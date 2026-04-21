@@ -41,64 +41,94 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
-    // Management Routes
-    Route::resource('customers', \App\Http\Controllers\CustomerController::class);
-    Route::get('customers/{customer}/activate', [\App\Http\Controllers\CustomerActivationController::class, 'index'])->name('customers.activate');
-    Route::post('customers/{customer}/activate', [\App\Http\Controllers\CustomerActivationController::class, 'store'])->name('customers.activate.store');
-    Route::get('customers/{customer}/dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'dismantleForm'])->name('customers.dismantle');
-    Route::post('customers/{customer}/dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'processDismantle'])->name('customers.dismantle.store');
-    Route::post('customers/{customer}/request-dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'requestDismantle'])->name('customers.request-dismantle');
-    Route::resource('packages', \App\Http\Controllers\PackageController::class);
-    Route::resource('nas', \App\Http\Controllers\NasController::class);
-    Route::resource('invoices', \App\Http\Controllers\InvoiceController::class);
-    Route::post('invoices/generate-automated', [\App\Http\Controllers\InvoiceController::class, 'generateAutomated'])->name('invoices.generate-automated');
-    Route::get('invoices/{invoice}/pay', [\App\Http\Controllers\InvoiceController::class, 'pay'])->name('invoices.pay');
-    Route::post('invoices/{invoice}/whatsapp', [\App\Http\Controllers\InvoiceController::class, 'sendWhatsApp'])->name('invoices.whatsapp');
-    Route::resource('tickets', \App\Http\Controllers\TicketController::class);
-    Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
-
-    Route::get('online-users', [\App\Http\Controllers\OnlineUserController::class, 'index'])->name('online-users.index');
-
-    // Inventory & Supplier Routes
-    Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
-    Route::get('inventory', [\App\Http\Controllers\InventoryController::class, 'index'])->name('inventory.index');
-    Route::get('inventory/items/create', [\App\Http\Controllers\InventoryController::class, 'create'])->name('inventory.create');
-    Route::post('inventory/items', [\App\Http\Controllers\InventoryController::class, 'store'])->name('inventory.store');
-    Route::get('inventory/items/{item}', [\App\Http\Controllers\InventoryController::class, 'show'])->name('inventory.show');
-    Route::get('inventory/categories', [\App\Http\Controllers\InventoryController::class, 'categories'])->name('inventory.categories');
-    Route::post('inventory/categories', [\App\Http\Controllers\InventoryController::class, 'storeCategory'])->name('inventory.category.store');
+    // Universal Operational Routes (Multiple Roles)
     
-    // Low level stock entry
-    Route::get('inventory/stock-in', [\App\Http\Controllers\InventoryController::class, 'stockIn'])->name('inventory.stock-in');
-    Route::post('inventory/stock-in', [\App\Http\Controllers\InventoryController::class, 'storeStockIn'])->name('inventory.stock-in.store');
+    // CUSTOMERS: All Operational Roles (View, Create, Edit)
+    Route::middleware('role:administrator,admin,teknisi,sales')->group(function () {
+        Route::get('customers', [\App\Http\Controllers\CustomerController::class, 'index'])->name('customers.index');
+        Route::get('customers/create', [\App\Http\Controllers\CustomerController::class, 'create'])->name('customers.create');
+        Route::post('customers', [\App\Http\Controllers\CustomerController::class, 'store'])->name('customers.store');
+        Route::get('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'show'])->name('customers.show');
+        Route::get('customers/{customer}/edit', [\App\Http\Controllers\CustomerController::class, 'edit'])->name('customers.edit');
+        Route::put('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'update'])->name('customers.update');
+        Route::patch('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'update']);
+    });
 
-    // Location Master Data Routes
-    Route::get('locations/regions', [\App\Http\Controllers\LocationDataController::class, 'regions'])->name('locations.regions');
-    Route::post('locations/regions', [\App\Http\Controllers\LocationDataController::class, 'storeRegion'])->name('locations.region.store');
-    Route::delete('locations/regions/{region}', [\App\Http\Controllers\LocationDataController::class, 'destroyRegion'])->name('locations.region.destroy');
-    
-    Route::get('locations/stos', [\App\Http\Controllers\LocationDataController::class, 'stos'])->name('locations.stos');
-    Route::post('locations/stos', [\App\Http\Controllers\LocationDataController::class, 'storeSto'])->name('locations.sto.store');
-    Route::delete('locations/stos/{sto}', [\App\Http\Controllers\LocationDataController::class, 'destroySto'])->name('locations.sto.destroy');
-    
-    Route::get('locations/stbs', [\App\Http\Controllers\LocationDataController::class, 'stbs'])->name('locations.stbs');
-    Route::post('locations/stbs', [\App\Http\Controllers\LocationDataController::class, 'storeStb'])->name('locations.stb.store');
-    Route::delete('locations/stbs/{stb}', [\App\Http\Controllers\LocationDataController::class, 'destroyStb'])->name('locations.stb.destroy');
+    // CUSTOMER ACTIVATION: Admin & Teknisi
+    Route::middleware('role:administrator,admin,teknisi')->group(function () {
+        Route::get('customers/{customer}/activate', [\App\Http\Controllers\CustomerActivationController::class, 'index'])->name('customers.activate');
+        Route::post('customers/{customer}/activate', [\App\Http\Controllers\CustomerActivationController::class, 'store'])->name('customers.activate.store');
+        
+        // Dismantle logic
+        Route::get('customers/{customer}/dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'dismantleForm'])->name('customers.dismantle');
+        Route::post('customers/{customer}/dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'processDismantle'])->name('customers.dismantle.store');
+    });
 
-    // JSON API Endpoints for Cascading Dropdown
+    // CUSTOMER DELETE: Admin & Administrator only
+    Route::middleware('role:administrator,admin')->group(function () {
+        Route::delete('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'destroy'])->name('customers.destroy');
+    });
+
+    // TICKETS: Admin, Teknisi & Sales
+    Route::middleware('role:administrator,admin,teknisi,sales')->group(function () {
+        Route::resource('tickets', \App\Http\Controllers\TicketController::class);
+    });
+
+    // INVOICES & PAYMENTS: Admin & Kasir
+    Route::middleware('role:administrator,admin,kasir')->group(function () {
+        Route::resource('invoices', \App\Http\Controllers\InvoiceController::class);
+        Route::post('invoices/generate-automated', [\App\Http\Controllers\InvoiceController::class, 'generateAutomated'])->name('invoices.generate-automated');
+        Route::get('invoices/{invoice}/pay', [\App\Http\Controllers\InvoiceController::class, 'pay'])->name('invoices.pay');
+        Route::post('invoices/{invoice}/whatsapp', [\App\Http\Controllers\InvoiceController::class, 'sendWhatsApp'])->name('invoices.whatsapp');
+    });
+
+    // TECHNICAL & WAREHOUSE: Admin & Teknisi
+    Route::middleware('role:administrator,admin,teknisi')->group(function () {
+        Route::get('online-users', [\App\Http\Controllers\OnlineUserController::class, 'index'])->name('online-users.index');
+        
+        // Inventory
+        Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
+        Route::get('inventory', [\App\Http\Controllers\InventoryController::class, 'index'])->name('inventory.index');
+        Route::get('inventory/items/create', [\App\Http\Controllers\InventoryController::class, 'create'])->name('inventory.create');
+        Route::post('inventory/items', [\App\Http\Controllers\InventoryController::class, 'store'])->name('inventory.store');
+        Route::get('inventory/items/{item}', [\App\Http\Controllers\InventoryController::class, 'show'])->name('inventory.show');
+        Route::get('inventory/categories', [\App\Http\Controllers\InventoryController::class, 'categories'])->name('inventory.categories');
+        Route::post('inventory/categories', [\App\Http\Controllers\InventoryController::class, 'storeCategory'])->name('inventory.category.store');
+        Route::get('inventory/stock-in', [\App\Http\Controllers\InventoryController::class, 'stockIn'])->name('inventory.stock-in');
+        Route::post('inventory/stock-in', [\App\Http\Controllers\InventoryController::class, 'storeStockIn'])->name('inventory.stock-in.store');
+    });
+
+    // SYSTEM ADMINISTRATION: Administrator ONLY
+    Route::middleware('role:administrator')->group(function () {
+        Route::resource('nas', \App\Http\Controllers\NasController::class);
+        Route::resource('users', \App\Http\Controllers\UserController::class);
+        Route::post('users/{user}/toggle-status', [\App\Http\Controllers\UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        
+        Route::resource('packages', \App\Http\Controllers\PackageController::class);
+        Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
+        
+        // Location Master Data
+        Route::get('locations/regions', [\App\Http\Controllers\LocationDataController::class, 'regions'])->name('locations.regions');
+        Route::post('locations/regions', [\App\Http\Controllers\LocationDataController::class, 'storeRegion'])->name('locations.region.store');
+        Route::delete('locations/regions/{region}', [\App\Http\Controllers\LocationDataController::class, 'destroyRegion'])->name('locations.region.destroy');
+        Route::get('locations/stos', [\App\Http\Controllers\LocationDataController::class, 'stos'])->name('locations.stos');
+        Route::post('locations/stos', [\App\Http\Controllers\LocationDataController::class, 'storeSto'])->name('locations.sto.store');
+        Route::delete('locations/stos/{sto}', [\App\Http\Controllers\LocationDataController::class, 'destroySto'])->name('locations.sto.destroy');
+        Route::get('locations/stbs', [\App\Http\Controllers\LocationDataController::class, 'stbs'])->name('locations.stbs');
+        Route::post('locations/stbs', [\App\Http\Controllers\LocationDataController::class, 'storeStb'])->name('locations.stb.store');
+        Route::delete('locations/stbs/{stb}', [\App\Http\Controllers\LocationDataController::class, 'destroyStb'])->name('locations.stb.destroy');
+
+        // Integrations & Settings
+        Route::get('integrations/payment', [\App\Http\Controllers\IntegrationController::class, 'payment'])->name('integrations.payment');
+        Route::get('integrations/whatsapp', [\App\Http\Controllers\IntegrationController::class, 'whatsapp'])->name('integrations.whatsapp');
+        Route::post('integrations/update', [\App\Http\Controllers\IntegrationController::class, 'update'])->name('integrations.update');
+        Route::get('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'index'])->name('settings.company');
+        Route::post('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'update'])->name('settings.company.update');
+    });
+
+    // Shared Utility APIs (Auth only)
     Route::get('api/regions/{region}/stos', [\App\Http\Controllers\LocationDataController::class, 'apiStos']);
     Route::get('api/stos/{sto}/stbs', [\App\Http\Controllers\LocationDataController::class, 'apiStbs']);
-
-    // Integration Gateways
-    Route::get('integrations/payment', [\App\Http\Controllers\IntegrationController::class, 'payment'])->name('integrations.payment');
-    Route::get('integrations/whatsapp', [\App\Http\Controllers\IntegrationController::class, 'whatsapp'])->name('integrations.whatsapp');
-    Route::post('integrations/update', [\App\Http\Controllers\IntegrationController::class, 'update'])->name('integrations.update');
-
-    // Company Settings
-    Route::get('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'index'])->name('settings.company');
-    Route::post('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'update'])->name('settings.company.update');
-
-    // API Search & notifications
     Route::get('api/search', [\App\Http\Controllers\SearchController::class, 'apiSearch'])->name('api.search');
     Route::get('api/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('api.notifications');
     Route::post('api/notifications/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('api.notifications.read');

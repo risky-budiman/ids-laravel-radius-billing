@@ -18,7 +18,7 @@ trait LogsActivity
 
         static::updated(function ($model) {
             $changes = $model->getChanges();
-            unset($changes['updated_at']);
+            unset($changes['updated_at'], $changes['remember_token']);
             if (empty($changes)) return;
 
             $identifier = $model->getModelIdentifier();

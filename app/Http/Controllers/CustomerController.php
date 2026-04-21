@@ -180,6 +180,8 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer)
     {
+        abort_if(!auth()->user()->isAdmin(), 403, 'Unauthorized: Only administrators can delete subscriber records.');
+
         DB::transaction(function () use ($customer) {
             // Delete RADIUS records first to prevent orphaned records if delete fails
             RadCheck::where('username', $customer->username)->delete();

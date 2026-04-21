@@ -39,57 +39,74 @@
                 </a>
             </li>
             
+            @if(auth()->user()->isAdmin() || auth()->user()->isSales() || auth()->user()->isTeknisi() || auth()->user()->isAdministrator())
             <li class="pt-4 pb-2">
                 <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">Management</p>
             </li>
+            @endif
             
+            @if(auth()->user()->isAdmin() || auth()->user()->isSales() || auth()->user()->isTeknisi())
             <li>
                 <a href="{{ route('customers.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('customers.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
                     <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     Subscribers
                 </a>
             </li>
+            @endif
             
+            @if(auth()->user()->isAdministrator())
             <li>
                 <a href="{{ route('packages.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('packages.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
                     <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
                     Packages
                 </a>
             </li>
+            @endif
             
+            @if(auth()->user()->isAdministrator())
             <li>
                 <a href="{{ route('nas.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('nas.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
                     <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
                     Routers (NAS)
                 </a>
             </li>
+            @endif
 
+            @if(auth()->user()->isAdmin() || auth()->user()->isTeknisi() || auth()->user()->isSales())
             <li>
                 <a href="{{ route('tickets.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('tickets.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
                     <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
                     Tickets
                 </a>
             </li>
+            @endif
 
 
+            @if(auth()->user()->isAdmin() || auth()->user()->isKasir() || auth()->user()->isTeknisi())
             <li class="pt-4 pb-2">
                 <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">Billing & Status</p>
             </li>
+            @endif
             
+            @if(auth()->user()->isAdmin() || auth()->user()->isKasir())
             <li>
                 <a href="{{ route('invoices.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('invoices.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
                     <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     Invoices
                 </a>
             </li>
+            @endif
             
+            @if(auth()->user()->isAdmin() || auth()->user()->isTeknisi())
             <li>
                 <a href="{{ route('online-users.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('online-users.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
                     <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
                     Online Users
                 </a>
             </li>
+            @endif
 
+            @if(auth()->user()->isAdmin() || auth()->user()->isTeknisi())
             <li class="pt-4 pb-2">
                 <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">Inventory & Assets</p>
             </li>
@@ -131,10 +148,19 @@
                     </div>
                 </div>
             </li>
+            @endif
 
+            @if(auth()->user()->isAdministrator())
             <li class="pt-4 mt-2 border-t border-gray-200 dark:border-gray-700">
-                <p class="px-4 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Settings</p>
+                <p class="px-4 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Settings & Security</p>
                 
+                <li>
+                    <a href="{{ route('users.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('users.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
+                        <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        Manage Staff
+                    </a>
+                </li>
+
                 <div x-data="{ open: {{ request()->routeIs('locations.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" type="button" class="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 group">
                         <div class="flex items-center">
@@ -164,7 +190,7 @@
                         <a href="{{ route('locations.stbs') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('locations.stbs') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
                             STB Data
                         </a>
-
+ 
                         <a href="{{ route('settings.company') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('settings.company') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
                             Company Profile
                         </a>
@@ -205,13 +231,14 @@
             <li class="pt-4 pb-2">
                 <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">System Audit</p>
             </li>
-
+ 
             <li>
                 <a href="{{ route('activity-logs.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('activity-logs.*') ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
                     <svg class="w-5 h-5 mr-3 group-hover:text-amber-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     Activity Logs
                 </a>
             </li>
+            @endif
 
 
         </ul>

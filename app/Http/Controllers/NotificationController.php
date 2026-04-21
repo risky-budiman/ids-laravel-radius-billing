@@ -11,6 +11,13 @@ class NotificationController extends Controller
     {
         $notifications = Auth::user()->unreadNotifications;
         
+        // Filter for Kasir: Only Billing/Invoice notifications
+        if (Auth::user()->isKasir()) {
+            $notifications = $notifications->filter(function($notif) {
+                return str_contains($notif->type, 'Invoice');
+            });
+        }
+
         // Group by type (shortened name of notification class)
         $grouped = $notifications->groupBy(function($notif) {
             $class = explode('\\', $notif->type);

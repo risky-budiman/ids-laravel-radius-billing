@@ -122,6 +122,7 @@
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Register a new user</p>
                         </div>
                     </a>
+                    @if(!auth()->user()->isKasir())
                     <form action="{{ route('invoices.generate-automated') }}" method="POST">
                         @csrf
                         <button type="submit" class="w-full flex items-center p-5 rounded-2xl border border-gray-100 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl hover:shadow-green-500/10 hover:border-green-200 dark:hover:border-green-800 transition-all group">
@@ -134,6 +135,7 @@
                             </div>
                         </button>
                     </form>
+                    @endif
                 </div>
             </div>
 
@@ -156,6 +158,7 @@
             </div>
         </div>
 
+        @if(auth()->user()->isAdmin())
         <!-- Row 3: Recent Activity Log (Separate and clean) -->
         <div class="glass-premium bg-white/80 dark:bg-gray-800/80 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="px-8 py-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50">
@@ -172,11 +175,18 @@
                 @forelse($latestActivities as $activity)
                     <div class="px-8 py-5 flex items-center justify-between hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-all">
                         <div class="flex items-center space-x-4">
-                            <div class="p-2 rounded-xl {{ $activity->action === 'created' ? 'bg-green-50 text-green-600' : ($activity->action === 'updated' ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600') }} dark:bg-gray-700">
+                            <div class="p-2 rounded-xl 
+                                {{ $activity->action === 'created' ? 'bg-green-50 text-green-600' : 
+                                  ($activity->action === 'updated' ? 'bg-blue-50 text-blue-600' : 
+                                  ($activity->action === 'login' || $activity->action === 'logout' ? 'bg-indigo-50 text-indigo-600' : 'bg-red-50 text-red-600')) }} dark:bg-gray-700">
                                 @if($activity->action === 'created')
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                                 @elseif($activity->action === 'updated')
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                @elseif($activity->action === 'login')
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                                @elseif($activity->action === 'logout')
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                                 @else
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 @endif
@@ -200,5 +210,6 @@
                 @endforelse
             </div>
         </div>
+        @endif
     </div>
 </x-app-layout>

@@ -62,33 +62,47 @@
                                     {{ str_replace('_', ' ', $customer->status ?? ($customer->is_active ? 'active' : 'inactive')) }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="flex items-center justify-end space-x-3">
-                                    @if($customer->status === 'waiting_activation' || (!$customer->is_active && $customer->status === 'new'))
-                                        <a href="{{ route('customers.activate', $customer) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all shadow-lg shadow-indigo-600/20">
-                                            ACTIVATE
-                                        </a>
-                                    @endif
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex items-center justify-end space-x-3 group">
+                                            @if($customer->status === 'waiting_activation' || (!$customer->is_active && $customer->status === 'new'))
+                                                @if(auth()->user()->isAdmin() || auth()->user()->isTeknisi())
+                                                <a href="{{ route('customers.activate', $customer) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all shadow-lg shadow-indigo-600/20">
+                                                    ACTIVATE
+                                                </a>
+                                                @endif
+                                            @endif
 
-                                    @if($customer->status === 'active' || ($customer->is_active && $customer->status !== 'waiting_dismantle'))
-                                        <form action="{{ route('customers.request-dismantle', $customer) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin mengajukan dismantle untuk pelanggan ini?')">
-                                            @csrf
-                                            <button type="submit" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all">
-                                                DISMANTLE
-                                            </button>
-                                        </form>
-                                    @endif
+                                            @if($customer->status === 'active' || ($customer->is_active && $customer->status !== 'waiting_dismantle'))
+                                                @if(auth()->user()->isAdmin() || auth()->user()->isTeknisi())
+                                                <form action="{{ route('customers.request-dismantle', $customer) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin mengajukan dismantle untuk pelanggan ini?')">
+                                                    @csrf
+                                                    <button type="submit" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all">
+                                                        DISMANTLE
+                                                    </button>
+                                                </form>
+                                                @endif
+                                            @endif
 
-                                    @if($customer->status === 'waiting_dismantle')
-                                        <a href="{{ route('customers.dismantle', $customer) }}" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all shadow-lg shadow-amber-600/20">
-                                            COLLECT GEAR
-                                        </a>
-                                    @endif
+                                            @if($customer->status === 'waiting_dismantle')
+                                                <a href="{{ route('customers.dismantle', $customer) }}" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all shadow-lg shadow-amber-600/20">
+                                                    COLLECT GEAR
+                                                </a>
+                                            @endif
 
-                                    <a href="{{ route('customers.show', $customer) }}" class="text-gray-400 hover:text-indigo-600 dark:text-gray-500 dark:hover:text-indigo-400 text-xs font-bold transition-colors">Details</a>
-                                    <a href="{{ route('customers.edit', $customer) }}" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 text-xs font-bold transition-colors">Edit</a>
-                                </div>
-                            </td>
+                                            <a href="{{ route('customers.show', $customer) }}" class="text-gray-400 hover:text-indigo-600 dark:text-gray-500 dark:hover:text-indigo-400 text-xs font-bold transition-colors">Details</a>
+                                            <a href="{{ route('customers.edit', $customer) }}" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 text-xs font-bold transition-colors">Edit</a>
+                                            
+                                            @if(auth()->user()->isAdmin())
+                                            <form action="{{ route('customers.destroy', $customer) }}" method="POST" onsubmit="return confirm('Hapus pelanggan ini secara permanen?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </form>
+                                            @endif
+                                        </div>
+                                    </td>
                         </tr>
                     @empty
                         <tr>

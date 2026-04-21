@@ -14,6 +14,8 @@ class CustomerActivationController extends Controller
 {
     public function index(Customer $customer)
     {
+        abort_if(auth()->user()->isSales(), 403, 'Unauthorized: Sales staff cannot perform subscriber activations.');
+
         // Get items that are tracked by serial number and have ready or dismantled stocks
         $serialItems = InventoryItem::where('track_serial', true)
             ->whereHas('stocks', function($q) {
@@ -30,6 +32,8 @@ class CustomerActivationController extends Controller
 
     public function store(Request $request, Customer $customer)
     {
+        abort_if(auth()->user()->isSales(), 403, 'Unauthorized: Sales staff cannot perform subscriber activations.');
+
         $request->validate([
             'modem_stock_id' => 'required|exists:inventory_stocks,id',
             'consumables' => 'nullable|array',
@@ -114,6 +118,10 @@ class CustomerActivationController extends Controller
 
     public function dismantleForm(Customer $customer)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->isTeknisi()) {
+            return redirect()->route('customers.index')->with('error', 'Unauthorized: Only technicians or admins can access dismantle forms.');
+        }
+
         $installedEquipment = InventoryStock::where('customer_id', $customer->id)
             ->where('status', 'installed')
             ->with('item')
@@ -124,6 +132,10 @@ class CustomerActivationController extends Controller
 
     public function processDismantle(Request $request, Customer $customer)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->isTeknisi()) {
+            return redirect()->route('customers.index')->with('error', 'Unauthorized: Only technicians or admins can process equipment returns.');
+        }
+
         $request->validate([
             'stock_ids' => 'required|array',
             'stock_ids.*' => 'exists:inventory_stocks,id',
@@ -182,6 +194,10 @@ class CustomerActivationController extends Controller
 
     public function requestDismantle(Customer $customer)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->isTeknisi()) {
+            return redirect()->route('customers.index')->with('error', 'Unauthorized: Only technicians or admins can initiate dismantle process.');
+        }
+
         $customer->update(['status' => Customer::STATUS_WAITING_DISMANTLE]);
         return redirect()->back()->with('success', 'Permintaan dismantle telah diajukan. Tiket penarikan perangkat otomatis dibuat.');
     }

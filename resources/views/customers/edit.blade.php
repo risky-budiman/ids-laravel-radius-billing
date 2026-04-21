@@ -164,7 +164,7 @@
                 <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <x-input-label for="is_active" :value="__('Account Status')" />
-                        <select id="is_active" name="is_active" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm">
+                        <select id="is_active" name="is_active" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm disabled:opacity-50" {{ auth()->user()->isSales() ? 'disabled' : '' }}>
                             <option value="1" {{ old('is_active', $customer->is_active) == '1' ? 'selected' : '' }}>Active</option>
                             <option value="0" {{ old('is_active', $customer->is_active) == '0' ? 'selected' : '' }}>Suspended</option>
                         </select>

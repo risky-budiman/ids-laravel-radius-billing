@@ -13,15 +13,17 @@
                 @php 
                     $hasInstalled = \App\Models\InventoryStock::where('customer_id', $customer->id)->where('status', 'installed')->exists();
                 @endphp
-                @if($customer->is_active && $hasInstalled)
-                    <a href="{{ route('customers.dismantle', $customer) }}" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-6 py-2 rounded-xl text-sm font-bold transition-all border border-rose-100 shadow-sm shadow-rose-500/10">
-                        Dismantle
-                    </a>
-                @endif
-                @if(!$customer->is_active)
-                    <a href="{{ route('customers.activate', $customer) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20">
-                        Activate Now
-                    </a>
+                @if(auth()->user()->isAdmin() || auth()->user()->isTeknisi())
+                    @if($customer->is_active && $hasInstalled)
+                        <a href="{{ route('customers.dismantle', $customer) }}" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-6 py-2 rounded-xl text-sm font-bold transition-all border border-rose-100 shadow-sm shadow-rose-500/10">
+                            Dismantle
+                        </a>
+                    @endif
+                    @if(!$customer->is_active)
+                        <a href="{{ route('customers.activate', $customer) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20">
+                            Activate Now
+                        </a>
+                    @endif
                 @endif
                 <a href="{{ route('customers.edit', $customer) }}" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl text-sm font-bold transition-all hover:bg-gray-200">
                     Edit Profile
@@ -117,14 +119,18 @@
                                 </div>
                                 <div class="ml-auto flex items-center space-x-4">
                                     <span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded uppercase tracking-widest">Installed</span>
-                                    <a href="{{ route('customers.dismantle', $customer) }}" class="text-[10px] font-bold text-rose-500 hover:text-rose-700 uppercase tracking-widest">Dismantle →</a>
+                                    @if(auth()->user()->isAdmin() || auth()->user()->isTeknisi())
+                                        <a href="{{ route('customers.dismantle', $customer) }}" class="text-[10px] font-bold text-rose-500 hover:text-rose-700 uppercase tracking-widest">Dismantle →</a>
+                                    @endif
                                 </div>
                             </div>
                         @else
                             <div class="text-center py-6 border-2 border-dashed border-gray-50 dark:border-gray-800 rounded-3xl">
                                 <p class="text-xs text-gray-400 italic">No equipment recorded for this customer.</p>
-                                @if(!$customer->is_active)
-                                    <a href="{{ route('customers.activate', $customer) }}" class="inline-block mt-3 text-[10px] font-bold text-indigo-600 uppercase">Run Activation Wizard →</a>
+                                @if(!auth()->user()->isSales())
+                                    @if(!$customer->is_active)
+                                        <a href="{{ route('customers.activate', $customer) }}" class="inline-block mt-3 text-[10px] font-bold text-indigo-600 uppercase">Run Activation Wizard →</a>
+                                    @endif
                                 @endif
                             </div>
                         @endif
