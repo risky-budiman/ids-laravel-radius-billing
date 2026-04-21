@@ -6,6 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
+    const STATUS_NEW = 'new';
+    const STATUS_WAITING_ACTIVATION = 'waiting_activation';
+    const STATUS_ACTIVE = 'active';
+    const STATUS_SUSPENDED = 'suspended';
+    const STATUS_WAITING_DISMANTLE = 'waiting_dismantle';
+    const STATUS_DISMANTLED = 'dismantled';
+    const STATUS_CANCELED = 'canceled';
+
     protected $fillable = [
         'customer_code',
         'region_code',
@@ -18,6 +26,7 @@ class Customer extends Model
         'address',
         'package_id',
         'is_active',
+        'status',
     ];
 
     public function package()

@@ -65,6 +65,7 @@ class CustomerController extends Controller
                 'address' => $validated['address'],
                 'package_id' => $validated['package_id'],
                 'is_active' => false,
+                'status' => Customer::STATUS_NEW,
             ]);
 
             // Create in RADIUS (Authentication)

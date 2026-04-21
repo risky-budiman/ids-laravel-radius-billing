@@ -47,25 +47,44 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4">
-                                @if($customer->is_active)
-                                    <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                                        <span>ACTIVE</span>
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500">
-                                        <span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
-                                        <span>INACTIVE</span>
-                                    </span>
-                                @endif
+                                @php
+                                    $statusColors = [
+                                        'new' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                                        'waiting_activation' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                                        'active' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                                        'suspended' => 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+                                        'waiting_dismantle' => 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+                                        'dismantled' => 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+                                        'canceled' => 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500',
+                                    ];
+                                @endphp
+                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest {{ $statusColors[$customer->status] ?? 'bg-gray-100' }}">
+                                    {{ str_replace('_', ' ', $customer->status ?? ($customer->is_active ? 'active' : 'inactive')) }}
+                                </span>
                             </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center space-x-4">
-                                    @if(!$customer->is_active)
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end space-x-3">
+                                    @if($customer->status === 'waiting_activation' || (!$customer->is_active && $customer->status === 'new'))
                                         <a href="{{ route('customers.activate', $customer) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all shadow-lg shadow-indigo-600/20">
                                             ACTIVATE
                                         </a>
                                     @endif
+
+                                    @if($customer->status === 'active' || ($customer->is_active && $customer->status !== 'waiting_dismantle'))
+                                        <form action="{{ route('customers.request-dismantle', $customer) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin mengajukan dismantle untuk pelanggan ini?')">
+                                            @csrf
+                                            <button type="submit" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all">
+                                                DISMANTLE
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    @if($customer->status === 'waiting_dismantle')
+                                        <a href="{{ route('customers.dismantle', $customer) }}" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all shadow-lg shadow-amber-600/20">
+                                            COLLECT GEAR
+                                        </a>
+                                    @endif
+
                                     <a href="{{ route('customers.show', $customer) }}" class="text-gray-400 hover:text-indigo-600 dark:text-gray-500 dark:hover:text-indigo-400 text-xs font-bold transition-colors">Details</a>
                                     <a href="{{ route('customers.edit', $customer) }}" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 text-xs font-bold transition-colors">Edit</a>
                                 </div>

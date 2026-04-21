@@ -39,9 +39,21 @@ class CustomerActivationController extends Controller
 
         DB::transaction(function() use ($request, $customer) {
             // 1. Activate Customer
-            $customer->update(['is_active' => true]);
+            $customer->update([
+                'is_active' => true,
+                'status' => Customer::STATUS_ACTIVE
+            ]);
 
-            // 2. Install Modem (Serialized Item)
+            // 2. Find and Close Aktivasi Ticket
+            \App\Models\Ticket::where('customer_id', $customer->id)
+                ->where('type', 'aktivasi')
+                ->whereIn('status', ['open', 'in_progress'])
+                ->update([
+                    'status' => 'closed',
+                    'resolution_notes' => 'Aktivasi selesai. Perangkat telah dipasang.'
+                ]);
+
+            // 3. Install Modem (Serialized Item)
             $modem = InventoryStock::findOrFail($request->modem_stock_id);
             $modem->update([
                 'status' => 'installed',
@@ -99,10 +111,22 @@ class CustomerActivationController extends Controller
 
         try {
             DB::transaction(function() use ($request, $customer) {
-                // 1. Update Customer status to inactive
-                $customer->update(['is_active' => false]);
+                // 1. Update Customer status to dismantled
+                $customer->update([
+                    'is_active' => false,
+                    'status' => Customer::STATUS_DISMANTLED
+                ]);
 
-                // 2. Process each dismantled equipment
+                // 2. Find and Close Dismantle Ticket
+                \App\Models\Ticket::where('customer_id', $customer->id)
+                    ->where('type', 'dismantle')
+                    ->whereIn('status', ['open', 'in_progress'])
+                    ->update([
+                        'status' => 'closed',
+                        'resolution_notes' => 'Dismantle selesai. Perangkat telah ditarik.'
+                    ]);
+
+                // 3. Process each dismantled equipment
                 foreach ($request->stock_ids as $stockId) {
                     $stock = InventoryStock::findOrFail($stockId);
                     
@@ -134,5 +158,11 @@ class CustomerActivationController extends Controller
             \Log::error('Dismantle failed: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal memproses dismantle: ' . $e->getMessage());
         }
+    }
+
+    public function requestDismantle(Customer $customer)
+    {
+        $customer->update(['status' => Customer::STATUS_WAITING_DISMANTLE]);
+        return redirect()->back()->with('success', 'Permintaan dismantle telah diajukan. Tiket penarikan perangkat otomatis dibuat.');
     }
 }

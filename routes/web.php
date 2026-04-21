@@ -42,11 +42,14 @@ Route::middleware('auth')->group(function () {
     Route::post('customers/{customer}/activate', [\App\Http\Controllers\CustomerActivationController::class, 'store'])->name('customers.activate.store');
     Route::get('customers/{customer}/dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'dismantleForm'])->name('customers.dismantle');
     Route::post('customers/{customer}/dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'processDismantle'])->name('customers.dismantle.store');
+    Route::post('customers/{customer}/request-dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'requestDismantle'])->name('customers.request-dismantle');
     Route::resource('packages', \App\Http\Controllers\PackageController::class);
     Route::resource('nas', \App\Http\Controllers\NasController::class);
     Route::resource('invoices', \App\Http\Controllers\InvoiceController::class);
     Route::get('invoices/{invoice}/pay', [\App\Http\Controllers\InvoiceController::class, 'pay'])->name('invoices.pay');
     Route::post('invoices/{invoice}/whatsapp', [\App\Http\Controllers\InvoiceController::class, 'sendWhatsApp'])->name('invoices.whatsapp');
+    Route::resource('tickets', \App\Http\Controllers\TicketController::class);
+
     Route::get('online-users', [\App\Http\Controllers\OnlineUserController::class, 'index'])->name('online-users.index');
 
     // Inventory & Supplier Routes
