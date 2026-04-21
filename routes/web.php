@@ -97,6 +97,8 @@ Route::middleware('auth')->group(function () {
         Route::get('inventory/stock-in', [\App\Http\Controllers\InventoryController::class, 'stockIn'])->name('inventory.stock-in');
         Route::post('inventory/stock-in', [\App\Http\Controllers\InventoryController::class, 'storeStockIn'])->name('inventory.stock-in.store');
     });
+    // APP CHANGELOG (Public/Shared)
+    Route::get('changelog', [\App\Http\Controllers\ChangelogController::class, 'index'])->name('changelog.index');
 
     // SYSTEM ADMINISTRATION: Administrator ONLY
     Route::middleware('role:administrator')->group(function () {
@@ -124,6 +126,10 @@ Route::middleware('auth')->group(function () {
         Route::post('integrations/update', [\App\Http\Controllers\IntegrationController::class, 'update'])->name('integrations.update');
         Route::get('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'index'])->name('settings.company');
         Route::post('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'update'])->name('settings.company.update');
+
+        // Changelog Management
+        Route::post('changelog', [\App\Http\Controllers\ChangelogController::class, 'store'])->name('changelog.store');
+        Route::delete('changelog/{changelog}', [\App\Http\Controllers\ChangelogController::class, 'destroy'])->name('changelog.destroy');
     });
 
     // Shared Utility APIs (Auth only)
