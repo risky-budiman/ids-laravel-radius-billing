@@ -98,6 +98,43 @@
                 </div>
             </div>
 
+            <!-- Section: Billing Configuration -->
+            <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Billing Configuration</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <x-input-label for="billing_type" :value="__('Billing Type')" />
+                        <select id="billing_type" name="billing_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" required>
+                            <option value="postpaid" {{ old('billing_type', $customer->billing_type) == 'postpaid' ? 'selected' : '' }}>Pasca Bayar (Postpaid)</option>
+                            <option value="prepaid" {{ old('billing_type', $customer->billing_type) == 'prepaid' ? 'selected' : '' }}>Prabayar (Prepaid)</option>
+                        </select>
+                        <x-input-error class="mt-2" :messages="$errors->get('billing_type')" />
+                    </div>
+
+                    <div>
+                        <x-input-label for="billing_method" :value="__('Billing Method')" />
+                        <select id="billing_method" name="billing_method" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" required>
+                            <!-- Options will be populated by JS -->
+                        </select>
+                        <x-input-error class="mt-2" :messages="$errors->get('billing_method')" />
+                    </div>
+
+                    <div id="billing_cycle_dates" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
+                        <div>
+                            <x-input-label for="billing_day" :value="__('Generate Bill Day (1-28)')" />
+                            <x-text-input id="billing_day" name="billing_day" type="number" min="1" max="28" class="mt-1 block w-full" :value="old('billing_day', $customer->billing_day ?? 1)" />
+                            <p class="mt-1 text-[10px] text-gray-500 italic">Day of the month to generate invoice (Default: 1st)</p>
+                        </div>
+                        <div>
+                            <x-input-label for="billing_due_day" :value="__('Due Date Day (1-28)')" />
+                            <x-text-input id="billing_due_day" name="billing_due_day" type="number" min="1" max="28" class="mt-1 block w-full" :value="old('billing_due_day', $customer->billing_due_day ?? 20)" />
+                            <p class="mt-1 text-[10px] text-gray-500 italic">Day of the month to suspend if unpaid (Default: 20th)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Section: Subscription -->
             <div class="mb-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Subscription Plan</h3>
@@ -116,6 +153,15 @@
                         <x-input-error class="mt-2" :messages="$errors->get('package_id')" />
                     </div>
 
+                    <div id="billing_info_box" class="md:col-span-1 border p-4 rounded-xl flex items-start">
+                        <svg class="w-5 h-5 text-indigo-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div id="method_description" class="text-[11px] leading-relaxed">
+                            Pilih metode billing untuk melihat detail aturan penagihan.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <x-input-label for="is_active" :value="__('Account Status')" />
                         <select id="is_active" name="is_active" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm">
@@ -199,6 +245,66 @@
 
             if(regionSelect.value) { filterStos(true); }
             if(stoSelect.value) { filterStbs(true); }
+
+            // Billing Logic script
+            const billingType = document.getElementById('billing_type');
+            const billingMethod = document.getElementById('billing_method');
+            const cycleDates = document.getElementById('billing_cycle_dates');
+            const infoBox = document.getElementById('billing_info_box');
+            const methodDesc = document.getElementById('method_description');
+            
+            const initialMethod = @json(old('billing_method', $customer->billing_method));
+
+            const methods = {
+                postpaid: [
+                    { value: 'cycle', label: 'Cycle (Invoice tgl 1, Jatuh Tempo tgl 20)', desc: '<strong>Pasca Bayar Cycle:</strong> Layanan dipakai dulu. Invoice terbit setiap tanggal 1, jatuh tempo tanggal 20. Pembayaran pertama dihitung prorata.' },
+                    { value: 'fixed', label: 'Fixed (Jatuh Tempo Tgl Aktif, -7 Hari)', desc: '<strong>Pasca Bayar Fixed:</strong> Layanan dipakai dulu. Jatuh tempo setiap tanggal pendaftaran (anniversary). Invoice terbit 7 hari sebelum jatuh tempo.' }
+                ],
+                prepaid: [
+                    { value: 'fixed', label: 'Fixed (Bayar di Depan, Anniversary Tgl)', desc: '<strong>Prabayar Fixed:</strong> Bayar dulu baru layanan aktif. Jatuh tempo setiap tanggal pendaftaran. Invoice terbit 7 hari sebelum masa aktif periode berikutnya dimulai.' },
+                    { value: 'renewal', label: 'Renewal (Top-up / +30 Hari)', desc: '<strong>Prabayar Renewal:</strong> Bayar secara manual untuk memperpanjang masa aktif. Setiap pembayaran menambah masa aktif sebanyak 30 hari.' }
+                ]
+            };
+
+            function updateMethods() {
+                const type = billingType.value;
+                const oldMethod = billingMethod.value || initialMethod;
+                billingMethod.innerHTML = '';
+                
+                methods[type].forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.value;
+                    opt.textContent = m.label;
+                    if(m.value === oldMethod) opt.selected = true;
+                    billingMethod.appendChild(opt);
+                });
+
+                updateDescription();
+            }
+
+            function updateDescription() {
+                const type = billingType.value;
+                const method = billingMethod.value;
+                const activeMethod = methods[type].find(m => m.value === method);
+                
+                if (activeMethod) {
+                    methodDesc.innerHTML = activeMethod.desc;
+                    infoBox.className = 'md:col-span-1 border p-4 rounded-xl flex items-start ' + 
+                                       (type === 'postpaid' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30' : 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30');
+                }
+
+                // Show cycle dates ONLY for postpaid cycle
+                if (type === 'postpaid' && method === 'cycle') {
+                    cycleDates.classList.remove('hidden');
+                } else {
+                    cycleDates.classList.add('hidden');
+                }
+            }
+
+            billingType.addEventListener('change', updateMethods);
+            billingMethod.addEventListener('change', updateDescription);
+            
+            updateMethods();
         });
     </script>
 </x-app-layout>

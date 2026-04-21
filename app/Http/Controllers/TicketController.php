@@ -44,6 +44,10 @@ class TicketController extends Controller
 
         $ticket = \App\Models\Ticket::create($validated);
 
+        // Notify all administrators
+        $admins = \App\Models\User::all();
+        \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\TicketCreatedNotification($ticket));
+
         return redirect()->route('tickets.index', ['type' => $ticket->type])
             ->with('success', 'Ticket created successfully.');
     }

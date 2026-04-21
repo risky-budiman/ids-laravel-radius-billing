@@ -5,8 +5,13 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
+                    <a href="{{ route('dashboard') }}" class="flex items-center space-x-3">
+                        @if(get_setting('company_logo'))
+                            <img src="{{ asset('storage/' . get_setting('company_logo')) }}" alt="Logo" class="block h-9 w-auto">
+                        @else
+                            <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
+                        @endif
+                        <span class="font-bold text-xl text-gray-800 dark:text-gray-200">{{ get_setting('company_name', config('app.name')) }}</span>
                     </a>
                 </div>
 
@@ -36,6 +41,10 @@
                     <x-slot name="content">
                         <x-dropdown-link :href="route('profile.edit')">
                             {{ __('Profile') }}
+                        </x-dropdown-link>
+
+                        <x-dropdown-link :href="route('settings.company')">
+                            {{ __('Company Profile') }}
                         </x-dropdown-link>
 
                         <!-- Authentication -->

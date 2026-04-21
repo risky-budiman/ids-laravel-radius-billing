@@ -38,11 +38,31 @@ class CustomerActivationController extends Controller
         ]);
 
         DB::transaction(function() use ($request, $customer) {
-            // 1. Activate Customer
+            // 1. Activate Customer and Set Initial Billing
             $customer->update([
                 'is_active' => true,
-                'status' => Customer::STATUS_ACTIVE
+                'status' => Customer::STATUS_ACTIVE,
+                'activated_at' => now(),
             ]);
+
+            // Handle Initial Invoicing for Postpaid Cycle
+            if ($customer->billing_type === 'postpaid' && $customer->billing_method === 'cycle') {
+                $prorataAmount = $customer->calculateProrata($customer->package->price);
+                
+                if ($prorataAmount > 0) {
+                    \App\Models\Invoice::create([
+                        'invoice_number' => 'INV-PR-' . strtoupper(uniqid()),
+                        'customer_id' => $customer->id,
+                        'amount' => $prorataAmount,
+                        'status' => 'unpaid',
+                        'due_date' => now()->day($customer->billing_due_day ?? 20),
+                        'description' => 'Tagihan Prorata (Aktivasi Baru)',
+                    ]);
+                }
+            }
+
+            // Sync next billing dates
+            $customer->syncBillingDates();
 
             // 2. Find and Close Aktivasi Ticket
             \App\Models\Ticket::where('customer_id', $customer->id)

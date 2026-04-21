@@ -48,6 +48,10 @@ class CustomerController extends Controller
             'address' => 'nullable|string',
             'package_id' => 'required|exists:packages,id',
             'is_active' => 'boolean',
+            'billing_type' => 'required|in:prepaid,postpaid',
+            'billing_method' => 'required|in:cycle,fixed,renewal',
+            'billing_day' => 'nullable|integer|min:1|max:28',
+            'billing_due_day' => 'nullable|integer|min:1|max:28',
         ]);
 
         $package = Package::find($validated['package_id']);
@@ -66,6 +70,10 @@ class CustomerController extends Controller
                 'package_id' => $validated['package_id'],
                 'is_active' => false,
                 'status' => Customer::STATUS_NEW,
+                'billing_type' => $validated['billing_type'],
+                'billing_method' => $validated['billing_method'],
+                'billing_day' => $validated['billing_day'] ?? 1,
+                'billing_due_day' => $validated['billing_due_day'] ?? 20,
             ]);
 
             // Create in RADIUS (Authentication)
@@ -111,6 +119,10 @@ class CustomerController extends Controller
             'package_id' => 'required|exists:packages,id',
             'password' => 'nullable|string|min:6',
             'is_active' => 'boolean',
+            'billing_type' => 'required|in:prepaid,postpaid',
+            'billing_method' => 'required|in:cycle,fixed,renewal',
+            'billing_day' => 'nullable|integer|min:1|max:28',
+            'billing_due_day' => 'nullable|integer|min:1|max:28',
         ]);
 
         $package = Package::find($validated['package_id']);
@@ -129,6 +141,10 @@ class CustomerController extends Controller
                 'address' => $validated['address'],
                 'package_id' => $validated['package_id'],
                 'is_active' => $validated['is_active'] ?? true,
+                'billing_type' => $validated['billing_type'],
+                'billing_method' => $validated['billing_method'],
+                'billing_day' => $validated['billing_day'] ?? 1,
+                'billing_due_day' => $validated['billing_due_day'] ?? 20,
             ]);
 
             // Update RADIUS Password if changed

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
+
 use Illuminate\Database\Eloquent\Model;
 
 class InventoryItem extends Model
 {
+    use LogsActivity;
     protected $fillable = [
         'category_id',
         'name',

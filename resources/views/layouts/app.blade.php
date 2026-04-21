@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Radius ISP') }}</title>
+        <title>{{ get_setting('company_name', config('app.name', 'Radius ISP')) }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -26,10 +26,10 @@
         <style>
             /* Premium utilities */
             .glass {
-                background: rgba(255, 255, 255, 0.7);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.18);
+                background: rgba(255, 255, 255, 0.9);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid rgba(229, 231, 235, 0.5);
             }
             .dark .glass {
                 background: rgba(17, 24, 39, 0.7);

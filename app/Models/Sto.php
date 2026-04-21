@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
+
 use Illuminate\Database\Eloquent\Model;
 
 class Sto extends Model
 {
+    use LogsActivity;
     protected $fillable = ['region_id', 'code', 'name'];
 
     public function region()

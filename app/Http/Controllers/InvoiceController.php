@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Services\PaymentGatewayService;
 use App\Services\WhatsAppService;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Artisan;
 
 class InvoiceController extends Controller
 {
@@ -56,11 +57,27 @@ class InvoiceController extends Controller
     public function update(Request $request, Invoice $invoice)
     {
         if ($request->has('mark_as_paid')) {
-            $invoice->update([
-                'status' => 'paid',
-                'paid_at' => now(),
-            ]);
-            return redirect()->route('invoices.index')->with('success', 'Invoice marked as paid.');
+            DB::transaction(function() use ($invoice) {
+                $invoice->update([
+                    'status' => 'paid',
+                    'paid_at' => now(),
+                ]);
+
+                $customer = $invoice->customer;
+                if ($customer) {
+                    // Reactivate if suspended
+                    $customer->update([
+                        'is_active' => true,
+                        'status' => \App\Models\Customer::STATUS_ACTIVE
+                    ]);
+
+                    // For Renewal method, we sync dates ON payment
+                    if ($customer->billing_method === 'renewal') {
+                        $customer->syncBillingDates();
+                    }
+                }
+            });
+            return redirect()->route('invoices.index')->with('success', 'Invoice marked as paid and customer reactivated.');
         } elseif ($request->has('cancel_payment')) {
             $invoice->update([
                 'status' => 'unpaid',
@@ -106,6 +123,18 @@ class InvoiceController extends Controller
         }
 
         return redirect()->back()->with('error', 'Gagal mengirim pesan WhatsApp. Pastikan Gateway Fonnte aktif.');
+    }
+
+    public function generateAutomated()
+    {
+        try {
+            Artisan::call('app:process-billing');
+            $output = Artisan::output();
+            
+            return redirect()->back()->with('success', 'Automated billing processed: ' . $output);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Billing Error: ' . $e->getMessage());
+        }
     }
 
     public function destroy(Invoice $invoice)

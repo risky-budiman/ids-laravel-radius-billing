@@ -16,10 +16,16 @@
     <!-- Logo -->
     <div class="flex items-center justify-center h-20 shrink-0 border-b border-gray-200 dark:border-gray-800">
         <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/30">
-                R
-            </div>
-            <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">Radius ISP</span>
+            @if(get_setting('company_logo'))
+                <img src="{{ asset('storage/' . get_setting('company_logo')) }}" alt="Logo" class="w-10 h-10 object-contain">
+            @else
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/30">
+                    {{ substr(get_setting('company_name', 'Radius'), 0, 1) }}
+                </div>
+            @endif
+            <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">
+                {{ get_setting('company_name', 'Radius ISP') }}
+            </span>
         </div>
     </div>
 
@@ -158,11 +164,15 @@
                         <a href="{{ route('locations.stbs') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('locations.stbs') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
                             STB Data
                         </a>
+
+                        <a href="{{ route('settings.company') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('settings.company') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            Company Profile
+                        </a>
                     </div>
                 </div>
             </li>
 
-            <li class="pt-2 mt-2">
+            <li class="pt-2">
                 <div x-data="{ open: {{ request()->routeIs('integrations.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" type="button" class="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 group">
                         <div class="flex items-center">
@@ -191,6 +201,19 @@
                     </div>
                 </div>
             </li>
+
+            <li class="pt-4 pb-2">
+                <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">System Audit</p>
+            </li>
+
+            <li>
+                <a href="{{ route('activity-logs.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('activity-logs.*') ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
+                    <svg class="w-5 h-5 mr-3 group-hover:text-amber-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Activity Logs
+                </a>
+            </li>
+
+
         </ul>
     </div>
 </aside>

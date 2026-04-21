@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
+
 use Illuminate\Database\Eloquent\Model;
 
 class Stb extends Model
 {
+    use LogsActivity;
     protected $fillable = ['sto_id', 'code', 'name'];
 
     public function sto()

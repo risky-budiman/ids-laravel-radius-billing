@@ -28,7 +28,12 @@ Route::get('/dashboard', function () {
             ->sum('amount') ?? 0;
     }
 
-    return view('dashboard', compact('totalSubscribers', 'activeUsers', 'unpaidInvoices', 'revenue'));
+    $latestActivities = \App\Models\ActivityLog::with('user')
+        ->latest()
+        ->limit(10)
+        ->get();
+
+    return view('dashboard', compact('totalSubscribers', 'activeUsers', 'unpaidInvoices', 'revenue', 'latestActivities'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -46,9 +51,11 @@ Route::middleware('auth')->group(function () {
     Route::resource('packages', \App\Http\Controllers\PackageController::class);
     Route::resource('nas', \App\Http\Controllers\NasController::class);
     Route::resource('invoices', \App\Http\Controllers\InvoiceController::class);
+    Route::post('invoices/generate-automated', [\App\Http\Controllers\InvoiceController::class, 'generateAutomated'])->name('invoices.generate-automated');
     Route::get('invoices/{invoice}/pay', [\App\Http\Controllers\InvoiceController::class, 'pay'])->name('invoices.pay');
     Route::post('invoices/{invoice}/whatsapp', [\App\Http\Controllers\InvoiceController::class, 'sendWhatsApp'])->name('invoices.whatsapp');
     Route::resource('tickets', \App\Http\Controllers\TicketController::class);
+    Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
 
     Route::get('online-users', [\App\Http\Controllers\OnlineUserController::class, 'index'])->name('online-users.index');
 
@@ -86,6 +93,15 @@ Route::middleware('auth')->group(function () {
     Route::get('integrations/payment', [\App\Http\Controllers\IntegrationController::class, 'payment'])->name('integrations.payment');
     Route::get('integrations/whatsapp', [\App\Http\Controllers\IntegrationController::class, 'whatsapp'])->name('integrations.whatsapp');
     Route::post('integrations/update', [\App\Http\Controllers\IntegrationController::class, 'update'])->name('integrations.update');
+
+    // Company Settings
+    Route::get('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'index'])->name('settings.company');
+    Route::post('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'update'])->name('settings.company.update');
+
+    // API Search & notifications
+    Route::get('api/search', [\App\Http\Controllers\SearchController::class, 'apiSearch'])->name('api.search');
+    Route::get('api/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('api.notifications');
+    Route::post('api/notifications/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('api.notifications.read');
 });
 
 require __DIR__.'/auth.php';
