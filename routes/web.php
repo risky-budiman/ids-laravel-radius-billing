@@ -86,16 +86,37 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:administrator,admin,teknisi')->group(function () {
         Route::get('online-users', [\App\Http\Controllers\OnlineUserController::class, 'index'])->name('online-users.index');
         
-        // Inventory
+        // Inventory - View & Stock Management (Technician/Admin/Administrator)
         Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
         Route::get('inventory', [\App\Http\Controllers\InventoryController::class, 'index'])->name('inventory.index');
-        Route::get('inventory/items/create', [\App\Http\Controllers\InventoryController::class, 'create'])->name('inventory.create');
-        Route::post('inventory/items', [\App\Http\Controllers\InventoryController::class, 'store'])->name('inventory.store');
-        Route::get('inventory/items/{item}', [\App\Http\Controllers\InventoryController::class, 'show'])->name('inventory.show');
         Route::get('inventory/categories', [\App\Http\Controllers\InventoryController::class, 'categories'])->name('inventory.categories');
-        Route::post('inventory/categories', [\App\Http\Controllers\InventoryController::class, 'storeCategory'])->name('inventory.category.store');
         Route::get('inventory/stock-in', [\App\Http\Controllers\InventoryController::class, 'stockIn'])->name('inventory.stock-in');
         Route::post('inventory/stock-in', [\App\Http\Controllers\InventoryController::class, 'storeStockIn'])->name('inventory.stock-in.store');
+        Route::get('inventory/stock-out', [\App\Http\Controllers\InventoryController::class, 'stockOut'])->name('inventory.stock-out');
+        Route::post('inventory/stock-out', [\App\Http\Controllers\InventoryController::class, 'storeStockOut'])->name('inventory.stock-out.store');
+        Route::get('inventory/outflow', [\App\Http\Controllers\InventoryController::class, 'outflowReport'])->name('inventory.outflow');
+
+        // Inventory - Management (Admin & Administrator)
+        Route::middleware('role:administrator,admin')->group(function () {
+            Route::get('inventory/items/create', [\App\Http\Controllers\InventoryController::class, 'create'])->name('inventory.create');
+            Route::post('inventory/items', [\App\Http\Controllers\InventoryController::class, 'store'])->name('inventory.store');
+            Route::get('inventory/categories/create', [\App\Http\Controllers\InventoryController::class, 'createCategory'])->name('inventory.category.create');
+            Route::post('inventory/categories', [\App\Http\Controllers\InventoryController::class, 'storeCategory'])->name('inventory.category.store');
+        });
+
+        // Wildcard routes must come AFTER static routes
+        Route::get('inventory/items/{item}', [\App\Http\Controllers\InventoryController::class, 'show'])->name('inventory.show');
+
+        // Inventory - Restrictive Management (Administrator Only)
+        Route::middleware('role:administrator')->group(function () {
+            Route::get('inventory/items/{item}/edit', [\App\Http\Controllers\InventoryController::class, 'edit'])->name('inventory.edit');
+            Route::put('inventory/items/{item}', [\App\Http\Controllers\InventoryController::class, 'update'])->name('inventory.update');
+            Route::delete('inventory/items/{item}', [\App\Http\Controllers\InventoryController::class, 'destroy'])->name('inventory.destroy');
+
+            Route::get('inventory/categories/{category}/edit', [\App\Http\Controllers\InventoryController::class, 'editCategory'])->name('inventory.category.edit');
+            Route::put('inventory/categories/{category}', [\App\Http\Controllers\InventoryController::class, 'updateCategory'])->name('inventory.category.update');
+            Route::delete('inventory/categories/{category}', [\App\Http\Controllers\InventoryController::class, 'destroyCategory'])->name('inventory.category.destroy');
+        });
     });
     // APP CHANGELOG (Public/Shared)
     Route::get('changelog', [\App\Http\Controllers\ChangelogController::class, 'index'])->name('changelog.index');

@@ -74,5 +74,7 @@
                 @include('components.footer')
             </div>
         </div>
+        
+        @stack('modals')
     </body>
 </html>

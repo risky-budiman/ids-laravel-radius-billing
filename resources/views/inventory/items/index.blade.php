@@ -8,9 +8,17 @@
                 <a href="{{ route('inventory.stock-in') }}" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-emerald-500/20">
                     + Stock In
                 </a>
-                <button onclick="document.getElementById('addProductModal').classList.remove('hidden')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20">
+                <a href="{{ route('inventory.stock-out') }}" class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-rose-500/20">
+                    - Stock Out
+                </a>
+                @if(auth()->user()->isAdmin())
+                <a href="{{ route('inventory.outflow') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold transition-all">
+                    Audit Log
+                </a>
+                <a href="{{ route('inventory.create') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20">
                     + New Product
-                </button>
+                </a>
+                @endif
             </div>
         </div>
     </x-slot>
@@ -29,7 +37,19 @@
         </div>
     </div>
 
-    <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+    @if(session('success'))
+        <div class="mb-4 px-4 py-3 bg-emerald-100/80 border border-emerald-200 text-emerald-700 rounded-xl font-medium">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="mb-4 px-4 py-3 bg-red-100/80 border border-red-200 text-red-700 rounded-xl font-medium">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
         <div class="overflow-x-auto">
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
@@ -78,7 +98,17 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center space-x-3">
-                                    <a href="{{ route('inventory.show', $item) }}" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold">Details</a>
+                                    <a href="{{ route('inventory.show', $item) }}" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold" title="View Details">Details</a>
+                                    
+                                    @if(auth()->user()->isAdministrator())
+                                        <a href="{{ route('inventory.edit', $item) }}" class="text-amber-500 hover:text-amber-700 text-xs font-bold" title="Edit Product">Edit</a>
+                                        
+                                        <form action="{{ route('inventory.destroy', $item) }}" method="POST" onsubmit="return confirm('Delete this product?')" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-bold" title="Delete Product">Delete</button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -90,62 +120,6 @@
                 </tbody>
             </table>
         </div>
-        {{ $items->links() }}
     </div>
-
-    <!-- Modal Add Product -->
-    <div id="addProductModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="glass bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-lg border border-white/20 overflow-hidden transform transition-all">
-            <div class="bg-indigo-600 px-6 py-4 text-white">
-                <h3 class="font-bold text-lg">Create New Product</h3>
-            </div>
-            <form action="{{ route('inventory.store') }}" method="POST" class="p-6 space-y-4">
-                @csrf
-                <div class="grid grid-cols-1 gap-4">
-                    <div>
-                        <x-input-label value="Category" />
-                        <select name="category_id" required class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
-                            <option value="">Select Category</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <x-input-label value="Product Name" />
-                        <x-text-input name="name" required class="mt-1 w-full" placeholder="e.g. ONU XPON GM220" />
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <x-input-label value="SKU (Optional)" />
-                            <x-text-input name="sku" class="mt-1 w-full" placeholder="ONU-001" />
-                        </div>
-                        <div>
-                            <x-input-label value="Unit" />
-                            <select name="unit" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
-                                <option value="pcs">pcs</option>
-                                <option value="meters">meters</option>
-                                <option value="unit">unit</option>
-                                <option value="roll">roll</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <x-input-label value="Min Stock Alert" />
-                            <x-text-input name="min_stock" type="number" value="10" class="mt-1 w-full" />
-                        </div>
-                        <div class="flex items-center pt-6">
-                            <input type="checkbox" name="track_serial" value="1" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                            <span class="ml-2 text-xs font-bold text-gray-600 dark:text-gray-400">Track Serial Numbers (ONU/Router)</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="document.getElementById('addProductModal').classList.add('hidden')" class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">Cancel</button>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/20">Create Product</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    {{ $items->links() }}
 </x-app-layout>

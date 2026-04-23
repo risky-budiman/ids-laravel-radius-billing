@@ -145,6 +145,14 @@
                         <a href="{{ route('inventory.stock-in') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('inventory.stock-in') ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
                             + Add Stock In
                         </a>
+
+                        <a href="{{ route('inventory.stock-out') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('inventory.stock-out') ? 'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            - Issue Item (Out)
+                        </a>
+
+                        <a href="{{ route('inventory.outflow') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('inventory.outflow') ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            Audit Outflow
+                        </a>
                     </div>
                 </div>
             </li>
