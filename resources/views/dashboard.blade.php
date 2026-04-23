@@ -35,6 +35,31 @@
         </div>
     @endif
 
+    <!-- Profile Summary Section -->
+    <div class="mb-8 p-6 glass-premium bg-white/80 dark:bg-gray-800/80 rounded-[2rem] shadow-xl shadow-indigo-500/5 border border-white/50 dark:border-gray-700/50 flex flex-col md:flex-row items-center justify-between">
+        <div class="flex items-center space-x-6">
+            <div class="relative">
+                <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="h-24 w-24 rounded-3xl object-cover border-4 border-white dark:border-gray-700 shadow-2xl shadow-indigo-500/20">
+                <div class="absolute -bottom-2 -right-2 h-8 w-8 bg-green-500 border-4 border-white dark:border-gray-800 rounded-full shadow-lg"></div>
+            </div>
+            <div>
+                <h1 class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Selamat Datang, {{ explode(' ', auth()->user()->name)[0] }}!</h1>
+                <p class="text-gray-500 dark:text-gray-400 font-medium mt-1 flex items-center">
+                    <span class="px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest mr-3">
+                        {{ auth()->user()->role }}
+                    </span>
+                    {{ auth()->user()->email }}
+                </p>
+            </div>
+        </div>
+        <div class="mt-6 md:mt-0">
+            <a href="{{ route('profile.edit') }}" class="inline-flex items-center px-6 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl font-bold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-300 shadow-sm">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                Edit Profile
+            </a>
+        </div>
+    </div>
+
     <!-- Stats Overview -->
     <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Stat Card 1 -->

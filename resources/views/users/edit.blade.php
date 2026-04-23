@@ -63,8 +63,9 @@
                         </div>
 
                         <div class="flex items-center justify-end mt-10 pt-6 border-t border-gray-50 dark:border-gray-700">
-                            <a href="{{ route('users.index') }}" class="text-sm font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mr-6 transition-colors">
-                                Cancel
+                            <a href="{{ route('users.index') }}" class="inline-flex items-center px-6 py-3 bg-gray-100 dark:bg-gray-700 border border-transparent rounded-2xl font-bold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-600 transition ease-in-out duration-150 mr-4">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                                Kembali
                             </a>
                             <x-primary-button class="bg-indigo-600 hover:bg-indigo-700 px-8 py-3 rounded-2xl shadow-lg shadow-indigo-500/20 uppercase text-xs">
                                 {{ __('Update Account Information') }}

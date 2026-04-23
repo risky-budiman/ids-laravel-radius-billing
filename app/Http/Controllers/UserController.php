@@ -11,7 +11,9 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::latest()->paginate(10);
+        $users = User::withCount(['sessions' => function($query) {
+            $query->where('last_activity', '>=', now()->subMinutes(config('session.lifetime'))->getTimestamp());
+        }])->latest()->paginate(10);
         return view('users.index', compact('users'));
     }
 
@@ -93,6 +95,12 @@ class UserController extends Controller
 
         $status = $user->is_active ? 'activated' : 'deactivated';
         return back()->with('success', "Account has been successfully {$status}.");
+    }
+
+    public function resetSessions(User $user)
+    {
+        $user->sessions()->delete();
+        return back()->with('success', "All active sessions for {$user->name} have been reset.");
     }
 
     public function destroy(User $user)

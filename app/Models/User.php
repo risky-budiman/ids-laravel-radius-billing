@@ -22,6 +22,7 @@ class User extends Authenticatable
         'password',
         'role',
         'is_active',
+        'profile_photo',
     ];
 
     protected $hidden = [
@@ -55,6 +56,26 @@ class User extends Authenticatable
     public function isTeknisi(): bool { return $this->role === self::ROLE_TEKNISI; }
     public function isKasir(): bool { return $this->role === self::ROLE_KASIR; }
     public function isSales(): bool { return $this->role === self::ROLE_SALES; }
+
+    /**
+     * Relationship to active sessions
+     */
+    public function sessions()
+    {
+        return $this->hasMany(Session::class);
+    }
+
+    /**
+     * Get the URL to the user's profile photo or a default initial avatar.
+     */
+    public function getAvatarUrlAttribute()
+    {
+        if ($this->profile_photo) {
+            return asset('storage/' . $this->profile_photo);
+        }
+
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=7F9CF5&background=EBF4FF';
+    }
 
     /**
      * Get the attributes that should be cast.

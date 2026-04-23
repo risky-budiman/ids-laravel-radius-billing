@@ -39,7 +39,7 @@ Route::get('/dashboard', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     // Universal Operational Routes (Multiple Roles)
     
@@ -105,6 +105,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('nas', \App\Http\Controllers\NasController::class);
         Route::resource('users', \App\Http\Controllers\UserController::class);
         Route::post('users/{user}/toggle-status', [\App\Http\Controllers\UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::post('users/{user}/reset-sessions', [\App\Http\Controllers\UserController::class, 'resetSessions'])->name('users.reset-sessions');
         
         Route::resource('packages', \App\Http\Controllers\PackageController::class);
         Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
