@@ -8,6 +8,7 @@ use App\Services\PaymentGatewayService;
 use App\Services\WhatsAppService;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
@@ -28,6 +29,14 @@ class InvoiceController extends Controller
 
         if ($request->filled('status')) {
             $query->where('status', $request->get('status'));
+        }
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('period_start', '>=', $request->get('start_date'));
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('period_end', '<=', $request->get('end_date'));
         }
 
         $invoices = $query->paginate(10)->withQueryString();
@@ -52,16 +61,24 @@ class InvoiceController extends Controller
             'customer_id' => 'required|exists:customers,id',
             'amount' => 'required|numeric|min:0',
             'due_date' => 'required|date',
+            'billing_period' => 'nullable|string|max:255',
+            'period_start' => 'required|date',
+            'period_end' => 'required|date',
+            'notes' => 'nullable|string',
         ]);
         
         $customer = \App\Models\Customer::find($validated['customer_id']);
         
         $invoice = Invoice::create([
             'invoice_number' => 'INV-' . strtoupper(uniqid()),
+            'billing_period' => $validated['billing_period'] ?? '1 Month',
+            'period_start' => $validated['period_start'],
+            'period_end' => $validated['period_end'],
             'customer_id' => $validated['customer_id'],
             'amount' => $validated['amount'],
             'status' => 'unpaid',
             'due_date' => $validated['due_date'],
+            'notes' => $validated['notes'],
         ]);
 
         return redirect()->route('invoices.index')->with('success', 'Invoice generated successfully.');
@@ -70,6 +87,12 @@ class InvoiceController extends Controller
     public function show(Invoice $invoice)
     {
         return view('invoices.show', compact('invoice'));
+    }
+    
+    public function edit(Invoice $invoice)
+    {
+        $customers = \App\Models\Customer::where('is_active', true)->get();
+        return view('invoices.edit', compact('invoice', 'customers'));
     }
 
     // Editing not usually done, but marking as paid is a standard action
@@ -105,7 +128,19 @@ class InvoiceController extends Controller
             return redirect()->route('invoices.index')->with('success', 'Invoice payment cancelled (Reverted to unpaid).');
         }
         
-        return redirect()->route('invoices.index');
+        // General update
+        $validated = $request->validate([
+            'billing_period' => 'nullable|string|max:255',
+            'period_start' => 'required|date',
+            'period_end' => 'required|date',
+            'amount' => 'required|numeric|min:0',
+            'due_date' => 'required|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        $invoice->update($validated);
+        
+        return redirect()->route('invoices.index')->with('success', 'Invoice updated successfully.');
     }
 
     public function pay(Invoice $invoice, Request $request, PaymentGatewayService $paymentService)

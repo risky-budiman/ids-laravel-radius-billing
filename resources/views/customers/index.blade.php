@@ -28,7 +28,7 @@
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Subscriber Name</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Package</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -75,8 +75,8 @@
                                     {{ str_replace('_', ' ', $customer->status ?? ($customer->is_active ? 'active' : 'inactive')) }}
                                 </span>
                             </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <div class="flex items-center justify-end space-x-3 group">
+                                    <td class="px-6 py-4 text-center">
+                                        <div class="flex items-center justify-center space-x-3 group">
                                             @if($customer->status === 'waiting_activation' || (!$customer->is_active && $customer->status === 'new'))
                                                 @if(auth()->user()->isAdmin() || auth()->user()->isTeknisi())
                                                 <a href="{{ route('customers.activate', $customer) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all shadow-lg shadow-indigo-600/20">

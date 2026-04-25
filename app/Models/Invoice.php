@@ -10,6 +10,9 @@ class Invoice extends Model
     use LogsActivity;
     protected $fillable = [
         'invoice_number',
+        'billing_period',
+        'period_start',
+        'period_end',
         'customer_id',
         'amount',
         'tax',
@@ -23,6 +26,8 @@ class Invoice extends Model
     protected $casts = [
         'due_date' => 'date',
         'paid_at' => 'datetime',
+        'period_start' => 'date',
+        'period_end' => 'date',
     ];
 
     public function customer()

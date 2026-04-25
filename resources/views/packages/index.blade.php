@@ -26,7 +26,7 @@
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Speed (UP/DL)</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Price (Rp)</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -39,8 +39,8 @@
                             <td class="px-6 py-4 uppercase text-xs font-bold text-gray-500">{{ $package->type }}</td>
                             <td class="px-6 py-4 text-indigo-600 dark:text-indigo-400 font-mono">{{ $package->upload_speed ?: 'Unlimited' }}M / {{ $package->download_speed ?: 'Unlimited' }}M</td>
                             <td class="px-6 py-4 text-gray-900 dark:text-gray-100">{{ number_format($package->price, 0) }}</td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center space-x-4">
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex items-center justify-center space-x-4">
                                     <a href="{{ route('packages.edit', $package) }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Edit</a>
                                     <form action="{{ route('packages.destroy', $package) }}" method="POST" onsubmit="return confirm('Delete this package? Ensure no active subscribers are using it.');">
                                         @csrf @method('DELETE')

@@ -78,10 +78,10 @@
                                     <th class="px-6 py-4 font-semibold">Priority</th>
                                     <th class="px-6 py-4 font-semibold">Assigned To</th>
                                     <th class="px-6 py-4 font-semibold">Date</th>
-                                    <th class="px-6 py-4 text-right">Actions</th>
+                                    <th class="px-6 py-4 text-center">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                            <tbody class="divide-y divide-100 dark:divide-gray-700">
                                 @forelse($tickets as $ticket)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors duration-150">
                                         <td class="px-6 py-4 text-gray-400 dark:text-gray-500 text-sm font-medium">
@@ -145,8 +145,8 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
                                             {{ $ticket->created_at->format('d M Y H:i') }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div class="flex justify-end space-x-2">
+                                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                            <div class="flex justify-center space-x-2">
                                                 <a href="{{ route('tickets.show', $ticket) }}" class="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                                 </a>

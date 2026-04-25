@@ -58,9 +58,24 @@ class ProcessAutomatedBilling extends Command
 
             // Generate Invoice
             $price = $customer->package->price;
+            $nextDate = $customer->billing_next_date ?? now();
+            
+            if ($customer->billing_type === 'postpaid' && $customer->billing_method === 'cycle') {
+                // For Postpaid Cycle, the invoice generated on the 1st covers the PREVIOUS month
+                $startDate = $nextDate->copy()->subMonth()->startOfMonth();
+                $endDate = $nextDate->copy()->subDay(); // Last day of previous month
+            } else {
+                // Default for Prepaid or other types
+                $startDate = $nextDate->copy();
+                $endDate = $startDate->copy()->addMonth()->subDay();
+            }
+
             $invoice = Invoice::create([
                 'invoice_number' => 'INV-' . strtoupper(uniqid()),
                 'customer_id' => $customer->id,
+                'billing_period' => '1 Month',
+                'period_start' => $startDate,
+                'period_end' => $endDate,
                 'amount' => $price,
                 'status' => 'unpaid',
                 'due_date' => $customer->billing_due_date,

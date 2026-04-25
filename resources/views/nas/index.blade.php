@@ -26,7 +26,7 @@
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Shortname</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Secret</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -39,7 +39,7 @@
                             <td class="px-6 py-4 text-gray-900 dark:text-gray-100">{{ $router->shortname }}</td>
                             <td class="px-6 py-4 text-gray-500 font-mono tracking-widest">••••••••</td>
                             <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ $router->description }}</td>
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 text-center">
                                 <form action="{{ route('nas.destroy', $router->id) }}" method="POST" onsubmit="return confirm('Delete this NAS?');">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>

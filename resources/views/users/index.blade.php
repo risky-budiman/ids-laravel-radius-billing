@@ -25,7 +25,7 @@
                                     <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
                                     <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Login Devices</th>
                                     <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Last Active</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
@@ -77,8 +77,8 @@
                                     <td class="px-6 py-5 text-center text-xs text-gray-500 dark:text-gray-400">
                                         {{ $user->updated_at->diffForHumans() }}
                                     </td>
-                                    <td class="px-6 py-5 text-right">
-                                        <div class="flex justify-end items-center space-x-2">
+                                    <td class="px-6 py-5 text-center">
+                                        <div class="flex justify-center items-center space-x-2">
                                             @if($user->role !== \App\Models\User::ROLE_ADMINISTRATOR)
                                             <form action="{{ route('users.toggle-status', $user) }}" method="POST">
                                                 @csrf
