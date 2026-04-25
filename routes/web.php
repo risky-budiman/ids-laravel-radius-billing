@@ -137,6 +137,8 @@ Route::middleware('auth')->group(function () {
         Route::post('online-users/{radacctid}/kick', [\App\Http\Controllers\OnlineUserController::class, 'kick'])->name('online-users.kick');
         Route::post('online-users/{radacctid}/force-close', [\App\Http\Controllers\OnlineUserController::class, 'forceClose'])->name('online-users.force-close');
         Route::get('auth-logs', [\App\Http\Controllers\AuthLogController::class, 'index'])->name('auth-logs.index');
+        Route::delete('auth-logs/clear', [\App\Http\Controllers\AuthLogController::class, 'clear'])->name('auth-logs.clear');
+        Route::delete('auth-logs/{id}', [\App\Http\Controllers\AuthLogController::class, 'destroy'])->name('auth-logs.destroy');
         
         // Inventory - View & Stock Management (Technician/Admin/Administrator)
         Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);

@@ -49,6 +49,27 @@ class AuthLogController extends Controller
     }
 
     /**
+     * Hapus satu entri log
+     */
+    public function destroy($id)
+    {
+        $log = RadPostAuth::findOrFail($id);
+        $log->delete();
+
+        return redirect()->back()->with('success', 'Log berhasil dihapus.');
+    }
+
+    /**
+     * Bersihkan semua log
+     */
+    public function clear()
+    {
+        RadPostAuth::truncate();
+
+        return redirect()->back()->with('success', 'Semua log berhasil dibersihkan.');
+    }
+
+    /**
      * Helper to determine why a login was accepted or rejected
      */
     private function determineReason($log)

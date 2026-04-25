@@ -1,8 +1,18 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
-            {{ __('Authentication Logs') }}
-        </h2>
+        <div class="flex items-center justify-between">
+            <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
+                {{ __('Log Autentikasi') }}
+            </h2>
+            <form action="{{ route('auth-logs.clear') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus SEMUA log? Tindakan ini tidak dapat dibatalkan.')">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="inline-flex items-center px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all shadow-sm shadow-rose-500/30">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Bersihkan Semua Log
+                </button>
+            </form>
+        </div>
     </x-slot>
 
     {{-- Stats Cards --}}
@@ -10,7 +20,7 @@
         <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Today's Total</p>
+                    <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Total Hari Ini</p>
                     <p class="text-3xl font-black text-gray-900 dark:text-gray-100 mt-1">{{ number_format($totalToday) }}</p>
                 </div>
                 <div class="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
@@ -21,7 +31,7 @@
         <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Success (Accept)</p>
+                    <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Berhasil (Accept)</p>
                     <p class="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{{ number_format($successToday) }}</p>
                 </div>
                 <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
@@ -32,7 +42,7 @@
         <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Failed (Reject)</p>
+                    <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Gagal (Reject)</p>
                     <p class="text-3xl font-black text-rose-600 dark:text-rose-400 mt-1">{{ number_format($failedToday) }}</p>
                 </div>
                 <div class="w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center">
@@ -52,7 +62,7 @@
                 </div>
                 <div>
                     <select name="status" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
-                        <option value="">All Status</option>
+                        <option value="">Semua Status</option>
                         <option value="accept" {{ request('status') === 'accept' ? 'selected' : '' }}>✅ Access-Accept</option>
                         <option value="reject" {{ request('status') === 'reject' ? 'selected' : '' }}>❌ Access-Reject</option>
                     </select>
@@ -86,15 +96,18 @@
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Username</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Password</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Reply</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Detail / Reason</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Auth Date</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Detail / Alasan</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Waktu Auth</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($logs as $log)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                            <td class="px-6 py-4 text-gray-400 dark:text-gray-500 text-sm">{{ $log->id }}</td>
+                            <td class="px-6 py-4 text-gray-400 dark:text-gray-500 text-sm font-medium">
+                                {{ $logs->firstItem() + $loop->index }}
+                            </td>
                             <td class="px-6 py-4">
                                 <span class="font-mono text-indigo-600 dark:text-indigo-400 font-bold">{{ $log->username }}</span>
                             </td>
@@ -129,6 +142,15 @@
                                 <div class="text-sm text-gray-900 dark:text-gray-100 font-medium">{{ $log->authdate->format('d M Y') }}</div>
                                 <div class="text-xs text-gray-400 dark:text-gray-500">{{ $log->authdate->format('H:i:s') }}</div>
                             </td>
+                            <td class="px-6 py-4 text-right">
+                                <form action="{{ route('auth-logs.destroy', $log->id) }}" method="POST" onsubmit="return confirm('Hapus log ini?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors" title="Hapus Log">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                     @empty
                         <tr>
@@ -136,7 +158,7 @@
                                 <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                 </svg>
-                                No authentication logs found.
+                                Tidak ada log autentikasi ditemukan.
                             </td>
                         </tr>
                     @endforelse
