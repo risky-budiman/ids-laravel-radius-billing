@@ -16,13 +16,32 @@ class CustomerController extends Controller
     public function index()
     {
         $customers = Customer::with('package')->paginate(10);
+        
+        // Fetch passwords for these customers from radcheck
+        $usernames = $customers->pluck('username')->toArray();
+        $passwords = \App\Models\Radius\RadCheck::whereIn('username', $usernames)
+            ->where('attribute', 'Cleartext-Password')
+            ->get()
+            ->pluck('value', 'username');
+
+        foreach ($customers as $customer) {
+            $customer->password = $passwords[$customer->username] ?? '-';
+        }
+
         return view('customers.index', compact('customers'));
     }
 
     public function show(Customer $customer)
     {
         $customer->load('package');
-        return view('customers.show', compact('customer'));
+        
+        // Fetch recent session history from RADIUS
+        $sessions = \App\Models\Radius\RadAcct::where('username', $customer->username)
+            ->orderBy('acctstarttime', 'desc')
+            ->limit(50)
+            ->get();
+
+        return view('customers.show', compact('customer', 'sessions'));
     }
 
     public function create()
@@ -44,6 +63,8 @@ class CustomerController extends Controller
             'sto_code' => 'required|string|size:3|exists:stos,code',
             'stb_code' => 'required|string|size:3|exists:stbs,code',
             'email' => 'nullable|email|max:255',
+            'ktp' => 'nullable|string|max:20|unique:customers,ktp',
+            'customer_code' => 'required|string|max:20|unique:customers,customer_code',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
             'package_id' => 'required|exists:packages,id',
@@ -59,11 +80,13 @@ class CustomerController extends Controller
         DB::transaction(function () use ($validated, $package) {
             // Create in Billing
             Customer::create([
+                'customer_code' => $validated['customer_code'],
                 'region_code' => $validated['region_code'] ?? '000',
                 'sto_code' => $validated['sto_code'] ?? '000',
                 'stb_code' => $validated['stb_code'] ?? '000',
                 'username' => $validated['username'],
                 'name' => $validated['name'],
+                'ktp' => $validated['ktp'],
                 'email' => $validated['email'],
                 'phone' => $validated['phone'],
                 'address' => $validated['address'],
@@ -103,6 +126,10 @@ class CustomerController extends Controller
         $regions = \App\Models\Region::all();
         $stos = \App\Models\Sto::all();
         $stbs = \App\Models\Stb::all();
+        
+        $radCheck = \App\Models\Radius\RadCheck::where('username', $customer->username)->first();
+        $customer->password = $radCheck ? $radCheck->value : '';
+
         return view('customers.edit', compact('customer', 'packages', 'regions', 'stos', 'stbs'));
     }
 
@@ -110,72 +137,63 @@ class CustomerController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:customers,username,' . $customer->id,
             'region_code' => 'required|string|size:3|exists:regions,code',
             'sto_code' => 'required|string|size:3|exists:stos,code',
             'stb_code' => 'required|string|size:3|exists:stbs,code',
             'email' => 'nullable|email|max:255',
+            'ktp' => 'nullable|string|max:20|unique:customers,ktp,' . $customer->id,
+            'customer_code' => 'required|string|max:20|unique:customers,customer_code,' . $customer->id,
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
             'package_id' => 'required|exists:packages,id',
-            'password' => 'nullable|string|min:6',
             'is_active' => 'boolean',
+            'password' => 'required|string|min:4',
             'billing_type' => 'required|in:prepaid,postpaid',
             'billing_method' => 'required|in:cycle,fixed,renewal',
             'billing_day' => 'nullable|integer|min:1|max:28',
             'billing_due_day' => 'nullable|integer|min:1|max:28',
         ]);
 
-        $package = Package::find($validated['package_id']);
-        $oldPackageId = $customer->package_id;
-        $isPackageChanged = $oldPackageId != $validated['package_id'];
-        $oldStatus = $customer->is_active;
+        $oldUsername = $customer->username;
+        $newUsername = $validated['username'];
+        $package = \App\Models\Package::find($validated['package_id']);
 
-        DB::transaction(function () use ($validated, $customer, $package, $isPackageChanged) {
-            $customer->update([
-                'name' => $validated['name'],
-                'region_code' => $validated['region_code'] ?? $customer->region_code,
-                'sto_code' => $validated['sto_code'] ?? $customer->sto_code,
-                'stb_code' => $validated['stb_code'] ?? $customer->stb_code,
-                'email' => $validated['email'],
-                'phone' => $validated['phone'],
-                'address' => $validated['address'],
-                'package_id' => $validated['package_id'],
-                'is_active' => $validated['is_active'] ?? true,
-                'billing_type' => $validated['billing_type'],
-                'billing_method' => $validated['billing_method'],
-                'billing_day' => $validated['billing_day'] ?? 1,
-                'billing_due_day' => $validated['billing_due_day'] ?? 20,
+        \DB::transaction(function () use ($customer, $validated, $oldUsername, $newUsername, $package) {
+            // 1. Update Customer Table
+            $customer->update($validated);
+
+            // 2. Sync radcheck (Update username & password)
+            \App\Models\Radius\RadCheck::where('username', $oldUsername)->update([
+                'username' => $newUsername,
+                'value' => $validated['password']
             ]);
 
-            // Update RADIUS Password if changed
-            if (!empty($validated['password'])) {
-                RadCheck::where('username', $customer->username)
-                    ->where('attribute', 'Cleartext-Password')
-                    ->update(['value' => $validated['password']]);
-            }
+            // 3. Sync radusergroup
+            \App\Models\Radius\RadUserGroup::where('username', $oldUsername)->update([
+                'username' => $newUsername,
+                'groupname' => $package->name
+            ]);
 
-            // Update RADIUS Group (Package) if changed
-            if ($isPackageChanged && $package) {
-                RadUserGroup::where('username', $customer->username)->delete();
-                RadUserGroup::create([
-                    'username' => $customer->username,
-                    'groupname' => $package->name,
-                    'priority' => 1,
-                ]);
-            }
+            // 4. Sync radacct history (agar riwayat tetap terhubung)
+            \DB::table('radacct')->where('username', $oldUsername)->update([
+                'username' => $newUsername
+            ]);
         });
 
-        // Trigger RADIUS CoA Disconnect if suspended or package changed
+        // 5. Trigger RADIUS CoA Disconnect if suspended or package changed
         $newStatus = $validated['is_active'] ?? true;
-        if (($oldStatus && !$newStatus) || $isPackageChanged) {
-            $nas = Nas::first(); 
+        $isPackageChanged = $customer->wasChanged('package_id');
+        
+        if (($oldStatus && !$newStatus) || $isPackageChanged || ($oldUsername !== $newUsername)) {
+            $nas = \App\Models\Nas::first(); 
             if ($nas) {
-                $coaService = new RadiusCoAService();
-                $coaService->disconnect($nas->ip_address, $nas->secret, $customer->username);
+                $coaService = new \App\Services\RadiusCoAService();
+                $coaService->disconnect($nas->nasipaddress, $nas->secret, $newUsername);
             }
         }
 
-        return redirect()->route('customers.index')->with('success', 'Subscriber updated successfully.');
+        return redirect()->route('customers.show', $customer)->with('success', 'Subscriber and RADIUS records updated successfully.');
     }
 
     public function destroy(Customer $customer)

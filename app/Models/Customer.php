@@ -23,6 +23,7 @@ class Customer extends Model
         'sto_code',
         'stb_code',
         'username',
+        'ktp',
         'name',
         'email',
         'phone',
@@ -125,17 +126,5 @@ class Customer extends Model
         return $this->hasMany(Invoice::class);
     }
 
-    protected static function booted()
-    {
-        static::creating(function ($customer) {
-            if (empty($customer->customer_code)) {
-                $region = str_pad($customer->region_code ?? '000', 3, '0', STR_PAD_LEFT);
-                $sto = str_pad($customer->sto_code ?? '000', 3, '0', STR_PAD_LEFT);
-                $stb = str_pad($customer->stb_code ?? '000', 3, '0', STR_PAD_LEFT);
-                $random = str_pad(mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
-                
-                $customer->customer_code = $region . $sto . $stb . $random;
-            }
-        });
-    }
+    // Auto-generation is now handled by the UI Form for better consistency
 }

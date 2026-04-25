@@ -22,14 +22,22 @@
 
                     <div>
                         <x-input-label for="username" :value="__('PPPoE / Hotspot Username')" />
-                        <x-text-input id="username" type="text" class="mt-1 block w-full bg-gray-100 dark:bg-gray-800 text-gray-500" :value="$customer->username" disabled />
-                        <p class="mt-1 text-xs text-gray-500">Username cannot be changed. Delete & recreate to change.</p>
+                        <x-text-input id="username" name="username" type="text" class="mt-1 block w-full" :value="old('username', $customer->username)" required />
+                        <x-input-error class="mt-2" :messages="$errors->get('username')" />
+                        <p class="mt-1 text-[10px] text-amber-600 font-bold uppercase">Warning: Changing username will sync all RADIUS records.</p>
                     </div>
 
                     <div>
-                        <x-input-label for="password" :value="__('Change Password (optional)')" />
-                        <x-text-input id="password" name="password" type="text" class="mt-1 block w-full" placeholder="Leave blank to keep current" />
+                        <div class="flex justify-between items-end mb-1">
+                            <x-input-label for="password" :value="__('Network Password')" />
+                            <button type="button" id="regen_password" class="text-indigo-600 text-[10px] font-black uppercase hover:text-indigo-800 transition-colors flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Regenerate
+                            </button>
+                        </div>
+                        <x-text-input id="password" name="password" type="text" class="block w-full font-mono" :value="old('password', $customer->password)" required />
                         <x-input-error class="mt-2" :messages="$errors->get('password')" />
+                        <p class="mt-1 text-[10px] text-gray-400 italic">Current RADIUS password is shown.</p>
                     </div>
                 </div>
             </div>
@@ -39,6 +47,12 @@
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Subscriber details</h3>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <x-input-label for="ktp" :value="__('Nomor KTP (NIK)')" />
+                        <x-text-input id="ktp" name="ktp" type="text" class="mt-1 block w-full" :value="old('ktp', $customer->ktp)" placeholder="16 Digit NIK" />
+                        <x-input-error class="mt-2" :messages="$errors->get('ktp')" />
+                    </div>
+
                     <div>
                         <x-input-label for="name" :value="__('Full Name')" />
                         <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $customer->name)" required />
@@ -304,6 +318,25 @@
             billingType.addEventListener('change', updateMethods);
             billingMethod.addEventListener('change', updateDescription);
             
+            // Password Regeneration logic
+            const regenBtn = document.getElementById('regen_password');
+            const passwordInput = document.getElementById('password');
+
+            function generateRandomPassword(length = 8) {
+                const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                let retVal = "";
+                for (let i = 0, n = charset.length; i < length; ++i) {
+                    retVal += charset.charAt(Math.floor(Math.random() * n));
+                }
+                return retVal;
+            }
+
+            if (regenBtn && passwordInput) {
+                regenBtn.addEventListener('click', function() {
+                    passwordInput.value = generateRandomPassword();
+                });
+            }
+
             updateMethods();
         });
     </script>

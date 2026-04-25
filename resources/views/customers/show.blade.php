@@ -42,6 +42,9 @@
                     </div>
                     <h3 class="mt-4 text-lg font-bold text-gray-900 dark:text-white">{{ $customer->name }}</h3>
                     <p class="text-xs text-gray-400 font-mono">@ {{ $customer->username }}</p>
+                    @if($customer->ktp)
+                        <p class="text-[10px] text-gray-400 mt-1 font-mono">ID: {{ $customer->ktp }}</p>
+                    @endif
                 </div>
 
                 <div class="space-y-4">
@@ -58,6 +61,13 @@
                         <span class="font-bold text-gray-900 dark:text-white">{{ $customer->package ? $customer->package->name : '-' }}</span>
                     </div>
                     <div class="flex justify-between items-center text-sm pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <span class="text-gray-500">Password:</span>
+                        @php 
+                            $radCheck = \App\Models\Radius\RadCheck::where('username', $customer->username)->first();
+                        @endphp
+                        <span class="font-mono font-bold text-indigo-600 dark:text-indigo-400">{{ $radCheck ? $radCheck->value : '-' }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
                         <span class="text-gray-500">Joined Ate:</span>
                         <span class="text-gray-700 dark:text-gray-300">{{ $customer->created_at->format('d M Y') }}</span>
                     </div>
@@ -68,6 +78,10 @@
             <div class="glass bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
                 <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest">Contact Details</h4>
                 <div class="space-y-4">
+                    <div class="flex items-start">
+                        <svg class="w-4 h-4 text-gray-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z"></path></svg>
+                        <p class="text-xs text-gray-700 dark:text-gray-300 font-mono">{{ $customer->ktp ?: 'No KTP registered' }}</p>
+                    </div>
                     <div class="flex items-start">
                         <svg class="w-4 h-4 text-gray-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
                         <p class="text-xs text-gray-700 dark:text-gray-300">{{ $customer->phone ?: 'Not provided' }}</p>
@@ -91,6 +105,7 @@
             <div class="flex space-x-6 border-b border-gray-100 dark:border-gray-800">
                 <button @click="tab = 'assets'" :class="tab === 'assets' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'" class="pb-4 px-2 border-b-2 font-bold text-sm transition-all">Installed Assets</button>
                 <button @click="tab = 'billing'" :class="tab === 'billing' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'" class="pb-4 px-2 border-b-2 font-bold text-sm transition-all">Billing History</button>
+                <button @click="tab = 'sessions'" :class="tab === 'sessions' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'" class="pb-4 px-2 border-b-2 font-bold text-sm transition-all">Session History</button>
             </div>
 
             <!-- Tab Content: Assets -->
@@ -173,11 +188,74 @@
                 </div>
             </div>
 
-            <!-- Tab Content: Billing (Simple placeholder for now) -->
+            <!-- Tab Content: Billing -->
             <div x-show="tab === 'billing'" x-transition class="glass bg-white dark:bg-gray-800 p-12 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700 text-center">
                 <svg class="mx-auto h-12 w-12 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <p class="text-sm text-gray-400 italic">Integrate with Invoice module to see detailed billing history here.</p>
                 <a href="{{ route('invoices.index') }}" class="inline-block mt-4 text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Manage Invoices →</a>
+            </div>
+
+            <!-- Tab Content: Session History -->
+            <div x-show="tab === 'sessions'" x-transition class="space-y-6">
+                <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Start Time</th>
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">End Time</th>
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Duration</th>
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">IP Address</th>
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">MAC Address</th>
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">NAS/Router</th>
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Cause</th>
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Traffic</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+                                @forelse($sessions as $session)
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                        <td class="px-6 py-4">
+                                            <div class="text-xs font-bold text-gray-900 dark:text-white">{{ $session->acctstarttime->format('d/m/Y') }}</div>
+                                            <div class="text-[10px] text-gray-400">{{ $session->acctstarttime->format('H:i:s') }}</div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            @if($session->acctstoptime)
+                                                <div class="text-xs font-bold text-gray-900 dark:text-white">{{ $session->acctstoptime->format('d/m/Y') }}</div>
+                                                <div class="text-[10px] text-gray-400">{{ $session->acctstoptime->format('H:i:s') }}</div>
+                                            @else
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-700 animate-pulse">Active</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 text-xs text-gray-600 dark:text-gray-400 font-mono">
+                                            {{ gmdate("H:i:s", $session->acctsessiontime) }}
+                                        </td>
+                                        <td class="px-6 py-4 text-xs text-gray-700 dark:text-gray-300 font-mono">
+                                            {{ $session->framedipaddress ?? '-' }}
+                                        </td>
+                                        <td class="px-6 py-4 text-[10px] text-gray-500 font-mono uppercase">
+                                            {{ $session->callingstationid ?: '-' }}
+                                        </td>
+                                        <td class="px-6 py-4 text-[10px] text-gray-600 dark:text-gray-400">
+                                            {{ $session->nasipaddress }}
+                                        </td>
+                                        <td class="px-6 py-4 text-[10px] text-gray-500 italic">
+                                            {{ $session->acctterminatecause ?: '-' }}
+                                        </td>
+                                        <td class="px-6 py-4 text-right">
+                                            <div class="text-[10px] font-bold text-emerald-600">↓ {{ number_format($session->acctoutputoctets / 1048576, 2) }} MB</div>
+                                            <div class="text-[10px] font-bold text-indigo-600">↑ {{ number_format($session->acctinputoctets / 1048576, 2) }} MB</div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="8" class="px-6 py-12 text-center text-gray-400 text-xs italic">No session history found for this subscriber.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
         </div>

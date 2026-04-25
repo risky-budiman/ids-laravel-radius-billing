@@ -21,23 +21,32 @@
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
                     <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Account / Username</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name / Info</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer ID</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Username</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Password</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Subscriber Name</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Package</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($customers as $customer)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-6 py-4 font-mono text-indigo-600 dark:text-indigo-400 font-bold">
+                                {{ $customer->customer_code ?? 'N/A' }}
+                            </td>
+                            <td class="px-6 py-4 font-mono text-gray-600 dark:text-gray-400 text-xs">
+                                {{ $customer->username }}
+                            </td>
                             <td class="px-6 py-4">
-                                <div class="font-mono text-indigo-600 dark:text-indigo-400 font-bold mb-1">{{ $customer->customer_code ?? 'N/A' }}</div>
-                                <div class="font-mono text-gray-500 dark:text-gray-400 text-xs">@ {{ $customer->username }}</div>
+                                <div class="font-mono text-[10px] font-black text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded border border-gray-100 dark:border-gray-700/50 inline-block">
+                                    {{ $customer->password }}
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="font-medium text-gray-900 dark:text-gray-100">{{ $customer->name }}</div>
-                                <div class="text-sm text-gray-500 dark:text-gray-400">{{ $customer->phone ?: 'No phone' }}</div>
+                                <div class="text-[10px] text-gray-500 dark:text-gray-400">{{ $customer->phone ?: 'No phone' }}</div>
                             </td>
                             <td class="px-6 py-4 text-gray-600 dark:text-gray-300">
                                 @if($customer->package)

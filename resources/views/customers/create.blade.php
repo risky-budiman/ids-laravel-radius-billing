@@ -11,25 +11,39 @@
 
             <!-- Section: RADIUS Auth -->
             <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Network Access (RADIUS)</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Network Access (RADIUS)</h3>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="auto_generate" name="auto_generate" value="1" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" checked>
+                        <label for="auto_generate" class="ml-2 text-sm font-bold text-indigo-600 uppercase tracking-wider cursor-pointer">Automatic Generation</label>
+                    </div>
+                </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2">
-                        <x-input-label for="customer_code_info" :value="__('Customer ID (Identity Number)')" />
-                        <x-text-input id="customer_code_info" type="text" class="mt-1 block w-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-bold tracking-widest text-center border border-indigo-200 dark:border-indigo-800" value="[ 3 Digit Region ] + [ 3 Digit STO ] + [ 3 Digit STB ] + [ 3 Random ]" disabled />
+                        <x-input-label for="customer_code" :value="__('Customer ID (Identity Number)')" />
+                        <x-text-input id="customer_code" name="customer_code" type="text" class="mt-1 block w-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-bold tracking-widest text-center border border-indigo-200 dark:border-indigo-800" :value="old('customer_code')" placeholder="Select location or type manually" />
+                        <x-input-error class="mt-2" :messages="$errors->get('customer_code')" />
                     </div>
                 
                     <div>
                         <x-input-label for="username" :value="__('PPPoE / Hotspot Username')" />
-                        <x-text-input id="username" name="username" type="text" class="mt-1 block w-full" :value="old('username')" required autofocus />
+                        <x-text-input id="username" name="username" type="text" class="mt-1 block w-full" :value="old('username')" required />
                         <x-input-error class="mt-2" :messages="$errors->get('username')" />
-                        <p class="mt-1 text-xs text-gray-500">This must exactly match the username dialed by the router.</p>
+                        <p class="mt-1 text-xs text-gray-500" id="username_hint">Auto-generated based on Customer ID if Auto is checked.</p>
                     </div>
 
                     <div>
-                        <x-input-label for="password" :value="__('Password')" />
-                        <x-text-input id="password" name="password" type="text" class="mt-1 block w-full" :value="old('password')" required />
+                        <div class="flex justify-between items-end mb-1">
+                            <x-input-label for="password" :value="__('Password')" />
+                            <button type="button" id="regen_password" class="text-indigo-600 text-[10px] font-black uppercase hover:text-indigo-800 transition-colors flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Regenerate
+                            </button>
+                        </div>
+                        <x-text-input id="password" name="password" type="text" class="block w-full font-mono" :value="old('password')" required />
                         <x-input-error class="mt-2" :messages="$errors->get('password')" />
+                        <p class="mt-1 text-[10px] text-gray-400 italic">Auto-generated password for security.</p>
                     </div>
                 </div>
             </div>
@@ -39,6 +53,12 @@
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Subscriber details</h3>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <x-input-label for="ktp" :value="__('Nomor KTP (NIK)')" />
+                        <x-text-input id="ktp" name="ktp" type="text" class="mt-1 block w-full" :value="old('ktp')" placeholder="16 Digit NIK" />
+                        <x-input-error class="mt-2" :messages="$errors->get('ktp')" />
+                    </div>
+
                     <div>
                         <x-input-label for="name" :value="__('Full Name')" />
                         <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name')" required />
@@ -232,11 +252,91 @@
                 if(preserveValue) stbSelect.value = currentValue;
             }
 
-            regionSelect.addEventListener('change', () => { filterStos(false); filterStbs(false); });
-            stoSelect.addEventListener('change', () => filterStbs(false));
+            regionSelect.addEventListener('change', () => { filterStos(false); filterStbs(false); updateAutoFields(); });
+            stoSelect.addEventListener('change', () => { filterStbs(false); updateAutoFields(); });
+            stbSelect.addEventListener('change', updateAutoFields);
 
             if(regionSelect.value) { filterStos(true); }
             if(stoSelect.value) { filterStbs(true); }
+
+            // Auto-generation Logic
+            const autoGenerate = document.getElementById('auto_generate');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const customerCodeInput = document.getElementById('customer_code');
+            const regenPasswordBtn = document.getElementById('regen_password');
+            const companySuffix = "{{ \App\Models\Setting::where('key', 'company_domain')->first()->value ?? 'net.id' }}";
+
+            function generateRandomPassword(length = 8) {
+                const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                let retVal = "";
+                for (let i = 0, n = charset.length; i < length; ++i) {
+                    retVal += charset.charAt(Math.floor(Math.random() * n));
+                }
+                return retVal;
+            }
+
+            let persistentRandomPart = Math.floor(100 + Math.random() * 900);
+
+            function updateAutoFields() {
+                if (!autoGenerate.checked) return;
+
+                const region = regionSelect.value || '000';
+                const sto = stoSelect.value || '000';
+                const stb = stbSelect.value || '000';
+                
+                if (region !== '000' && sto !== '000' && stb !== '000') {
+                    const fullCode = `${region}${sto}${stb}${persistentRandomPart}`;
+                    customerCodeInput.value = fullCode;
+                    usernameInput.value = `${fullCode}@${companySuffix}`;
+                }
+            }
+
+            autoGenerate.addEventListener('change', function() {
+                if (this.checked) {
+                    // Lock fields for Auto
+                    usernameInput.setAttribute('readonly', true);
+                    customerCodeInput.setAttribute('readonly', true);
+                    passwordInput.setAttribute('readonly', true);
+                    usernameInput.classList.add('bg-gray-100', 'cursor-not-allowed', 'opacity-75');
+                    customerCodeInput.classList.add('bg-indigo-50', 'cursor-not-allowed', 'opacity-75');
+                    passwordInput.classList.add('bg-gray-100', 'cursor-not-allowed', 'opacity-75');
+                    updateAutoFields();
+                    if (!passwordInput.value) passwordInput.value = generateRandomPassword();
+                } else {
+                    // Unlock fields for Manual
+                    usernameInput.removeAttribute('readonly');
+                    customerCodeInput.removeAttribute('readonly');
+                    passwordInput.removeAttribute('readonly');
+                    usernameInput.classList.remove('bg-gray-100', 'cursor-not-allowed', 'opacity-75');
+                    customerCodeInput.classList.remove('bg-indigo-50', 'cursor-not-allowed', 'opacity-75');
+                    passwordInput.classList.remove('bg-gray-100', 'cursor-not-allowed', 'opacity-75');
+                    customerCodeInput.placeholder = "Enter ID manually...";
+                }
+            });
+
+            // Listen for manual changes in customer_code to update username if in auto mode (though it should be locked)
+            customerCodeInput.addEventListener('input', function() {
+                if (autoGenerate.checked) {
+                    usernameInput.value = `${this.value}@${companySuffix}`;
+                }
+            });
+
+            regenPasswordBtn.addEventListener('click', () => {
+                passwordInput.value = generateRandomPassword();
+            });
+
+            // Initial call based on checkbox state
+            if (autoGenerate.checked) {
+                usernameInput.setAttribute('readonly', true);
+                customerCodeInput.setAttribute('readonly', true);
+                passwordInput.setAttribute('readonly', true);
+                usernameInput.classList.add('bg-gray-100', 'cursor-not-allowed', 'opacity-75');
+                customerCodeInput.classList.add('bg-indigo-50', 'cursor-not-allowed', 'opacity-75');
+                passwordInput.classList.add('bg-gray-100', 'cursor-not-allowed', 'opacity-75');
+                if (!passwordInput.value) passwordInput.value = generateRandomPassword();
+                updateAutoFields();
+            }
 
             // Billing Logic script
             const billingType = document.getElementById('billing_type');

@@ -205,7 +205,7 @@
                             STB Data
                         </a>
  
-                        <a href="{{ route('settings.company') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('settings.company') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                        <a href="{{ route('settings.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('settings.*') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
                             Company Profile
                         </a>
                     </div>
