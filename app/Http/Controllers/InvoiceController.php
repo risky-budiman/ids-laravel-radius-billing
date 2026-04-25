@@ -11,12 +11,31 @@ use Illuminate\Support\Facades\Artisan;
 
 class InvoiceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $invoices = Invoice::with('customer.package')->orderBy('created_at', 'desc')->paginate(10);
+        $query = Invoice::with('customer.package')->orderBy('created_at', 'desc');
+
+        if ($request->has('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                  ->orWhereHas('customer', function($cq) use ($search) {
+                      $cq->where('name', 'like', "%{$search}%")
+                        ->orWhere('username', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->get('status'));
+        }
+
+        $invoices = $query->paginate(10)->withQueryString();
+
         $activeGateways = \App\Models\Gateway::where('type', 'payment')
             ->where('is_active', true)
             ->get();
+            
         return view('invoices.index', compact('invoices', 'activeGateways'));
     }
 
