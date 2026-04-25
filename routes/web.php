@@ -15,10 +15,10 @@ Route::get('/portal/invoice/{invoice}', [\App\Http\Controllers\PortalController:
 Route::get('/dashboard', function () {
     $totalSubscribers = \App\Models\Customer::count();
     
-    // Simulate Active Users based on is_active for now or radacct if available
+    // Active Users from billing
     $activeUsers = \App\Models\Customer::where('is_active', true)->count();
     
-    // For invoices we can try to fetch, if it exists
+    // Invoice stats
     $unpaidInvoices = 0;
     $revenue = 0;
     if (class_exists(\App\Models\Invoice::class)) {
@@ -33,7 +33,54 @@ Route::get('/dashboard', function () {
         ->limit(10)
         ->get();
 
-    return view('dashboard', compact('totalSubscribers', 'activeUsers', 'unpaidInvoices', 'revenue', 'latestActivities'));
+    // ── Live Traffic Data from RADIUS ──
+    $onlineNow = \App\Models\Radius\RadAcct::whereNull('acctstoptime')->count();
+
+    $onlineSessions = \App\Models\Radius\RadAcct::whereNull('acctstoptime')
+        ->selectRaw('SUM(acctinputoctets) as total_upload, SUM(acctoutputoctets) as total_download')
+        ->first();
+    $totalUpload = $onlineSessions->total_upload ?? 0;
+    $totalDownload = $onlineSessions->total_download ?? 0;
+
+    // Top 5 users by current session traffic
+    $topUsers = \App\Models\Radius\RadAcct::whereNull('acctstoptime')
+        ->selectRaw('username, framedipaddress, acctsessiontime, (acctinputoctets + acctoutputoctets) as total_traffic, acctstarttime')
+        ->orderByDesc('total_traffic')
+        ->limit(5)
+        ->get();
+
+    // Hourly traffic for the last 24 hours (for chart)
+    $hourlyTraffic = \App\Models\Radius\RadAcct::where('acctstarttime', '>=', now()->subHours(24))
+        ->selectRaw('HOUR(acctstarttime) as hour, COUNT(*) as sessions, SUM(acctinputoctets) as upload, SUM(acctoutputoctets) as download')
+        ->groupByRaw('HOUR(acctstarttime)')
+        ->orderByRaw('HOUR(acctstarttime)')
+        ->get()
+        ->keyBy('hour');
+
+    // Build 24-hour data array
+    $chartLabels = [];
+    $chartUpload = [];
+    $chartDownload = [];
+    $chartSessions = [];
+    for ($i = 23; $i >= 0; $i--) {
+        $h = now()->subHours($i)->format('H');
+        $hourInt = (int) $h;
+        $chartLabels[] = $h . ':00';
+        $chartUpload[] = round(($hourlyTraffic[$hourInt]->upload ?? 0) / 1048576, 2);
+        $chartDownload[] = round(($hourlyTraffic[$hourInt]->download ?? 0) / 1048576, 2);
+        $chartSessions[] = $hourlyTraffic[$hourInt]->sessions ?? 0;
+    }
+
+    // Auth stats from radpostauth
+    $authAcceptToday = \App\Models\Radius\RadPostAuth::whereDate('authdate', today())->where('reply', 'Access-Accept')->count();
+    $authRejectToday = \App\Models\Radius\RadPostAuth::whereDate('authdate', today())->where('reply', 'Access-Reject')->count();
+
+    return view('dashboard', compact(
+        'totalSubscribers', 'activeUsers', 'unpaidInvoices', 'revenue', 'latestActivities',
+        'onlineNow', 'totalUpload', 'totalDownload', 'topUsers',
+        'chartLabels', 'chartUpload', 'chartDownload', 'chartSessions',
+        'authAcceptToday', 'authRejectToday'
+    ));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {

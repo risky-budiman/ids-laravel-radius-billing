@@ -164,22 +164,112 @@
                 </div>
             </div>
 
-            <!-- Live Traffic restored -->
+            <!-- Live Traffic & Network Status -->
             <div class="lg:col-span-2 glass-premium bg-white/80 dark:bg-gray-800/80 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
-                <div class="px-8 py-6 border-b border-gray-100 dark:border-gray-700">
+                <div class="px-8 py-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                     <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
                         <span class="w-2 h-8 bg-green-600 rounded-full mr-3"></span>
                         Live Traffic & Network Status
                     </h3>
-                </div>
-                <div class="p-8 flex flex-col items-center justify-center min-h-[300px] text-gray-500 dark:text-gray-400">
-                    <div class="relative mb-6">
-                        <div class="absolute inset-0 bg-indigo-500 rounded-full blur-3xl opacity-20 animate-pulse"></div>
-                        <svg class="relative w-16 h-16 text-indigo-500 dark:text-indigo-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg>
+                    <div class="flex items-center space-x-2">
+                        <span class="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        <span class="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-widest">Live</span>
                     </div>
-                    <p class="text-base font-semibold text-gray-600 dark:text-gray-400">Monitoring Pulse Active</p>
-                    <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">Waiting for RADIUS traffic data to visualize network load.</p>
                 </div>
+
+                <!-- Mini Stats Row -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 pb-2">
+                    <!-- Online Now -->
+                    <div class="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-2xl p-4 border border-emerald-100 dark:border-emerald-800/30">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Online</span>
+                        </div>
+                        <p class="text-2xl font-black text-emerald-700 dark:text-emerald-300">{{ number_format($onlineNow) }}</p>
+                    </div>
+                    <!-- Upload -->
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-4 border border-blue-100 dark:border-blue-800/30">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                            <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">Upload</span>
+                        </div>
+                        <p class="text-xl font-black text-blue-700 dark:text-blue-300">
+                            @if($totalUpload > 1073741824)
+                                {{ number_format($totalUpload / 1073741824, 2) }} <span class="text-xs font-bold opacity-60">GB</span>
+                            @else
+                                {{ number_format($totalUpload / 1048576, 1) }} <span class="text-xs font-bold opacity-60">MB</span>
+                            @endif
+                        </p>
+                    </div>
+                    <!-- Download -->
+                    <div class="bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 rounded-2xl p-4 border border-green-100 dark:border-green-800/30">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <svg class="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                            <span class="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-widest">Download</span>
+                        </div>
+                        <p class="text-xl font-black text-green-700 dark:text-green-300">
+                            @if($totalDownload > 1073741824)
+                                {{ number_format($totalDownload / 1073741824, 2) }} <span class="text-xs font-bold opacity-60">GB</span>
+                            @else
+                                {{ number_format($totalDownload / 1048576, 1) }} <span class="text-xs font-bold opacity-60">MB</span>
+                            @endif
+                        </p>
+                    </div>
+                    <!-- Auth Today -->
+                    <div class="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-2xl p-4 border border-purple-100 dark:border-purple-800/30">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <svg class="w-3 h-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                            <span class="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest">Auth</span>
+                        </div>
+                        <p class="text-lg font-black">
+                            <span class="text-emerald-600 dark:text-emerald-400">{{ $authAcceptToday }}</span>
+                            <span class="text-gray-300 dark:text-gray-600 mx-1">/</span>
+                            <span class="text-rose-600 dark:text-rose-400">{{ $authRejectToday }}</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Traffic Chart -->
+                <div class="px-6 py-4">
+                    <canvas id="trafficChart" height="140"></canvas>
+                </div>
+
+                <!-- Top Bandwidth Users -->
+                @if($topUsers->count() > 0)
+                <div class="px-6 pb-6">
+                    <h4 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 px-2">Top Bandwidth Consumers</h4>
+                    <div class="space-y-2">
+                        @foreach($topUsers as $idx => $user)
+                        <div class="flex items-center justify-between px-4 py-3 rounded-xl bg-gray-50/80 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black
+                                    {{ $idx === 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400' }}">
+                                    {{ $idx + 1 }}
+                                </span>
+                                <div>
+                                    <p class="text-sm font-bold text-gray-900 dark:text-gray-100 font-mono">{{ $user->username }}</p>
+                                    <p class="text-[10px] text-gray-400">{{ $user->framedipaddress ?? 'N/A' }}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-bold text-gray-900 dark:text-gray-100">
+                                    @if($user->total_traffic > 1073741824)
+                                        {{ number_format($user->total_traffic / 1073741824, 2) }} GB
+                                    @else
+                                        {{ number_format($user->total_traffic / 1048576, 1) }} MB
+                                    @endif
+                                </p>
+                                <p class="text-[10px] text-gray-400">{{ gmdate('H:i:s', $user->acctsessiontime ?? 0) }} uptime</p>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+                @else
+                <div class="px-6 pb-6 text-center text-gray-400 dark:text-gray-500 py-4">
+                    <p class="text-sm font-medium">No active sessions at the moment</p>
+                </div>
+                @endif
             </div>
         </div>
 
@@ -238,3 +328,124 @@
         @endif
     </div>
 </x-app-layout>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('trafficChart');
+    if (!ctx) return;
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+    const textColor = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)';
+
+    const uploadGradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+    uploadGradient.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
+    uploadGradient.addColorStop(1, 'rgba(99, 102, 241, 0.01)');
+
+    const downloadGradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+    downloadGradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+    downloadGradient.addColorStop(1, 'rgba(16, 185, 129, 0.01)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: @json($chartLabels),
+            datasets: [
+                {
+                    label: 'Upload (MB)',
+                    data: @json($chartUpload),
+                    borderColor: 'rgb(99, 102, 241)',
+                    backgroundColor: uploadGradient,
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: 'rgb(99, 102, 241)',
+                    pointHoverBorderColor: '#fff',
+                    pointHoverBorderWidth: 2,
+                },
+                {
+                    label: 'Download (MB)',
+                    data: @json($chartDownload),
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: downloadGradient,
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: 'rgb(16, 185, 129)',
+                    pointHoverBorderColor: '#fff',
+                    pointHoverBorderWidth: 2,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    align: 'end',
+                    labels: {
+                        boxWidth: 8,
+                        boxHeight: 8,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        font: { size: 11, weight: '600' },
+                        color: textColor,
+                        padding: 16,
+                    }
+                },
+                tooltip: {
+                    backgroundColor: isDark ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)',
+                    titleColor: isDark ? '#e5e7eb' : '#111827',
+                    bodyColor: isDark ? '#9ca3af' : '#6b7280',
+                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                    borderWidth: 1,
+                    cornerRadius: 12,
+                    padding: 12,
+                    displayColors: true,
+                    boxWidth: 8,
+                    boxHeight: 8,
+                    usePointStyle: true,
+                    callbacks: {
+                        label: function(ctx) {
+                            return ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + ' MB';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: gridColor, drawBorder: false },
+                    ticks: {
+                        color: textColor,
+                        font: { size: 10, weight: '500' },
+                        maxRotation: 0,
+                        maxTicksLimit: 12,
+                    },
+                    border: { display: false }
+                },
+                y: {
+                    grid: { color: gridColor, drawBorder: false },
+                    ticks: {
+                        color: textColor,
+                        font: { size: 10, weight: '500' },
+                        callback: function(val) { return val + ' MB'; }
+                    },
+                    border: { display: false },
+                    beginAtZero: true,
+                }
+            }
+        }
+    });
+});
+</script>
