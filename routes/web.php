@@ -134,6 +134,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:administrator,admin,teknisi')->group(function () {
         Route::get('online-users', [\App\Http\Controllers\OnlineUserController::class, 'index'])->name('online-users.index');
         Route::post('online-users/{radacctid}/kick', [\App\Http\Controllers\OnlineUserController::class, 'kick'])->name('online-users.kick');
+        Route::post('online-users/{radacctid}/force-close', [\App\Http\Controllers\OnlineUserController::class, 'forceClose'])->name('online-users.force-close');
         Route::get('auth-logs', [\App\Http\Controllers\AuthLogController::class, 'index'])->name('auth-logs.index');
         
         // Inventory - View & Stock Management (Technician/Admin/Administrator)

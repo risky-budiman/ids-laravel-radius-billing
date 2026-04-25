@@ -50,7 +50,19 @@ class OnlineUserController extends Controller
         if ($success) {
             return back()->with('success', "Kick command sent to {$session->username}. User will be disconnected shortly.");
         } else {
-            return back()->with('error', "Failed to send kick command. Check radclient logs.");
+            return back()->with('error', "Failed to send kick command (NAS Unreachable). Use 'Force Close' if NAS is offline.");
         }
+    }
+
+    public function forceClose(Request $request, $radacctid)
+    {
+        $session = RadAcct::findOrFail($radacctid);
+        
+        $session->update([
+            'acctstoptime' => now(),
+            'acctterminatecause' => 'Admin-Reset'
+        ]);
+
+        return back()->with('success', "Session for {$session->username} has been force closed in database.");
     }
 }

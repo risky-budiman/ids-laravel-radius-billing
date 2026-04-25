@@ -19,12 +19,12 @@ class RadiusCoAService
     public function disconnect(string $nasIp, string $secret, string $username): bool
     {
         try {
-            // Echo the User-Name attribute into radclient to send a Disconnect-Request (type 40)
+            // Added -t 2 (timeout 2s) to prevent hanging if NAS doesn't respond
             $command = sprintf(
-                'echo "User-Name=\"%s\"" | radclient -x %s:3799 disconnect "%s"',
-                escapeshellcmd($username),
-                escapeshellcmd($nasIp),
-                escapeshellcmd($secret)
+                'echo "User-Name=\"%s\"" | radclient -t 2 -x %s:3799 disconnect "%s" 2>&1',
+                $username,
+                $nasIp,
+                $secret
             );
 
             // Execute the shell command
@@ -34,7 +34,8 @@ class RadiusCoAService
                 Log::info("CoA Disconnect sent successfully for {$username} at NAS {$nasIp}");
                 return true;
             } else {
-                Log::error("CoA Disconnect failed for {$username}. radclient output: " . implode("\n", $output));
+                $errorMsg = implode("\n", $output);
+                Log::error("CoA Disconnect failed for {$username} at {$nasIp}. Exit Code: {$returnVar}. Output: {$errorMsg}");
                 return false;
             }
         } catch (Exception $e) {

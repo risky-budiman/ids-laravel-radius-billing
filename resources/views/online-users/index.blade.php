@@ -64,12 +64,20 @@
                                 <span class="text-blue-600 dark:text-blue-400">↑ {{ round($session->acctinputoctets / 1048576, 2) }} MB</span>
                             </td>
                             <td class="px-6 py-4 text-right">
-                                <form action="{{ route('online-users.kick', $session->radacctid) }}" method="POST" onsubmit="return confirm('Disconnect user {{ $session->username }}?')">
-                                    @csrf
-                                    <button type="submit" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all">
-                                        Disconnect
-                                    </button>
-                                </form>
+                                <div class="flex justify-end gap-2">
+                                    <form action="{{ route('online-users.kick', $session->radacctid) }}" method="POST" onsubmit="return confirm('Send Disconnect signal to Router for user {{ $session->username }}?')">
+                                        @csrf
+                                        <button type="submit" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all" title="Send CoA Disconnect to Router">
+                                            Disconnect
+                                        </button>
+                                    </form>
+                                    <form action="{{ route('online-users.force-close', $session->radacctid) }}" method="POST" onsubmit="return confirm('Force close session for {{ $session->username }} in database? (Use this if NAS is offline)')">
+                                        @csrf
+                                        <button type="submit" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all" title="Clear from DB only">
+                                            Force Close
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
