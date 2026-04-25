@@ -86,6 +86,7 @@ Route::middleware('auth')->group(function () {
     // TECHNICAL & WAREHOUSE: Admin & Teknisi
     Route::middleware('role:administrator,admin,teknisi')->group(function () {
         Route::get('online-users', [\App\Http\Controllers\OnlineUserController::class, 'index'])->name('online-users.index');
+        Route::get('auth-logs', [\App\Http\Controllers\AuthLogController::class, 'index'])->name('auth-logs.index');
         
         // Inventory - View & Stock Management (Technician/Admin/Administrator)
         Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
