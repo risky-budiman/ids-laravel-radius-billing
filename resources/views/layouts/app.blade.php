@@ -14,6 +14,8 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+        @stack('styles')
+
         <!-- Theme Initialization Script (prevents FOUC) -->
         <script>
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -76,5 +78,7 @@
         </div>
         
         @stack('modals')
+
+        @stack('scripts')
     </body>
 </html>

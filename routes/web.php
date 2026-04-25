@@ -93,6 +93,7 @@ Route::middleware('auth')->group(function () {
     
     // CUSTOMERS: All Operational Roles (View, Create, Edit)
     Route::middleware('role:administrator,admin,teknisi,sales')->group(function () {
+        Route::get('customers/map', [\App\Http\Controllers\CustomerController::class, 'map'])->name('customers.map');
         Route::get('customers', [\App\Http\Controllers\CustomerController::class, 'index'])->name('customers.index');
         Route::get('customers/create', [\App\Http\Controllers\CustomerController::class, 'create'])->name('customers.create');
         Route::post('customers', [\App\Http\Controllers\CustomerController::class, 'store'])->name('customers.store');

@@ -110,6 +110,32 @@
                     <textarea id="address" name="address" rows="3" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">{{ old('address', $customer->address) }}</textarea>
                     <x-input-error class="mt-2" :messages="$errors->get('address')" />
                 </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <x-input-label :value="__('Installation Location')" />
+                        <button type="button" id="locate-me" class="text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full font-bold uppercase hover:bg-indigo-100 transition-all flex items-center">
+                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            Gunakan Lokasi Saya
+                        </button>
+                    </div>
+                    <div class="mt-1 border-4 border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden shadow-inner">
+                        <div id="map-picker" style="height: 300px; width: 100%;"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <x-input-label for="latitude" :value="__('Latitude')" />
+                            <x-text-input id="latitude" name="latitude" type="text" class="mt-1 block w-full bg-gray-50 dark:bg-gray-900/50" :value="old('latitude', $customer->latitude)" required />
+                            <x-input-error class="mt-2" :messages="$errors->get('latitude')" />
+                        </div>
+                        <div>
+                            <x-input-label for="longitude" :value="__('Longitude')" />
+                            <x-text-input id="longitude" name="longitude" type="text" class="mt-1 block w-full bg-gray-50 dark:bg-gray-900/50" :value="old('longitude', $customer->longitude)" required />
+                            <x-input-error class="mt-2" :messages="$errors->get('longitude')" />
+                        </div>
+                    </div>
+                    <p class="mt-2 text-xs text-gray-500 italic">Drag marker or click on the map to update coordinates.</p>
+                </div>
             </div>
 
             <!-- Section: Billing Configuration -->
@@ -196,8 +222,93 @@
         </form>
     </div>
     <!-- CASCADING DROPDOWNS SCRIPT -->
+    @push('styles')
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    @endpush
+
+    @push('scripts')
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Map Picker Logic
+            const latInput = document.getElementById('latitude');
+            const lngInput = document.getElementById('longitude');
+            
+            const initialLat = @json($customer->latitude) || -6.200000;
+            const initialLng = @json($customer->longitude) || 106.816666;
+            
+            const map = L.map('map-picker').setView([initialLat, initialLng], 14);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            let marker = L.marker([initialLat, initialLng], {draggable: true}).addTo(map);
+            const locateBtn = document.getElementById('locate-me');
+
+            function updateInputs(lat, lng) {
+                if (latInput && lngInput) {
+                    latInput.value = lat.toFixed(8);
+                    lngInput.value = lng.toFixed(8);
+                    
+                    // Visual feedback
+                    latInput.style.backgroundColor = '#dcfce7';
+                    lngInput.style.backgroundColor = '#dcfce7';
+                    setTimeout(() => {
+                        latInput.style.backgroundColor = '';
+                        lngInput.style.backgroundColor = '';
+                    }, 500);
+                    
+                    console.log("Updated inputs to:", lat, lng);
+                }
+            }
+
+            // Initial population
+            updateInputs(initialLat, initialLng);
+
+            if (locateBtn && navigator.geolocation) {
+                locateBtn.addEventListener('click', function() {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+                        marker.setLatLng([userLat, userLng]);
+                        map.setView([userLat, userLng], 16);
+                        updateInputs(userLat, userLng);
+                    }, function(error) {
+                        alert("Gagal mendapatkan lokasi: " + error.message);
+                    });
+                });
+            }
+
+            latInput.addEventListener('input', function() {
+                const lat = parseFloat(this.value);
+                const lng = parseFloat(lngInput.value);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    marker.setLatLng([lat, lng]);
+                    map.panTo([lat, lng]);
+                }
+            });
+
+            lngInput.addEventListener('input', function() {
+                const lat = parseFloat(latInput.value);
+                const lng = parseFloat(this.value);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    marker.setLatLng([lat, lng]);
+                    map.panTo([lat, lng]);
+                }
+            });
+
+            marker.on('dragend', function(e) {
+                const position = marker.getLatLng();
+                updateInputs(position.lat, position.lng);
+            });
+
+            map.on('click', function(e) {
+                marker.setLatLng(e.latlng);
+                updateInputs(e.latlng.lat, e.latlng.lng);
+            });
+
+            // Cascading Dropdowns Logic (original)
             const regionSelect = document.getElementById('region_code');
             const stoSelect = document.getElementById('sto_code');
             const stbSelect = document.getElementById('stb_code');
@@ -340,4 +451,5 @@
             updateMethods();
         });
     </script>
+    @endpush
 </x-app-layout>

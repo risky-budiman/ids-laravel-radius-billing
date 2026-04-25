@@ -28,6 +28,8 @@ class Customer extends Model
         'email',
         'phone',
         'address',
+        'latitude',
+        'longitude',
         'package_id',
         'is_active',
         'status',

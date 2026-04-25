@@ -10,6 +10,8 @@ use App\Models\Nas;
 use App\Services\RadiusCoAService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class CustomerController extends Controller
 {
@@ -29,6 +31,17 @@ class CustomerController extends Controller
         }
 
         return view('customers.index', compact('customers'));
+    }
+
+    public function map()
+    {
+        // Simple query: just get those that have something in latitude
+        $customers = Customer::where('latitude', '!=', '')
+            ->whereNotNull('latitude')
+            ->with('package')
+            ->get();
+            
+        return view('customers.map', compact('customers'));
     }
 
     public function show(Customer $customer)
@@ -68,16 +81,19 @@ class CustomerController extends Controller
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
             'package_id' => 'required|exists:packages,id',
-            'is_active' => 'boolean',
+            'is_active' => 'nullable',
             'billing_type' => 'required|in:prepaid,postpaid',
             'billing_method' => 'required|in:cycle,fixed,renewal',
             'billing_day' => 'nullable|integer|min:1|max:28',
             'billing_due_day' => 'nullable|integer|min:1|max:28',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
         $package = Package::find($validated['package_id']);
+        $isActive = filter_var($request->input('is_active', false), FILTER_VALIDATE_BOOLEAN);
 
-        DB::transaction(function () use ($validated, $package) {
+        DB::transaction(function () use ($validated, $package, $isActive) {
             // Create in Billing
             Customer::create([
                 'customer_code' => $validated['customer_code'],
@@ -91,12 +107,14 @@ class CustomerController extends Controller
                 'phone' => $validated['phone'],
                 'address' => $validated['address'],
                 'package_id' => $validated['package_id'],
-                'is_active' => false,
-                'status' => Customer::STATUS_NEW,
+                'is_active' => $isActive,
+                'status' => $isActive ? Customer::STATUS_ACTIVE : Customer::STATUS_NEW,
                 'billing_type' => $validated['billing_type'],
                 'billing_method' => $validated['billing_method'],
                 'billing_day' => $validated['billing_day'] ?? 1,
                 'billing_due_day' => $validated['billing_due_day'] ?? 20,
+                'latitude' => $validated['latitude'],
+                'longitude' => $validated['longitude'],
             ]);
 
             // Create in RADIUS (Authentication)
@@ -135,6 +153,14 @@ class CustomerController extends Controller
 
     public function update(Request $request, Customer $customer)
     {
+        // Pre-sanitize coordinates before validation
+        if ($request->has('latitude')) {
+            $request->merge(['latitude' => str_replace(',', '.', $request->input('latitude'))]);
+        }
+        if ($request->has('longitude')) {
+            $request->merge(['longitude' => str_replace(',', '.', $request->input('longitude'))]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:customers,username,' . $customer->id,
@@ -143,25 +169,36 @@ class CustomerController extends Controller
             'stb_code' => 'required|string|size:3|exists:stbs,code',
             'email' => 'nullable|email|max:255',
             'ktp' => 'nullable|string|max:20|unique:customers,ktp,' . $customer->id,
-            'customer_code' => 'required|string|max:20|unique:customers,customer_code,' . $customer->id,
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
             'package_id' => 'required|exists:packages,id',
-            'is_active' => 'boolean',
+            'is_active' => 'nullable',
             'password' => 'required|string|min:4',
             'billing_type' => 'required|in:prepaid,postpaid',
             'billing_method' => 'required|in:cycle,fixed,renewal',
             'billing_day' => 'nullable|integer|min:1|max:28',
             'billing_due_day' => 'nullable|integer|min:1|max:28',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
+        $latitude = $validated['latitude'] ?? null;
+        $longitude = $validated['longitude'] ?? null;
+        
         $oldUsername = $customer->username;
+        $oldStatus = $customer->is_active;
         $newUsername = $validated['username'];
         $package = \App\Models\Package::find($validated['package_id']);
+        $isActive = filter_var($request->input('is_active', false), FILTER_VALIDATE_BOOLEAN);
 
-        \DB::transaction(function () use ($customer, $validated, $oldUsername, $newUsername, $package) {
-            // 1. Update Customer Table
-            $customer->update($validated);
+        DB::transaction(function () use ($customer, $validated, $oldUsername, $newUsername, $package, $isActive, $latitude, $longitude) {
+            // 1. Update customer fields (excluding password and coordinates)
+            $updateData = collect($validated)->except(['password', 'latitude', 'longitude'])->toArray();
+            $updateData['is_active'] = $isActive;
+            $updateData['latitude'] = $latitude;
+            $updateData['longitude'] = $longitude;
+
+            $customer->update($updateData);
 
             // 2. Sync radcheck (Update username & password)
             \App\Models\Radius\RadCheck::where('username', $oldUsername)->update([
@@ -176,20 +213,23 @@ class CustomerController extends Controller
             ]);
 
             // 4. Sync radacct history (agar riwayat tetap terhubung)
-            \DB::table('radacct')->where('username', $oldUsername)->update([
+            DB::table('radacct')->where('username', $oldUsername)->update([
                 'username' => $newUsername
             ]);
         });
 
         // 5. Trigger RADIUS CoA Disconnect if suspended or package changed
-        $newStatus = $validated['is_active'] ?? true;
         $isPackageChanged = $customer->wasChanged('package_id');
         
-        if (($oldStatus && !$newStatus) || $isPackageChanged || ($oldUsername !== $newUsername)) {
-            $nas = \App\Models\Nas::first(); 
-            if ($nas) {
-                $coaService = new \App\Services\RadiusCoAService();
-                $coaService->disconnect($nas->nasipaddress, $nas->secret, $newUsername);
+        if (($oldStatus && !$isActive) || $isPackageChanged || ($oldUsername !== $newUsername)) {
+            try {
+                $nas = \App\Models\Nas::first(); 
+                if ($nas) {
+                    $coaService = new \App\Services\RadiusCoAService();
+                    $coaService->disconnect($nas->nasipaddress, $nas->secret, $newUsername);
+                }
+            } catch (\Exception $e) {
+                \Log::warning("CoA Disconnect failed: " . $e->getMessage());
             }
         }
 
