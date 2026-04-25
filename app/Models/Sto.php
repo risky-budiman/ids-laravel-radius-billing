@@ -9,11 +9,16 @@ use Illuminate\Database\Eloquent\Model;
 class Sto extends Model
 {
     use LogsActivity;
-    protected $fillable = ['region_id', 'code', 'name'];
+    protected $fillable = ['region_id', 'acs_server_id', 'code', 'name'];
 
     public function region()
     {
         return $this->belongsTo(Region::class);
+    }
+
+    public function acsServer()
+    {
+        return $this->belongsTo(AcsServer::class);
     }
 
     public function stbs()

@@ -81,6 +81,15 @@
             </li>
             @endif
 
+            @if(auth()->user()->isAdmin() || auth()->user()->isTeknisi())
+            <li>
+                <a href="{{ route('acs-servers.devices') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('acs-servers.devices') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
+                    <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+                    ONT Devices (ONU)
+                </a>
+            </li>
+            @endif
+
 
             @if(auth()->user()->isAdmin() || auth()->user()->isKasir() || auth()->user()->isTeknisi())
             <li class="pt-4 pb-2">
@@ -237,6 +246,10 @@
                         
                         <a href="{{ route('integrations.whatsapp') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('integrations.whatsapp') ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
                             WhatsApp Gateway
+                        </a>
+
+                        <a href="{{ route('acs-servers.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('acs-servers.index') ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            GenieACS Servers
                         </a>
                     </div>
                 </div>

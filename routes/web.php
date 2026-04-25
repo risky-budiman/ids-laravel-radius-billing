@@ -200,6 +200,13 @@ Route::middleware('auth')->group(function () {
         Route::get('integrations/payment', [\App\Http\Controllers\IntegrationController::class, 'payment'])->name('integrations.payment');
         Route::get('integrations/whatsapp', [\App\Http\Controllers\IntegrationController::class, 'whatsapp'])->name('integrations.whatsapp');
         Route::post('integrations/update', [\App\Http\Controllers\IntegrationController::class, 'update'])->name('integrations.update');
+        Route::get('acs-devices/details/{deviceId}', [\App\Http\Controllers\AcsServerController::class, 'deviceDetails'])->name('acs-servers.device-details')->where('deviceId', '[a-zA-Z0-9\-\.]+');
+        Route::get('acs-devices/{deviceId}/show', [\App\Http\Controllers\AcsServerController::class, 'showDeviceRaw'])->name('acs-servers.show-device')->where('deviceId', '[a-zA-Z0-9\-\.]+');
+        Route::post('acs-devices/{deviceId}/update-config', [\App\Http\Controllers\AcsServerController::class, 'updateConfig'])->name('acs-servers.update-config')->where('deviceId', '[a-zA-Z0-9\-\.]+');
+        Route::post('acs-devices/{deviceId}/reboot', [\App\Http\Controllers\AcsServerController::class, 'reboot'])->name('acs-servers.reboot')->where('deviceId', '[a-zA-Z0-9\-\.]+');
+        Route::post('acs-devices/{deviceId}/refresh', [\App\Http\Controllers\AcsServerController::class, 'refreshDevice'])->name('acs-servers.refresh-device')->where('deviceId', '[a-zA-Z0-9\-\.]+');
+        Route::get('acs-devices', [\App\Http\Controllers\AcsServerController::class, 'devices'])->name('acs-servers.devices');
+        Route::resource('acs-servers', \App\Http\Controllers\AcsServerController::class);
         Route::get('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'index'])->name('settings.company');
         Route::post('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'update'])->name('settings.company.update');
 
