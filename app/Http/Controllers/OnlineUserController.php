@@ -35,34 +35,37 @@ class OnlineUserController extends Controller
     {
         $session = RadAcct::findOrFail($radacctid);
         
-        // Find NAS for this session to get the secret
+        // Find NAS for this session
         $nas = Nas::where('shortname', $session->nasipaddress)
                   ->orWhere('nasname', $session->nasipaddress)
                   ->first();
         
         if (!$nas) {
-            return back()->with('error', 'NAS/Router not found in database. Cannot send kick command.');
+            // Fallback: If NAS not in DB, just force close
+            $this->performForceClose($session);
+            return back()->with('success', "NAS not found. Session for {$session->username} has been force closed in database.");
         }
 
         $coa = new RadiusCoAService();
         $success = $coa->disconnect($nas->nasname, $nas->secret, $session->username);
 
         if ($success) {
-            return back()->with('success', "Kick command sent to {$session->username}. User will be disconnected shortly.");
+            return back()->with('success', "Disconnect signal sent to Router for {$session->username}.");
         } else {
-            return back()->with('error', "Failed to send kick command (NAS Unreachable). Use 'Force Close' if NAS is offline.");
+            // Fallback: If CoA fails (NAS Offline), force close in DB
+            $this->performForceClose($session);
+            return back()->with('success', "NAS Unreachable. Session for {$session->username} has been automatically force closed in database.");
         }
     }
 
-    public function forceClose(Request $request, $radacctid)
+    /**
+     * Internal helper to close session in DB
+     */
+    private function performForceClose($session)
     {
-        $session = RadAcct::findOrFail($radacctid);
-        
         $session->update([
             'acctstoptime' => now(),
             'acctterminatecause' => 'Admin-Reset'
         ]);
-
-        return back()->with('success', "Session for {$session->username} has been force closed in database.");
     }
 }
