@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Radius\RadAcct;
-use App\Models\Nas;
+use App\Models\Radius\Nas;
 use App\Services\RadiusCoAService;
 use Illuminate\Http\Request;
 
