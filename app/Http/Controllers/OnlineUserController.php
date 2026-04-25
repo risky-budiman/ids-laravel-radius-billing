@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Radius\RadAcct;
+use App\Models\Nas;
+use App\Services\RadiusCoAService;
 use Illuminate\Http\Request;
 
 class OnlineUserController extends Controller
@@ -11,7 +13,7 @@ class OnlineUserController extends Controller
     {
         $status = $request->query('status', 'online'); // default to online
         
-        $onlineUsernames = RadAcct::whereNull('acctstoptime')->pluck('username')->toArray();
+        $onlineUsernames = RadAcct::online()->pluck('username')->toArray();
 
         if ($status === 'offline') {
             $offlineUsers = \App\Models\Customer::with('package')
@@ -21,11 +23,34 @@ class OnlineUserController extends Controller
             return view('online-users.index', compact('offlineUsers', 'status'));
         }
 
-        // Default: Online Users
-        $onlineUsers = RadAcct::whereNull('acctstoptime')
+        // Default: Online Users (Truly Online)
+        $onlineUsers = RadAcct::online()
             ->orderBy('acctstarttime', 'desc')
             ->paginate(20);
             
         return view('online-users.index', compact('onlineUsers', 'status'));
+    }
+
+    public function kick(Request $request, $radacctid)
+    {
+        $session = RadAcct::findOrFail($radacctid);
+        
+        // Find NAS for this session to get the secret
+        $nas = Nas::where('shortname', $session->nasipaddress)
+                  ->orWhere('nasname', $session->nasipaddress)
+                  ->first();
+        
+        if (!$nas) {
+            return back()->with('error', 'NAS/Router not found in database. Cannot send kick command.');
+        }
+
+        $coa = new RadiusCoAService();
+        $success = $coa->disconnect($nas->nasname, $nas->secret, $session->username);
+
+        if ($success) {
+            return back()->with('success', "Kick command sent to {$session->username}. User will be disconnected shortly.");
+        } else {
+            return back()->with('error', "Failed to send kick command. Check radclient logs.");
+        }
     }
 }

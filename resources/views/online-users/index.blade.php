@@ -5,6 +5,19 @@
         </h2>
     </x-slot>
 
+    <div class="mb-4">
+        @if(session('success'))
+            <div class="px-4 py-3 bg-green-100/80 border border-green-200 text-green-700 rounded-xl dark:bg-green-900/30 dark:border-green-800 dark:text-green-400">
+                {{ session('success') }}
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="px-4 py-3 bg-red-100/80 border border-red-200 text-red-700 rounded-xl dark:bg-red-900/30 dark:border-red-800 dark:text-red-400">
+                {{ session('error') }}
+            </div>
+        @endif
+    </div>
+
     <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">Live Connections Monitor</h3>
@@ -33,6 +46,7 @@
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">NAS / Router</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Traffic (IN/OUT)</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -49,10 +63,18 @@
                                 <span class="text-green-600 dark:text-green-400">↓ {{ round($session->acctoutputoctets / 1048576, 2) }} MB</span> / 
                                 <span class="text-blue-600 dark:text-blue-400">↑ {{ round($session->acctinputoctets / 1048576, 2) }} MB</span>
                             </td>
+                            <td class="px-6 py-4 text-right">
+                                <form action="{{ route('online-users.kick', $session->radacctid) }}" method="POST" onsubmit="return confirm('Disconnect user {{ $session->username }}?')">
+                                    @csrf
+                                    <button type="submit" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all">
+                                        Disconnect
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">No active dial-in sessions found.</td>
+                            <td colspan="7" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">No active dial-in sessions found.</td>
                         </tr>
                     @endforelse
                 </tbody>

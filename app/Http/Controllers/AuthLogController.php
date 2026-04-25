@@ -35,11 +35,48 @@ class AuthLogController extends Controller
 
         $logs = $query->paginate(25)->appends($request->query());
 
+        // Attach reason details to each log
+        foreach ($logs as $log) {
+            $log->reason = $this->determineReason($log);
+        }
+
         // Stats
         $totalToday = RadPostAuth::whereDate('authdate', today())->count();
         $successToday = RadPostAuth::whereDate('authdate', today())->where('reply', 'Access-Accept')->count();
         $failedToday = RadPostAuth::whereDate('authdate', today())->where('reply', 'Access-Reject')->count();
 
         return view('auth-logs.index', compact('logs', 'totalToday', 'successToday', 'failedToday'));
+    }
+
+    /**
+     * Helper to determine why a login was accepted or rejected
+     */
+    private function determineReason($log)
+    {
+        if ($log->reply === 'Access-Accept') {
+            return 'Authentication Successful';
+        }
+
+        // For Rejects, check the database
+        $customer = \App\Models\Customer::where('username', $log->username)->first();
+        
+        if (!$customer) {
+            return 'User Not Found in Billing';
+        }
+
+        if (!$customer->is_active) {
+            return 'Account Suspended / Inactive';
+        }
+
+        // If user is active but rejected, check password
+        $radCheck = \App\Models\Radius\RadCheck::where('username', $log->username)
+            ->where('attribute', 'Cleartext-Password')
+            ->first();
+
+        if ($radCheck && $log->pass !== $radCheck->value) {
+            return 'Wrong Password Attempted';
+        }
+
+        return 'Rejected by RADIUS (Check NAS/Policy)';
     }
 }

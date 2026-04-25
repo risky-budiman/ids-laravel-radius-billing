@@ -34,16 +34,16 @@ Route::get('/dashboard', function () {
         ->get();
 
     // ── Live Traffic Data from RADIUS ──
-    $onlineNow = \App\Models\Radius\RadAcct::whereNull('acctstoptime')->count();
+    $onlineNow = \App\Models\Radius\RadAcct::online()->count();
 
-    $onlineSessions = \App\Models\Radius\RadAcct::whereNull('acctstoptime')
+    $onlineSessions = \App\Models\Radius\RadAcct::online()
         ->selectRaw('SUM(acctinputoctets) as total_upload, SUM(acctoutputoctets) as total_download')
         ->first();
     $totalUpload = $onlineSessions->total_upload ?? 0;
     $totalDownload = $onlineSessions->total_download ?? 0;
 
     // Top 5 users by current session traffic
-    $topUsers = \App\Models\Radius\RadAcct::whereNull('acctstoptime')
+    $topUsers = \App\Models\Radius\RadAcct::online()
         ->selectRaw('username, framedipaddress, acctsessiontime, (acctinputoctets + acctoutputoctets) as total_traffic, acctstarttime')
         ->orderByDesc('total_traffic')
         ->limit(5)
@@ -133,6 +133,7 @@ Route::middleware('auth')->group(function () {
     // TECHNICAL & WAREHOUSE: Admin & Teknisi
     Route::middleware('role:administrator,admin,teknisi')->group(function () {
         Route::get('online-users', [\App\Http\Controllers\OnlineUserController::class, 'index'])->name('online-users.index');
+        Route::post('online-users/{radacctid}/kick', [\App\Http\Controllers\OnlineUserController::class, 'kick'])->name('online-users.kick');
         Route::get('auth-logs', [\App\Http\Controllers\AuthLogController::class, 'index'])->name('auth-logs.index');
         
         // Inventory - View & Stock Management (Technician/Admin/Administrator)

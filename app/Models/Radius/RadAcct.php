@@ -35,4 +35,18 @@ class RadAcct extends Model
         'framedprotocol',
         'framedipaddress',
     ];
+    protected $casts = [
+        'acctstarttime' => 'datetime',
+        'acctupdatetime' => 'datetime',
+        'acctstoptime' => 'datetime',
+    ];
+
+    /**
+     * Scope for truly online users (not stale)
+     */
+    public function scopeOnline($query)
+    {
+        return $query->whereNull('acctstoptime')
+                     ->where('acctupdatetime', '>=', now()->subMinutes(10));
+    }
 }
