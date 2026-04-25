@@ -40,6 +40,7 @@
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
                     <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Username</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">IP Address</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">MAC Address</th>
@@ -52,6 +53,9 @@
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($onlineUsers as $session)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-6 py-4 text-gray-400 dark:text-gray-500 text-sm font-medium">
+                                {{ $onlineUsers->firstItem() + $loop->index }}
+                            </td>
                             <td class="px-6 py-4 font-mono text-indigo-600 dark:text-indigo-400 font-bold">{{ $session->username }}</td>
                             <td class="px-6 py-4 text-gray-900 dark:text-gray-100 font-mono text-sm">{{ $session->framedipaddress ?? 'N/A' }}</td>
                             <td class="px-6 py-4 text-gray-500 font-mono text-sm uppercase">{{ $session->callingstationid }}</td>
@@ -84,6 +88,7 @@
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
                     <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Username</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer Name</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Phone / Contact</th>
@@ -94,6 +99,9 @@
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($offlineUsers as $customer)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-6 py-4 text-gray-400 dark:text-gray-500 text-sm font-medium">
+                                {{ $offlineUsers->firstItem() + $loop->index }}
+                            </td>
                             <td class="px-6 py-4 font-mono text-indigo-600 dark:text-indigo-400 font-bold">{{ $customer->username }}</td>
                             <td class="px-6 py-4 text-gray-900 dark:text-gray-100 font-medium">{{ $customer->name }}</td>
                             <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ $customer->phone ?: 'No Phone' }}</td>

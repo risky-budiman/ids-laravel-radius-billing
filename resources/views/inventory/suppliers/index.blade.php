@@ -21,16 +21,20 @@
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
                     <tr class="bg-gray-50/50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">
+                        <th class="px-6 py-4 font-bold">#</th>
                         <th class="px-6 py-4 font-bold">Supplier Name</th>
                         <th class="px-6 py-4 font-bold">Contact Person</th>
                         <th class="px-6 py-4 font-bold">Phone / Email</th>
                         <th class="px-6 py-4 font-bold">Status</th>
-                        <th class="px-6 py-4 font-bold">Actions</th>
+                        <th class="px-6 py-4 font-bold text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                     @forelse($suppliers as $supplier)
                         <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-900/30 transition-colors group">
+                            <td class="px-6 py-4 text-gray-400 dark:text-gray-500 text-sm font-medium">
+                                {{ $suppliers->firstItem() + $loop->index }}
+                            </td>
                             <td class="px-6 py-4">
                                 <span class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $supplier->name }}</span>
                                 <p class="text-[10px] text-gray-400 mt-0.5 truncate max-w-xs">{{ $supplier->address }}</p>

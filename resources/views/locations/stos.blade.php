@@ -58,6 +58,7 @@
                 <table class="w-full whitespace-nowrap align-middle">
                     <thead class="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
                         <tr>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">#</th>
                             <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Code</th>
                             <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">STO Name</th>
                             <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Region Master</th>
@@ -68,6 +69,9 @@
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
                         @foreach($stos as $s)
                         <tr class="hover:bg-fuchsia-50/30 dark:hover:bg-fuchsia-900/10 transition-colors group">
+                            <td class="px-6 py-4 text-gray-400 dark:text-gray-500 text-sm font-medium">
+                                {{ $loop->iteration }}
+                            </td>
                             <td class="px-6 py-4">
                                 <span class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-mono font-bold px-3 py-1.5 rounded-lg text-sm border border-gray-200 dark:border-gray-600">
                                     {{ $s->code }}

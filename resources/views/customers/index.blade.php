@@ -21,6 +21,7 @@
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
                     <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer ID</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Username</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Password</th>
@@ -33,6 +34,9 @@
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($customers as $customer)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-6 py-4 text-gray-400 dark:text-gray-500 text-sm font-medium">
+                                {{ $customers->firstItem() + $loop->index }}
+                            </td>
                             <td class="px-6 py-4 font-mono text-indigo-600 dark:text-indigo-400 font-bold">
                                 {{ $customer->customer_code ?? 'N/A' }}
                             </td>

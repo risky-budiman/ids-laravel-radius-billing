@@ -20,6 +20,7 @@
                         <table class="w-full text-left">
                             <thead>
                                 <tr class="border-b border-gray-100 dark:border-gray-700">
+                                    <th class="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">#</th>
                                     <th class="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">User</th>
                                     <th class="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Action</th>
                                     <th class="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Description</th>
@@ -30,6 +31,9 @@
                             <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
                                 @forelse($activities as $activity)
                                     <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-900/30 transition-all group">
+                                        <td class="px-6 py-5 text-gray-400 dark:text-gray-500 text-sm font-medium">
+                                            {{ $activities->firstItem() + $loop->index }}
+                                        </td>
                                         <td class="px-6 py-5 whitespace-nowrap">
                                             <div class="flex items-center">
                                                 <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs mr-3 border border-indigo-200 dark:border-indigo-800">

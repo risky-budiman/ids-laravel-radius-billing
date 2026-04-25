@@ -202,6 +202,7 @@
                         <table class="w-full text-left whitespace-nowrap">
                             <thead>
                                 <tr class="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">#</th>
                                     <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Start Time</th>
                                     <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">End Time</th>
                                     <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Duration</th>
@@ -215,6 +216,9 @@
                             <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
                                 @forelse($sessions as $session)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                        <td class="px-6 py-4 text-gray-400 dark:text-gray-500 text-[10px] font-medium">
+                                            {{ $loop->iteration }}
+                                        </td>
                                         <td class="px-6 py-4">
                                             <div class="text-xs font-bold text-gray-900 dark:text-white">{{ $session->acctstarttime->format('d/m/Y') }}</div>
                                             <div class="text-[10px] text-gray-400">{{ $session->acctstarttime->format('H:i:s') }}</div>

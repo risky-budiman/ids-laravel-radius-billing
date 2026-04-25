@@ -19,6 +19,7 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="border-b border-gray-100 dark:border-gray-700">
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">#</th>
                                     <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">User Profile</th>
                                     <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Role</th>
                                     <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
@@ -30,6 +31,9 @@
                             <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
                                 @foreach($users as $user)
                                 <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-all group">
+                                    <td class="px-6 py-5 text-gray-400 dark:text-gray-500 text-sm font-medium">
+                                        {{ $users->firstItem() + $loop->index }}
+                                    </td>
                                     <td class="px-6 py-5">
                                         <div class="flex items-center">
                                             <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="h-10 w-10 rounded-full object-cover border-2 border-indigo-500 shadow-md">

@@ -185,6 +185,7 @@
                 <table class="w-full text-left whitespace-nowrap">
                     <thead>
                         <tr class="bg-gray-50/50 dark:bg-gray-900/50 text-gray-400 text-[10px] uppercase tracking-widest font-black border-b border-gray-100 dark:border-gray-700">
+                            <th class="px-8 py-5">#</th>
                             <th class="px-8 py-5">Timestamp</th>
                             <th class="px-8 py-5">Product</th>
                             <th class="px-8 py-5 text-center">Qty</th>
@@ -195,6 +196,9 @@
                     <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
                         @forelse($outflows as $flow)
                             <tr class="hover:bg-gray-50/30 dark:hover:bg-gray-900/30 transition-colors">
+                                <td class="px-8 py-5 text-gray-400 dark:text-gray-500 text-sm font-medium">
+                                    {{ $outflows->firstItem() + $loop->index }}
+                                </td>
                                 <td class="px-8 py-5">
                                     <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $flow->created_at->format('d M Y') }}</p>
                                     <p class="text-[10px] text-gray-400 font-medium">{{ $flow->created_at->format('H:i') }}</p>

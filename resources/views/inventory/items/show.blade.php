@@ -73,6 +73,7 @@
                     <table class="w-full text-left">
                         <thead>
                             <tr class="text-[10px] text-gray-400 uppercase font-bold border-b border-gray-100 dark:border-gray-700">
+                                <th class="px-8 py-4 text-left">#</th>
                                 <th class="px-8 py-4">Serial Number / MAC</th>
                                 <th class="px-8 py-4">Condition</th>
                                 <th class="px-8 py-4">Status</th>
@@ -82,6 +83,9 @@
                         <tbody class="divide-y divide-gray-50 dark:divide-gray-800 text-xs">
                             @forelse($item->stocks as $stock)
                                 <tr>
+                                    <td class="px-8 py-4 text-gray-400 dark:text-gray-500 font-medium">
+                                        {{ $loop->iteration }}
+                                    </td>
                                     <td class="px-8 py-4 font-mono font-bold text-gray-700 dark:text-gray-300">
                                         {{ $stock->serial_number }}
                                         @if($stock->mac_address)

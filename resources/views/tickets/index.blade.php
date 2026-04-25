@@ -70,6 +70,7 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
+                                    <th class="px-6 py-4 font-semibold">#</th>
                                     <th class="px-6 py-4 font-semibold">Number</th>
                                     <th class="px-6 py-4 font-semibold">Customer</th>
                                     <th class="px-6 py-4 font-semibold">Type</th>
@@ -83,6 +84,9 @@
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                                 @forelse($tickets as $ticket)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors duration-150">
+                                        <td class="px-6 py-4 text-gray-400 dark:text-gray-500 text-sm font-medium">
+                                            {{ $tickets->firstItem() + $loop->index }}
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <a href="{{ route('tickets.show', $ticket) }}" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
                                                 {{ $ticket->ticket_number }}

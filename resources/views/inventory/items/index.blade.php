@@ -54,17 +54,21 @@
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
                     <tr class="bg-gray-50/50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">
+                        <th class="px-6 py-4 font-bold">#</th>
                         <th class="px-6 py-4 font-bold">Product Name</th>
                         <th class="px-6 py-4 font-bold">Category</th>
                         <th class="px-6 py-4 font-bold">SKU</th>
                         <th class="px-6 py-4 font-bold">Curr. Stock</th>
                         <th class="px-6 py-4 font-bold">Min. Stock</th>
-                        <th class="px-6 py-4 font-bold">Actions</th>
+                        <th class="px-6 py-4 font-bold text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                     @forelse($items as $item)
                         <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-900/30 transition-colors group">
+                            <td class="px-6 py-4 text-gray-400 dark:text-gray-500 text-sm font-medium">
+                                {{ $items->firstItem() + $loop->index }}
+                            </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center space-x-3">
                                     <div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center font-bold text-xs text-gray-500">
