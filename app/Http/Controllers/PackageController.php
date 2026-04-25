@@ -24,27 +24,26 @@ class PackageController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:packages,name',
-            'type' => 'required|in:pppoe,hotspot',
             'price' => 'required|numeric|min:0',
-            'download_speed' => 'nullable|integer|min:1',
-            'upload_speed' => 'nullable|integer|min:1',
+            'download_speed' => 'nullable|string',
+            'upload_speed' => 'nullable|string',
+            'burst_limit_up' => 'nullable|string',
+            'burst_limit_down' => 'nullable|string',
+            'burst_threshold_up' => 'nullable|string',
+            'burst_threshold_down' => 'nullable|string',
+            'burst_time_up' => 'nullable|string',
+            'burst_time_down' => 'nullable|string',
+            'limit_at_up' => 'nullable|string',
+            'limit_at_down' => 'nullable|string',
+            'priority' => 'nullable|integer|min:1|max:8',
             'description' => 'nullable|string',
-            'is_active' => 'boolean',
         ]);
 
         DB::transaction(function () use ($validated) {
-            $package = Package::create([
-                'name' => $validated['name'],
-                'type' => $validated['type'],
-                'price' => $validated['price'],
-                'download_speed' => $validated['download_speed'] ?? null,
-                'upload_speed' => $validated['upload_speed'] ?? null,
-                'description' => $validated['description'] ?? null,
-                'is_active' => $validated['is_active'] ?? true,
-            ]);
+            $package = Package::create($validated);
 
-            if (!empty($validated['download_speed']) && !empty($validated['upload_speed'])) {
-                $rateLimit = $validated['upload_speed'] . 'M/' . $validated['download_speed'] . 'M';
+            $rateLimit = $package->mikrotik_rate_limit;
+            if ($rateLimit) {
                 RadGroupReply::create([
                     'groupname' => $package->name,
                     'attribute' => 'Mikrotik-Rate-Limit',
@@ -66,48 +65,39 @@ class PackageController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:packages,name,' . $package->id,
-            'type' => 'required|in:pppoe,hotspot',
             'price' => 'required|numeric|min:0',
-            'download_speed' => 'nullable|integer|min:1',
-            'upload_speed' => 'nullable|integer|min:1',
+            'download_speed' => 'nullable|string',
+            'upload_speed' => 'nullable|string',
+            'burst_limit_up' => 'nullable|string',
+            'burst_limit_down' => 'nullable|string',
+            'burst_threshold_up' => 'nullable|string',
+            'burst_threshold_down' => 'nullable|string',
+            'burst_time_up' => 'nullable|string',
+            'burst_time_down' => 'nullable|string',
+            'limit_at_up' => 'nullable|string',
+            'limit_at_down' => 'nullable|string',
+            'priority' => 'nullable|integer|min:1|max:8',
             'description' => 'nullable|string',
-            'is_active' => 'boolean',
         ]);
 
         $oldName = $package->name;
 
         DB::transaction(function () use ($validated, $package, $oldName) {
-            $package->update([
-                'name' => $validated['name'],
-                'type' => $validated['type'],
-                'price' => $validated['price'],
-                'download_speed' => $validated['download_speed'] ?? null,
-                'upload_speed' => $validated['upload_speed'] ?? null,
-                'description' => $validated['description'] ?? null,
-                'is_active' => $validated['is_active'] ?? true,
-            ]);
+            $package->update($validated);
 
             // Update RADIUS
             if ($oldName !== $validated['name']) {
                 RadGroupReply::where('groupname', $oldName)->update(['groupname' => $validated['name']]);
-                // We should also update radusergroup but keeping it simple for now
             }
 
-            if (!empty($validated['download_speed']) && !empty($validated['upload_speed'])) {
-                $rateLimit = $validated['upload_speed'] . 'M/' . $validated['download_speed'] . 'M';
-                $reply = RadGroupReply::where('groupname', $validated['name'])->where('attribute', 'Mikrotik-Rate-Limit')->first();
-                if ($reply) {
-                    $reply->update(['value' => $rateLimit]);
-                } else {
-                    RadGroupReply::create([
-                        'groupname' => $validated['name'],
-                        'attribute' => 'Mikrotik-Rate-Limit',
-                        'op' => '=',
-                        'value' => $rateLimit,
-                    ]);
-                }
+            $rateLimit = $package->mikrotik_rate_limit;
+            if ($rateLimit) {
+                RadGroupReply::updateOrCreate(
+                    ['groupname' => $package->name, 'attribute' => 'Mikrotik-Rate-Limit'],
+                    ['op' => '=', 'value' => $rateLimit]
+                );
             } else {
-                RadGroupReply::where('groupname', $validated['name'])->where('attribute', 'Mikrotik-Rate-Limit')->delete();
+                RadGroupReply::where('groupname', $package->name)->where('attribute', 'Mikrotik-Rate-Limit')->delete();
             }
         });
 

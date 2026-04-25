@@ -9,26 +9,67 @@
         <form action="{{ route('packages.store') }}" method="POST" class="p-8">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                    <x-input-label for="name" :value="__('Package Name (Groupname)')" />
-                    <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" required />
-                </div>
-                <div>
-                    <x-input-label for="type" :value="__('Type')" />
-                    <select id="type" name="type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm">
-                        <option value="pppoe">PPPoE</option>
-                        <option value="hotspot">Hotspot</option>
-                    </select>
-                </div>
-                <div>
-                    <x-input-label for="download_speed" :value="__('Download Speed (Mbps)')" />
-                    <x-text-input id="download_speed" name="download_speed" type="number" class="mt-1 block w-full" />
-                </div>
-                <div>
-                    <x-input-label for="upload_speed" :value="__('Upload Speed (Mbps)')" />
-                    <x-text-input id="upload_speed" name="upload_speed" type="number" class="mt-1 block w-full" />
-                </div>
                 <div class="md:col-span-2">
+                    <x-input-label for="name" :value="__('Package Name (Groupname)')" />
+                    <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" required placeholder="e.g. Bronze_5M" />
+                </div>
+
+                <div class="md:col-span-2 py-2 border-b border-gray-100 dark:border-gray-700">
+                    <h3 class="text-sm font-bold text-indigo-600 uppercase tracking-wider">Bandwidth Limitation (MikroTik PPPoE)</h3>
+                    <p class="text-xs text-gray-500 mt-1">Format: 5M, 512k, etc.</p>
+                </div>
+
+                <!-- Rate Limit -->
+                <div class="md:col-span-2">
+                    <span class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">Rate Limit (Upload / Download)</span>
+                    <div class="grid grid-cols-2 gap-4 mt-1">
+                        <x-text-input id="upload_speed" name="upload_speed" type="text" class="block w-full" placeholder="Upload (Rx) e.g. 1M" />
+                        <x-text-input id="download_speed" name="download_speed" type="text" class="block w-full" placeholder="Download (Tx) e.g. 5M" />
+                    </div>
+                </div>
+
+                <!-- Burst Limit -->
+                <div class="md:col-span-2">
+                    <span class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">Burst Limit (Upload / Download)</span>
+                    <div class="grid grid-cols-2 gap-4 mt-1">
+                        <x-text-input id="burst_limit_up" name="burst_limit_up" type="text" class="block w-full" placeholder="Burst Up e.g. 2M" />
+                        <x-text-input id="burst_limit_down" name="burst_limit_down" type="text" class="block w-full" placeholder="Burst Down e.g. 10M" />
+                    </div>
+                </div>
+
+                <!-- Burst Threshold -->
+                <div class="md:col-span-2">
+                    <span class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">Burst Threshold (Upload / Download)</span>
+                    <div class="grid grid-cols-2 gap-4 mt-1">
+                        <x-text-input id="burst_threshold_up" name="burst_threshold_up" type="text" class="block w-full" placeholder="Threshold Up" />
+                        <x-text-input id="burst_threshold_down" name="burst_threshold_down" type="text" class="block w-full" placeholder="Threshold Down" />
+                    </div>
+                </div>
+
+                <!-- Burst Time -->
+                <div class="md:col-span-2">
+                    <span class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">Burst Time (Upload / Download)</span>
+                    <div class="grid grid-cols-2 gap-4 mt-1">
+                        <x-text-input id="burst_time_up" name="burst_time_up" type="text" class="block w-full" placeholder="Time Up (sec)" />
+                        <x-text-input id="burst_time_down" name="burst_time_down" type="text" class="block w-full" placeholder="Time Down (sec)" />
+                    </div>
+                </div>
+
+                <!-- Limit At -->
+                <div class="md:col-span-2">
+                    <span class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">Limit At (Upload / Download)</span>
+                    <div class="grid grid-cols-2 gap-4 mt-1">
+                        <x-text-input id="limit_at_up" name="limit_at_up" type="text" class="block w-full" placeholder="Min Up" />
+                        <x-text-input id="limit_at_down" name="limit_at_down" type="text" class="block w-full" placeholder="Min Down" />
+                    </div>
+                </div>
+
+                <div class="mt-2">
+                    <x-input-label for="priority" :value="__('Priority (1-8)')" />
+                    <x-text-input id="priority" name="priority" type="number" min="1" max="8" class="mt-1 block w-full" value="8" />
+                </div>
+
+                <div class="md:col-span-2 pt-4 border-t border-gray-100 dark:border-gray-700 mt-4">
                     <x-input-label for="price" :value="__('Monthly Price (Rp)')" />
                     <x-text-input id="price" name="price" type="number" class="mt-1 block w-full" required />
                 </div>

@@ -23,7 +23,6 @@
                     <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Package Name</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Speed (UP/DL)</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Price (Rp)</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Actions</th>
@@ -36,9 +35,10 @@
                                 {{ $packages->firstItem() + $loop->index }}
                             </td>
                             <td class="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">{{ $package->name }}</td>
-                            <td class="px-6 py-4 uppercase text-xs font-bold text-gray-500">{{ $package->type }}</td>
-                            <td class="px-6 py-4 text-indigo-600 dark:text-indigo-400 font-mono">{{ $package->upload_speed ?: 'Unlimited' }}M / {{ $package->download_speed ?: 'Unlimited' }}M</td>
-                            <td class="px-6 py-4 text-gray-900 dark:text-gray-100">{{ number_format($package->price, 0) }}</td>
+                            <td class="px-6 py-4 text-indigo-600 dark:text-indigo-400 font-mono">
+                                {{ $package->upload_speed ?: 'Unlimited' }} / {{ $package->download_speed ?: 'Unlimited' }}
+                            </td>
+                            <td class="px-6 py-4 text-gray-900 dark:text-gray-100">Rp {{ number_format($package->price, 0, ',', '.') }}</td>
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center space-x-4">
                                     <a href="{{ route('packages.edit', $package) }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Edit</a>
