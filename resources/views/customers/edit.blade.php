@@ -114,10 +114,14 @@
                 <div class="mb-6">
                     <div class="flex justify-between items-center mb-2">
                         <x-input-label :value="__('Installation Location')" />
-                        <button type="button" id="locate-me" class="text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full font-bold uppercase hover:bg-indigo-100 transition-all flex items-center">
+                        <button type="button" id="locate-me" class="hidden text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full font-bold uppercase hover:bg-indigo-100 transition-all items-center">
                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                             Gunakan Lokasi Saya
                         </button>
+                        <span id="locate-no-https" class="hidden text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
+                            <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 0v2m0-2h2m-2 0H10m9.364-7.364A9 9 0 115.636 5.636 9 9 0 0119.364 12.636z"></path></svg>
+                            Lokasi GPS memerlukan HTTPS
+                        </span>
                     </div>
                     <div class="mt-1 border-4 border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden shadow-inner">
                         <div id="map-picker" style="height: 300px; width: 100%;"></div>
@@ -275,7 +279,12 @@
                 // Initial population
                 updateInputs(initialLat, initialLng);
 
-                if (locateBtn && navigator.geolocation) {
+                var isSecure = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+                var noHttpsMsg = document.getElementById('locate-no-https');
+
+                if (locateBtn && navigator.geolocation && isSecure) {
+                    locateBtn.classList.remove('hidden');
+                    locateBtn.classList.add('flex');
                     locateBtn.addEventListener('click', function() {
                         navigator.geolocation.getCurrentPosition(function(position) {
                             var userLat = position.coords.latitude;
@@ -287,6 +296,9 @@
                             alert("Gagal mendapatkan lokasi: " + error.message);
                         });
                     });
+                } else if (noHttpsMsg && !isSecure) {
+                    noHttpsMsg.classList.remove('hidden');
+                    noHttpsMsg.classList.add('inline-flex');
                 }
 
                 latInput.addEventListener('input', function() {
