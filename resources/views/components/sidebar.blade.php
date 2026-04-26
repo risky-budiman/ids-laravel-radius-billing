@@ -273,6 +273,12 @@
                     Activity Logs
                 </a>
             </li>
+            <li>
+                <a href="{{ route('server-logs.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('server-logs.*') ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
+                    <svg class="w-5 h-5 mr-3 group-hover:text-amber-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Server Logs
+                </a>
+            </li>
             @endif
 
             <li class="pt-4 pb-2 border-t border-gray-200/50 dark:border-gray-800/50">

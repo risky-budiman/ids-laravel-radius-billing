@@ -185,6 +185,8 @@ Route::middleware('auth')->group(function () {
         
         Route::resource('packages', \App\Http\Controllers\PackageController::class);
         Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::get('server-logs', [\App\Http\Controllers\ServerLogController::class, 'index'])->name('server-logs.index');
+        Route::delete('server-logs/clear', [\App\Http\Controllers\ServerLogController::class, 'clear'])->name('server-logs.clear');
         
         // Location Master Data
         Route::get('locations/regions', [\App\Http\Controllers\LocationDataController::class, 'regions'])->name('locations.regions');

@@ -3,10 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Customer;
-use App\Models\Invoice;
-use App\Models\Radius\Nas;
-use App\Services\RadiusCoAService;
-use App\Services\WhatsAppService;
+use App\Jobs\GenerateCustomerInvoice;
+use App\Jobs\ProcessCustomerSuspension;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -24,23 +22,25 @@ class ProcessAutomatedBilling extends Command
      *
      * @var string
      */
-    protected $description = 'Process automated daily billing, invoice generation, and suspension';
+    protected $description = 'Process automated daily billing, invoice generation, and suspension by dispatching jobs';
 
     /**
      * Execute the console command.
      */
-    public function handle(RadiusCoAService $coaService, WhatsAppService $waService)
+    public function handle()
     {
-        $this->info("Starting Automated Billing Processor...");
+        $this->info("Starting Automated Billing Job Dispatcher...");
+        Log::info("Automated Billing Dispatcher started.");
         
-        $this->generateInvoices($waService);
-        $this->processSuspensions($coaService, $waService);
+        $this->dispatchInvoices();
+        $this->dispatchSuspensions();
         
-        $this->info("Billing Processor finished.");
+        $this->info("Billing Dispatcher finished.");
+        Log::info("Automated Billing Dispatcher finished.");
         return 0;
     }
 
-    private function generateInvoices($waService)
+    private function dispatchInvoices()
     {
         $this->info("Checking for new invoices to generate...");
         
@@ -52,47 +52,16 @@ class ProcessAutomatedBilling extends Command
 
         foreach ($customers as $customer) {
             if ($this->option('dry-run')) {
-                $this->line("Dry-run: Would generate invoice for {$customer->name} ({$customer->username})");
+                $this->line("Dry-run: Would dispatch invoice generation for {$customer->username}");
                 continue;
             }
 
-            // Generate Invoice
-            $price = $customer->package->price;
-            $nextDate = $customer->billing_next_date ?? now();
-            
-            if ($customer->billing_type === 'postpaid' && $customer->billing_method === 'cycle') {
-                // For Postpaid Cycle, the invoice generated on the 1st covers the PREVIOUS month
-                $startDate = $nextDate->copy()->subMonth()->startOfMonth();
-                $endDate = $nextDate->copy()->subDay(); // Last day of previous month
-            } else {
-                // Default for Prepaid or other types
-                $startDate = $nextDate->copy();
-                $endDate = $startDate->copy()->addMonth()->subDay();
-            }
-
-            $invoice = Invoice::create([
-                'invoice_number' => 'INV-' . strtoupper(uniqid()),
-                'customer_id' => $customer->id,
-                'billing_period' => '1 Month',
-                'period_start' => $startDate,
-                'period_end' => $endDate,
-                'amount' => $price,
-                'status' => 'unpaid',
-                'due_date' => $customer->billing_due_date,
-                'notes' => 'Tagihan otomatis skema ' . ucfirst($customer->billing_method),
-            ]);
-
-            $this->info("Generated invoice {$invoice->invoice_number} for {$customer->username}");
-
-            // Update next billing schedule
-            $customer->syncBillingDates();
-
-            // Send WhatsApp Notification
-            $this->sendInvoiceNotification($customer, $invoice, $waService);
+            GenerateCustomerInvoice::dispatch($customer);
+            $this->info("Dispatched invoice generation job for {$customer->username}");
         }
     }
 
-    private function processSuspensions($coaService, $waService)
+    private function dispatchSuspensions()
     {
         $this->info("Checking for customers needing suspension...");
 
@@ -107,7 +76,7 @@ class ProcessAutomatedBilling extends Command
             ->get();
 
         foreach ($postpaidOverdue as $customer) {
-            $this->suspendCustomer($customer, "Tagihan Pasca Bayar belum lunas melewati jatuh tempo.", $coaService, $waService);
+            $this->dispatchSuspensionJob($customer, "Tagihan Pasca Bayar belum lunas melewati jatuh tempo.");
         }
 
         // 2. Prepaid Fixed Suspension
@@ -122,7 +91,7 @@ class ProcessAutomatedBilling extends Command
             ->get();
             
         foreach ($prepaidFixedOverdue as $customer) {
-            $this->suspendCustomer($customer, "Tagihan Prabayar Fixed belum lunas atau masa aktif habis.", $coaService, $waService);
+            $this->dispatchSuspensionJob($customer, "Tagihan Prabayar Fixed belum lunas atau masa aktif habis.");
         }
 
         // 3. Prepaid Renewal Suspension
@@ -134,46 +103,18 @@ class ProcessAutomatedBilling extends Command
             ->get();
 
         foreach ($prepaidRenewalOverdue as $customer) {
-            $this->suspendCustomer($customer, "Masa aktif Prabayar (Renewal) telah habis.", $coaService, $waService);
+            $this->dispatchSuspensionJob($customer, "Masa aktif Prabayar (Renewal) telah habis.");
         }
     }
 
-    private function suspendCustomer($customer, $reason, $coaService, $waService)
+    private function dispatchSuspensionJob($customer, $reason)
     {
         if ($this->option('dry-run')) {
-            $this->line("Dry-run: Would suspend {$customer->username}. Reason: {$reason}");
+            $this->line("Dry-run: Would dispatch suspension for {$customer->username}. Reason: {$reason}");
             return;
         }
 
-        $this->warn("Suspending customer: {$customer->username}");
-        
-        $customer->update([
-            'is_active' => false,
-            'status' => Customer::STATUS_SUSPENDED
-        ]);
-
-        // CoA Disconnect if possible
-        $nas = Nas::first();
-        if ($nas) {
-            $coaService->disconnect($nas->nasname, $nas->secret, $customer->username);
-        }
-
-        // Send WA Notification
-        $message = "Halo *{$customer->name}*,\n\n" .
-                   "Layanan internet Anda sementara ditangguhkan (SUSPENDED).\n" .
-                   "Alasan: {$reason}\n\n" .
-                   "Silakan melakukan pembayaran untuk mengaktifkan kembali layanan. Terima kasih.";
-                   
-        $waService->sendMessage($customer->phone, $message);
-    }
-
-    private function sendInvoiceNotification($customer, $invoice, $waService)
-    {
-        $message = "Halo *{$customer->name}*,\n\n" .
-                  "Tagihan internet Anda untuk nomor *{$invoice->invoice_number}* sebesar *Rp " . number_format($invoice->amount, 0, ',', '.') . "* telah terbit.\n" .
-                  "Jatuh tempo pada: *{$invoice->due_date->format('d-m-Y')}*.\n\n" .
-                  "Silakan segera lakukan pembayaran melalui portal pelanggan. Terima kasih.";
-                  
-        $waService->sendMessage($customer->phone, $message);
+        ProcessCustomerSuspension::dispatch($customer, $reason);
+        $this->warn("Dispatched suspension job for {$customer->username}");
     }
 }
