@@ -58,11 +58,22 @@ class ProcessCustomerSuspension implements ShouldQueue
         }
 
         // Send WA Notification
-        $message = "Halo *{$customer->name}*,\n\n" .
-                   "Layanan internet Anda sementara ditangguhkan (SUSPENDED).\n" .
-                   "Alasan: {$reason}\n\n" .
-                   "Silakan melakukan pembayaran untuk mengaktifkan kembali layanan. Terima kasih.";
-                   
-        $waService->sendMessage($customer->phone, $message);
+        $template = \App\Models\WhatsappTemplate::where('type', 'suspension')->first();
+        if ($template && $template->is_active) {
+            $message = $template->message;
+            $amount = $customer->invoices()->where('status', 'unpaid')->sum('amount');
+            $paymentLink = config('app.url') . '/portal'; // General portal link since multiple invoices might exist
+
+            $replace = [
+                '{id_pelanggan}' => $customer->username,
+                '{name}' => $customer->name,
+                '{reason}' => $reason,
+                '{amount}' => number_format($amount, 0, ',', '.'),
+                '{payment_link}' => $paymentLink,
+            ];
+
+            $message = str_replace(array_keys($replace), array_values($replace), $message);
+            $waService->sendMessage($customer->phone, $message);
+        }
     }
 }

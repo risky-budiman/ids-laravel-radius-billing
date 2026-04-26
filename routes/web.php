@@ -187,6 +187,20 @@ Route::middleware('auth')->group(function () {
         Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
         Route::get('server-logs', [\App\Http\Controllers\ServerLogController::class, 'index'])->name('server-logs.index');
         Route::delete('server-logs/clear', [\App\Http\Controllers\ServerLogController::class, 'clear'])->name('server-logs.clear');
+
+        // WhatsApp Templates
+        Route::get('whatsapp-templates', [\App\Http\Controllers\WhatsappTemplateController::class, 'index'])->name('whatsapp-templates.index');
+        Route::get('whatsapp-templates/{whatsappTemplate}/edit', [\App\Http\Controllers\WhatsappTemplateController::class, 'edit'])->name('whatsapp-templates.edit');
+        Route::put('whatsapp-templates/{whatsappTemplate}', [\App\Http\Controllers\WhatsappTemplateController::class, 'update'])->name('whatsapp-templates.update');
+        Route::post('whatsapp-templates/reset', [\App\Http\Controllers\WhatsappTemplateController::class, 'reset'])->name('whatsapp-templates.reset');
+
+        // WhatsApp Broadcast
+        Route::get('whatsapp-broadcast', [\App\Http\Controllers\WhatsappBroadcastController::class, 'create'])->name('whatsapp-broadcast.create');
+        Route::post('whatsapp-broadcast', [\App\Http\Controllers\WhatsappBroadcastController::class, 'send'])->name('whatsapp-broadcast.send');
+
+        // WhatsApp Logs
+        Route::get('whatsapp-logs', [\App\Http\Controllers\WhatsappLogController::class, 'index'])->name('whatsapp-logs.index');
+        Route::post('whatsapp-logs/{whatsappLog}/resend', [\App\Http\Controllers\WhatsappLogController::class, 'resend'])->name('whatsapp-logs.resend');
         
         // Location Master Data
         Route::get('locations/regions', [\App\Http\Controllers\LocationDataController::class, 'regions'])->name('locations.regions');

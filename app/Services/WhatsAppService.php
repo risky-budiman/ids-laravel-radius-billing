@@ -11,21 +11,36 @@ class WhatsAppService
     /**
      * Send a WhatsApp message using Fonnte.
      */
-    public function sendMessage($target, $message): bool
+    public function sendMessage($target, $message, $logId = null): bool
     {
+        $log = null;
+        if ($logId) {
+            $log = \App\Models\WhatsappLog::find($logId);
+        } else {
+            $log = \App\Models\WhatsappLog::create([
+                'target_phone' => $target,
+                'message' => $message,
+                'status' => 'pending',
+            ]);
+        }
+
         $gateway = Gateway::where('provider', 'fonnte')
             ->where('is_active', true)
             ->first();
 
         if (!$gateway) {
-            Log::warning('WhatsApp Notification: Fonnte is not active or configured.');
+            $error = 'WhatsApp Notification: Fonnte is not active or configured.';
+            Log::warning($error);
+            if ($log) $log->update(['status' => 'failed', 'error_reason' => $error]);
             return false;
         }
 
         $token = $gateway->credentials['token'] ?? null;
 
         if (!$token) {
-            Log::warning('WhatsApp Notification: Fonnte token is missing.');
+            $error = 'WhatsApp Notification: Fonnte token is missing.';
+            Log::warning($error);
+            if ($log) $log->update(['status' => 'failed', 'error_reason' => $error]);
             return false;
         }
 
@@ -39,14 +54,19 @@ class WhatsAppService
             ]);
 
             if ($response->successful()) {
+                if ($log) $log->update(['status' => 'sent']);
                 return true;
             }
 
-            Log::error('Fonnte API Error: ' . $response->body());
+            $error = 'Fonnte API Error: ' . $response->body();
+            Log::error($error);
+            if ($log) $log->update(['status' => 'failed', 'error_reason' => $error]);
             return false;
 
         } catch (\Exception $e) {
-            Log::error('WhatsApp Service Exception: ' . $e->getMessage());
+            $error = 'WhatsApp Service Exception: ' . $e->getMessage();
+            Log::error($error);
+            if ($log) $log->update(['status' => 'failed', 'error_reason' => $error]);
             return false;
         }
     }

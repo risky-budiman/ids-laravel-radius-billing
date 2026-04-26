@@ -74,10 +74,27 @@ class GenerateCustomerInvoice implements ShouldQueue
 
     private function sendInvoiceNotification($customer, $invoice, $waService)
     {
-        $message = "Halo *{$customer->name}*,\n\n" .
-                  "Tagihan internet Anda untuk nomor *{$invoice->invoice_number}* sebesar *Rp " . number_format($invoice->amount, 0, ',', '.') . "* telah terbit.\n" .
-                  "Jatuh tempo pada: *{$invoice->due_date->format('d-m-Y')}*.\n\n" .
-                  "Silakan segera lakukan pembayaran melalui portal pelanggan. Terima kasih.";
+        $template = \App\Models\WhatsappTemplate::where('type', 'invoice_generated')->first();
+        
+        if (!$template || !$template->is_active) {
+            return; // Don't send if template is inactive or missing
+        }
+
+        $message = $template->message;
+        $periode = $invoice->period_start->format('d M') . ' - ' . $invoice->period_end->format('d M Y');
+        $paymentLink = config('app.url') . '/pay/' . $invoice->invoice_number; // Assuming you have a payment route or just general portal
+
+        $replace = [
+            '{id_pelanggan}' => $customer->username,
+            '{name}' => $customer->name,
+            '{periode}' => $periode,
+            '{amount}' => number_format($invoice->amount, 0, ',', '.'),
+            '{invoice_number}' => $invoice->invoice_number,
+            '{due_date}' => $invoice->due_date->format('d-m-Y'),
+            '{payment_link}' => $paymentLink,
+        ];
+
+        $message = str_replace(array_keys($replace), array_values($replace), $message);
                   
         $waService->sendMessage($customer->phone, $message);
     }
