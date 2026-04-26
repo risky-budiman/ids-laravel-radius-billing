@@ -229,100 +229,112 @@
     @push('scripts')
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Map Picker Logic
-            const latInput = document.getElementById('latitude');
-            const lngInput = document.getElementById('longitude');
-            
-            const initialLat = @json($customer->latitude) || -6.200000;
-            const initialLng = @json($customer->longitude) || 106.816666;
-            
-            const map = L.map('map-picker').setView([initialLat, initialLng], 14);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
+        (function() {
+            var latInput = document.getElementById('latitude');
+            var lngInput = document.getElementById('longitude');
 
-            let marker = L.marker([initialLat, initialLng], {draggable: true}).addTo(map);
-            const locateBtn = document.getElementById('locate-me');
-
-            function updateInputs(lat, lng) {
-                if (latInput && lngInput) {
-                    latInput.value = lat.toFixed(8);
-                    lngInput.value = lng.toFixed(8);
-                    
-                    // Visual feedback
-                    latInput.style.backgroundColor = '#dcfce7';
-                    lngInput.style.backgroundColor = '#dcfce7';
-                    setTimeout(() => {
-                        latInput.style.backgroundColor = '';
-                        lngInput.style.backgroundColor = '';
-                    }, 500);
-                    
-                    console.log("Updated inputs to:", lat, lng);
+            // ========== MAP INITIALIZATION (wrapped in try-catch) ==========
+            try {
+                var initialLat = parseFloat(@json($customer->latitude)) || -6.200000;
+                var initialLng = parseFloat(@json($customer->longitude)) || 106.816666;
+                
+                // Properly destroy any existing Leaflet map instance
+                var mapContainer = document.getElementById('map-picker');
+                if (mapContainer && mapContainer._leaflet_id) {
+                    // Remove all child nodes and reset leaflet internal state
+                    while (mapContainer.firstChild) {
+                        mapContainer.removeChild(mapContainer.firstChild);
+                    }
+                    delete mapContainer._leaflet_id;
                 }
-            }
+                
+                var map = L.map('map-picker').setView([initialLat, initialLng], 14);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
 
-            // Initial population
-            updateInputs(initialLat, initialLng);
+                var marker = L.marker([initialLat, initialLng], {draggable: true}).addTo(map);
+                var locateBtn = document.getElementById('locate-me');
 
-            if (locateBtn && navigator.geolocation) {
-                locateBtn.addEventListener('click', function() {
-                    navigator.geolocation.getCurrentPosition(function(position) {
-                        const userLat = position.coords.latitude;
-                        const userLng = position.coords.longitude;
-                        marker.setLatLng([userLat, userLng]);
-                        map.setView([userLat, userLng], 16);
-                        updateInputs(userLat, userLng);
-                    }, function(error) {
-                        alert("Gagal mendapatkan lokasi: " + error.message);
+                function updateInputs(lat, lng) {
+                    if (latInput && lngInput) {
+                        latInput.value = lat.toFixed(8);
+                        lngInput.value = lng.toFixed(8);
+                        
+                        // Visual feedback
+                        latInput.style.backgroundColor = '#dcfce7';
+                        lngInput.style.backgroundColor = '#dcfce7';
+                        setTimeout(function() {
+                            latInput.style.backgroundColor = '';
+                            lngInput.style.backgroundColor = '';
+                        }, 500);
+                    }
+                }
+
+                // Initial population
+                updateInputs(initialLat, initialLng);
+
+                if (locateBtn && navigator.geolocation) {
+                    locateBtn.addEventListener('click', function() {
+                        navigator.geolocation.getCurrentPosition(function(position) {
+                            var userLat = position.coords.latitude;
+                            var userLng = position.coords.longitude;
+                            marker.setLatLng([userLat, userLng]);
+                            map.setView([userLat, userLng], 16);
+                            updateInputs(userLat, userLng);
+                        }, function(error) {
+                            alert("Gagal mendapatkan lokasi: " + error.message);
+                        });
                     });
+                }
+
+                latInput.addEventListener('input', function() {
+                    var lat = parseFloat(this.value);
+                    var lng = parseFloat(lngInput.value);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        marker.setLatLng([lat, lng]);
+                        map.panTo([lat, lng]);
+                    }
                 });
+
+                lngInput.addEventListener('input', function() {
+                    var lat = parseFloat(latInput.value);
+                    var lng = parseFloat(this.value);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        marker.setLatLng([lat, lng]);
+                        map.panTo([lat, lng]);
+                    }
+                });
+
+                marker.on('dragend', function(e) {
+                    var position = marker.getLatLng();
+                    updateInputs(position.lat, position.lng);
+                });
+
+                map.on('click', function(e) {
+                    marker.setLatLng(e.latlng);
+                    updateInputs(e.latlng.lat, e.latlng.lng);
+                });
+            } catch(mapError) {
+                console.warn('Map initialization skipped:', mapError.message);
             }
 
-            latInput.addEventListener('input', function() {
-                const lat = parseFloat(this.value);
-                const lng = parseFloat(lngInput.value);
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    marker.setLatLng([lat, lng]);
-                    map.panTo([lat, lng]);
-                }
-            });
+            // ========== CASCADING DROPDOWNS (always runs) ==========
+            var regionSelect = document.getElementById('region_code');
+            var stoSelect = document.getElementById('sto_code');
+            var stbSelect = document.getElementById('stb_code');
 
-            lngInput.addEventListener('input', function() {
-                const lat = parseFloat(latInput.value);
-                const lng = parseFloat(this.value);
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    marker.setLatLng([lat, lng]);
-                    map.panTo([lat, lng]);
-                }
-            });
-
-            marker.on('dragend', function(e) {
-                const position = marker.getLatLng();
-                updateInputs(position.lat, position.lng);
-            });
-
-            map.on('click', function(e) {
-                marker.setLatLng(e.latlng);
-                updateInputs(e.latlng.lat, e.latlng.lng);
-            });
-
-            // Cascading Dropdowns Logic (original)
-            const regionSelect = document.getElementById('region_code');
-            const stoSelect = document.getElementById('sto_code');
-            const stbSelect = document.getElementById('stb_code');
-
-            function filterStos(preserveValue = false) {
-                const selectedOption = regionSelect.options[regionSelect.selectedIndex];
-                const regionId = selectedOption ? selectedOption.getAttribute('data-id') : null;
-                const currentValue = stoSelect.value;
+            function filterStos(preserveValue) {
+                var selectedOption = regionSelect.options[regionSelect.selectedIndex];
+                var regionId = selectedOption ? selectedOption.getAttribute('data-id') : null;
+                var currentValue = stoSelect.value;
                 if(!preserveValue) stoSelect.value = '';
                 
                 if(regionId) {
                     stoSelect.disabled = false;
-                    for(let i = 0; i < stoSelect.options.length; i++) {
-                        const opt = stoSelect.options[i];
+                    for(var i = 0; i < stoSelect.options.length; i++) {
+                        var opt = stoSelect.options[i];
                         if(opt.value === "") continue;
                         
                         if(opt.getAttribute('data-region-id') === regionId) {
@@ -339,16 +351,16 @@
                 if(preserveValue) stoSelect.value = currentValue;
             }
 
-            function filterStbs(preserveValue = false) {
-                const selectedOption = stoSelect.options[stoSelect.selectedIndex];
-                const stoId = selectedOption ? selectedOption.getAttribute('data-id') : null;
-                const currentValue = stbSelect.value;
+            function filterStbs(preserveValue) {
+                var selectedOption = stoSelect.options[stoSelect.selectedIndex];
+                var stoId = selectedOption ? selectedOption.getAttribute('data-id') : null;
+                var currentValue = stbSelect.value;
                 if(!preserveValue) stbSelect.value = '';
 
                 if(stoId) {
                     stbSelect.disabled = false;
-                    for(let i = 0; i < stbSelect.options.length; i++) {
-                        const opt = stbSelect.options[i];
+                    for(var i = 0; i < stbSelect.options.length; i++) {
+                        var opt = stbSelect.options[i];
                         if(opt.value === "") continue;
                         
                         if(opt.getAttribute('data-sto-id') === stoId) {
@@ -365,22 +377,22 @@
                 if(preserveValue) stbSelect.value = currentValue;
             }
 
-            regionSelect.addEventListener('change', () => { filterStos(false); filterStbs(false); });
-            stoSelect.addEventListener('change', () => filterStbs(false));
+            regionSelect.addEventListener('change', function() { filterStos(false); filterStbs(false); });
+            stoSelect.addEventListener('change', function() { filterStbs(false); });
 
             if(regionSelect.value) { filterStos(true); }
             if(stoSelect.value) { filterStbs(true); }
 
-            // Billing Logic script
-            const billingType = document.getElementById('billing_type');
-            const billingMethod = document.getElementById('billing_method');
-            const cycleDates = document.getElementById('billing_cycle_dates');
-            const infoBox = document.getElementById('billing_info_box');
-            const methodDesc = document.getElementById('method_description');
+            // ========== BILLING LOGIC (always runs) ==========
+            var billingType = document.getElementById('billing_type');
+            var billingMethod = document.getElementById('billing_method');
+            var cycleDates = document.getElementById('billing_cycle_dates');
+            var infoBox = document.getElementById('billing_info_box');
+            var methodDesc = document.getElementById('method_description');
             
-            const initialMethod = @json(old('billing_method', $customer->billing_method));
+            var initialMethod = @json(old('billing_method', $customer->billing_method));
 
-            const methods = {
+            var methods = {
                 postpaid: [
                     { value: 'cycle', label: 'Cycle (Invoice tgl 1, Jatuh Tempo tgl 20)', desc: '<strong>Pasca Bayar Cycle:</strong> Layanan dipakai dulu. Invoice terbit setiap tanggal 1, jatuh tempo tanggal 20. Pembayaran pertama dihitung prorata.' },
                     { value: 'fixed', label: 'Fixed (Jatuh Tempo Tgl Aktif, -7 Hari)', desc: '<strong>Pasca Bayar Fixed:</strong> Layanan dipakai dulu. Jatuh tempo setiap tanggal pendaftaran (anniversary). Invoice terbit 7 hari sebelum jatuh tempo.' }
@@ -392,12 +404,12 @@
             };
 
             function updateMethods() {
-                const type = billingType.value;
-                const oldMethod = billingMethod.value || initialMethod;
+                var type = billingType.value;
+                var oldMethod = billingMethod.value || initialMethod;
                 billingMethod.innerHTML = '';
                 
-                methods[type].forEach(m => {
-                    const opt = document.createElement('option');
+                methods[type].forEach(function(m) {
+                    var opt = document.createElement('option');
                     opt.value = m.value;
                     opt.textContent = m.label;
                     if(m.value === oldMethod) opt.selected = true;
@@ -408,9 +420,9 @@
             }
 
             function updateDescription() {
-                const type = billingType.value;
-                const method = billingMethod.value;
-                const activeMethod = methods[type].find(m => m.value === method);
+                var type = billingType.value;
+                var method = billingMethod.value;
+                var activeMethod = methods[type].find(function(m) { return m.value === method; });
                 
                 if (activeMethod) {
                     methodDesc.innerHTML = activeMethod.desc;
@@ -429,14 +441,15 @@
             billingType.addEventListener('change', updateMethods);
             billingMethod.addEventListener('change', updateDescription);
             
-            // Password Regeneration logic
-            const regenBtn = document.getElementById('regen_password');
-            const passwordInput = document.getElementById('password');
+            // ========== PASSWORD REGENERATION (always runs) ==========
+            var regenBtn = document.getElementById('regen_password');
+            var passwordInput = document.getElementById('password');
 
-            function generateRandomPassword(length = 8) {
-                const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-                let retVal = "";
-                for (let i = 0, n = charset.length; i < length; ++i) {
+            function generateRandomPassword(length) {
+                length = length || 8;
+                var charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                var retVal = "";
+                for (var i = 0, n = charset.length; i < length; ++i) {
                     retVal += charset.charAt(Math.floor(Math.random() * n));
                 }
                 return retVal;
@@ -448,8 +461,9 @@
                 });
             }
 
+            // Initialize billing methods
             updateMethods();
-        });
+        })();
     </script>
     @endpush
 </x-app-layout>

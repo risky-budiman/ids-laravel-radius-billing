@@ -225,109 +225,121 @@
     @push('scripts')
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Map Picker Logic
-            const latInput = document.getElementById('latitude');
-            const lngInput = document.getElementById('longitude');
-            
-            // Default center (e.g., Jakarta or a relevant region)
-            const defaultLat = -6.200000;
-            const defaultLng = 106.816666;
-            
-            const map = L.map('map-picker').setView([defaultLat, defaultLng], 12);
-            
-            // Try to get user's current location
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const userLat = position.coords.latitude;
-                    const userLng = position.coords.longitude;
-                    map.setView([userLat, userLng], 14);
-                }, function() {
-                    console.log("Geolocation permission denied or failed.");
-                });
-            }
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
+        (function() {
+            var latInput = document.getElementById('latitude');
+            var lngInput = document.getElementById('longitude');
 
-            let marker;
-            const locateBtn = document.getElementById('locate-me');
-
-            function updateInputs(lat, lng) {
-                latInput.value = lat.toFixed(8);
-                lngInput.value = lng.toFixed(8);
-            }
-
-            function updateMarker(latlng) {
-                if (marker) {
-                    marker.setLatLng(latlng);
-                } else {
-                    marker = L.marker(latlng, {draggable: true}).addTo(map);
-                    marker.on('dragend', function(e) {
-                        const position = marker.getLatLng();
-                        updateInputs(position.lat, position.lng);
-                    });
-                }
-                map.panTo(latlng);
-            }
-
-            if (locateBtn && navigator.geolocation) {
-                locateBtn.addEventListener('click', function() {
-                    navigator.geolocation.getCurrentPosition(function(position) {
-                        const userLat = position.coords.latitude;
-                        const userLng = position.coords.longitude;
-                        updateMarker([userLat, userLng]);
-                        map.setView([userLat, userLng], 16);
-                    }, function(error) {
-                        alert("Gagal mendapatkan lokasi: " + error.message);
-                    });
-                });
+            // ========== MAP INITIALIZATION (wrapped in try-catch) ==========
+            try {
+                var defaultLat = -6.200000;
+                var defaultLng = 106.816666;
                 
-                // Auto-locate on load
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const userLat = position.coords.latitude;
-                    const userLng = position.coords.longitude;
-                    map.setView([userLat, userLng], 14);
+                // Properly destroy any existing Leaflet map instance
+                var mapContainer = document.getElementById('map-picker');
+                if (mapContainer && mapContainer._leaflet_id) {
+                    while (mapContainer.firstChild) {
+                        mapContainer.removeChild(mapContainer.firstChild);
+                    }
+                    delete mapContainer._leaflet_id;
+                }
+                
+                var map = L.map('map-picker').setView([defaultLat, defaultLng], 12);
+                
+                // Try to get user's current location
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        var userLat = position.coords.latitude;
+                        var userLng = position.coords.longitude;
+                        map.setView([userLat, userLng], 14);
+                    }, function() {
+                        console.log("Geolocation permission denied or failed.");
+                    });
+                }
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+
+                var marker;
+                var locateBtn = document.getElementById('locate-me');
+
+                function updateInputs(lat, lng) {
+                    latInput.value = lat.toFixed(8);
+                    lngInput.value = lng.toFixed(8);
+                }
+
+                function updateMarker(latlng) {
+                    if (marker) {
+                        marker.setLatLng(latlng);
+                    } else {
+                        marker = L.marker(latlng, {draggable: true}).addTo(map);
+                        marker.on('dragend', function(e) {
+                            var position = marker.getLatLng();
+                            updateInputs(position.lat, position.lng);
+                        });
+                    }
+                    map.panTo(latlng);
+                }
+
+                if (locateBtn && navigator.geolocation) {
+                    locateBtn.addEventListener('click', function() {
+                        navigator.geolocation.getCurrentPosition(function(position) {
+                            var userLat = position.coords.latitude;
+                            var userLng = position.coords.longitude;
+                            updateMarker([userLat, userLng]);
+                            map.setView([userLat, userLng], 16);
+                        }, function(error) {
+                            alert("Gagal mendapatkan lokasi: " + error.message);
+                        });
+                    });
+                    
+                    // Auto-locate on load
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        var userLat = position.coords.latitude;
+                        var userLng = position.coords.longitude;
+                        map.setView([userLat, userLng], 14);
+                    });
+                }
+
+                latInput.addEventListener('input', function() {
+                    var lat = parseFloat(this.value);
+                    var lng = parseFloat(lngInput.value);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        updateMarker([lat, lng]);
+                    }
                 });
+
+                lngInput.addEventListener('input', function() {
+                    var lat = parseFloat(latInput.value);
+                    var lng = parseFloat(this.value);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        updateMarker([lat, lng]);
+                    }
+                });
+
+                map.on('click', function(e) {
+                    updateInputs(e.latlng.lat, e.latlng.lng);
+                    updateMarker(e.latlng);
+                });
+            } catch(mapError) {
+                console.warn('Map initialization skipped:', mapError.message);
             }
 
-            latInput.addEventListener('input', function() {
-                const lat = parseFloat(this.value);
-                const lng = parseFloat(lngInput.value);
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    updateMarker([lat, lng]);
-                }
-            });
+            // ========== CASCADING DROPDOWNS (always runs) ==========
+            var regionSelect = document.getElementById('region_code');
+            var stoSelect = document.getElementById('sto_code');
+            var stbSelect = document.getElementById('stb_code');
 
-            lngInput.addEventListener('input', function() {
-                const lat = parseFloat(latInput.value);
-                const lng = parseFloat(this.value);
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    updateMarker([lat, lng]);
-                }
-            });
-
-            map.on('click', function(e) {
-                updateInputs(e.latlng.lat, e.latlng.lng);
-                updateMarker(e.latlng);
-            });
-
-            // Cascading Dropdowns Logic (original)
-            const regionSelect = document.getElementById('region_code');
-            const stoSelect = document.getElementById('sto_code');
-            const stbSelect = document.getElementById('stb_code');
-
-            function filterStos(preserveValue = false) {
-                const selectedOption = regionSelect.options[regionSelect.selectedIndex];
-                const regionId = selectedOption ? selectedOption.getAttribute('data-id') : null;
-                const currentValue = stoSelect.value;
+            function filterStos(preserveValue) {
+                var selectedOption = regionSelect.options[regionSelect.selectedIndex];
+                var regionId = selectedOption ? selectedOption.getAttribute('data-id') : null;
+                var currentValue = stoSelect.value;
                 if(!preserveValue) stoSelect.value = '';
                 
                 if(regionId) {
                     stoSelect.disabled = false;
-                    for(let i = 0; i < stoSelect.options.length; i++) {
-                        const opt = stoSelect.options[i];
+                    for(var i = 0; i < stoSelect.options.length; i++) {
+                        var opt = stoSelect.options[i];
                         if(opt.value === "") continue; 
                         
                         if(opt.getAttribute('data-region-id') === regionId) {
@@ -344,16 +356,16 @@
                 if(preserveValue) stoSelect.value = currentValue;
             }
 
-            function filterStbs(preserveValue = false) {
-                const selectedOption = stoSelect.options[stoSelect.selectedIndex];
-                const stoId = selectedOption ? selectedOption.getAttribute('data-id') : null;
-                const currentValue = stbSelect.value;
+            function filterStbs(preserveValue) {
+                var selectedOption = stoSelect.options[stoSelect.selectedIndex];
+                var stoId = selectedOption ? selectedOption.getAttribute('data-id') : null;
+                var currentValue = stbSelect.value;
                 if(!preserveValue) stbSelect.value = '';
 
                 if(stoId) {
                     stbSelect.disabled = false;
-                    for(let i = 0; i < stbSelect.options.length; i++) {
-                        const opt = stbSelect.options[i];
+                    for(var i = 0; i < stbSelect.options.length; i++) {
+                        var opt = stbSelect.options[i];
                         if(opt.value === "") continue;
                         
                         if(opt.getAttribute('data-sto-id') === stoId) {
@@ -370,49 +382,49 @@
                 if(preserveValue) stbSelect.value = currentValue;
             }
 
-            regionSelect.addEventListener('change', () => { filterStos(false); filterStbs(false); updateAutoFields(); });
-            stoSelect.addEventListener('change', () => { filterStbs(false); updateAutoFields(); });
+            regionSelect.addEventListener('change', function() { filterStos(false); filterStbs(false); updateAutoFields(); });
+            stoSelect.addEventListener('change', function() { filterStbs(false); updateAutoFields(); });
             stbSelect.addEventListener('change', updateAutoFields);
 
             if(regionSelect.value) { filterStos(true); }
             if(stoSelect.value) { filterStbs(true); }
 
-            // Auto-generation Logic
-            const autoGenerate = document.getElementById('auto_generate');
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
-            const customerCodeInput = document.getElementById('customer_code');
-            const regenPasswordBtn = document.getElementById('regen_password');
-            const companySuffix = "{{ \App\Models\Setting::where('key', 'company_domain')->first()->value ?? 'net.id' }}";
+            // ========== AUTO-GENERATION LOGIC (always runs) ==========
+            var autoGenerate = document.getElementById('auto_generate');
+            var usernameInput = document.getElementById('username');
+            var passwordInput = document.getElementById('password');
+            var customerCodeInput = document.getElementById('customer_code');
+            var regenPasswordBtn = document.getElementById('regen_password');
+            var companySuffix = "{{ \App\Models\Setting::where('key', 'company_domain')->first()->value ?? 'net.id' }}";
 
-            function generateRandomPassword(length = 8) {
-                const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-                let retVal = "";
-                for (let i = 0, n = charset.length; i < length; ++i) {
+            function generateRandomPassword(length) {
+                length = length || 8;
+                var charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                var retVal = "";
+                for (var i = 0, n = charset.length; i < length; ++i) {
                     retVal += charset.charAt(Math.floor(Math.random() * n));
                 }
                 return retVal;
             }
 
-            let persistentRandomPart = Math.floor(100 + Math.random() * 900);
+            var persistentRandomPart = Math.floor(100 + Math.random() * 900);
 
             function updateAutoFields() {
                 if (!autoGenerate.checked) return;
 
-                const region = regionSelect.value || '000';
-                const sto = stoSelect.value || '000';
-                const stb = stbSelect.value || '000';
+                var region = regionSelect.value || '000';
+                var sto = stoSelect.value || '000';
+                var stb = stbSelect.value || '000';
                 
                 if (region !== '000' && sto !== '000' && stb !== '000') {
-                    const fullCode = `${region}${sto}${stb}${persistentRandomPart}`;
+                    var fullCode = region + sto + stb + persistentRandomPart;
                     customerCodeInput.value = fullCode;
-                    usernameInput.value = `${fullCode}@${companySuffix}`;
+                    usernameInput.value = fullCode + '@' + companySuffix;
                 }
             }
 
             autoGenerate.addEventListener('change', function() {
                 if (this.checked) {
-                    // Lock fields for Auto
                     usernameInput.setAttribute('readonly', true);
                     customerCodeInput.setAttribute('readonly', true);
                     passwordInput.setAttribute('readonly', true);
@@ -422,7 +434,6 @@
                     updateAutoFields();
                     if (!passwordInput.value) passwordInput.value = generateRandomPassword();
                 } else {
-                    // Unlock fields for Manual
                     usernameInput.removeAttribute('readonly');
                     customerCodeInput.removeAttribute('readonly');
                     passwordInput.removeAttribute('readonly');
@@ -433,14 +444,13 @@
                 }
             });
 
-            // Listen for manual changes in customer_code to update username if in auto mode (though it should be locked)
             customerCodeInput.addEventListener('input', function() {
                 if (autoGenerate.checked) {
-                    usernameInput.value = `${this.value}@${companySuffix}`;
+                    usernameInput.value = this.value + '@' + companySuffix;
                 }
             });
 
-            regenPasswordBtn.addEventListener('click', () => {
+            regenPasswordBtn.addEventListener('click', function() {
                 passwordInput.value = generateRandomPassword();
             });
 
@@ -456,14 +466,14 @@
                 updateAutoFields();
             }
 
-            // Billing Logic script
-            const billingType = document.getElementById('billing_type');
-            const billingMethod = document.getElementById('billing_method');
-            const cycleDates = document.getElementById('billing_cycle_dates');
-            const infoBox = document.getElementById('billing_info_box');
-            const methodDesc = document.getElementById('method_description');
+            // ========== BILLING LOGIC (always runs) ==========
+            var billingType = document.getElementById('billing_type');
+            var billingMethod = document.getElementById('billing_method');
+            var cycleDates = document.getElementById('billing_cycle_dates');
+            var infoBox = document.getElementById('billing_info_box');
+            var methodDesc = document.getElementById('method_description');
 
-            const methods = {
+            var methods = {
                 postpaid: [
                     { value: 'cycle', label: 'Cycle (Invoice tgl 1, Jatuh Tempo tgl 20)', desc: '<strong>Pasca Bayar Cycle:</strong> Layanan dipakai dulu. Invoice terbit setiap tanggal 1, jatuh tempo tanggal 20. Pembayaran pertama dihitung prorata.' },
                     { value: 'fixed', label: 'Fixed (Jatuh Tempo Tgl Aktif, -7 Hari)', desc: '<strong>Pasca Bayar Fixed:</strong> Layanan dipakai dulu. Jatuh tempo setiap tanggal pendaftaran (anniversary). Invoice terbit 7 hari sebelum jatuh tempo.' }
@@ -475,12 +485,12 @@
             };
 
             function updateMethods() {
-                const type = billingType.value;
-                const oldMethod = billingMethod.value;
+                var type = billingType.value;
+                var oldMethod = billingMethod.value;
                 billingMethod.innerHTML = '';
                 
-                methods[type].forEach(m => {
-                    const opt = document.createElement('option');
+                methods[type].forEach(function(m) {
+                    var opt = document.createElement('option');
                     opt.value = m.value;
                     opt.textContent = m.label;
                     if(m.value === oldMethod) opt.selected = true;
@@ -491,9 +501,9 @@
             }
 
             function updateDescription() {
-                const type = billingType.value;
-                const method = billingMethod.value;
-                const activeMethod = methods[type].find(m => m.value === method);
+                var type = billingType.value;
+                var method = billingMethod.value;
+                var activeMethod = methods[type].find(function(m) { return m.value === method; });
                 
                 if (activeMethod) {
                     methodDesc.innerHTML = activeMethod.desc;
@@ -512,8 +522,9 @@
             billingType.addEventListener('change', updateMethods);
             billingMethod.addEventListener('change', updateDescription);
             
+            // Initialize billing methods
             updateMethods();
-        });
+        })();
     </script>
     @endpush
 </x-app-layout>
