@@ -21,7 +21,7 @@ class ServerLogController extends Controller
             // Membaca maksimal 1000 baris terakhir agar browser tidak hang (blank)
             $logs = implode("", $this->tailFile($logPath, 1000));
             // Menghapus karakter non-UTF8 yang bisa membuat halaman menjadi blank
-            $logs = mb_convert_encoding($logs, 'UTF-8', 'UTF-8');
+            $logs = iconv('UTF-8', 'UTF-8//IGNORE', $logs);
         } else {
             $logs = "Log file not found or is empty.";
         }
@@ -68,7 +68,13 @@ class ServerLogController extends Controller
                 $lineCounter++;
             }
         }
-        fseek($f, $cursor + 2, SEEK_END);
+        
+        if ($lineCounter < $lines) {
+            rewind($f);
+        } else {
+            fseek($f, $cursor + 2, SEEK_END);
+        }
+        
         $output = [];
         while (!feof($f)) {
             $output[] = fgets($f);
