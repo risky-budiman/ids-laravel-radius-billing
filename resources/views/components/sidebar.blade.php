@@ -157,7 +157,7 @@
                 </a>
             </li>
             <li>
-                <div x-data="{ open: {{ request()->routeIs('accounting.reports.*') ? 'true' : 'false' }} }">
+                <div x-data="{ open: {{ request()->routeIs('accounting.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" type="button" class="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 group">
                         <div class="flex items-center">
                             <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m32-2v2a4 4 0 00-4-4h-1a4 4 0 00-4 4v2m-9-3h.01M12 12h.01M12 9h.01M12 6h.01M11 12h.01M12 12h.01M12 12h.01"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2"></path></svg>
@@ -181,10 +181,10 @@
                         <a href="{{ route('accounting.reports.tax-summary') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.reports.tax-summary') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
                             Tax Summary
                         </a>
-                        <a href="{{ route('accounting.tax-settings.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.tax-settings.*') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                        <a href="{{ route('accounting.tax-settings.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.tax-settings*') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
                             Tax Settings
                         </a>
-                        <a href="{{ route('accounting.closing.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.closing.*') ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                        <a href="{{ route('accounting.closing.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.closing*') ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
                             Closing Period
                         </a>
                     </div>
