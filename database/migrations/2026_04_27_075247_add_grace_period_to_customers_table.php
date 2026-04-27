@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('customers', function (Blueprint $table) {
-            $table->timestamp('activation_grace_expires_at')->nullable();
-            $table->timestamp('installation_paid_at')->nullable();
+            if (!Schema::hasColumn('customers', 'activation_grace_expires_at')) {
+                $table->timestamp('activation_grace_expires_at')->nullable();
+            }
+            if (!Schema::hasColumn('customers', 'installation_paid_at')) {
+                $table->timestamp('installation_paid_at')->nullable();
+            }
         });
     }
 
@@ -23,7 +27,13 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('customers', function (Blueprint $table) {
-            $table->dropColumn(['activation_grace_expires_at', 'installation_paid_at']);
+            $columns = [];
+            if (Schema::hasColumn('customers', 'activation_grace_expires_at')) $columns[] = 'activation_grace_expires_at';
+            if (Schema::hasColumn('customers', 'installation_paid_at')) $columns[] = 'installation_paid_at';
+            
+            if (count($columns) > 0) {
+                $table->dropColumn($columns);
+            }
         });
     }
 };
