@@ -54,12 +54,14 @@ class ChartOfAccountSeeder extends Seeder
                 $parentId = $parent ? $parent->id : null;
             }
 
-            ChartOfAccount::create([
-                'code' => $account['code'],
-                'name' => $account['name'],
-                'type' => $account['type'],
-                'parent_id' => $parentId,
-            ]);
+            ChartOfAccount::updateOrCreate(
+                ['code' => $account['code']],
+                [
+                    'name' => $account['name'],
+                    'type' => $account['type'],
+                    'parent_id' => $parentId,
+                ]
+            );
         }
     }
 }

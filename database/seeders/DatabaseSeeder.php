@@ -23,5 +23,10 @@ class DatabaseSeeder extends Seeder
                 'role' => User::ROLE_ADMINISTRATOR,
             ]
         );
+
+        $this->call([
+            ChartOfAccountSeeder::class,
+            WhatsappTemplateSeeder::class,
+        ]);
     }
 }
