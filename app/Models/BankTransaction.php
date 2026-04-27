@@ -71,15 +71,23 @@ class BankTransaction extends Model
     public function updateBalance($isDelete = false)
     {
         $account = $this->bankAccount;
-        $amount = (string) $this->amount;
-        $currentBalance = (string) $account->balance;
+        $amount = (float) $this->amount;
+        $currentBalance = (float) $account->balance;
 
         if ($this->type === 'deposit') {
-            $newBalance = $isDelete ? bcsub($currentBalance, $amount, 2) : bcadd($currentBalance, $amount, 2);
+            if (function_exists('bcadd')) {
+                $newBalance = $isDelete ? bcsub($currentBalance, $amount, 2) : bcadd($currentBalance, $amount, 2);
+            } else {
+                $newBalance = $isDelete ? ($currentBalance - $amount) : ($currentBalance + $amount);
+            }
         } else {
-            $newBalance = $isDelete ? bcadd($currentBalance, $amount, 2) : bcsub($currentBalance, $amount, 2);
+            if (function_exists('bcadd')) {
+                $newBalance = $isDelete ? bcadd($currentBalance, $amount, 2) : bcsub($currentBalance, $amount, 2);
+            } else {
+                $newBalance = $isDelete ? ($currentBalance + $amount) : ($currentBalance - $amount);
+            }
         }
 
-        $account->update(['balance' => $newBalance]);
+        $account->update(['balance' => round($newBalance, 2)]);
     }
 }

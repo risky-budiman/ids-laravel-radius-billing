@@ -165,27 +165,37 @@ class AccountingService
 
         return DB::transaction(function () use ($transaction) {
             $bankAccount = $transaction->bankAccount;
-            $coaBankId = $bankAccount->chart_of_account_id ?? ChartOfAccount::where('code', '1102')->first()->id;
+            $coaBank = $bankAccount->chart_of_account_id 
+                ? ChartOfAccount::find($bankAccount->chart_of_account_id)
+                : ChartOfAccount::where('code', '1102')->first();
             
-            // For general transactions, we might need a default account or user selection
-            // If it's an expense, credit Bank, debit Expense
-            // If it's an income, debit Bank, credit Income
+            if (!$coaBank) {
+                \Illuminate\Support\Facades\Log::error("Missing CoA for Bank Account (1102) during TRX-" . $transaction->id);
+                return null;
+            }
+            
+            $coaBankId = $coaBank->id;
             
             $isIncome = $transaction->type === 'income' || $transaction->type === 'deposit';
             
-            $journal = Journal::create([
-                'date' => $transaction->transaction_date,
-                'reference' => 'TRX-' . $transaction->id,
-                'description' => $transaction->description,
-                'created_by' => $transaction->created_by,
-            ]);
-
             // Determine Offset Account (Category)
             $offsetAccountId = $transaction->chart_of_account_id;
             if (!$offsetAccountId) {
                 $code = $isIncome ? '4103' : '5106'; // Default Income / Expense
-                $offsetAccountId = ChartOfAccount::where('code', $code)->first()->id;
+                $offsetAccount = ChartOfAccount::where('code', $code)->first();
+                if (!$offsetAccount) {
+                    \Illuminate\Support\Facades\Log::error("Missing default CoA ($code) during TRX-" . $transaction->id);
+                    return null;
+                }
+                $offsetAccountId = $offsetAccount->id;
             }
+
+            $journal = Journal::create([
+                'date' => $transaction->transaction_date,
+                'reference' => 'TRX-' . $transaction->id,
+                'description' => $transaction->description,
+                'created_by' => $transaction->created_by ?? 1,
+            ]);
 
             if ($isIncome) {
                 $debitAccountId = $coaBankId;
