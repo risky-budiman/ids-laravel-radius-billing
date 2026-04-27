@@ -158,22 +158,16 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('accounting.journals.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('accounting.journals.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
-                    <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                    General Ledger
-                </a>
-            </li>
-            <li>
-                <div x-data="{ open: {{ request()->routeIs('accounting.*') ? 'true' : 'false' }} }">
+                <div x-data="{ open: {{ request()->routeIs('accounting.reports.*', 'accounting.journals.*', 'accounting.tax-settings.*', 'accounting.closing.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" type="button" class="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 group">
                         <div class="flex items-center">
                             <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m32-2v2a4 4 0 00-4-4h-1a4 4 0 00-4 4v2m-9-3h.01M12 12h.01M12 9h.01M12 6h.01M11 12h.01M12 12h.01M12 12h.01"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2"></path></svg>
-                            Financial Reports
+                            Finance Reports
                         </div>
                         <svg class="w-4 h-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
                     <div x-show="open" class="mt-1 space-y-1 pl-11 pr-4">
-                        <a href="{{ route('accounting.reports.ledger') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.reports.ledger') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                        <a href="{{ route('accounting.journals.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.journals.*') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
                             General Ledger
                         </a>
                         <a href="{{ route('accounting.reports.profit-loss') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.reports.profit-loss') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
