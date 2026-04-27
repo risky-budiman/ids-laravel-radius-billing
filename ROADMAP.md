@@ -92,6 +92,7 @@ Fase ini berfokus untuk melengkapi atribut *Subscriber* agar setara dengan stand
 - [ ] Upload foto fisik Modem/Router (CPE).
 - [ ] Fitur **OCR (Optical Character Recognition)** untuk mengekstrak Serial Number (SN) dan MAC Address secara otomatis dari foto modem yang diupload.
 - [ ] Penambahan tipe pelanggan (Personal, Corporate, VIP) untuk prioritas penanganan tiket (SLA).
+- [ ] **Kolom Deskripsi Tambahan:** Penambahan *field* `description` (catatan khusus) pada data subscriber untuk menyimpan keterangan detail/kronologi khusus yang tidak tercakup pada *field* standar.
 
 ### 4.3. Manajemen Perangkat Pelanggan (CPE)
 - [ ] Pencatatan detail Router/Access Point milik pelanggan (Merk, Tipe, MAC Address Router).
@@ -186,4 +187,28 @@ Setelah melakukan pengecekan pada logika `NocController`, ditemukan **Celah Perf
 ### 10.2. Sistem Peringatan Dini (Proactive Alerting)
 - [ ] **Telegram/WA NOC Bot Integration:** Sistem akan secara otomatis mengirim peringatan *(Alert)* ke Grup Telegram/WA NOC jika terdeteksi OLT *Offline* (Down), port PON *Down* massal, atau redaman pelanggan tiba-tiba memburuk melewati ambang batas kritis (misal < -27 dBm).
 - [ ] **Grafik Kualitas Jaringan (RRD/Grafana-like):** Menyimpan histori fluktuasi sinyal OLT Rx/Tx setiap hari untuk digambarkan menjadi grafik tren redaman pelanggan, sehingga teknisi bisa melihat kapan kabel mulai rusak sebelum putus sepenuhnya.
+
+---
+
+## FASE 11: Customer Self-Service Portal (Client Area)
+Sistem *Enterprise* wajib memiliki portal mandiri agar pelanggan tidak terus-menerus menghubungi CS/Kasir hanya untuk mengecek tagihan atau komplain.
+- [ ] **Dashboard Pelanggan (Web/Mobile App):** Pelanggan dapat *login* untuk melihat status internet (Aktif/Isolir), melihat kecepatan paket, dan membaca pengumuman *maintenance* (gangguan massal).
+- [ ] **Self-Payment & Billing History:** Pelanggan bisa melihat riwayat pembayaran bulan-bulan sebelumnya, mendownload/cetak *Invoice* PDF, dan membayar tagihan berjalan secara langsung melalui *Payment Gateway* (QRIS/Virtual Account).
+- [ ] **Pembelian Add-on Booster (FUP Reset):** Fitur untuk pelanggan agar dapat membeli kuota tambahan (Booster) secara mandiri via Portal. Jika pembayaran sukses, FUP akan otomatis di-*reset* oleh sistem tanpa campur tangan Admin.
+- [ ] **Open Ticket (Lapor Gangguan):** Pelanggan dapat membuat tiket gangguan dari portal, yang akan langsung masuk ke sistem antrean teknisi *(Helpdesk)* tanpa perlu *chat* manual ke WA Admin.
+
+
+---
+
+## FASE 12: Manajemen Kemitraan & Reseller (B2B)
+Banyak ISP melakukan ekspansi wilayah dengan cara menggandeng mitra lokal (RT/RW Net atau Agen).
+- [ ] **Sistem Komisi Mitra:** Menambahkan level *User Role* baru (Mitra/Agen). Sistem akan otomatis menghitung pembagian komisi (misal: 15% dari tagihan) setiap kali pelanggan yang berada di bawah naungan mitra tersebut membayar tagihan.
+- [ ] **Pencairan Saldo (Withdrawal):** Fitur untuk mencatat dan menjurnal proses pencairan komisi bulanan dari kas utama perusahaan ke rekening agen/mitra.
+
+---
+
+## FASE 13: Fair Usage Policy (FUP) & Manajemen Kuota
+- [ ] **Data Usage Tracking:** Mengumpulkan data pemakaian *Bandwidth* harian pelanggan (Download/Upload bytes) dari RADIUS *Accounting* (`radacct`) untuk ditampilkan di Dashboard Admin dan Dashboard Pelanggan.
+- [ ] **Auto-Downgrade Speed (FUP):** Logika otomatis untuk menurunkan *Speed Profile* di OLT/Mikrotik (misal dari 50Mbps menjadi 10Mbps) ketika pelanggan telah melewati batas kuota FUP (misal 1 Terabyte) dalam bulan tersebut. Kecepatan akan di-*reset* normal kembali setiap tanggal 1.
+- [ ] **Manual FUP Reset:** Tombol khusus untuk Admin agar dapat mereset kuota FUP pelanggan secara manual ke 0 di pertengahan bulan (misalnya jika pelanggan komplain atau membeli *add-on booster*).
 
