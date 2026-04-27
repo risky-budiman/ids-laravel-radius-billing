@@ -106,6 +106,9 @@ class InventoryController extends Controller
         $request->validate([
             'inventory_item_id' => 'required|exists:inventory_items,id',
             'quantity' => 'required|numeric|min:1',
+            'unit_price' => 'required|numeric|min:0',
+            'tax_id' => 'nullable|exists:taxes,id',
+            'supplier_id' => 'nullable|exists:suppliers,id',
             'reference' => 'nullable|string',
             'serials' => 'nullable|array', // For SN tracking
         ]);
@@ -113,11 +116,25 @@ class InventoryController extends Controller
         $item = InventoryItem::findOrFail($request->inventory_item_id);
 
         DB::transaction(function() use ($request, $item) {
+            $subtotal = $request->unit_price * $request->quantity;
+            $taxAmount = 0;
+            if ($request->filled('tax_id')) {
+                $tax = \App\Models\Tax::find($request->tax_id);
+                $taxAmount = ($subtotal * $tax->rate) / 100;
+            }
+            $totalAmount = $subtotal + $taxAmount;
+
             // 1. Create movement log
-            InventoryMovement::create([
+            $movement = InventoryMovement::create([
                 'inventory_item_id' => $item->id,
                 'type' => 'in',
                 'quantity' => $request->quantity,
+                'unit_price' => $request->unit_price,
+                'subtotal' => $subtotal,
+                'tax_id' => $request->tax_id,
+                'tax_amount' => $taxAmount,
+                'total_amount' => $totalAmount,
+                'supplier_id' => $request->supplier_id,
                 'reference' => $request->reference,
                 'user_id' => Auth::id()
             ]);
@@ -133,6 +150,13 @@ class InventoryController extends Controller
                         ]);
                     }
                 }
+            }
+
+            // 3. Auto-Journal: Inventory Purchase
+            try {
+                (new \App\Services\AccountingService())->recordInventoryPurchase($movement);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Auto-journal failed for STOCK-IN-{$movement->id}: " . $e->getMessage());
             }
         });
 

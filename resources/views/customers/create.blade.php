@@ -184,10 +184,10 @@
             </div>
 
             <!-- Section: Subscription -->
-            <div class="mb-6">
+            <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Subscription Plan</h3>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
                         <x-input-label for="package_id" :value="__('Internet Package')" />
                         <select id="package_id" name="package_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" required>
@@ -216,11 +216,25 @@
                         <p class="mt-1 text-[10px] text-gray-500 italic">Satu kali bayar saat aktivasi.</p>
                         <x-input-error class="mt-2" :messages="$errors->get('installation_fee')" />
                     </div>
+                </div>
 
-                    <div id="billing_info_box" class="md:col-span-1 border p-4 rounded-xl flex items-start">
-                        <svg class="w-5 h-5 text-indigo-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <div id="method_description" class="text-[11px] leading-relaxed">
-                            Pilih metode billing untuk melihat detail aturan penagihan.
+                <div id="billing_info_box" class="border p-4 rounded-xl flex items-start">
+                    <svg class="w-5 h-5 text-indigo-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div id="method_description" class="text-[11px] leading-relaxed">
+                        Pilih metode billing untuk melihat detail aturan penagihan.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Taxation Settings -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Taxation Settings</h3>
+                <div class="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-2xl p-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="use_tax" name="use_tax" value="1" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 h-5 w-5" {{ old('use_tax', true) ? 'checked' : '' }}>
+                        <div class="ml-4">
+                            <label for="use_tax" class="text-sm font-black text-gray-900 dark:text-gray-100 uppercase tracking-widest cursor-pointer">Kenakan Pajak (PPN)</label>
+                            <p class="text-xs text-gray-500 mt-1">Jika diaktifkan, tagihan bulanan pelanggan ini akan ditambah PPN sesuai aturan yang berlaku (Default: 11%).</p>
                         </div>
                     </div>
                 </div>

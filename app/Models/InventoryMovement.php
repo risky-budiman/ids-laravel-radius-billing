@@ -10,16 +10,17 @@ class InventoryMovement extends Model
         'inventory_item_id',
         'type',
         'quantity',
+        'unit_price',
+        'subtotal',
+        'tax_id',
+        'tax_amount',
+        'total_amount',
+        'supplier_id',
         'reference',
         'notes',
         'user_id',
-        'customer_id'
+        'customer_id',
     ];
-
-    public function customer()
-    {
-        return $this->belongsTo(Customer::class);
-    }
 
     public function item()
     {
@@ -29,5 +30,20 @@ class InventoryMovement extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function tax()
+    {
+        return $this->belongsTo(Tax::class);
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
     }
 }

@@ -11,6 +11,7 @@ class BankTransaction extends Model
 
     protected $fillable = [
         'bank_account_id',
+        'chart_of_account_id',
         'type',
         'amount',
         'reference_number',
@@ -41,14 +42,29 @@ class BankTransaction extends Model
         return $this->belongsTo(BankTransaction::class, 'related_transaction_id');
     }
 
+    public function category()
+    {
+        return $this->belongsTo(ChartOfAccount::class, 'chart_of_account_id');
+    }
+
     protected static function booted()
     {
         static::created(function ($transaction) {
             $transaction->updateBalance();
+            
+            // Auto-Journal for Bank Transaction
+            try {
+                (new \App\Services\AccountingService())->recordBankTransaction($transaction);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Auto-journal failed for TRX-{$transaction->id}: " . $e->getMessage());
+            }
         });
 
         static::deleted(function ($transaction) {
             $transaction->updateBalance(true);
+            
+            // Reverse/Delete Journal when transaction is deleted
+            \App\Models\Journal::where('reference', 'TRX-' . $transaction->id)->delete();
         });
     }
 

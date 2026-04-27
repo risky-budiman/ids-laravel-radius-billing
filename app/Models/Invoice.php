@@ -9,21 +9,22 @@ class Invoice extends Model
 {
     use LogsActivity;
     protected $fillable = [
+        'customer_id',
         'invoice_number',
         'billing_period',
         'period_start',
         'period_end',
-        'customer_id',
         'amount',
-        'tax',
-        'total',
+        'subtotal',
+        'tax_id',
+        'tax_amount',
         'status',
-        'due_date',
-        'paid_at',
-        'notes',
         'payment_url',
         'payment_token',
-        'payment_method'
+        'payment_method',
+        'due_date',
+        'notes',
+        'paid_at',
     ];
 
     protected $casts = [
@@ -31,10 +32,18 @@ class Invoice extends Model
         'paid_at' => 'datetime',
         'period_start' => 'date',
         'period_end' => 'date',
+        'amount' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
     ];
 
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function tax()
+    {
+        return $this->belongsTo(Tax::class);
     }
 }

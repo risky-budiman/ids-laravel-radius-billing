@@ -134,6 +134,64 @@
             </li>
             @endif
 
+            @if(auth()->user()->isAdmin() || auth()->user()->isAdministrator() || auth()->user()->isKasir())
+            <li class="pt-4 pb-2">
+                <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">Finance & Accounting</p>
+            </li>
+            <li>
+                <a href="{{ route('bank-accounts.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('bank-accounts.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
+                    <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                    Bank Accounts (Kas/Bank)
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('accounting.coa.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('accounting.coa.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
+                    <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    Chart of Accounts
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('accounting.journals.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('accounting.journals.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
+                    <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    General Ledger
+                </a>
+            </li>
+            <li>
+                <div x-data="{ open: {{ request()->routeIs('accounting.reports.*') ? 'true' : 'false' }} }">
+                    <button @click="open = !open" type="button" class="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 group">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m32-2v2a4 4 0 00-4-4h-1a4 4 0 00-4 4v2m-9-3h.01M12 12h.01M12 9h.01M12 6h.01M11 12h.01M12 12h.01M12 12h.01"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2"></path></svg>
+                            Financial Reports
+                        </div>
+                        <svg class="w-4 h-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div x-show="open" class="mt-1 space-y-1 pl-11 pr-4">
+                        <a href="{{ route('accounting.reports.ledger') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.reports.ledger') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            General Ledger
+                        </a>
+                        <a href="{{ route('accounting.reports.profit-loss') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.reports.profit-loss') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            Profit & Loss
+                        </a>
+                        <a href="{{ route('accounting.reports.balance-sheet') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.reports.balance-sheet') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            Balance Sheet
+                        </a>
+                        <a href="{{ route('accounting.reports.cash-flow') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.reports.cash-flow') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            Cash Flow
+                        </a>
+                        <a href="{{ route('accounting.reports.tax-summary') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.reports.tax-summary') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            Tax Summary
+                        </a>
+                        <a href="{{ route('accounting.tax-settings.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.tax-settings.*') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            Tax Settings
+                        </a>
+                        <a href="{{ route('accounting.closing.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.closing.*') ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            Closing Period
+                        </a>
+                    </div>
+                </div>
+            </li>
+            @endif
+
             @if(auth()->user()->isAdmin() || auth()->user()->isTeknisi())
             <li class="pt-4 pb-2">
                 <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">Inventory & Assets</p>
@@ -315,17 +373,6 @@
                 </a>
             </li>
             @endif
-
-            <!-- Finance Group -->
-            <li class="pt-4 pb-2 border-t border-gray-200/50 dark:border-gray-800/50 mt-2">
-                <p class="text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-wider px-4 mb-2">Keuangan & Akuntansi</p>
-            </li>
-            <li>
-                <a href="{{ route('bank-accounts.index') }}" class="flex items-center px-4 py-2.5 rounded-xl transition-all duration-200 {{ request()->routeIs('bank-accounts.*') || request()->routeIs('bank-transactions.*') ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
-                    <svg class="w-5 h-5 mr-3 group-hover:text-emerald-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-                    Rekening Bank
-                </a>
-            </li>
 
             <li class="pt-4 pb-2 border-t border-gray-200/50 dark:border-gray-800/50">
                 <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">Application</p>

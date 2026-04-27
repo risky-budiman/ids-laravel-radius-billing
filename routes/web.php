@@ -283,6 +283,31 @@ Route::middleware('auth')->group(function () {
     // Settings
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
     Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+    // ACCOUNTING SYSTEM (Admin & Administrator Only)
+    Route::middleware('role:admin,administrator')->prefix('accounting')->name('accounting.')->group(function () {
+        Route::get('coa', [\App\Http\Controllers\Accounting\ChartOfAccountController::class, 'index'])->name('coa.index');
+        Route::post('coa', [\App\Http\Controllers\Accounting\ChartOfAccountController::class, 'store'])->name('coa.store');
+        
+        Route::get('journals', [\App\Http\Controllers\Accounting\JournalController::class, 'index'])->name('journals.index');
+        Route::get('journals/create', [\App\Http\Controllers\Accounting\JournalController::class, 'create'])->name('journals.create');
+        Route::post('journals', [\App\Http\Controllers\Accounting\JournalController::class, 'store'])->name('journals.store');
+        Route::get('journals/{journal}', [\App\Http\Controllers\Accounting\JournalController::class, 'show'])->name('journals.show');
+        
+        // Reports
+        Route::get('reports/profit-loss', [\App\Http\Controllers\Accounting\ReportController::class, 'profitLoss'])->name('reports.profit-loss');
+        Route::get('reports/balance-sheet', [\App\Http\Controllers\Accounting\ReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
+        Route::get('reports/tax-summary', [\App\Http\Controllers\Accounting\ReportController::class, 'taxSummary'])->name('reports.tax-summary');
+        Route::get('reports/ledger', [\App\Http\Controllers\Accounting\ReportController::class, 'ledger'])->name('reports.ledger');
+        Route::get('reports/ledger/export', [\App\Http\Controllers\Accounting\ReportController::class, 'exportLedger'])->name('reports.ledger.export');
+        Route::get('reports/cash-flow', [\App\Http\Controllers\Accounting\ReportController::class, 'cashFlow'])->name('reports.cash-flow');
+        Route::get('reports/cash-flow/export', [\App\Http\Controllers\Accounting\ReportController::class, 'exportCashFlow'])->name('reports.cash-flow.export');
+
+        Route::get('closing', [\App\Http\Controllers\Accounting\ClosingController::class, 'index'])->name('closing.index');
+        Route::post('closing', [\App\Http\Controllers\Accounting\ClosingController::class, 'process'])->name('closing.process');
+
+        Route::get('tax-settings', [\App\Http\Controllers\Accounting\TaxSettingController::class, 'index'])->name('tax-settings.index');
+        Route::post('tax-settings', [\App\Http\Controllers\Accounting\TaxSettingController::class, 'update'])->name('tax-settings.update');
+    });
 });
 
 require __DIR__.'/auth.php';

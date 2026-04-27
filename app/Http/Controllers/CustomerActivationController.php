@@ -46,10 +46,11 @@ class CustomerActivationController extends Controller
         DB::transaction(function() use ($request, $customer) {
             // 1. Activate Customer and Set Initial Billing
             $customer->update([
-                'is_active' => ($request->payment_method !== 'pg'), // PG keeps it inactive until paid
-                'status' => ($request->payment_method === 'pg') ? Customer::STATUS_WAITING_ACTIVATION : Customer::STATUS_ACTIVE,
-                'activated_at' => ($request->payment_method !== 'pg') ? now() : null,
+                'is_active' => true, // Instant activation
+                'status' => Customer::STATUS_ACTIVE,
+                'activated_at' => now(),
                 'installation_paid_at' => ($request->payment_method === 'pg') ? null : now(),
+                'activation_grace_expires_at' => ($request->payment_method === 'pg') ? now()->addHour() : null,
                 'installation_bank_account_id' => $request->bank_account_id,
             ]);
 

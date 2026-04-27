@@ -3,6 +3,25 @@
 use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
 
+if (!function_exists('is_accounting_locked')) {
+    /**
+     * Check if the given date is in a locked accounting period
+     */
+    function is_accounting_locked($date)
+    {
+        $closedUntil = get_setting('accounting_closed_until');
+        if (!$closedUntil) return false;
+        
+        try {
+            $checkDate = \Carbon\Carbon::parse($date);
+            $lockDate = \Carbon\Carbon::parse($closedUntil);
+            return $checkDate->lte($lockDate);
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+}
+
 if (!function_exists('get_setting')) {
     /**
      * Get a setting value by its key.

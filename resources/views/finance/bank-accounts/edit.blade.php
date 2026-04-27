@@ -60,6 +60,18 @@
                         </div>
 
                         <div class="col-span-full md:col-span-1">
+                            <label for="chart_of_account_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Link ke Akun Perkiraan (CoA)</label>
+                            <select id="chart_of_account_id" name="chart_of_account_id" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                                <option value="">Pilih Akun (Otomatis: 1102 Bank)</option>
+                                @foreach($accounts as $coa)
+                                <option value="{{ $coa->id }}" {{ old('chart_of_account_id', $bankAccount->chart_of_account_id) == $coa->id ? 'selected' : '' }}>{{ $coa->code }} - {{ $coa->name }}</option>
+                                @endforeach
+                            </select>
+                            <p class="mt-1 text-xs text-gray-500">Hubungkan rekening ini dengan akun di Buku Besar.</p>
+                            @error('chart_of_account_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="col-span-full md:col-span-1">
                             <label for="is_active" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Status Rekening</label>
                             <select id="is_active" name="is_active" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500" required>
                                 <option value="1" {{ old('is_active', $bankAccount->is_active) == 1 ? 'selected' : '' }}>Aktif</option>

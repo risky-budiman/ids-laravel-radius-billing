@@ -10,6 +10,7 @@ class BankAccount extends Model
     use HasFactory;
 
     protected $fillable = [
+        'chart_of_account_id',
         'bank_name',
         'account_name',
         'account_number',
@@ -19,6 +20,11 @@ class BankAccount extends Model
         'is_active',
         'description',
     ];
+
+    public function chartOfAccount()
+    {
+        return $this->belongsTo(ChartOfAccount::class);
+    }
 
     protected $casts = [
         'balance' => 'decimal:2',

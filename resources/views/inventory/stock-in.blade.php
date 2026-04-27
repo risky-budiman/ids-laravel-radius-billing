@@ -33,11 +33,27 @@
                         </select>
                     </div>
                     <div>
-                        <x-input-label value="Supplier (Optional)" />
-                        <select name="reference_supplier_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                        <x-input-label value="Supplier (Vendor)" />
+                        <select name="supplier_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
                             <option value="">Pilih Supplier</option>
                             @foreach($suppliers as $supplier)
                                 <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <x-input-label value="Harga Beli Per Unit (Rp)" />
+                        <x-text-input name="unit_price" type="number" class="mt-1 w-full" required placeholder="0" />
+                    </div>
+                    <div>
+                        <x-input-label value="Pajak Pembelian (Tax Input)" />
+                        <select name="tax_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                            <option value="">Tanpa Pajak</option>
+                            @foreach(\App\Models\Tax::where('is_active', true)->get() as $tax)
+                                <option value="{{ $tax->id }}">{{ $tax->name }} ({{ $tax->rate }}%)</option>
                             @endforeach
                         </select>
                     </div>

@@ -49,6 +49,20 @@
                             @error('bank_account_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
+                        <div class="col-span-full">
+                            <label for="chart_of_account_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Kategori Biaya (Buku Besar)</label>
+                            <select id="chart_of_account_id" name="chart_of_account_id" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500" required>
+                                <option value="">Pilih Kategori Akun</option>
+                                @foreach($categories as $coa)
+                                <option value="{{ $coa->id }}" {{ old('chart_of_account_id') == $coa->id ? 'selected' : '' }}>
+                                    {{ $coa->code }} - {{ $coa->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                            <p class="mt-1 text-xs text-gray-500 italic text-indigo-500">Pilih akun beban yang sesuai untuk pencatatan di laporan Laba Rugi.</p>
+                            @error('chart_of_account_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
                         <div class="col-span-full md:col-span-1">
                             <label for="display_amount" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Jumlah Pengeluaran (Rp)</label>
                             <div class="relative">

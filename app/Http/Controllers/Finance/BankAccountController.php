@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Finance;
 use App\Http\Controllers\Controller;
 use App\Models\BankAccount;
 use App\Models\User;
+use App\Models\ChartOfAccount;
 use Illuminate\Http\Request;
 
 class BankAccountController extends Controller
@@ -33,7 +34,13 @@ class BankAccountController extends Controller
             ->whereIn('role', ['admin', 'teknisi'])
             ->orderBy('name')
             ->get();
-        return view('finance.bank-accounts.create', compact('users'));
+            
+        $accounts = ChartOfAccount::where('type', 'asset')
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get();
+
+        return view('finance.bank-accounts.create', compact('users', 'accounts'));
     }
 
     public function store(Request $request)
@@ -44,6 +51,7 @@ class BankAccountController extends Controller
             'account_number' => 'nullable|string|max:255',
             'type' => 'required|in:bank,cash,e_wallet,payment_gateway',
             'user_id' => 'nullable|exists:users,id',
+            'chart_of_account_id' => 'nullable|exists:chart_of_accounts,id',
             'initial_balance' => 'required|numeric|min:0',
             'description' => 'nullable|string',
         ]);
@@ -54,6 +62,7 @@ class BankAccountController extends Controller
             'account_number' => $request->account_number,
             'type' => $request->type,
             'user_id' => $request->user_id,
+            'chart_of_account_id' => $request->chart_of_account_id,
             'balance' => 0, // Will be updated by transaction
             'description' => $request->description,
         ]);
@@ -92,7 +101,13 @@ class BankAccountController extends Controller
             ->whereIn('role', ['admin', 'teknisi'])
             ->orderBy('name')
             ->get();
-        return view('finance.bank-accounts.edit', compact('bankAccount', 'users'));
+            
+        $accounts = ChartOfAccount::where('type', 'asset')
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get();
+
+        return view('finance.bank-accounts.edit', compact('bankAccount', 'users', 'accounts'));
     }
 
     public function update(Request $request, BankAccount $bankAccount)
@@ -103,6 +118,7 @@ class BankAccountController extends Controller
             'account_number' => 'nullable|string|max:255',
             'type' => 'required|in:bank,cash,e_wallet,payment_gateway',
             'user_id' => 'nullable|exists:users,id',
+            'chart_of_account_id' => 'nullable|exists:chart_of_accounts,id',
             'description' => 'nullable|string',
             'is_active' => 'required|boolean',
         ]);

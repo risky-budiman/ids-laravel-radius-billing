@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Finance;
 use App\Http\Controllers\Controller;
 use App\Models\BankAccount;
 use App\Models\BankTransaction;
+use App\Models\ChartOfAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -64,13 +65,18 @@ class BankTransactionController extends Controller
     public function expense()
     {
         $accounts = BankAccount::where('is_active', true)->orderBy('bank_name')->get();
-        return view('finance.bank-transactions.expense', compact('accounts'));
+        $categories = ChartOfAccount::where('type', 'expense')
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get();
+        return view('finance.bank-transactions.expense', compact('accounts', 'categories'));
     }
 
     public function processExpense(Request $request)
     {
         $request->validate([
             'bank_account_id' => 'required|exists:bank_accounts,id',
+            'chart_of_account_id' => 'required|exists:chart_of_accounts,id',
             'amount' => 'required|numeric|min:1',
             'transaction_date' => 'required|date',
             'description' => 'required|string|max:255',
@@ -85,6 +91,7 @@ class BankTransactionController extends Controller
 
         BankTransaction::create([
             'bank_account_id' => $request->bank_account_id,
+            'chart_of_account_id' => $request->chart_of_account_id,
             'type' => 'withdrawal',
             'amount' => $request->amount,
             'description' => 'Pengeluaran: ' . $request->description,
@@ -164,14 +171,19 @@ class BankTransactionController extends Controller
         }
 
         $accounts = $query->orderBy('bank_name')->get();
+        $categories = ChartOfAccount::whereIn('type', ['income', 'equity'])
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get();
         
-        return view('finance.bank-transactions.income', compact('accounts'));
+        return view('finance.bank-transactions.income', compact('accounts', 'categories'));
     }
 
     public function processIncome(Request $request)
     {
         $request->validate([
             'bank_account_id' => 'required|exists:bank_accounts,id',
+            'chart_of_account_id' => 'required|exists:chart_of_accounts,id',
             'amount' => 'required|numeric|min:0.01',
             'transaction_date' => 'required|date',
             'description' => 'required|string',
@@ -188,6 +200,7 @@ class BankTransactionController extends Controller
         DB::transaction(function () use ($request) {
             BankTransaction::create([
                 'bank_account_id' => $request->bank_account_id,
+                'chart_of_account_id' => $request->chart_of_account_id,
                 'type' => 'deposit',
                 'amount' => $request->amount,
                 'description' => '[Pemasukan] ' . $request->description,

@@ -44,6 +44,8 @@ class Customer extends Model
         'installation_fee',
         'installation_paid_at',
         'installation_bank_account_id',
+        'activation_grace_expires_at',
+        'use_tax',
     ];
 
     protected $casts = [
@@ -52,8 +54,10 @@ class Customer extends Model
         'expired_at' => 'date',
         'activated_at' => 'datetime',
         'installation_paid_at' => 'datetime',
+        'activation_grace_expires_at' => 'datetime',
         'installation_fee' => 'decimal:2',
         'is_active' => 'boolean',
+        'use_tax' => 'boolean',
     ];
 
     /**

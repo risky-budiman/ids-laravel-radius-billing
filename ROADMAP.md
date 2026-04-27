@@ -18,21 +18,25 @@ Tujuan utama fase ini adalah mengubah sistem dari sekadar penagihan (Billing) me
 - [x] **Manajemen Kasir & Setor Dana:** Kasir menampung dana tunai dan memiliki fitur setor ke perusahaan.
 
 ### 1.2. Buku Besar & Jurnal (General Ledger)
-- [ ] Merancang standarisasi Chart of Accounts (CoA) / Bagan Akun
-- [ ] Membuat fitur pencatatan Jurnal Umum Manual (Double-Entry Bookkeeping)
-- [ ] Mengembangkan algoritma Auto-Journal untuk Invoice yang dibayar pelanggan
-- [ ] Mengembangkan algoritma Auto-Journal untuk pengeluaran Kas Kecil/Inventory
+- [x] **Merancang standarisasi Chart of Accounts (CoA):** Pembuatan master akun (Aset, Modal, Beban, dll)
+- [x] Membuat fitur pencatatan Jurnal Umum Manual (Double-Entry Bookkeeping)
+- [x] Mengembangkan algoritma Auto-Journal untuk Invoice yang dibayar pelanggan
+- [x] Mengembangkan algoritma Auto-Journal untuk pengeluaran Kas Kecil/Inventory
+- [x] **Laporan Keuangan Dasar:** Pembuatan Neraca (Balance Sheet) & Laba Rugi (Profit & Loss)
+- [x] **Fitur Tutup Buku:** Proses closing bulanan/tahunan dan penguncian periode transaksi.
+
 
 ### 1.3. Perpajakan (Taxation)
-- [ ] Pembuatan Master Data Pajak Dinamis (Misal: PPN 11%)
-- [ ] Mengimplementasikan penghitungan *Tax Output* (Pajak Keluaran) otomatis pada tagihan
-- [ ] Mengimplementasikan form *Tax Input* (Pajak Masukan) untuk pembelian inventaris
-- [ ] Membuat rangkuman Laporan Pajak Masa bulanan
+- [x] **Master Data Pajak:** Pembuatan Master Data Pajak Dinamis (Misal: PPN 11%)
+- [x] **Tax Output Calculation:** Mengimplementasikan penghitungan Tax Output (Pajak Keluaran) otomatis pada tagihan
+- [x] **Tax Input Implementation:** Mengimplementasikan form *Tax Input* (Pajak Masukan) untuk pembelian inventaris
+- [x] **Tax Report Summary:** Membuat rangkuman Laporan Pajak Masa bulanan
+- [x] **Flexible Tax Rules:** Implementasi aturan PPN Global vs Per-Pelanggan (Optional PPN)
 
 ### 1.4. Laporan Keuangan Finansial (Financial Reports)
-- [ ] Membuat halaman Laporan Buku Besar (Ledger Report) per CoA
-- [ ] Membuat generator Laporan Laba/Rugi (Income Statement)
-- [ ] Membuat generator Laporan Neraca Keuangan (Balance Sheet)
+- [x] Membuat halaman Laporan Buku Besar (Ledger Report) per CoA
+- [x] Membuat Laporan Arus Kas (Cash Flow) - Metode Langsung
+- [x] Implementasi ekspor laporan ke Excel / PDF
 
 ---
 

@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 
 use Illuminate\Support\Facades\Schedule;
 Schedule::command('app:process-billing')->dailyAt('00:01');
+Schedule::command('customer:check-grace-period')->everyMinute();

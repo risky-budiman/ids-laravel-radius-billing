@@ -89,6 +89,7 @@ class PaymentWebhookController extends Controller
                             $customer->update([
                                 'installation_paid_at' => now(),
                                 'installation_bank_account_id' => $pgAccount->id,
+                                'activation_grace_expires_at' => null, // Clear grace period
                             ]);
                         }
                     }

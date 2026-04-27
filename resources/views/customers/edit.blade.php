@@ -205,6 +205,20 @@
                     </div>
                 </div>
 
+            <!-- Section: Taxation Settings -->
+            <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Taxation Settings</h3>
+                <div class="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-2xl p-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="use_tax" name="use_tax" value="1" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 h-5 w-5" {{ old('use_tax', $customer->use_tax) ? 'checked' : '' }}>
+                        <div class="ml-4">
+                            <label for="use_tax" class="text-sm font-black text-gray-900 dark:text-gray-100 uppercase tracking-widest cursor-pointer">Kenakan Pajak (PPN)</label>
+                            <p class="text-xs text-gray-500 mt-1">Jika diaktifkan, tagihan bulanan pelanggan ini akan ditambah PPN (11%).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
                 <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <x-input-label for="is_active" :value="__('Account Status')" />

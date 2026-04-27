@@ -9,6 +9,7 @@ use App\Services\WhatsAppService;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use App\Services\AccountingService;
 
 class InvoiceController extends Controller
 {
@@ -45,21 +46,26 @@ class InvoiceController extends Controller
             ->where('type', '!=', 'payment_gateway')
             ->get();
 
+        $activeGateways = \App\Models\BankAccount::where('is_active', true)
+            ->where('type', 'payment_gateway')
+            ->get();
+
         return view('invoices.index', compact('invoices', 'activeGateways', 'bankAccounts'));
     }
 
     public function create()
     {
-        // Simple manual invoice system for now
         $customers = \App\Models\Customer::where('is_active', true)->get();
-        return view('invoices.create', compact('customers'));
+        $taxes = \App\Models\Tax::where('is_active', true)->get();
+        return view('invoices.create', compact('customers', 'taxes'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
-            'amount' => 'required|numeric|min:0',
+            'amount' => 'required|numeric|min:0', // This is interpreted as Subtotal
+            'tax_id' => 'nullable|exists:taxes,id',
             'due_date' => 'required|date',
             'billing_period' => 'nullable|string|max:255',
             'period_start' => 'required|date',
@@ -69,17 +75,35 @@ class InvoiceController extends Controller
         
         $customer = \App\Models\Customer::find($validated['customer_id']);
         
+        $subtotal = $validated['amount'];
+        $taxAmount = 0;
+        if ($request->filled('tax_id')) {
+            $tax = \App\Models\Tax::find($request->tax_id);
+            $taxAmount = ($subtotal * $tax->rate) / 100;
+        }
+        $totalAmount = $subtotal + $taxAmount;
+
         $invoice = Invoice::create([
             'invoice_number' => 'INV-' . strtoupper(uniqid()),
             'billing_period' => $validated['billing_period'] ?? '1 Month',
             'period_start' => $validated['period_start'],
             'period_end' => $validated['period_end'],
             'customer_id' => $validated['customer_id'],
-            'amount' => $validated['amount'],
+            'amount' => $totalAmount,
+            'subtotal' => $subtotal,
+            'tax_id' => $request->tax_id,
+            'tax_amount' => $taxAmount,
             'status' => 'unpaid',
             'due_date' => $validated['due_date'],
             'notes' => $validated['notes'],
         ]);
+
+        // Auto-Journal: Invoice Generated
+        try {
+            (new AccountingService())->recordInvoiceGenerated($invoice);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Auto-journal failed for BILL-{$invoice->invoice_number}: " . $e->getMessage());
+        }
 
         return redirect()->route('invoices.index')->with('success', 'Invoice generated successfully.');
     }
@@ -138,6 +162,14 @@ class InvoiceController extends Controller
                     if ($customer->billing_method === 'renewal') {
                         $customer->syncBillingDates();
                     }
+                }
+
+                // Auto-Journal: Invoice Payment
+                try {
+                    $bankAccount = \App\Models\BankAccount::find($bankAccountId);
+                    (new AccountingService())->recordInvoicePayment($invoice, $bankAccount);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Auto-journal failed for PAY-{$invoice->invoice_number}: " . $e->getMessage());
                 }
             });
             return redirect()->route('invoices.index')->with('success', 'Invoice marked as paid and customer reactivated.');

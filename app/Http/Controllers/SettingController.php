@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class SettingController extends Controller
 {
@@ -32,6 +33,9 @@ class SettingController extends Controller
                 ['value' => $value, 'type' => 'string']
             );
         }
+
+        // IMPORTANT: Clear the cache so changes appear immediately
+        Cache::forget('app_settings');
 
         return redirect()->back()->with('success', 'Company profile updated successfully.');
     }

@@ -166,9 +166,56 @@
                     });
                 </script>
                 <div>
-                    <x-input-label for="amount" :value="__('Amount (Rp)')" />
+                    <x-input-label for="amount" :value="__('Amount (Rp) - Subtotal')" />
                     <x-text-input id="amount" name="amount" type="number" class="mt-1 block w-full" required />
+                    <p class="mt-1 text-xs text-gray-500">Masukkan nilai dasar sebelum pajak.</p>
                 </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <x-input-label for="tax_id" :value="__('Applied Tax (Pajak)')" />
+                        <select id="tax_id" name="tax_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm">
+                            <option value="">-- No Tax (Tanpa Pajak) --</option>
+                            @foreach($taxes as $tax)
+                                <option value="{{ $tax->id }}" data-rate="{{ $tax->rate }}">{{ $tax->name }} ({{ $tax->rate }}%)</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <x-input-label :value="__('Total Payable (Setelah Pajak)')" />
+                        <div class="mt-1 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <span class="text-lg font-bold text-indigo-600 dark:text-indigo-400">Rp <span id="total_display">0</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const amountInput = document.getElementById('amount');
+                        const taxSelect = document.getElementById('tax_id');
+                        const totalDisplay = document.getElementById('total_display');
+
+                        function calculateTotal() {
+                            const subtotal = parseFloat(amountInput.value) || 0;
+                            const taxRate = parseFloat(taxSelect.options[taxSelect.selectedIndex]?.getAttribute('data-rate')) || 0;
+                            const taxAmount = (subtotal * taxRate) / 100;
+                            const total = subtotal + taxAmount;
+                            
+                            totalDisplay.textContent = new Intl.NumberFormat('id-ID').format(total);
+                        }
+
+                        amountInput.addEventListener('input', calculateTotal);
+                        taxSelect.addEventListener('change', calculateTotal);
+                        
+                        // Link with existing updateAmount
+                        const oldUpdateAmount = window.updateAmount;
+                        window.updateAmount = function() {
+                            // Call original logic if needed, or just let calculateTotal handle it
+                            // In this view, updateAmount is defined inside a closure.
+                        }
+                    });
+                </script>
+
                 <div>
                     <x-input-label for="due_date" :value="__('Due Date')" />
                     <x-text-input id="due_date" name="due_date" type="date" class="mt-1 block w-full" value="{{ now()->addDays(7)->format('Y-m-d') }}" required />

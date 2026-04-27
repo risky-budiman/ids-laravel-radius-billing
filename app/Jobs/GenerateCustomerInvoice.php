@@ -40,7 +40,21 @@ class GenerateCustomerInvoice implements ShouldQueue
         }
 
         // Generate Invoice
-        $price = $customer->package->price;
+        $subtotal = $customer->package->price;
+        $tax = \App\Models\Tax::where('is_active', true)->first(); // Pick active tax
+        
+        // Taxation Logic: Check Global Setting then Individual Preference
+        $taxMode = \App\Models\Setting::where('key', 'tax_mode')->first()?->value ?? 'individual';
+        $applyTax = ($taxMode === 'all') || ($taxMode === 'individual' && $customer->use_tax);
+
+        $taxAmount = 0;
+        if ($tax && $applyTax) {
+            $taxAmount = ($subtotal * $tax->rate) / 100;
+        } else {
+            $tax = null; // Clear tax if not applied
+        }
+        $totalAmount = $subtotal + $taxAmount;
+
         $nextDate = $customer->billing_next_date ?? now();
         
         if ($customer->billing_type === 'postpaid' && $customer->billing_method === 'cycle') {
@@ -57,13 +71,23 @@ class GenerateCustomerInvoice implements ShouldQueue
             'billing_period' => '1 Month',
             'period_start' => $startDate,
             'period_end' => $endDate,
-            'amount' => $price,
+            'amount' => $totalAmount,
+            'subtotal' => $subtotal,
+            'tax_id' => $tax?->id,
+            'tax_amount' => $taxAmount,
             'status' => 'unpaid',
             'due_date' => $customer->billing_due_date,
             'notes' => 'Tagihan otomatis skema ' . ucfirst($customer->billing_method),
         ]);
 
         Log::info("Generated invoice {$invoice->invoice_number} for {$customer->username}");
+        
+        // Auto-Journal: Invoice Generated
+        try {
+            (new \App\Services\AccountingService())->recordInvoiceGenerated($invoice);
+        } catch (\Exception $e) {
+            Log::error("Auto-journal failed for BILL-{$invoice->invoice_number}: " . $e->getMessage());
+        }
 
         // Update next billing schedule
         $customer->syncBillingDates();

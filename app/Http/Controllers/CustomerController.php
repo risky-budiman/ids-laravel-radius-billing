@@ -89,6 +89,7 @@ class CustomerController extends Controller
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'installation_fee' => 'nullable|numeric|min:0',
+            'use_tax' => 'nullable',
         ]);
 
         $package = Package::find($validated['package_id']);
@@ -117,6 +118,7 @@ class CustomerController extends Controller
                 'latitude' => $validated['latitude'],
                 'longitude' => $validated['longitude'],
                 'installation_fee' => $validated['installation_fee'] ?? 0,
+                'use_tax' => $request->has('use_tax'),
             ]);
 
             // Create in RADIUS (Authentication)
@@ -183,6 +185,7 @@ class CustomerController extends Controller
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'installation_fee' => 'nullable|numeric|min:0',
+            'use_tax' => 'nullable',
         ]);
 
         $latitude = $validated['latitude'] ?? null;
@@ -200,6 +203,7 @@ class CustomerController extends Controller
             $updateData['is_active'] = $isActive;
             $updateData['latitude'] = $latitude;
             $updateData['longitude'] = $longitude;
+            $updateData['use_tax'] = $request->has('use_tax');
 
             $customer->update($updateData);
 

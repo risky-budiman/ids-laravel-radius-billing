@@ -58,6 +58,18 @@
                             @error('account_number') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
+                        <div class="col-span-full md:col-span-1">
+                            <label for="chart_of_account_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Link ke Akun Perkiraan (CoA)</label>
+                            <select id="chart_of_account_id" name="chart_of_account_id" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                                <option value="">Pilih Akun (Otomatis: 1102 Bank)</option>
+                                @foreach($accounts as $coa)
+                                <option value="{{ $coa->id }}" {{ old('chart_of_account_id') == $coa->id ? 'selected' : '' }}>{{ $coa->code }} - {{ $coa->name }}</option>
+                                @endforeach
+                            </select>
+                            <p class="mt-1 text-xs text-gray-500">Hubungkan rekening ini dengan akun di Buku Besar.</p>
+                            @error('chart_of_account_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
                         <div class="col-span-full">
                             <label for="display_initial_balance" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Saldo Awal (Rp)</label>
                             <div class="relative">
