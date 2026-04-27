@@ -263,6 +263,14 @@ Route::middleware('auth')->group(function () {
         Route::get('locations/stbs', [\App\Http\Controllers\LocationDataController::class, 'stbs'])->name('locations.stbs');
         Route::post('locations/stbs', [\App\Http\Controllers\LocationDataController::class, 'storeStb'])->name('locations.stb.store');
         Route::delete('locations/stbs/{stb}', [\App\Http\Controllers\LocationDataController::class, 'destroyStb'])->name('locations.stb.destroy');
+        
+        Route::get('locations/odcs', [\App\Http\Controllers\LocationDataController::class, 'odcs'])->name('locations.odcs');
+        Route::post('locations/odcs', [\App\Http\Controllers\LocationDataController::class, 'storeOdc'])->name('locations.odc.store');
+        Route::delete('locations/odcs/{odc}', [\App\Http\Controllers\LocationDataController::class, 'destroyOdc'])->name('locations.odc.destroy');
+        
+        Route::get('locations/odps', [\App\Http\Controllers\LocationDataController::class, 'odps'])->name('locations.odps');
+        Route::post('locations/odps', [\App\Http\Controllers\LocationDataController::class, 'storeOdp'])->name('locations.odp.store');
+        Route::delete('locations/odps/{odp}', [\App\Http\Controllers\LocationDataController::class, 'destroyOdp'])->name('locations.odp.destroy');
 
         // Integrations & Settings
         Route::get('integrations/payment', [\App\Http\Controllers\IntegrationController::class, 'payment'])->name('integrations.payment');

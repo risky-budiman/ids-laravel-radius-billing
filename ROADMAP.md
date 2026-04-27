@@ -70,12 +70,12 @@ Fase ini bertujuan untuk mencapai status *Zero Touch Provisioning*, di mana sist
 ---
 
 ## FASE 3: Pemetaan Geospasial & GIS
-- [ ] CRUD Lengkap (Create, Read, Update, Delete) untuk Master Data Lokasi (Regional, STO, STB)
-- [ ] Fitur penambahan Titik Koordinat (Latitude/Longitude) pada data Pelanggan
-- [ ] Menampilkan peta sebaran pelanggan secara interaktif (Leaflet/Google Maps)
-- [ ] Fitur Manajemen & Pemetaan infrastruktur ODC (Optical Distribution Cabinet)
-- [ ] Fitur Manajemen & Pemetaan infrastruktur ODP (Optical Distribution Point)
-- [ ] Sinkronisasi data ODC & ODP dengan Master Data Lokasi (Regional, STO, STB) yang sudah ada
+- [x] CRUD Lengkap (Create, Read, Update, Delete) untuk Master Data Lokasi (Regional, STO, STB)
+- [x] Fitur penambahan Titik Koordinat (Latitude/Longitude) pada data Pelanggan (Selesai: Diperhalus di Wizard Aktivasi)
+- [x] Menampilkan peta sebaran pelanggan secara interaktif (Leaflet/Google Maps)
+- [x] Fitur Manajemen & Pemetaan infrastruktur ODC (Optical Distribution Cabinet)
+- [x] Fitur Manajemen & Pemetaan infrastruktur ODP (Optical Distribution Point)
+- [x] Sinkronisasi data ODC & ODP dengan Master Data Lokasi (Regional, STO, STB) yang sudah ada
 
 ---
 
@@ -83,20 +83,20 @@ Fase ini bertujuan untuk mencapai status *Zero Touch Provisioning*, di mana sist
 Fase ini berfokus untuk melengkapi atribut *Subscriber* agar setara dengan standar ISP Enterprise, mencakup kelengkapan data infrastruktur fisik, KYC (Know Your Customer), dan manajemen CPE (Customer Premises Equipment).
 
 ### 4.1. Pemetaan Infrastruktur Fisik Pelanggan
-- [ ] Penambahan field `odc_id`, `odp_id`, dan `odp_port` pada data pelanggan untuk melacak letak port fisik di lapangan.
-- [ ] Penambahan field `cable_length` (Panjang Kabel Drop Core) untuk manajemen aset dan penghitungan estimasi redaman (Loss).
-- [ ] Penambahan field `vlan_id` dan `static_ip` untuk pelanggan tipe Corporate/Dedicated.
+- [x] Penambahan field `odc_id`, `odp_id`, dan `odp_port` pada data pelanggan untuk melacak letak port fisik di lapangan. (Selesai: Terintegrasi di Wizard Aktivasi)
+- [x] Penambahan field `cable_length` (Panjang Kabel Drop Core) untuk manajemen aset dan penghitungan estimasi redaman (Loss). (Selesai: Terintegrasi di Wizard Aktivasi)
+- [x] Penambahan field `vlan_id` dan `static_ip` untuk pelanggan tipe Corporate/Dedicated. (Selesai: Terintegrasi di Wizard Aktivasi)
 
 ### 4.2. Dokumen KYC & Verifikasi
-- [ ] Upload foto identitas (KTP/NPWP) dan foto rumah/lokasi pemasangan (House Photo) saat teknisi melakukan aktivasi.
-- [ ] Upload foto fisik Modem/Router (CPE).
+- [x] Upload foto identitas (KTP/NPWP) dan foto rumah/lokasi pemasangan (House Photo) saat teknisi melakukan aktivasi. (Selesai: Terintegrasi di Wizard Aktivasi)
+- [x] Upload foto fisik Modem/Router (CPE). (Selesai: Terintegrasi di Wizard Aktivasi)
 - [ ] Fitur **OCR (Optical Character Recognition)** untuk mengekstrak Serial Number (SN) dan MAC Address secara otomatis dari foto modem yang diupload.
-- [ ] Penambahan tipe pelanggan (Personal, Corporate, VIP) untuk prioritas penanganan tiket (SLA).
-- [ ] **Kolom Deskripsi Tambahan:** Penambahan *field* `description` (catatan khusus) pada data subscriber untuk menyimpan keterangan detail/kronologi khusus yang tidak tercakup pada *field* standar.
+- [x] Penambahan tipe pelanggan (Personal, Corporate, VIP) untuk prioritas penanganan tiket (SLA).
+- [x] **Kolom Deskripsi Tambahan:** Penambahan *field* `description` (catatan khusus) pada data subscriber untuk menyimpan keterangan detail/kronologi khusus yang tidak tercakup pada *field* standar. (Selesai: Terintegrasi di Wizard Aktivasi)
 
 ### 4.3. Manajemen Perangkat Pelanggan (CPE)
-- [ ] Pencatatan detail Router/Access Point milik pelanggan (Merk, Tipe, MAC Address Router).
-- [ ] Sistem *Binding MAC Address* terintegrasi antara data pelanggan dan RADIUS untuk keamanan tambahan.
+- [x] Pencatatan detail Router/Access Point milik pelanggan (Merk, Tipe, MAC Address Router). (Selesai: Terintegrasi di Wizard Aktivasi)
+- [x] Sistem *Binding MAC Address* terintegrasi antara data pelanggan dan RADIUS untuk keamanan tambahan.
 
 ---
 

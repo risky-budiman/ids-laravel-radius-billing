@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Region;
 use App\Models\Sto;
 use App\Models\Stb;
+use App\Models\Odc;
+use App\Models\Odp;
 use Illuminate\Http\Request;
 
 class LocationDataController extends Controller
@@ -86,5 +88,57 @@ class LocationDataController extends Controller
     public function apiStbs(Sto $sto)
     {
         return response()->json($sto->stbs);
+    }
+
+    // === ODCs ===
+    public function odcs()
+    {
+        $odcs = Odc::with('stb')->get();
+        $stbs = Stb::all();
+        return view('locations.odcs', compact('odcs', 'stbs'));
+    }
+
+    public function storeOdc(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|string|unique:odcs,id',
+            'stb_id' => 'nullable|exists:stbs,id',
+            'name' => 'required|string',
+            'total_ports' => 'nullable|integer'
+        ]);
+        Odc::create($request->all());
+        return redirect()->back()->with('success', 'ODC added.');
+    }
+
+    public function destroyOdc(Odc $odc)
+    {
+        $odc->delete();
+        return redirect()->back()->with('success', 'ODC removed.');
+    }
+
+    // === ODPs ===
+    public function odps()
+    {
+        $odps = Odp::with('odc')->get();
+        $odcs = Odc::all();
+        return view('locations.odps', compact('odps', 'odcs'));
+    }
+
+    public function storeOdp(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|string|unique:odps,id',
+            'odc_id' => 'required|exists:odcs,id',
+            'name' => 'required|string',
+            'total_ports' => 'nullable|integer'
+        ]);
+        Odp::create($request->all());
+        return redirect()->back()->with('success', 'ODP added.');
+    }
+
+    public function destroyOdp(Odp $odp)
+    {
+        $odp->delete();
+        return redirect()->back()->with('success', 'ODP removed.');
     }
 }

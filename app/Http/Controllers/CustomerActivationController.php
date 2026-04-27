@@ -27,7 +27,20 @@ class CustomerActivationController extends Controller
         // Get items that are not tracked (cables, connectors, etc)
         $consumableItems = InventoryItem::where('track_serial', false)->get();
 
-        return view('customers.activate', compact('customer', 'serialItems', 'consumableItems'));
+        // Get OLTs for provisioning
+        $olts = \App\Models\Olt::where('is_active', true)->get();
+
+        // Get enterprise metadata for the wizard
+        $regions = \App\Models\Region::all();
+        $stos = \App\Models\Sto::all();
+        $stbs = \App\Models\Stb::all();
+        $odcs = \App\Models\Odc::all();
+        $odps = \App\Models\Odp::all();
+
+        return view('customers.activate', compact(
+            'customer', 'serialItems', 'consumableItems', 
+            'regions', 'stos', 'stbs', 'odcs', 'odps', 'olts'
+        ));
     }
 
     public function store(Request $request, Customer $customer)
@@ -41,18 +54,70 @@ class CustomerActivationController extends Controller
             'consumables.*.quantity' => 'required|numeric|min:0',
             'payment_method' => 'nullable|string|in:cash,transfer,pg',
             'bank_account_id' => 'nullable|exists:bank_accounts,id',
+            
+            // Enterprise Fields
+            'odc_id' => 'nullable|exists:odcs,id',
+            'odp_id' => 'nullable|exists:odps,id',
+            'odp_port' => 'nullable|numeric',
+            'vlan_id' => 'nullable|numeric',
+            'static_ip' => 'nullable|string',
+            'region_code' => 'nullable|string',
+            'sto_code' => 'nullable|string',
+            'stb_code' => 'nullable|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'identity_photo' => 'nullable|image|max:2048',
+            'house_photo' => 'nullable|image|max:2048',
+            'cpe_photo' => 'nullable|image|max:2048',
+            'description' => 'nullable|string',
+
+            // OLT Provisioning
+            'olt_id' => 'nullable|exists:olts,id',
+            'onu_sn' => 'nullable|string',
+            'onu_index' => 'nullable|string',
+            'onu_type' => 'nullable|string',
         ]);
 
         DB::transaction(function() use ($request, $customer) {
             // 1. Activate Customer and Set Initial Billing
-            $customer->update([
-                'is_active' => true, // Instant activation
+            $updateData = [
+                'is_active' => true,
                 'status' => Customer::STATUS_ACTIVE,
                 'activated_at' => now(),
                 'installation_paid_at' => ($request->payment_method === 'pg') ? null : now(),
                 'activation_grace_expires_at' => ($request->payment_method === 'pg') ? now()->addHour() : null,
                 'installation_bank_account_id' => $request->bank_account_id,
-            ]);
+            ];
+
+            // Load the selected modem stock to get its serial number
+            $modem = InventoryStock::findOrFail($request->modem_stock_id);
+
+            // Map and save enterprise fields from activation form
+            $enterpriseFields = [
+                'odc_id', 'odp_id', 'odp_port', 'vlan_id', 'static_ip',
+                'region_code', 'sto_code', 'stb_code', 'latitude', 'longitude', 'description',
+                'olt_id', 'onu_sn', 'onu_index', 'onu_type'
+            ];
+
+            foreach ($enterpriseFields as $field) {
+                if ($request->has($field)) {
+                    $updateData[$field] = $request->input($field);
+                }
+            }
+
+            // [PROGRES] Ensure ONU SN is taken from inventory if not provided or to ensure sync
+            if (empty($updateData['onu_sn']) || $updateData['onu_sn'] === 'e.g. ZTEGC000...') {
+                $updateData['onu_sn'] = $modem->serial_number;
+            }
+
+            // Handle Photo Uploads
+            foreach (['identity_photo', 'house_photo', 'cpe_photo'] as $photo) {
+                if ($request->hasFile($photo)) {
+                    $updateData[$photo] = $request->file($photo)->store('kyc_photos', 'public');
+                }
+            }
+
+            $customer->update($updateData);
 
             // Handle Treasury for Installation Fee (Non-PG)
             if ($customer->installation_fee > 0 && in_array($request->payment_method, ['cash', 'transfer'])) {
@@ -107,8 +172,7 @@ class CustomerActivationController extends Controller
                     'resolution_notes' => 'Aktivasi selesai. Perangkat telah dipasang.'
                 ]);
 
-            // 3. Install Modem (Serialized Item)
-            $modem = InventoryStock::findOrFail($request->modem_stock_id);
+            // 3. Install Modem (Serialized Item) - Already fetched above
             $modem->update([
                 'status' => 'installed',
                 'customer_id' => $customer->id

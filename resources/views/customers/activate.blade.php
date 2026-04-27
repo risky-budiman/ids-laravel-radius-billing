@@ -21,11 +21,59 @@
             <form action="{{ route('customers.activate.store', $customer) }}" method="POST" class="p-8 space-y-8" x-data="{ consumables: [] }">
                 @csrf
                 
-                <!-- Main Equipment Selection -->
+                <!-- Section: OLT Provisioning (Zero Touch) -->
                 <div class="space-y-4">
                     <div class="flex items-center space-x-2">
                         <div class="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
-                        <h4 class="font-bold text-gray-900 dark:text-gray-100">Perangkat Utama (ONU/Modem)</h4>
+                        <h4 class="font-bold text-gray-900 dark:text-gray-100">OLT Provisioning (Zero Touch)</h4>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-indigo-50/30 dark:bg-indigo-900/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-800">
+                        <div>
+                            <x-input-label for="olt_id" :value="__('Source OLT')" />
+                            <select id="olt_id" name="olt_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                                <option value="">-- Manual Configuration (No OLT) --</option>
+                                @foreach($olts as $olt)
+                                    <option value="{{ $olt->id }}" {{ old('olt_id', $customer->olt_id) == $olt->id ? 'selected' : '' }}>{{ $olt->name }} ({{ $olt->ip_address }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <x-input-label for="onu_sn" :value="__('ONU Serial Number')" />
+                                <span id="sn-sync-badge" class="hidden text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">
+                                    Synced with Inventory
+                                </span>
+                            </div>
+                            <x-text-input id="onu_sn" name="onu_sn" type="text" class="mt-1 block w-full font-mono uppercase" :value="old('onu_sn', $customer->onu_sn)" placeholder="e.g. ZTEGC000..." />
+                            <p class="text-[9px] text-gray-400 mt-1 italic">Dapat diisi manual atau otomatis dari pilihan stok di bawah.</p>
+                        </div>
+
+                        <div>
+                            <x-input-label for="onu_index" :value="__('ONU Index (Position)')" />
+                            <x-text-input id="onu_index" name="onu_index" type="text" class="mt-1 block w-full font-mono" :value="old('onu_index', $customer->onu_index)" placeholder=".shelf.slot.port.id" />
+                            <p class="text-[9px] text-gray-400 mt-1 italic">Example: .1.1.1.1</p>
+                        </div>
+
+                        <div>
+                            <x-input-label for="onu_type" :value="__('ONU Type/Model')" />
+                            <select id="onu_type" name="onu_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                                <option value="ZTE F660" {{ old('onu_type', $customer->onu_type) == 'ZTE F660' ? 'selected' : '' }}>ZTE F660</option>
+                                <option value="ZTE F609" {{ old('onu_type', $customer->onu_type) == 'ZTE F609' ? 'selected' : '' }}>ZTE F609</option>
+                                <option value="HG6243C" {{ old('onu_type', $customer->onu_type) == 'HG6243C' ? 'selected' : '' }}>HG6243C (FiberHome)</option>
+                                <option value="HG6145D" {{ old('onu_type', $customer->onu_type) == 'HG6145D' ? 'selected' : '' }}>HG6145D (FiberHome)</option>
+                                <option value="Other" {{ old('onu_type', $customer->onu_type) == 'Other' ? 'selected' : '' }}>Other / Generic</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Equipment Selection -->
+                <div class="space-y-4 pt-6 border-t border-gray-100 dark:border-gray-700">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-1.5 h-6 bg-slate-500 rounded-full"></div>
+                        <h4 class="font-bold text-gray-900 dark:text-gray-100">Inventory Mapping (ONU/Modem)</h4>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -35,7 +83,9 @@
                                 @foreach($serialItems as $item)
                                     <optgroup label="{{ $item->name }}">
                                         @foreach($item->stocks as $stock)
-                                            <option value="{{ $stock->id }}">SN: {{ $stock->serial_number }} ({{ strtoupper($stock->condition) }})</option>
+                                            <option value="{{ $stock->id }}" data-sn="{{ $stock->serial_number }}" data-type="{{ $item->model }}" data-brand="{{ $item->brand }}">
+                                                SN: {{ $stock->serial_number }} ({{ strtoupper($stock->condition) }})
+                                            </option>
                                         @endforeach
                                     </optgroup>
                                 @endforeach
@@ -86,17 +136,158 @@
                     </div>
                 </div>
 
+                <!-- Section: Physical Infrastructure -->
+                <div class="space-y-4 pt-6 border-t border-gray-100 dark:border-gray-700">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
+                        <h4 class="font-bold text-gray-900 dark:text-gray-100">Pemetaan Infrastruktur Fisik (ODC/ODP)</h4>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-emerald-50/30 dark:bg-emerald-900/10 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+                        <div>
+                            <x-input-label for="odc_id" :value="__('ODC Cabinet')" />
+                            <select id="odc_id" name="odc_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                                <option value="">-- Pilih ODC --</option>
+                                @foreach($odcs as $odc)
+                                    <option value="{{ $odc->id }}" {{ old('odc_id', $customer->odc_id) == $odc->id ? 'selected' : '' }}>{{ $odc->id }} - {{ $odc->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <x-input-label for="odp_id" :value="__('ODP Box')" />
+                            <select id="odp_id" name="odp_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                                <option value="">-- Pilih ODP --</option>
+                                @foreach($odps as $odp)
+                                    <option value="{{ $odp->id }}" data-odc-id="{{ $odp->odc_id }}" {{ old('odp_id', $customer->odp_id) == $odp->id ? 'selected' : '' }}>{{ $odp->id }} - {{ $odp->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <x-input-label for="odp_port" :value="__('ODP Port')" />
+                                <x-text-input id="odp_port" name="odp_port" type="number" class="mt-1 block w-full" :value="old('odp_port', $customer->odp_port)" placeholder="1-16" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <x-input-label for="vlan_id" :value="__('Service VLAN ID')" />
+                                <x-text-input id="vlan_id" name="vlan_id" type="number" class="mt-1 block w-full" :value="old('vlan_id', $customer->vlan_id)" placeholder="100" />
+                            </div>
+                            <div>
+                                <x-input-label for="static_ip" :value="__('Static IP (Optional)')" />
+                                <x-text-input id="static_ip" name="static_ip" type="text" class="mt-1 block w-full" :value="old('static_ip', $customer->static_ip)" placeholder="10.x.x.x" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: KYC & CPE Photos -->
+                <div class="space-y-4 pt-6 border-t border-gray-100 dark:border-gray-700">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-1.5 h-6 bg-amber-500 rounded-full"></div>
+                        <h4 class="font-bold text-gray-900 dark:text-gray-100">Dokumentasi KYC & Foto Perangkat</h4>
+                    </div>
+                    
+                    <div class="bg-amber-50/30 dark:bg-amber-900/10 p-6 rounded-2xl border border-amber-100 dark:border-amber-800">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div>
+                                <x-input-label for="identity_photo" :value="__('Foto KTP/Identitas')" />
+                                <input type="file" id="identity_photo" name="identity_photo" class="mt-1 block w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-100 file:text-amber-700" accept="image/*">
+                            </div>
+                            <div>
+                                <x-input-label for="house_photo" :value="__('Foto Rumah/Lokasi')" />
+                                <input type="file" id="house_photo" name="house_photo" class="mt-1 block w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-100 file:text-amber-700" accept="image/*">
+                            </div>
+                            <div class="space-y-3">
+                                <x-input-label for="cpe_photo" :value="__('Foto Fisik Modem (Harus Terlihat SN)')" />
+                                <div class="flex items-center space-x-4">
+                                    <input type="file" id="cpe_photo" name="cpe_photo" class="mt-1 block w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-100 file:text-amber-700" accept="image/*" @change="previewImage($event, 'cpe-preview')">
+                                    <div id="cpe-preview-container" class="hidden">
+                                        <img id="cpe-preview" class="h-16 w-16 object-cover rounded-lg border-2 border-amber-200 shadow-sm">
+                                    </div>
+                                </div>
+                                <div class="mt-2 p-2 bg-amber-100/50 rounded-lg border border-amber-200 flex items-center">
+                                    <svg class="w-4 h-4 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <p class="text-[10px] text-amber-800 font-medium italic">Pastikan SN di foto sesuai dengan SN Inventory yang dipilih di atas.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <x-input-label for="region_code" :value="__('Region')" />
+                                <select id="region_code" name="region_code" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm" required>
+                                    <option value="">-- Pilih --</option>
+                                    @foreach($regions as $r)
+                                        <option value="{{ $r->code }}" data-id="{{ $r->id }}" {{ old('region_code', $customer->region_code) == $r->code ? 'selected' : '' }}>[{{ $r->code }}] {{ $r->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <x-input-label for="sto_code" :value="__('STO')" />
+                                <select id="sto_code" name="sto_code" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm" required>
+                                    <option value="">-- Pilih --</option>
+                                    @foreach($stos as $s)
+                                        <option value="{{ $s->code }}" data-id="{{ $s->id }}" data-region-id="{{ $s->region_id }}" class="hidden" {{ old('sto_code', $customer->sto_code) == $s->code ? 'selected' : '' }}>[{{ $s->code }}] {{ $s->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <x-input-label for="stb_code" :value="__('STB')" />
+                                <select id="stb_code" name="stb_code" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm" required>
+                                    <option value="">-- Pilih --</option>
+                                    @foreach($stbs as $t)
+                                        <option value="{{ $t->code }}" data-sto-id="{{ $t->sto_id }}" class="hidden" {{ old('stb_code', $customer->stb_code) == $t->code ? 'selected' : '' }}>[{{ $t->code }}] {{ $t->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Geolocation -->
+                <div class="space-y-4 pt-6 border-t border-gray-100 dark:border-gray-700">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-1.5 h-6 bg-rose-500 rounded-full"></div>
+                            <h4 class="font-bold text-gray-900 dark:text-gray-100">Koordinat Pemasangan (GPS)</h4>
+                        </div>
+                        <button type="button" id="locate-me" class="hidden text-[10px] bg-rose-50 text-rose-600 px-3 py-1 rounded-lg font-bold uppercase hover:bg-rose-100 transition-colors">
+                            Deteksi Lokasi Saya
+                        </button>
+                    </div>
+
+                    <div class="bg-rose-50/30 dark:bg-rose-900/10 p-6 rounded-2xl border border-rose-100 dark:border-rose-800">
+                        <div class="border-2 border-white dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm mb-4">
+                            <div id="map-picker" style="height: 200px; width: 100%;"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <x-input-label for="latitude" :value="__('Latitude')" />
+                                <x-text-input id="latitude" name="latitude" type="text" class="mt-1 block w-full bg-white dark:bg-gray-900 font-mono" :value="old('latitude', $customer->latitude)" required />
+                            </div>
+                            <div>
+                                <x-input-label for="longitude" :value="__('Longitude')" />
+                                <x-text-input id="longitude" name="longitude" type="text" class="mt-1 block w-full bg-white dark:bg-gray-900 font-mono" :value="old('longitude', $customer->longitude)" required />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Installation Payment -->
                 <div class="space-y-4 pt-6 border-t border-gray-100 dark:border-gray-700" x-data="{ payment_method: 'cash' }">
                     <div class="flex items-center space-x-2">
-                        <div class="w-1.5 h-6 bg-amber-500 rounded-full"></div>
+                        <div class="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
                         <h4 class="font-bold text-gray-900 dark:text-gray-100">Pembayaran Instalasi</h4>
                     </div>
                     
-                    <div class="bg-amber-50/50 dark:bg-amber-900/10 p-6 rounded-2xl border border-amber-100 dark:border-amber-900/30">
+                    <div class="bg-indigo-50/50 dark:bg-indigo-900/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/30">
                         <div class="flex items-center justify-between mb-6">
-                            <span class="text-sm font-medium text-amber-800 dark:text-amber-300">Biaya Instalasi Terutang:</span>
-                            <span class="text-2xl font-black text-amber-900 dark:text-amber-100">Rp {{ number_format($customer->installation_fee, 2, ',', '.') }}</span>
+                            <span class="text-sm font-medium text-indigo-800 dark:text-indigo-300">Biaya Instalasi Terutang:</span>
+                            <span class="text-2xl font-black text-indigo-900 dark:text-indigo-100">Rp {{ number_format($customer->installation_fee, 2, ',', '.') }}</span>
                         </div>
 
                         @if($customer->installation_fee > 0)
@@ -121,9 +312,9 @@
                             </div>
                             
                             <div x-show="payment_method === 'pg'" class="col-span-full">
-                                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-amber-900/50 flex items-start gap-3">
-                                    <svg class="w-5 h-5 text-amber-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <p class="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed italic">
+                                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-indigo-200 dark:border-indigo-900/50 flex items-start gap-3">
+                                    <svg class="w-5 h-5 text-indigo-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <p class="text-[11px] text-indigo-800 dark:text-indigo-300 leading-relaxed italic">
                                         Pilih ini jika pelanggan ingin membayar melalui Link Pembayaran (Midtrans/Xendit). Akun akan otomatis aktif setalah pembayaran diverifikasi oleh Gateway.
                                     </p>
                                 </div>
@@ -146,4 +337,150 @@
             </form>
         </div>
     </div>
+
+    @push('styles')
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    @endpush
+
+    @push('scripts')
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        function previewImage(event, previewId) {
+            const input = event.target;
+            const preview = document.getElementById(previewId);
+            const container = document.getElementById(previewId + '-container');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    container.classList.remove('hidden');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        (function() {
+            // Map Logic
+            var latInput = document.getElementById('latitude');
+            var lngInput = document.getElementById('longitude');
+
+            try {
+                var initialLat = parseFloat(@json($customer->latitude)) || -6.200000;
+                var initialLng = parseFloat(@json($customer->longitude)) || 106.816666;
+                
+                var map = L.map('map-picker').setView([initialLat, initialLng], 14);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                var marker = L.marker([initialLat, initialLng], {draggable: true}).addTo(map);
+
+                function updateInputs(lat, lng) {
+                    latInput.value = lat.toFixed(8);
+                    lngInput.value = lng.toFixed(8);
+                }
+
+                marker.on('dragend', function(e) {
+                    var position = marker.getLatLng();
+                    updateInputs(position.lat, position.lng);
+                });
+
+                map.on('click', function(e) {
+                    marker.setLatLng(e.latlng);
+                    updateInputs(e.latlng.lat, e.latlng.lng);
+                });
+
+                var locateBtn = document.getElementById('locate-me');
+                if (locateBtn && navigator.geolocation) {
+                    locateBtn.classList.remove('hidden');
+                    locateBtn.addEventListener('click', function() {
+                        navigator.geolocation.getCurrentPosition(function(position) {
+                            var userLat = position.coords.latitude;
+                            var userLng = position.coords.longitude;
+                            marker.setLatLng([userLat, userLng]);
+                            map.setView([userLat, userLng], 16);
+                            updateInputs(userLat, userLng);
+                        });
+                    });
+                }
+            } catch(e) { console.warn(e); }
+
+            // Cascading Logic
+            var regionSelect = document.getElementById('region_code');
+            var stoSelect = document.getElementById('sto_code');
+            var stbSelect = document.getElementById('stb_code');
+            var odcSelect = document.getElementById('odc_id');
+            var odpSelect = document.getElementById('odp_id');
+
+            regionSelect.addEventListener('change', function() {
+                var regionId = this.options[this.selectedIndex].getAttribute('data-id');
+                Array.from(stoSelect.options).forEach(opt => {
+                    if (opt.value === "") return;
+                    opt.classList.toggle('hidden', opt.getAttribute('data-region-id') !== regionId);
+                });
+                stoSelect.value = "";
+                stbSelect.value = "";
+            });
+
+            stoSelect.addEventListener('change', function() {
+                var stoId = this.options[this.selectedIndex].getAttribute('data-id');
+                Array.from(stbSelect.options).forEach(opt => {
+                    if (opt.value === "") return;
+                    opt.classList.toggle('hidden', opt.getAttribute('data-sto-id') !== stoId);
+                });
+                stbSelect.value = "";
+            });
+
+            odcSelect.addEventListener('change', function() {
+                var odcId = this.value;
+                Array.from(odpSelect.options).forEach(opt => {
+                    if (opt.value === "") return;
+                    opt.classList.toggle('hidden', opt.getAttribute('data-odc-id') !== odcId);
+                });
+                odpSelect.value = "";
+            });
+
+            // Inventory SN Sync Logic
+            var modemSelect = document.querySelector('select[name="modem_stock_id"]');
+            var onuSnInput = document.getElementById('onu_sn');
+            var onuTypeSelect = document.getElementById('onu_type');
+
+            modemSelect.addEventListener('change', function() {
+                var selected = this.options[this.selectedIndex];
+                var badge = document.getElementById('sn-sync-badge');
+                
+                if (!selected || selected.value === "") {
+                    if (badge) badge.classList.add('hidden');
+                    return;
+                }
+
+                var sn = selected.getAttribute('data-sn');
+                var type = selected.getAttribute('data-type');
+                
+                if (sn) {
+                    onuSnInput.value = sn.toUpperCase();
+                    if (badge) badge.classList.remove('hidden');
+                }
+                
+                // Try to match onu_type select or add as custom
+                if (type) {
+                    let matched = false;
+                    Array.from(onuTypeSelect.options).forEach(opt => {
+                        if (opt.value.toLowerCase().includes(type.toLowerCase())) {
+                            onuTypeSelect.value = opt.value;
+                            matched = true;
+                        }
+                    });
+                    if (!matched) {
+                        onuTypeSelect.value = "Other";
+                    }
+                }
+            });
+
+            // If user manually edits, hide the sync badge to indicate custom value
+            onuSnInput.addEventListener('input', function() {
+                var badge = document.getElementById('sn-sync-badge');
+                if (badge) badge.classList.add('hidden');
+            });
+        })();
+    </script>
+    @endpush
 </x-app-layout>

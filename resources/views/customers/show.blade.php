@@ -42,6 +42,20 @@
                     </div>
                     <h3 class="mt-4 text-lg font-bold text-gray-900 dark:text-white">{{ $customer->name }}</h3>
                     <p class="text-xs text-gray-400 font-mono">@ {{ $customer->username }}</p>
+                    
+                    <div class="mt-3 flex justify-center space-x-2">
+                        @php
+                            $typeColors = [
+                                'personal' => 'bg-blue-50 text-blue-600 border-blue-100',
+                                'corporate' => 'bg-purple-50 text-purple-600 border-purple-100',
+                                'vip' => 'bg-amber-50 text-amber-600 border-amber-100',
+                            ];
+                        @endphp
+                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border {{ $typeColors[$customer->customer_type] ?? 'bg-gray-50' }}">
+                            {{ $customer->customer_type }}
+                        </span>
+                    </div>
+
                     @if($customer->ktp)
                         <p class="text-[10px] text-gray-400 mt-1 font-mono">ID: {{ $customer->ktp }}</p>
                     @endif
@@ -104,6 +118,7 @@
             <!-- Tab Navigation -->
             <div class="flex space-x-6 border-b border-gray-100 dark:border-gray-800">
                 <button @click="tab = 'assets'" :class="tab === 'assets' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'" class="pb-4 px-2 border-b-2 font-bold text-sm transition-all">Installed Assets</button>
+                <button @click="tab = 'enterprise'" :class="tab === 'enterprise' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'" class="pb-4 px-2 border-b-2 font-bold text-sm transition-all">Enterprise & KYC</button>
                 <button @click="tab = 'billing'" :class="tab === 'billing' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'" class="pb-4 px-2 border-b-2 font-bold text-sm transition-all">Billing History</button>
                 <button @click="tab = 'sessions'" :class="tab === 'sessions' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'" class="pb-4 px-2 border-b-2 font-bold text-sm transition-all">Session History</button>
             </div>
@@ -186,6 +201,95 @@
                         </table>
                     </div>
                 </div>
+            </div>
+
+            <!-- Tab Content: Enterprise & KYC -->
+            <div x-show="tab === 'enterprise'" x-transition class="space-y-8">
+                <!-- Physical Infrastructure Details -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                        <div class="px-8 py-4 bg-emerald-50/50 dark:bg-emerald-900/10 border-b border-gray-100 dark:border-gray-700">
+                            <h4 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Physical Infrastructure</h4>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div class="flex justify-between">
+                                <span class="text-xs text-gray-500">ODC Cabinet:</span>
+                                <span class="text-xs font-bold text-gray-900 dark:text-white">{{ $customer->odc_id ?? 'Not Mapped' }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-xs text-gray-500">ODP Box:</span>
+                                <span class="text-xs font-bold text-gray-900 dark:text-white">{{ $customer->odp_id ?? 'Not Mapped' }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-xs text-gray-500">ODP Port:</span>
+                                <span class="text-xs font-bold text-gray-900 dark:text-white">{{ $customer->odp_port ?? '-' }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-xs text-gray-500">Drop Core:</span>
+                                <span class="text-xs font-bold text-gray-900 dark:text-white">{{ $customer->cable_length ? $customer->cable_length . ' Meters' : '-' }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                        <div class="px-8 py-4 bg-indigo-50/50 dark:bg-indigo-900/10 border-b border-gray-100 dark:border-gray-700">
+                            <h4 class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">CPE & Logical Configuration</h4>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div class="flex justify-between">
+                                <span class="text-xs text-gray-500">Service VLAN:</span>
+                                <span class="text-xs font-bold text-gray-900 dark:text-white">{{ $customer->vlan_id ?? '-' }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-xs text-gray-500">Static IP:</span>
+                                <span class="text-xs font-bold text-gray-900 dark:text-white">{{ $customer->static_ip ?? 'Dynamic' }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-xs text-gray-500">CPE Brand:</span>
+                                <span class="text-xs font-bold text-gray-900 dark:text-white">{{ $customer->cpe_brand ?? '-' }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-xs text-gray-500">CPE MAC:</span>
+                                <span class="text-xs font-bold text-gray-900 dark:text-white font-mono">{{ $customer->cpe_mac ?? '-' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KYC Documents / Photos -->
+                <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                    <div class="px-8 py-4 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
+                        <h4 class="text-[10px] font-black text-gray-500 uppercase tracking-widest">KYC Documents & Verification Photos</h4>
+                    </div>
+                    <div class="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+                        @foreach(['identity_photo' => 'Identity (KTP)', 'house_photo' => 'House/Location', 'cpe_photo' => 'Device (CPE)'] as $field => $label)
+                            <div class="space-y-3">
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block text-center">{{ $label }}</span>
+                                <div class="aspect-video rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 overflow-hidden group relative">
+                                    @if($customer->$field)
+                                        <img src="{{ asset('storage/' . $customer->$field) }}" class="w-full h-full object-cover transition-transform group-hover:scale-110 cursor-pointer" onclick="window.open(this.src)">
+                                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <span class="text-white text-[10px] font-bold uppercase tracking-widest">Click to Zoom</span>
+                                        </div>
+                                    @else
+                                        <div class="w-full h-full flex flex-col items-center justify-center text-gray-300">
+                                            <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002-2z"></path></svg>
+                                            <span class="text-[9px] font-bold uppercase">No Image</span>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Special Notes -->
+                @if($customer->description)
+                <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden p-8">
+                    <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Subscriber Notes</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 italic leading-relaxed whitespace-pre-wrap">{{ $customer->description }}</p>
+                </div>
+                @endif
             </div>
 
             <!-- Tab Content: Billing -->

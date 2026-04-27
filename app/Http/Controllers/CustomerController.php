@@ -6,7 +6,7 @@ use App\Models\Customer;
 use App\Models\Package;
 use App\Models\Radius\RadCheck;
 use App\Models\Radius\RadUserGroup;
-use App\Models\Nas;
+use App\Models\Radius\Nas;
 use App\Services\RadiusCoAService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -64,7 +64,9 @@ class CustomerController extends Controller
         $stos = \App\Models\Sto::all();
         $stbs = \App\Models\Stb::all();
         $olts = \App\Models\Olt::where('is_active', true)->get();
-        return view('customers.create', compact('packages', 'regions', 'stos', 'stbs', 'olts'));
+        $odcs = \App\Models\Odc::all();
+        $odps = \App\Models\Odp::all();
+        return view('customers.create', compact('packages', 'regions', 'stos', 'stbs', 'olts', 'odcs', 'odps'));
     }
 
     public function store(Request $request)
@@ -87,32 +89,37 @@ class CustomerController extends Controller
             'billing_method' => 'required|in:cycle,fixed,renewal',
             'billing_day' => 'nullable|integer|min:1|max:28',
             'billing_due_day' => 'nullable|integer|min:1|max:28',
+            'customer_type' => 'required|in:personal,corporate,vip',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'installation_fee' => 'nullable|numeric|min:0',
-            'use_tax' => 'nullable',
-            'olt_id' => 'nullable|exists:olts,id',
-            'onu_sn' => 'nullable|string|max:64',
-            'onu_index' => 'nullable|string|max:64',
-            'onu_type' => 'nullable|string|max:32',
+            'description' => 'nullable|string',
         ]);
 
         $package = Package::find($validated['package_id']);
         $isActive = filter_var($request->input('is_active', false), FILTER_VALIDATE_BOOLEAN);
 
-        DB::transaction(function () use ($validated, $package, $isActive) {
+        DB::transaction(function () use ($validated, $package, $isActive, $request) {
+            // Handle File Uploads
+            $photos = [];
+            foreach(['identity_photo', 'house_photo', 'cpe_photo'] as $field) {
+                if ($request->hasFile($field)) {
+                    $photos[$field] = $request->file($field)->store('customers/kyc', 'public');
+                }
+            }
+
             // Create in Billing
-            Customer::create([
+            Customer::create(array_merge([
                 'customer_code' => $validated['customer_code'],
                 'region_code' => $validated['region_code'] ?? '000',
                 'sto_code' => $validated['sto_code'] ?? '000',
                 'stb_code' => $validated['stb_code'] ?? '000',
                 'username' => $validated['username'],
                 'name' => $validated['name'],
-                'ktp' => $validated['ktp'],
-                'email' => $validated['email'],
-                'phone' => $validated['phone'],
-                'address' => $validated['address'],
+                'ktp' => $validated['ktp'] ?? null,
+                'email' => $validated['email'] ?? null,
+                'phone' => $validated['phone'] ?? null,
+                'address' => $validated['address'] ?? null,
                 'package_id' => $validated['package_id'],
                 'is_active' => $isActive,
                 'status' => $isActive ? Customer::STATUS_ACTIVE : Customer::STATUS_NEW,
@@ -124,11 +131,23 @@ class CustomerController extends Controller
                 'longitude' => $validated['longitude'],
                 'installation_fee' => $validated['installation_fee'] ?? 0,
                 'use_tax' => $request->has('use_tax'),
-                'olt_id' => $validated['olt_id'],
-                'onu_sn' => $validated['onu_sn'],
-                'onu_index' => $validated['onu_index'],
-                'onu_type' => $validated['onu_type'],
-            ]);
+                'olt_id' => $validated['olt_id'] ?? null,
+                'onu_sn' => $validated['onu_sn'] ?? null,
+                'onu_index' => $validated['onu_index'] ?? null,
+                'onu_type' => $validated['onu_type'] ?? null,
+                // Enterprise
+                'customer_type' => $validated['customer_type'] ?? 'personal',
+                'odc_id' => $validated['odc_id'] ?? null,
+                'odp_id' => $validated['odp_id'] ?? null,
+                'odp_port' => $validated['odp_port'] ?? null,
+                'cable_length' => $validated['cable_length'] ?? null,
+                'vlan_id' => $validated['vlan_id'] ?? null,
+                'static_ip' => $validated['static_ip'] ?? null,
+                'cpe_brand' => $validated['cpe_brand'] ?? null,
+                'cpe_model' => $validated['cpe_model'] ?? null,
+                'cpe_mac' => $validated['cpe_mac'] ?? null,
+                'description' => $validated['description'] ?? null,
+            ], $photos));
 
             // Create in RADIUS (Authentication)
             RadCheck::create([
@@ -166,8 +185,10 @@ class CustomerController extends Controller
         $radCheck = \App\Models\Radius\RadCheck::where('username', $customer->username)->first();
         $customer->password = $radCheck ? $radCheck->value : '';
         $olts = \App\Models\Olt::where('is_active', true)->get();
+        $odcs = \App\Models\Odc::all();
+        $odps = \App\Models\Odp::all();
 
-        return view('customers.edit', compact('customer', 'packages', 'regions', 'stos', 'stbs', 'olts'));
+        return view('customers.edit', compact('customer', 'packages', 'regions', 'stos', 'stbs', 'olts', 'odcs', 'odps'));
     }
 
     public function update(Request $request, Customer $customer)
@@ -197,10 +218,11 @@ class CustomerController extends Controller
             'billing_method' => 'required|in:cycle,fixed,renewal',
             'billing_day' => 'nullable|integer|min:1|max:28',
             'billing_due_day' => 'nullable|integer|min:1|max:28',
+            'customer_type' => 'required|in:personal,corporate,vip',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'installation_fee' => 'nullable|numeric|min:0',
-            'use_tax' => 'nullable',
+            'description' => 'nullable|string',
         ]);
 
         $latitude = $validated['latitude'] ?? null;
@@ -212,13 +234,24 @@ class CustomerController extends Controller
         $package = \App\Models\Package::find($validated['package_id']);
         $isActive = filter_var($request->input('is_active', false), FILTER_VALIDATE_BOOLEAN);
 
-        DB::transaction(function () use ($customer, $validated, $oldUsername, $newUsername, $package, $isActive, $latitude, $longitude) {
+        DB::transaction(function () use ($customer, $validated, $oldUsername, $newUsername, $package, $isActive, $latitude, $longitude, $request) {
             // 1. Update customer fields (excluding password and coordinates)
-            $updateData = collect($validated)->except(['password', 'latitude', 'longitude'])->toArray();
+            $updateData = collect($validated)->except(['password', 'latitude', 'longitude', 'identity_photo', 'house_photo', 'cpe_photo'])->toArray();
             $updateData['is_active'] = $isActive;
             $updateData['latitude'] = $latitude;
             $updateData['longitude'] = $longitude;
             $updateData['use_tax'] = $request->has('use_tax');
+
+            // Handle File Uploads
+            foreach(['identity_photo', 'house_photo', 'cpe_photo'] as $field) {
+                if ($request->hasFile($field)) {
+                    // Delete old file if exists
+                    if ($customer->$field) {
+                        \Illuminate\Support\Facades\Storage::disk('public')->delete($customer->$field);
+                    }
+                    $updateData[$field] = $request->file($field)->store('customers/kyc', 'public');
+                }
+            }
 
             $customer->update($updateData);
 
@@ -245,7 +278,7 @@ class CustomerController extends Controller
         
         if (($oldStatus && !$isActive) || $isPackageChanged || ($oldUsername !== $newUsername)) {
             try {
-                $nas = \App\Models\Nas::first(); 
+                $nas = Nas::first(); 
                 if ($nas) {
                     $coaService = new \App\Services\RadiusCoAService();
                     $coaService->disconnect($nas->nasipaddress, $nas->secret, $newUsername);

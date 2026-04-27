@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Customer extends Model
 {
@@ -17,6 +18,23 @@ class Customer extends Model
     const STATUS_WAITING_DISMANTLE = 'waiting_dismantle';
     const STATUS_DISMANTLED = 'dismantled';
     const STATUS_CANCELED = 'canceled';
+
+    const TYPE_PERSONAL = 'personal';
+    const TYPE_CORPORATE = 'corporate';
+    const TYPE_VIP = 'vip';
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($customer) {
+            foreach(['identity_photo', 'house_photo', 'cpe_photo'] as $field) {
+                if ($customer->$field) {
+                    Storage::disk('public')->delete($customer->$field);
+                }
+            }
+        });
+    }
 
     protected $fillable = [
         'customer_code',
@@ -47,6 +65,20 @@ class Customer extends Model
         'installation_bank_account_id',
         'activation_grace_expires_at',
         'use_tax',
+        'odc_id',
+        'odp_id',
+        'odp_port',
+        'cable_length',
+        'vlan_id',
+        'static_ip',
+        'customer_type',
+        'identity_photo',
+        'house_photo',
+        'cpe_photo',
+        'cpe_brand',
+        'cpe_model',
+        'cpe_mac',
+        'description',
     ];
 
     protected $casts = [
@@ -131,6 +163,16 @@ class Customer extends Model
     public function package()
     {
         return $this->belongsTo(Package::class);
+    }
+
+    public function odc()
+    {
+        return $this->belongsTo(Odc::class);
+    }
+
+    public function odp()
+    {
+        return $this->belongsTo(Odp::class);
     }
 
     public function invoices()
