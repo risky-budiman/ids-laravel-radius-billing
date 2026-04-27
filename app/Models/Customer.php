@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use App\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
-    use LogsActivity;
+    use HasFactory, LogsActivity;
 
     const STATUS_NEW = 'new';
     const STATUS_WAITING_ACTIVATION = 'waiting_activation';

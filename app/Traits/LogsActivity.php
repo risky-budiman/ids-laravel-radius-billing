@@ -65,14 +65,14 @@ trait LogsActivity
         }
 
         ActivityLog::create([
-            'user_id' => Auth::id(),
+            'user_id' => Auth::id(), // Will be null for background jobs
             'action' => $action,
             'description' => $description,
             'subject_type' => get_class($this),
             'subject_id' => $this->id,
             'properties' => $properties,
-            'ip_address' => Request::ip(),
-            'user_agent' => Request::userAgent(),
+            'ip_address' => Request::ip() ?? '127.0.0.1',
+            'user_agent' => Request::userAgent() ?? 'System/CLI',
         ]);
     }
 }

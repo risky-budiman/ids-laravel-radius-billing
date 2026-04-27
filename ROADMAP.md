@@ -149,14 +149,19 @@ Setelah melakukan audit pada sistem `CustomerActivationController`, ditemukan be
 Setelah melakukan pengecekan pada `TicketController`, ditemukan beberapa celah logika (Bypass/Loophole) yang berpotensi merusak integritas data Aktivasi, Inventory, dan Billing jika teknisi salah klik.
 
 ### 8.1. Penutupan Celah Bypass Status (Ticket Controller)
-- [ ] **Mencegah Bypass Aktivasi:** Saat teknisi menutup *(close)* tiket `Aktivasi` dari halaman Manajemen Tiket, sistem saat ini langsung merubah status pelanggan menjadi *Active* **TANPA** melalui *Wizard* Pemasangan Modem dan **TANPA** men-generate tagihan *Prorata*. Tombol Close untuk tipe tiket Aktivasi harus **di-disable/di-redirect** agar mewajibkan lewat halaman *Wizard Activation* (`CustomerActivationController`).
-- [ ] **Mencegah Bypass Dismantle:** Serupa dengan aktivasi, penutupan tiket `Dismantle` secara manual dari Manajemen Tiket hanya merubah status pelanggan, tetapi **TIDAK** mengembalikan barang ke gudang (Inventory IN). Aksi ini harus dicegah dan diarahkan ke *Wizard Dismantle*.
+- [x] **Mencegah Bypass Aktivasi:** Saat teknisi menutup *(close)* tiket `Aktivasi` dari halaman Manajemen Tiket, sistem saat ini langsung merubah status pelanggan menjadi *Active* **TANPA** melalui *Wizard* Pemasangan Modem dan **TANPA** men-generate tagihan *Prorata*. Tombol Close untuk tipe tiket Aktivasi harus **di-disable/di-redirect** agar mewajibkan lewat halaman *Wizard Activation* (`CustomerActivationController`).
+- [x] **Mencegah Bypass Dismantle:** Serupa dengan aktivasi, penutupan tiket `Dismantle` secara manual dari Manajemen Tiket hanya merubah status pelanggan, tetapi **TIDAK** mengembalikan barang ke gudang (Inventory IN). Aksi ini harus dicegah dan diarahkan ke *Wizard Dismantle*.
 
 ### 8.2. Pengayaan Fitur Helpdesk Enterprise
-- [ ] **Sistem Pengambilan Tiket (Claim/Assign):** Admin dapat menugaskan *(assign)* tiket langsung ke teknisi tertentu. Sebaliknya, tiket yang belum bertuan *(Unassigned)* akan masuk ke dalam *Pool* sehingga teknisi mana pun yang sedang *standby* bisa secara proaktif mengambil/klaim *(Take Ticket)* tiket tersebut.
-- [ ] **Sistem Komentar/Log Aktivitas (Ticket Replies):** Menambahkan fitur percakapan/komentar *(Thread)* di dalam halaman detail Tiket agar Admin dan Teknisi bisa saling bertukar laporan progres (lengkap dengan lampiran foto perbaikan).
-- [ ] **Notifikasi Tertarget:** Memperbaiki logika Notifikasi pembuatan tiket yang saat ini dikirim ke *semua* pengguna sistem (termasuk kasir/sales). Notifikasi seharusnya hanya dikirim ke role *Admin* dan *Teknisi* yang di-assign.
-- [ ] **SLA & Escalation:** Penambahan timer SLA (Service Level Agreement). Jika tiket gangguan tidak diselesaikan dalam 1x24 jam, tiket akan berstatus *Overdue* dan muncul peringatan merah ke Admin.
+- [x] **Sistem Pengambilan Tiket (Claim/Assign):** Admin dapat menugaskan *(assign)* tiket langsung ke teknisi tertentu. Sebaliknya, tiket yang belum bertuan *(Unassigned)* akan masuk ke dalam *Pool* sehingga teknisi mana pun yang sedang *standby* bisa secara proaktif mengambil/klaim *(Take Ticket)* tiket tersebut.
+- [x] **Sistem Komentar/Log Aktivitas (Ticket Replies):** Menambahkan fitur percakapan/komentar *(Thread)* di dalam halaman detail Tiket agar Admin dan Teknisi bisa saling bertukar laporan progres (lengkap dengan lampiran foto perbaikan).
+- [x] **Notifikasi Tertarget:** Memperbaiki logika Notifikasi pembuatan tiket yang saat ini dikirim ke *semua* pengguna sistem (termasuk kasir/sales). Notifikasi seharusnya hanya dikirim ke role *Admin* dan *Teknisi* yang di-assign.
+- [x] **SLA & Escalation:** Penambahan timer SLA (Service Level Agreement). Jika tiket gangguan tidak diselesaikan dalam 1x24 jam, tiket akan berstatus *Overdue* dan muncul peringatan merah ke Admin.
+
+### 8.3. Standardisasi Penomoran & Kode Tiket (Prefix Management)
+- [x] **Dynamic Ticket Prefixing:** Menambahkan sistem prefix (kode depan) otomatis untuk setiap tipe tiket (`TT`, `AO`, `DO`, `RL`, `MT`).
+- [x] **Configurable Prefix Settings:** Membuat halaman pengaturan global agar Admin bisa mengubah atau mengaktifkan/menonaktifkan kode prefix ini secara dinamis sesuai kebutuhan operasional.
+- [x] **Ticket Numbering Logic:** Mengubah algoritma penomoran tiket agar menggunakan format profesional (Misal: `TT/20260427/001`) agar lebih mudah diidentifikasi dan diarsipkan.
 
 ---
 
@@ -212,3 +217,131 @@ Banyak ISP melakukan ekspansi wilayah dengan cara menggandeng mitra lokal (RT/RW
 - [ ] **Auto-Downgrade Speed (FUP):** Logika otomatis untuk menurunkan *Speed Profile* di OLT/Mikrotik (misal dari 50Mbps menjadi 10Mbps) ketika pelanggan telah melewati batas kuota FUP (misal 1 Terabyte) dalam bulan tersebut. Kecepatan akan di-*reset* normal kembali setiap tanggal 1.
 - [ ] **Manual FUP Reset:** Tombol khusus untuk Admin agar dapat mereset kuota FUP pelanggan secara manual ke 0 di pertengahan bulan (misalnya jika pelanggan komplain atau membeli *add-on booster*).
 
+
+---
+
+## FASE 14: System Audit, Security & Compliance
+Fase ini berfokus pada transparansi aktivitas sistem, pelacakan perubahan data secara mendalam, dan pemeliharaan integritas log untuk kebutuhan audit skala enterprise.
+
+### 14.1. Pengayaan Fitur Activity Log
+- [ ] **Advanced Filtering & Search:** Menambahkan fitur pencarian log berdasarkan User, Tipe Aksi (Create/Update/Delete), rentang tanggal, dan pencarian teks pada deskripsi perubahan.
+- [ ] **Human-Readable Diffs:** Meningkatkan tampilan perbandingan data "Sebelum" dan "Sesudah" di UI agar lebih mudah dibaca oleh Admin non-teknis (menyembunyikan field teknis seperti ID/Timestamps secara cerdas).
+- [ ] **System-Level Logging:** Memastikan setiap aksi yang dijalankan oleh Background Job (Automated Billing, OLT Polling) tercatat sebagai user "System" agar history perubahan data tetap utuh.
+
+### 14.2. Manajemen Retensi & Keamanan Log
+- [ ] **Log Retention Policy:** Fitur untuk mengatur berapa lama log aktivitas disimpan (misal: 90 hari). Sistem akan otomatis menghapus log yang sudah kedaluwarsa untuk menjaga performa database.
+- [ ] **Audit Trail Export:** Fitur untuk mengekspor log aktivitas ke format Excel atau PDF sebagai laporan audit resmi perusahaan.
+- [ ] **Tamper-Evident Logs:** Implementasi tanda tangan digital (Hash) sederhana pada setiap entry log untuk memastikan bahwa log tidak dimodifikasi secara manual di database.
+
+---
+
+## FASE 15: Fine-Grained Access Control & Dashboard Optimization
+Fase ini bertujuan untuk meningkatkan keamanan dan relevansi data bagi setiap pengguna melalui sistem hak akses yang lebih detail (Permission-based) dan visualisasi Dashboard yang dipersonalisasi.
+
+### 15.1. Sistem Hak Akses (Advanced RBAC/ACL)
+- [ ] **Segregation of Duties (Finance vs Kasir):** Memisahkan role Kasir (hanya transaksi loket/pembayaran) dengan role Finance (jurnal, laporan keuangan, & audit) untuk meningkatkan integritas data keuangan.
+- [ ] **Permission-Based Authorization:** Migrasi dari pengecekan Role *hardcode* ke sistem Permission (ACL). Contoh: User bisa memiliki role "Teknisi" tapi diberikan permission khusus edit_billing jika diperlukan.
+- [ ] **Role & Permission Management UI:** Membuat antarmuka untuk Admin Utama dalam menentukan menu dan aksi apa saja yang boleh diakses oleh role tertentu (Checklist Permission).
+- [ ] **Middleware Security Audit:** Menstandarisasi Middleware pada setiap Route agar sesuai dengan Matrix Hak Akses yang baru.
+
+### 15.2. Personalisasi Dashboard (Role-Based Widgets)
+- [ ] **Finance Dashboard:** Menampilkan widget khusus keuangan (Pendapatan hari ini, Invoice menunggak, Saldo Kas/Bank) untuk Role Kasir/Finance.
+- [ ] **NOC & Technical Dashboard:** Menampilkan widget teknis (Status OLT, Jumlah Pelanggan Online, Tiket Gangguan yang belum selesai) untuk Role Teknisi/NOC.
+- [ ] **Sales Dashboard:** Menampilkan statistik pertumbuhan pelanggan baru dan peta potensi wilayah untuk Role Sales.
+- [ ] **Dashboard Widget Management:** Fitur bagi Administrator untuk menyusun (Drag & Drop) widget apa saja yang muncul di halaman depan secara global per role.
+
+### 15.3. Audit & Security Enhancement
+- [ ] **Action Authorization Logs:** Mencatat setiap kali ada percobaan akses ke menu yang tidak diizinkan (Unauthorized Access attempts) ke dalam log keamanan.
+- [ ] **Sensitive Data Masking:** Fitur untuk menyembunyikan data sensitif (misal: nomor telepon lengkap, saldo bank tertentu) bagi role yang tidak memiliki otoritas tinggi.
+
+---
+
+## FASE 16: Advanced Accounting & Financial Integrity
+Fase ini bertujuan untuk menstandarisasi modul keuangan agar setara dengan software akuntansi profesional (ERP) dan memudahkan audit keuangan eksternal.
+
+### 16.1. Konfigurasi Akun Sistem (System Accounts Mapping)
+- [ ] **Dynamic Account Mapping:** Menghilangkan hardcode kode akun (seperti 1103, 4101) di dalam kode program dan memindahkannya ke halaman pengaturan. Admin bisa menentukan akun mana yang bertindak sebagai "Piutang Pelanggan", "Pendapatan", dll.
+- [ ] **Multi-Currency Baseline:** Persiapan struktur database untuk mendukung transaksi dalam mata uang asing (USD/SGD) dan perhitungan selisih kurs.
+
+### 16.2. Otomatisasi Biaya Admin & MDR
+- [ ] **Payment Gateway MDR Handling:** Fitur untuk memisahkan otomatis biaya admin (MDR) saat pembayaran diterima via Payment Gateway (Misal: Bayar 100rb, masuk Bank 98rb, Beban Admin 2rb) dalam satu jurnal.
+- [ ] **Bank Fee Reconciliation:** Modul untuk mencatat beban administrasi bank bulanan secara kolektif saat proses rekonsiliasi.
+
+### 16.3. Penomoran Voucher Jurnal (Voucher Numbering System)
+- [ ] **Sequential Voucher Codes:** Implementasi nomor bukti jurnal otomatis dengan prefix yang bisa diatur (Misal: BKM untuk Bukti Kas Masuk, BKK untuk Bukti Kas Keluar, JVM untuk Jurnal Umum).
+- [ ] **Digital Signature & Approval:** Alur persetujuan (Approval) jurnal manual oleh Manager Keuangan sebelum jurnal tersebut memposting saldo ke Buku Besar.
+
+### 16.4. Budgeting & Reporting Lanjutan
+- [ ] **Budget vs Actual Report:** Fitur untuk memasukkan target anggaran (Budget) per kategori biaya dan membandingkannya dengan realisasi pengeluaran bulanan.
+- [ ] **Statement of Retained Earnings:** Menambahkan Laporan Perubahan Ekuitas untuk melengkapi 3 laporan keuangan utama yang sudah ada.
+
+---
+
+## FASE 17: Technical Documentation & Knowledge Base
+Fase ini memastikan bahwa setiap fitur yang dikembangkan memiliki panduan teknis dan operasional yang lengkap untuk menjamin keberlanjutan sistem (Sustainability).
+
+### 17.1. Dokumentasi Teknis (Developer Focused)
+- [ ] **API Documentation (Swagger/OpenAPI):** Implementasi dokumentasi API otomatis untuk memudahkan integrasi dengan aplikasi mobile atau pihak ketiga.
+- [ ] **Expansion of Markdown Docs:** Melanjutkan dan memperbarui dokumentasi `.md` yang sudah ada di folder `docs/` agar mencakup fitur terbaru seperti Activity Logs, Accounting Integrity, dan Roadmap Fase.
+- [ ] **Database Schema & ERD Update:** Pembuatan dan pembaruan diagram hubungan antar tabel (ERD) serta Kamus Data (Data Dictionary) setiap kali ada perubahan struktur database.
+- [ ] **Coding Standards & Guide:** Pembuatan panduan standar penulisan kode dan dokumentasi internal untuk developer baru.
+
+### 17.2. Panduan Operasional (User Focused)
+- [ ] **Internal Wiki / Knowledge Base:** Membangun modul Help Center di dalam aplikasi untuk panduan penggunaan fitur bagi Staff Admin, Teknisi, dan Kasir.
+- [ ] **Video Tutorial Series:** Pembuatan dokumentasi berupa video singkat untuk alur kerja kritikal (seperti Aktivasi OLT atau Tutup Buku Akuntansi).
+
+### 17.3. Prosedur Pembaruan Dokumentasi (Recurring Task)
+- [ ] **Phase Completion Review:** Mewajibkan pembaruan dokumentasi teknis dan manual user setiap kali satu FASE di dalam roadmap ini selesai dikerjakan ("Done").
+- [ ] **Changelog Management:** Standardisasi penulisan log perubahan (Release Notes) agar Admin/Owner mengetahui detail update di setiap versi.
+
+---
+
+## FASE 18: Integrated Dismantle & Hardware Lifecycle
+Fase ini bertujuan untuk mengelola siklus hidup perangkat keras (ONT/STB/Router) dari mulai pemasangan hingga penarikan kembali (Dismantle), serta memastikan aset perusahaan terlacak dengan baik.
+
+### 18.1. Alur Kerja Bongkaran & Tukar Alat (DO & MT Swap)
+- [ ] **Maintenance Hardware Swap:** Fitur khusus pada tiket Maintenance (MT) untuk melakukan pergantian alat yang rusak secara instan. Sistem akan mencatat pengambilan barang baru dari gudang dan pengembalian barang rusak secara bersamaan.
+- [ ] **Automated Deactivation & Return:** Saat tiket Dismantle (DO) selesai, sistem otomatis menonaktifkan akun RADIUS dan meminta input pengembalian perangkat ke gudang.
+- [ ] **Hardware Status Categorization:** Memberikan opsi status saat pengembalian: "Ready" (Layak Pakai), "Repaired" (Sudah Diperbaiki), atau "Damaged" (Rusak Total).
+
+### 18.2. Proteksi Barang Rusak (Inventory Protection)
+- [ ] **Auto-Block Damaged Items:** Perangkat yang ditandai sebagai "Damaged" atau "Broken" akan secara otomatis disembunyikan dari pilihan stok saat Aktivasi pelanggan baru.
+- [ ] **SN/MAC Validation Guard:** Mencegah input manual SN/MAC yang sudah masuk daftar hitam (Blacklist) barang rusak untuk menghindari kesalahan teknisi di lapangan.
+
+### 18.3. Audit & Reporting Aset
+- [ ] **Dismantle vs Inventory Audit:** Laporan rekonsiliasi untuk memastikan setiap perangkat dari pelanggan yang berhenti ("Dismantle") sudah benar-benar masuk kembali ke gudang.
+- [ ] **Depreciation of Damaged Goods:** Integrasi ke modul Akuntansi untuk menjurnal kerugian aset (Write-off) ketika barang dinyatakan rusak total dan tidak bisa diperbaiki lagi.
+
+---
+
+## FASE 19: System Stability & Quality Assurance
+Fase ini adalah lapisan keamanan untuk memastikan setiap pengembangan fitur baru tidak merusak fitur yang sudah berjalan (*Zero Regression Policy*).
+
+### 19.1. Automated Testing (Backend Integrity)
+- [ ] **Critical Path Testing:** Membuat automated test (PHPUnit) untuk modul paling sensitif: Kalkulasi Invoice, Posting Jurnal Akuntansi, dan Sinkronisasi RADIUS.
+- [ ] **Data Integrity Check:** Script rutin untuk memverifikasi bahwa total saldo di Buku Besar selalu sinkron dengan total transaksi di Bank dan Invoice.
+
+### 19.2. Deployment Safety & Monitoring
+- [ ] **Error Monitoring Integration:** Implementasi alat monitor error (seperti Sentry atau Log viewer internal) untuk menangkap bug secara real-time.
+- [ ] **Migration Safety Protocol:** Prosedur pengecekan ulang setiap script SQL/Migration agar tidak ada data lama yang terhapus saat update fitur.
+
+### 19.3. Backup & Disaster Recovery
+- [ ] **Automated Database Backup:** Konfigurasi backup database otomatis ke storage eksternal setiap hari.
+- [ ] **System Snapshot Guide:** Panduan bagi Admin untuk melakukan snapshot/backup manual sebelum memulai eksekusi FASE besar di roadmap ini.
+
+---
+
+## FASE 20: Regulatory Compliance & Tax Reporting (BHP & USO)
+Fase ini memastikan ISP mematuhi aturan regulasi pemerintah Indonesia terkait pajak dan biaya hak penyelenggaraan jasa telekomunikasi.
+
+### 20.1. Perhitungan Otomatis BHP & USO
+- [ ] **BHP & USO Calculation Engine:** Menambahkan logika perhitungan otomatis untuk Biaya Hak Penyelenggaraan (BHP) dan Kontribusi Universal Service Obligation (USO) berdasarkan persentase pendapatan kotor dari akun pendapatan yang relevan.
+- [ ] **Excluded Revenue Filtering:** Fitur untuk memisahkan pendapatan non-telekomunikasi (seperti penjualan perangkat atau biaya instalasi) yang tidak dikenakan BHP/USO.
+
+### 20.2. Integrasi Akuntansi (Accrual & Payment)
+- [ ] **Tax & Regulatory Journaling:** Otomatisasi jurnal akrual di akhir bulan (Debit: Beban Pajak/BHP, Credit: Hutang Pajak/BHP) agar laporan laba rugi mencerminkan beban yang sebenarnya.
+- [ ] **Payment Settlement Tracking:** Mencatat pembayaran BHP/USO ke negara dan melakukan rekonsiliasi dengan hutang pajak di sistem.
+
+### 20.3. Dashboard Pelaporan Pemerintah
+- [ ] **Regulatory Compliance Dashboard:** Dashboard ringkasan kewajiban PPN, PPh, BHP, dan USO per kuartal atau per tahun.
+- [ ] **Report Export for Kominfo:** Fitur ekspor data transaksi dan pendapatan ke format Excel yang sesuai dengan kebutuhan pelaporan di portal e-LPP Kominfo.

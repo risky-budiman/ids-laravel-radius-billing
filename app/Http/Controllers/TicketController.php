@@ -44,9 +44,9 @@ class TicketController extends Controller
 
         $ticket = \App\Models\Ticket::create($validated);
 
-        // Notify all administrators
-        $admins = \App\Models\User::all();
-        \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\TicketCreatedNotification($ticket));
+        // Notify targeted staff (Admin & Technicians)
+        $staff = \App\Models\User::whereIn('role', ['administrator', 'admin', 'teknisi'])->get();
+        \Illuminate\Support\Facades\Notification::send($staff, new \App\Notifications\TicketCreatedNotification($ticket));
 
         return redirect()->route('tickets.index', ['type' => $ticket->type])
             ->with('success', 'Ticket created successfully.');
@@ -54,7 +54,7 @@ class TicketController extends Controller
 
     public function show(\App\Models\Ticket $ticket)
     {
-        $ticket->load(['customer', 'assignee']);
+        $ticket->load(['customer', 'assignee', 'replies.user']);
         return view('tickets.show', compact('ticket'));
     }
 
@@ -78,6 +78,13 @@ class TicketController extends Controller
             'resolution_notes' => 'nullable|string',
             'assigned_to' => 'nullable|exists:users,id',
         ]);
+
+        // 8.1. Prevent manual closing of Activation/Dismantle tickets
+        if (in_array($ticket->type, ['aktivasi', 'dismantle']) && in_array($request->status, ['closed', 'resolved'])) {
+            $wizardType = ($ticket->type === 'aktivasi') ? 'Aktivasi' : 'Dismantle';
+            return redirect()->back()
+                ->with('error', "Tiket $wizardType hanya dapat diselesaikan melalui Wizard $wizardType Pelanggan agar integritas data Billing & Inventory terjaga.");
+        }
 
         $ticket->update($validated);
 
@@ -116,5 +123,40 @@ class TicketController extends Controller
         $ticket->delete();
 
         return redirect()->route('tickets.index')->with('success', 'Ticket deleted successfully.');
+    }
+
+    public function claim(\App\Models\Ticket $ticket)
+    {
+        if ($ticket->assigned_to) {
+            return back()->with('error', 'Tiket ini sudah diambil oleh teknisi lain.');
+        }
+
+        $ticket->update([
+            'assigned_to' => auth()->id(),
+            'status' => 'in_progress'
+        ]);
+
+        return back()->with('success', 'Tiket berhasil Anda klaim dan status berubah menjadi In Progress.');
+    }
+
+    public function reply(Request $request, \App\Models\Ticket $ticket)
+    {
+        $validated = $request->validate([
+            'message' => 'required|string',
+            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048'
+        ]);
+
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('tickets/attachments', 'public');
+        }
+
+        $ticket->replies()->create([
+            'user_id' => auth()->id(),
+            'message' => $validated['message'],
+            'attachment' => $attachmentPath
+        ]);
+
+        return back()->with('success', 'Balasan berhasil dikirim.');
     }
 }

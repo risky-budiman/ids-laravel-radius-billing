@@ -137,6 +137,8 @@ Route::middleware('auth')->group(function () {
     // TICKETS: Admin, Teknisi & Sales
     Route::middleware('role:administrator,admin,teknisi,sales')->group(function () {
         Route::resource('tickets', \App\Http\Controllers\TicketController::class);
+        Route::post('tickets/{ticket}/claim', [\App\Http\Controllers\TicketController::class, 'claim'])->name('tickets.claim');
+        Route::post('tickets/{ticket}/reply', [\App\Http\Controllers\TicketController::class, 'reply'])->name('tickets.reply');
     });
 
     // INVOICES & PAYMENTS: Admin & Kasir

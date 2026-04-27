@@ -91,6 +91,11 @@
                                             <a href="{{ route('tickets.show', $ticket) }}" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
                                                 {{ $ticket->ticket_number }}
                                             </a>
+                                            @if($ticket->isOverdue())
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black bg-rose-100 text-rose-700 animate-pulse border border-rose-200 uppercase tracking-tighter">
+                                                    OVERDUE
+                                                </span>
+                                            @endif
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="flex flex-col">

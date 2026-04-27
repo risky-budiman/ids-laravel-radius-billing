@@ -97,6 +97,35 @@
                                 <x-input-label for="company_address" :value="__('Office Address')" />
                                 <textarea id="company_address" name="company_address" rows="3" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ $settings['company_address']->value ?? '' }}</textarea>
                             </div>
+
+                            <div class="md:col-span-2 mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
+                                <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                                    <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                                    Ticket Numbering Prefixes
+                                </h4>
+                                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                    <div>
+                                        <x-input-label for="ticket_prefix_gangguan" :value="__('Gangguan (TT)')" />
+                                        <x-text-input id="ticket_prefix_gangguan" name="ticket_prefix_gangguan" type="text" class="mt-1 block w-full" :value="$settings['ticket_prefix_gangguan']->value ?? 'TT'" />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="ticket_prefix_aktivasi" :value="__('Aktivasi (AO)')" />
+                                        <x-text-input id="ticket_prefix_aktivasi" name="ticket_prefix_aktivasi" type="text" class="mt-1 block w-full" :value="$settings['ticket_prefix_aktivasi']->value ?? 'AO'" />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="ticket_prefix_dismantle" :value="__('Dismantle (DO)')" />
+                                        <x-text-input id="ticket_prefix_dismantle" name="ticket_prefix_dismantle" type="text" class="mt-1 block w-full" :value="$settings['ticket_prefix_dismantle']->value ?? 'DO'" />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="ticket_prefix_relokasi" :value="__('Relokasi (RL)')" />
+                                        <x-text-input id="ticket_prefix_relokasi" name="ticket_prefix_relokasi" type="text" class="mt-1 block w-full" :value="$settings['ticket_prefix_relokasi']->value ?? 'RL'" />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="ticket_prefix_maintenance" :value="__('Maintenance (MT)')" />
+                                        <x-text-input id="ticket_prefix_maintenance" name="ticket_prefix_maintenance" type="text" class="mt-1 block w-full" :value="$settings['ticket_prefix_maintenance']->value ?? 'MT'" />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
