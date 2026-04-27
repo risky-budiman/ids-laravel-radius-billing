@@ -88,6 +88,7 @@ class CustomerController extends Controller
             'billing_due_day' => 'nullable|integer|min:1|max:28',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'installation_fee' => 'nullable|numeric|min:0',
         ]);
 
         $package = Package::find($validated['package_id']);
@@ -115,6 +116,7 @@ class CustomerController extends Controller
                 'billing_due_day' => $validated['billing_due_day'] ?? 20,
                 'latitude' => $validated['latitude'],
                 'longitude' => $validated['longitude'],
+                'installation_fee' => $validated['installation_fee'] ?? 0,
             ]);
 
             // Create in RADIUS (Authentication)
@@ -180,6 +182,7 @@ class CustomerController extends Controller
             'billing_due_day' => 'nullable|integer|min:1|max:28',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'installation_fee' => 'nullable|numeric|min:0',
         ]);
 
         $latitude = $validated['latitude'] ?? null;

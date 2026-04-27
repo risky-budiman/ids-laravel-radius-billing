@@ -86,6 +86,57 @@
                     </div>
                 </div>
 
+                <!-- Installation Payment -->
+                <div class="space-y-4 pt-6 border-t border-gray-100 dark:border-gray-700" x-data="{ payment_method: 'cash' }">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-1.5 h-6 bg-amber-500 rounded-full"></div>
+                        <h4 class="font-bold text-gray-900 dark:text-gray-100">Pembayaran Instalasi</h4>
+                    </div>
+                    
+                    <div class="bg-amber-50/50 dark:bg-amber-900/10 p-6 rounded-2xl border border-amber-100 dark:border-amber-900/30">
+                        <div class="flex items-center justify-between mb-6">
+                            <span class="text-sm font-medium text-amber-800 dark:text-amber-300">Biaya Instalasi Terutang:</span>
+                            <span class="text-2xl font-black text-amber-900 dark:text-amber-100">Rp {{ number_format($customer->installation_fee, 2, ',', '.') }}</span>
+                        </div>
+
+                        @if($customer->installation_fee > 0)
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <x-input-label value="Metode Pembayaran" />
+                                <select name="payment_method" x-model="payment_method" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                                    <option value="cash">Tunai (Cash)</option>
+                                    <option value="transfer">Transfer Manual</option>
+                                    <option value="pg">Payment Gateway</option>
+                                </select>
+                            </div>
+
+                            <div x-show="payment_method === 'transfer'">
+                                <x-input-label value="Pilih Bank Penerima" />
+                                <select name="bank_account_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                                    <option value="">-- Pilih Rekening --</option>
+                                    @foreach(\App\Models\BankAccount::where('type', '!=', 'payment_gateway')->where('is_active', true)->get() as $acc)
+                                        <option value="{{ $acc->id }}">{{ $acc->bank_name }} - {{ $acc->account_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            
+                            <div x-show="payment_method === 'pg'" class="col-span-full">
+                                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-amber-900/50 flex items-start gap-3">
+                                    <svg class="w-5 h-5 text-amber-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <p class="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed italic">
+                                        Pilih ini jika pelanggan ingin membayar melalui Link Pembayaran (Midtrans/Xendit). Akun akan otomatis aktif setalah pembayaran diverifikasi oleh Gateway.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        @else
+                        <div class="text-center py-2">
+                            <p class="text-sm text-gray-500 italic">Tidak ada biaya instalasi untuk pelanggan ini.</p>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+
                 <div class="flex justify-end pt-6 space-x-3">
                     <a href="{{ route('customers.index') }}" class="px-6 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">Cancel</a>
                     <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-3 rounded-2xl text-sm font-bold shadow-xl shadow-indigo-600/20 transition-all transform hover:-translate-y-0.5">

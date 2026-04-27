@@ -39,15 +39,44 @@ class CustomerActivationController extends Controller
             'consumables' => 'nullable|array',
             'consumables.*.item_id' => 'required|exists:inventory_items,id',
             'consumables.*.quantity' => 'required|numeric|min:0',
+            'payment_method' => 'nullable|string|in:cash,transfer,pg',
+            'bank_account_id' => 'nullable|exists:bank_accounts,id',
         ]);
 
         DB::transaction(function() use ($request, $customer) {
             // 1. Activate Customer and Set Initial Billing
             $customer->update([
-                'is_active' => true,
-                'status' => Customer::STATUS_ACTIVE,
-                'activated_at' => now(),
+                'is_active' => ($request->payment_method !== 'pg'), // PG keeps it inactive until paid
+                'status' => ($request->payment_method === 'pg') ? Customer::STATUS_WAITING_ACTIVATION : Customer::STATUS_ACTIVE,
+                'activated_at' => ($request->payment_method !== 'pg') ? now() : null,
+                'installation_paid_at' => ($request->payment_method === 'pg') ? null : now(),
+                'installation_bank_account_id' => $request->bank_account_id,
             ]);
+
+            // Handle Treasury for Installation Fee (Non-PG)
+            if ($customer->installation_fee > 0 && in_array($request->payment_method, ['cash', 'transfer'])) {
+                // If Cash, find or create "KAS TUNAI" account if bank_account_id is null
+                $targetAccountId = $request->bank_account_id;
+                
+                if ($request->payment_method === 'cash' && !$targetAccountId) {
+                    $cashAccount = \App\Models\BankAccount::firstOrCreate(
+                        ['bank_name' => 'KAS TUNAI'],
+                        ['account_name' => 'Kas Kantor Utama', 'type' => 'cash', 'is_active' => true]
+                    );
+                    $targetAccountId = $cashAccount->id;
+                }
+
+                if ($targetAccountId) {
+                    \App\Models\BankTransaction::create([
+                        'bank_account_id' => $targetAccountId,
+                        'type' => 'deposit',
+                        'amount' => $customer->installation_fee,
+                        'description' => '[Instalasi] Pelanggan: ' . $customer->name . ' (' . $customer->customer_code . ')',
+                        'transaction_date' => now(),
+                        'created_by' => auth()->id(),
+                    ]);
+                }
+            }
 
             // Handle Initial Invoicing for Postpaid Cycle
             if ($customer->billing_type === 'postpaid' && $customer->billing_method === 'cycle') {
@@ -112,6 +141,20 @@ class CustomerActivationController extends Controller
                 }
             }
         });
+
+        // 4. Handle Payment Gateway Redirection if selected
+        if ($request->payment_method === 'pg' && $customer->installation_fee > 0) {
+            $invoice = \App\Models\Invoice::create([
+                'invoice_number' => 'INV-INST-' . strtoupper(uniqid()),
+                'customer_id' => $customer->id,
+                'amount' => $customer->installation_fee,
+                'status' => 'unpaid',
+                'due_date' => now()->addDays(3),
+                'description' => 'Biaya Instalasi Pelanggan: ' . $customer->name,
+            ]);
+
+            return redirect()->route('invoices.show', $invoice)->with('success', 'Aktivasi tertunda. Silakan selesaikan pembayaran instalasi via Gateway.');
+        }
 
         return redirect()->route('customers.index')->with('success', 'Customer activated and equipment recorded successfully.');
     }

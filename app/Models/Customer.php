@@ -41,6 +41,9 @@ class Customer extends Model
         'billing_due_date',
         'expired_at',
         'activated_at',
+        'installation_fee',
+        'installation_paid_at',
+        'installation_bank_account_id',
     ];
 
     protected $casts = [
@@ -48,6 +51,8 @@ class Customer extends Model
         'billing_due_date' => 'date',
         'expired_at' => 'date',
         'activated_at' => 'datetime',
+        'installation_paid_at' => 'datetime',
+        'installation_fee' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 

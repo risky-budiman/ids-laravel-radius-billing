@@ -204,6 +204,19 @@
                         @endif
                     </div>
 
+                    <div>
+                        <label for="display_installation_fee" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Biaya Instalasi (Rp)</label>
+                        <div class="relative mt-1">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 text-sm">Rp</span>
+                            </div>
+                            <input type="text" id="display_installation_fee" placeholder="0,00" class="block w-full pl-10 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" oninput="formatCurrency(this, 'installation_fee')" onblur="finalizeCurrency(this, 'installation_fee')">
+                            <input type="hidden" id="installation_fee" name="installation_fee" value="{{ old('installation_fee', 0) }}">
+                        </div>
+                        <p class="mt-1 text-[10px] text-gray-500 italic">Satu kali bayar saat aktivasi.</p>
+                        <x-input-error class="mt-2" :messages="$errors->get('installation_fee')" />
+                    </div>
+
                     <div id="billing_info_box" class="md:col-span-1 border p-4 rounded-xl flex items-start">
                         <svg class="w-5 h-5 text-indigo-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <div id="method_description" class="text-[11px] leading-relaxed">
@@ -537,6 +550,47 @@
             // Initialize billing methods
             updateMethods();
         })();
+
+        function formatCurrency(input, hiddenId) {
+            let val = input.value.replace(/\./g, "").replace(",", ".");
+            val = val.replace(/[^0-9.]/g, "");
+            let parts = val.split(".");
+            if (parts.length > 2) val = parts[0] + "." + parts.slice(1).join("");
+            if (parts[1] && parts[1].length > 2) val = parts[0] + "." + parts[1].substring(0, 2);
+
+            document.getElementById(hiddenId).value = val;
+            
+            if (val !== "") {
+                let displayParts = val.split(".");
+                let integerPart = new Intl.NumberFormat('id-ID').format(displayParts[0]);
+                input.value = displayParts.length > 1 ? integerPart + "," + displayParts[1] : integerPart;
+                if (val.endsWith(".") && !input.value.includes(",")) input.value += ",";
+            } else {
+                input.value = "";
+            }
+        }
+
+        function finalizeCurrency(input, hiddenId) {
+            let val = document.getElementById(hiddenId).value;
+            if (val !== "") {
+                let numeric = parseFloat(val);
+                if (!isNaN(numeric)) {
+                    input.value = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(numeric);
+                    document.getElementById(hiddenId).value = numeric.toFixed(2);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const hidden = document.getElementById('installation_fee');
+            const display = document.getElementById('display_installation_fee');
+            if (hidden && hidden.value && hidden.value != 0) {
+                let numeric = parseFloat(hidden.value);
+                if (!isNaN(numeric)) {
+                    display.value = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(numeric);
+                }
+            }
+        });
     </script>
     @endpush
 </x-app-layout>

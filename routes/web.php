@@ -13,6 +13,8 @@ Route::get('/portal/invoice/{invoice}', [\App\Http\Controllers\PortalController:
     ->name('portal.invoice')
     ->middleware('signed');
 
+Route::post('/webhooks/midtrans', [\App\Http\Controllers\PaymentWebhookController::class, 'midtrans'])->name('webhooks.midtrans');
+
 Route::get('/dashboard', function () {
     $totalSubscribers = \App\Models\Customer::count();
     
@@ -112,6 +114,13 @@ Route::middleware('auth')->group(function () {
         Route::post('customers/{customer}/request-dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'requestDismantle'])->name('customers.request-dismantle');
         Route::get('customers/{customer}/dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'dismantleForm'])->name('customers.dismantle');
         Route::post('customers/{customer}/dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'processDismantle'])->name('customers.dismantle.store');
+
+        // NOC CENTER (Technician & Administrator Only)
+        Route::middleware('role:administrator,teknisi')->group(function () {
+            Route::get('noc', [\App\Http\Controllers\NocController::class, 'index'])->name('noc.index');
+            Route::get('noc/discovery', [\App\Http\Controllers\NocController::class, 'discovery'])->name('noc.discovery');
+            Route::get('noc/signals', [\App\Http\Controllers\NocController::class, 'signals'])->name('noc.signals');
+        });
     });
 
     // CUSTOMER DELETE: Admin & Administrator only
@@ -201,6 +210,39 @@ Route::middleware('auth')->group(function () {
         // WhatsApp Logs
         Route::get('whatsapp-logs', [\App\Http\Controllers\WhatsappLogController::class, 'index'])->name('whatsapp-logs.index');
         Route::post('whatsapp-logs/{whatsappLog}/resend', [\App\Http\Controllers\WhatsappLogController::class, 'resend'])->name('whatsapp-logs.resend');
+
+        // Finance Module (Shared Access)
+        Route::group(['prefix' => 'finance', 'middleware' => 'role:administrator,admin,kasir,teknisi'], function () {
+            // View Bank Accounts & Transactions
+            Route::get('bank-accounts', [\App\Http\Controllers\Finance\BankAccountController::class, 'index'])->name('bank-accounts.index');
+            Route::get('bank-accounts/{bankAccount}', [\App\Http\Controllers\Finance\BankAccountController::class, 'show'])->name('bank-accounts.show');
+
+            // Administrator-Only Management
+            Route::middleware('role:administrator,admin')->group(function () {
+                Route::get('bank-accounts/create', [\App\Http\Controllers\Finance\BankAccountController::class, 'create'])->name('bank-accounts.create');
+                Route::post('bank-accounts', [\App\Http\Controllers\Finance\BankAccountController::class, 'store'])->name('bank-accounts.store');
+                Route::get('bank-accounts/{bankAccount}/edit', [\App\Http\Controllers\Finance\BankAccountController::class, 'edit'])->name('bank-accounts.edit');
+                Route::put('bank-accounts/{bankAccount}', [\App\Http\Controllers\Finance\BankAccountController::class, 'update'])->name('bank-accounts.update');
+                Route::delete('bank-accounts/{bankAccount}', [\App\Http\Controllers\Finance\BankAccountController::class, 'destroy'])->name('bank-accounts.destroy');
+
+                Route::get('transfer', [\App\Http\Controllers\Finance\BankTransactionController::class, 'transfer'])->name('bank-transactions.transfer');
+                Route::post('transfer', [\App\Http\Controllers\Finance\BankTransactionController::class, 'processTransfer'])->name('bank-transactions.process-transfer');
+                
+                Route::get('expense', [\App\Http\Controllers\Finance\BankTransactionController::class, 'expense'])->name('bank-transactions.expense');
+                Route::post('expense', [\App\Http\Controllers\Finance\BankTransactionController::class, 'processExpense'])->name('bank-transactions.process-expense');
+
+                Route::get('income', [\App\Http\Controllers\Finance\BankTransactionController::class, 'income'])->name('bank-transactions.income');
+                Route::post('income', [\App\Http\Controllers\Finance\BankTransactionController::class, 'processIncome'])->name('bank-transactions.process-income');
+                
+                Route::delete('transactions/{bankTransaction}', [\App\Http\Controllers\Finance\BankTransactionController::class, 'destroy'])->name('bank-transactions.destroy');
+            });
+
+            // Staff/Cashier Specific Actions
+            Route::middleware('role:admin,kasir,teknisi')->group(function () {
+                Route::get('cashier-deposit', [\App\Http\Controllers\Finance\BankTransactionController::class, 'depositToCompany'])->name('bank-transactions.cashier-deposit');
+                Route::post('cashier-deposit', [\App\Http\Controllers\Finance\BankTransactionController::class, 'processDepositToCompany'])->name('bank-transactions.process-cashier-deposit');
+            });
+        });
         
         // Location Master Data
         Route::get('locations/regions', [\App\Http\Controllers\LocationDataController::class, 'regions'])->name('locations.regions');

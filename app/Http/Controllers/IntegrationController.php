@@ -39,6 +39,19 @@ class IntegrationController extends Controller
             ]
         );
 
+        // Auto-sync Bank Account for Payment Gateways
+        if ($request->type === 'payment' && $request->is_active) {
+            \App\Models\BankAccount::updateOrCreate(
+                ['bank_name' => strtoupper($request->provider)],
+                [
+                    'account_name' => 'Gateway ' . strtoupper($request->provider),
+                    'type' => 'payment_gateway',
+                    'is_active' => true,
+                    // Note: Initial balance is handled by transactions
+                ]
+            );
+        }
+
         return redirect()->back()->with('success', strtoupper($request->provider) . ' Gateway settings updated successfully!');
     }
 }

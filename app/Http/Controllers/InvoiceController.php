@@ -41,11 +41,11 @@ class InvoiceController extends Controller
 
         $invoices = $query->paginate(10)->withQueryString();
 
-        $activeGateways = \App\Models\Gateway::where('type', 'payment')
-            ->where('is_active', true)
+        $bankAccounts = \App\Models\BankAccount::where('is_active', true)
+            ->where('type', '!=', 'payment_gateway')
             ->get();
-            
-        return view('invoices.index', compact('invoices', 'activeGateways'));
+
+        return view('invoices.index', compact('invoices', 'activeGateways', 'bankAccounts'));
     }
 
     public function create()
@@ -99,10 +99,31 @@ class InvoiceController extends Controller
     public function update(Request $request, Invoice $invoice)
     {
         if ($request->has('mark_as_paid')) {
-            DB::transaction(function() use ($invoice) {
+            DB::transaction(function() use ($invoice, $request) {
                 $invoice->update([
                     'status' => 'paid',
                     'paid_at' => now(),
+                ]);
+
+                // Record to Treasury
+                $bankAccountId = $request->input('bank_account_id');
+                
+                // If manual payment and no account selected, default to KAS TUNAI
+                if (!$bankAccountId) {
+                    $cashAccount = \App\Models\BankAccount::firstOrCreate(
+                        ['bank_name' => 'KAS TUNAI'],
+                        ['account_name' => 'Kas Kantor Utama', 'type' => 'cash', 'is_active' => true]
+                    );
+                    $bankAccountId = $cashAccount->id;
+                }
+
+                \App\Models\BankTransaction::create([
+                    'bank_account_id' => $bankAccountId,
+                    'type' => 'deposit',
+                    'amount' => $invoice->amount,
+                    'description' => '[Pembayaran Invoice] ' . $invoice->invoice_number . ' - Pelanggan: ' . $invoice->customer->name,
+                    'transaction_date' => now(),
+                    'created_by' => auth()->id(),
                 ]);
 
                 $customer = $invoice->customer;

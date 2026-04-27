@@ -38,6 +38,19 @@
                     Dashboard
                 </a>
             </li>
+
+            <!-- Network Operations Section -->
+            @if(auth()->user()->isTeknisi() || auth()->user()->isAdministrator())
+            <li class="pt-4 pb-2">
+                <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">Network Operations</p>
+            </li>
+            <li>
+                <a href="{{ route('noc.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('noc.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
+                    <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2"></path></svg>
+                    NOC Center
+                </a>
+            </li>
+            @endif
             
             @if(auth()->user()->isAdmin() || auth()->user()->isSales() || auth()->user()->isTeknisi() || auth()->user()->isAdministrator())
             <li class="pt-4 pb-2">
@@ -302,6 +315,17 @@
                 </a>
             </li>
             @endif
+
+            <!-- Finance Group -->
+            <li class="pt-4 pb-2 border-t border-gray-200/50 dark:border-gray-800/50 mt-2">
+                <p class="text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-wider px-4 mb-2">Keuangan & Akuntansi</p>
+            </li>
+            <li>
+                <a href="{{ route('bank-accounts.index') }}" class="flex items-center px-4 py-2.5 rounded-xl transition-all duration-200 {{ request()->routeIs('bank-accounts.*') || request()->routeIs('bank-transactions.*') ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
+                    <svg class="w-5 h-5 mr-3 group-hover:text-emerald-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                    Rekening Bank
+                </a>
+            </li>
 
             <li class="pt-4 pb-2 border-t border-gray-200/50 dark:border-gray-800/50">
                 <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">Application</p>

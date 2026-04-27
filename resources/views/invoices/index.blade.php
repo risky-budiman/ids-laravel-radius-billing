@@ -48,7 +48,19 @@
         </form>
     </div>
 
-    <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden" 
+         x-data="{ 
+            showPaymentModal: false, 
+            activeInvoiceId: null, 
+            activeInvoiceNumber: '',
+            activeInvoiceAmount: '',
+            openPaymentModal(id, number, amount) {
+                this.activeInvoiceId = id;
+                this.activeInvoiceNumber = number;
+                this.activeInvoiceAmount = amount;
+                this.showPaymentModal = true;
+            }
+         }">
         <div class="overflow-x-auto">
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
@@ -104,12 +116,10 @@
                                                 Online
                                             </a>
 
-                                            <!-- Manual Payment Button -->
-                                            <form action="{{ route('invoices.update', $invoice) }}" method="POST">
-                                                @csrf @method('PUT')
-                                                <input type="hidden" name="mark_as_paid" value="1">
-                                                <button type="submit" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors border border-emerald-100">Pay</button>
-                                            </form>
+                                            <!-- Manual Payment Button (Triggers Modal) -->
+                                            <button type="button" @click="openPaymentModal({{ $invoice->id }}, '{{ $invoice->invoice_number }}', '{{ number_format($invoice->amount, 2, ',', '.') }}')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors border border-emerald-100">
+                                                Pay
+                                            </button>
 
                                             <!-- WhatsApp Button -->
                                             <form action="{{ route('invoices.whatsapp', $invoice) }}" method="POST">
@@ -143,6 +153,52 @@
         </div>
         <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 pb-4">
             {{ $invoices->links() }}
+        </div>
+
+        <!-- Payment Modal -->
+        <div x-show="showPaymentModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm" x-cloak>
+            <div @click.away="showPaymentModal = false" class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all border border-gray-100 dark:border-gray-700">
+                <div class="bg-emerald-600 px-6 py-4 text-white flex justify-between items-center">
+                    <h3 class="font-bold text-lg">Catat Pembayaran Manual</h3>
+                    <button @click="showPaymentModal = false" class="text-emerald-100 hover:text-white">&times;</button>
+                </div>
+                
+                <form :action="'/invoices/' + activeInvoiceId" method="POST" class="p-6">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="mark_as_paid" value="1">
+                    
+                    <div class="mb-6">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">No. Invoice</label>
+                        <p class="text-xl font-bold text-indigo-600 dark:text-indigo-400" x-text="activeInvoiceNumber"></p>
+                        
+                        <div class="mt-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Tagihan</label>
+                            <p class="text-2xl font-black text-gray-900 dark:text-white" x-text="'Rp ' + activeInvoiceAmount"></p>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Pilih Rekening Penerima</label>
+                        <select name="bank_account_id" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all" required>
+                            <option value="">-- Pilih Rekening --</option>
+                            @foreach($bankAccounts as $acc)
+                                <option value="{{ $acc->id }}">{{ $acc->bank_name }} - {{ $acc->account_name }}</option>
+                            @endforeach
+                        </select>
+                        <p class="mt-2 text-[10px] text-gray-500 italic">Uang akan otomatis dicatat sebagai pemasukan pada rekening yang dipilih.</p>
+                    </div>
+
+                    <div class="flex flex-col gap-3">
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-2xl shadow-lg shadow-emerald-600/30 transition-all transform hover:-translate-y-0.5">
+                            Konfirmasi Pembayaran
+                        </button>
+                        <button type="button" @click="showPaymentModal = false" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 font-bold py-3 rounded-2xl transition-all">
+                            Batal
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </x-app-layout>
