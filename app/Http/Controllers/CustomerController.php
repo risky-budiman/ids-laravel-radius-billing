@@ -63,7 +63,8 @@ class CustomerController extends Controller
         $regions = \App\Models\Region::all();
         $stos = \App\Models\Sto::all();
         $stbs = \App\Models\Stb::all();
-        return view('customers.create', compact('packages', 'regions', 'stos', 'stbs'));
+        $olts = \App\Models\Olt::where('is_active', true)->get();
+        return view('customers.create', compact('packages', 'regions', 'stos', 'stbs', 'olts'));
     }
 
     public function store(Request $request)
@@ -90,6 +91,10 @@ class CustomerController extends Controller
             'longitude' => 'nullable|numeric',
             'installation_fee' => 'nullable|numeric|min:0',
             'use_tax' => 'nullable',
+            'olt_id' => 'nullable|exists:olts,id',
+            'onu_sn' => 'nullable|string|max:64',
+            'onu_index' => 'nullable|string|max:64',
+            'onu_type' => 'nullable|string|max:32',
         ]);
 
         $package = Package::find($validated['package_id']);
@@ -119,6 +124,10 @@ class CustomerController extends Controller
                 'longitude' => $validated['longitude'],
                 'installation_fee' => $validated['installation_fee'] ?? 0,
                 'use_tax' => $request->has('use_tax'),
+                'olt_id' => $validated['olt_id'],
+                'onu_sn' => $validated['onu_sn'],
+                'onu_index' => $validated['onu_index'],
+                'onu_type' => $validated['onu_type'],
             ]);
 
             // Create in RADIUS (Authentication)
@@ -139,7 +148,12 @@ class CustomerController extends Controller
             }
         });
 
-        return redirect()->route('customers.index')->with('success', 'Subscriber created successfully and synced to RADIUS.');
+        $customer = Customer::where('username', $validated['username'])->first();
+        if ($customer && $customer->olt_id && $customer->onu_index) {
+            \App\Jobs\ProvisionOnuJob::dispatch($customer);
+        }
+
+        return redirect()->route('customers.index')->with('success', 'Subscriber created successfully. OLT Provisioning has been queued.');
     }
 
     public function edit(Customer $customer)
@@ -151,8 +165,9 @@ class CustomerController extends Controller
         
         $radCheck = \App\Models\Radius\RadCheck::where('username', $customer->username)->first();
         $customer->password = $radCheck ? $radCheck->value : '';
+        $olts = \App\Models\Olt::where('is_active', true)->get();
 
-        return view('customers.edit', compact('customer', 'packages', 'regions', 'stos', 'stbs'));
+        return view('customers.edit', compact('customer', 'packages', 'regions', 'stos', 'stbs', 'olts'));
     }
 
     public function update(Request $request, Customer $customer)
@@ -240,12 +255,33 @@ class CustomerController extends Controller
             }
         }
 
-        return redirect()->route('customers.show', $customer)->with('success', 'Subscriber and RADIUS records updated successfully.');
+        // 6. Trigger OLT Jobs if OLT is configured
+        if ($customer->olt_id && $customer->onu_index) {
+            // Check status change
+            if ($oldStatus && !$isActive) {
+                \App\Jobs\UpdateOnuJob::dispatch($customer->olt_id, $customer->onu_index, 'suspend');
+            } elseif (!$oldStatus && $isActive) {
+                \App\Jobs\UpdateOnuJob::dispatch($customer->olt_id, $customer->onu_index, 'resume');
+            }
+
+            // Check package change for bandwidth update
+            if ($isPackageChanged) {
+                $bandwidth = $package->speed_limit_down ?? 102400;
+                \App\Jobs\UpdateOnuJob::dispatch($customer->olt_id, $customer->onu_index, 'update_speed', $bandwidth);
+            }
+        }
+
+        return redirect()->route('customers.show', $customer)->with('success', 'Subscriber and RADIUS records updated successfully. OLT changes queued.');
     }
 
     public function destroy(Customer $customer)
     {
         abort_if(!auth()->user()->isAdmin(), 403, 'Unauthorized: Only administrators can delete subscriber records.');
+
+        // Backup OLT info for deprovisioning job
+        $oltId = $customer->olt_id;
+        $onuIndex = $customer->onu_index;
+        $onuSn = $customer->onu_sn;
 
         DB::transaction(function () use ($customer) {
             // Delete RADIUS records first to prevent orphaned records if delete fails
@@ -256,6 +292,11 @@ class CustomerController extends Controller
             $customer->delete();
         });
 
-        return redirect()->route('customers.index')->with('success', 'Subscriber deleted successfully.');
+        // Trigger OLT Deprovisioning
+        if ($oltId && $onuIndex) {
+            \App\Jobs\DeprovisionOnuJob::dispatch($oltId, $onuIndex, $onuSn);
+        }
+
+        return redirect()->route('customers.index')->with('success', 'Subscriber deleted successfully. OLT Deprovisioning queued.');
     }
 }

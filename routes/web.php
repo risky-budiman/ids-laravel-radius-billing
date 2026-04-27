@@ -120,6 +120,12 @@ Route::middleware('auth')->group(function () {
             Route::get('noc', [\App\Http\Controllers\NocController::class, 'index'])->name('noc.index');
             Route::get('noc/discovery', [\App\Http\Controllers\NocController::class, 'discovery'])->name('noc.discovery');
             Route::get('noc/signals', [\App\Http\Controllers\NocController::class, 'signals'])->name('noc.signals');
+
+            // OLT Management
+            Route::resource('olts', \App\Http\Controllers\OltController::class);
+            Route::post('olts/{olt}/test-connection', [\App\Http\Controllers\OltController::class, 'testConnection'])->name('olts.test-connection');
+            Route::post('olts/{olt}/generate-ports', [\App\Http\Controllers\OltController::class, 'generatePorts'])->name('olts.generate-ports');
+            Route::post('olts/{olt}/manual-delete-onu', [\App\Http\Controllers\OltController::class, 'manualDeleteOnu'])->name('olts.manual-delete-onu');
         });
     });
 

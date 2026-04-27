@@ -9,6 +9,47 @@
         <form action="{{ route('customers.store') }}" method="POST" class="p-8">
             @csrf
 
+            <!-- Section: OLT Configuration -->
+            <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700 bg-indigo-50/30 dark:bg-indigo-900/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-800">
+                <h3 class="text-lg font-semibold text-indigo-900 dark:text-indigo-100 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    OLT Provisioning (Zero Touch)
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <x-input-label for="olt_id" :value="__('Source OLT')" />
+                        <select id="olt_id" name="olt_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm">
+                            <option value="">-- Manual Configuration (No OLT) --</option>
+                            @foreach($olts as $olt)
+                                <option value="{{ $olt->id }}" {{ (old('olt_id') ?? request('olt_id')) == $olt->id ? 'selected' : '' }}>{{ $olt->name }} ({{ $olt->ip_address }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <x-input-label for="onu_sn" :value="__('ONU Serial Number')" />
+                        <x-text-input id="onu_sn" name="onu_sn" type="text" class="mt-1 block w-full font-mono bg-white dark:bg-gray-900" :value="old('onu_sn') ?? request('sn')" placeholder="e.g. ZTEGC000..." />
+                    </div>
+
+                    <div>
+                        <x-input-label for="onu_index" :value="__('ONU Index (Position)')" />
+                        <x-text-input id="onu_index" name="onu_index" type="text" class="mt-1 block w-full font-mono bg-white dark:bg-gray-900" :value="old('onu_index') ?? request('pos')" placeholder=".shelf.slot.port.id" />
+                        <p class="mt-1 text-[10px] text-gray-500 italic">Example: .1.1.1.1</p>
+                    </div>
+
+                    <div>
+                        <x-input-label for="onu_type" :value="__('ONU Type/Model')" />
+                        <select id="onu_type" name="onu_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm">
+                            <option value="F660" {{ old('onu_type') == 'F660' ? 'selected' : '' }}>ZTE F660</option>
+                            <option value="F609" {{ old('onu_type') == 'F609' ? 'selected' : '' }}>ZTE F609</option>
+                            <option value="HG8245" {{ old('onu_type') == 'HG8245' ? 'selected' : '' }}>Huawei HG8245</option>
+                            <option value="GENERIC" {{ old('onu_type') == 'GENERIC' ? 'selected' : '' }}>Generic ONU</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <!-- Section: RADIUS Auth -->
             <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex justify-between items-center mb-4">

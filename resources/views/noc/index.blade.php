@@ -96,16 +96,61 @@
                             </h3>
                             <span class="text-xs text-gray-500 font-mono">Last Sync: {{ now()->format('H:i:s') }}</span>
                         </div>
+                        @if($olts->isEmpty())
                         <div class="p-12 text-center">
                             <div class="inline-flex p-4 bg-gray-50 dark:bg-gray-900 rounded-full mb-4">
                                 <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
                             </div>
                             <h4 class="text-lg font-bold text-gray-900 dark:text-white">Belum Ada OLT Terdaftar</h4>
                             <p class="text-sm text-gray-500 max-w-xs mx-auto mt-2">Hubungkan OLT Anda via SNMP untuk memantau trafik PON Port dan redaman ONU secara otomatis.</p>
-                            <button class="mt-6 px-6 py-2 bg-gray-900 dark:bg-white dark:text-gray-900 text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity">
+                            <a href="{{ route('olts.create') }}" class="mt-6 inline-block px-6 py-2 bg-gray-900 dark:bg-white dark:text-gray-900 text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity">
                                 + Daftarkan OLT
-                            </button>
+                            </a>
                         </div>
+                        @else
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                @foreach($olts as $olt)
+                                    <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-2xl border border-gray-100 dark:border-gray-700">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div class="flex items-center">
+                                                <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 mr-3">
+                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                                                </div>
+                                                <div>
+                                                    <h4 class="font-bold text-gray-900 dark:text-white">{{ $olt->name }}</h4>
+                                                    <p class="text-[10px] text-gray-500 font-mono">{{ $olt->ip_address }}</p>
+                                                </div>
+                                            </div>
+                                            <span class="flex h-2 w-2 relative">
+                                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full {{ $olt->is_active ? 'bg-emerald-400' : 'bg-gray-400' }} opacity-75"></span>
+                                                <span class="relative inline-flex rounded-full h-2 w-2 {{ $olt->is_active ? 'bg-emerald-500' : 'bg-gray-500' }}"></span>
+                                            </span>
+                                        </div>
+                                        <div class="grid grid-cols-3 gap-2 text-[10px] uppercase font-bold tracking-wider text-gray-400">
+                                            <div class="bg-white dark:bg-gray-800 p-2 rounded-lg text-center">
+                                                <span class="block text-gray-900 dark:text-gray-200 text-xs">--</span>
+                                                CPU
+                                            </div>
+                                            <div class="bg-white dark:bg-gray-800 p-2 rounded-lg text-center">
+                                                <span class="block text-emerald-500 text-xs">UP</span>
+                                                STATUS
+                                            </div>
+                                            <div class="bg-white dark:bg-gray-800 p-2 rounded-lg text-center">
+                                                <span class="block text-gray-900 dark:text-gray-200 text-xs">{{ $olt->pon_ports_count ?? 0 }}</span>
+                                                PORTS
+                                            </div>
+                                        </div>
+                                        <div class="mt-4">
+                                            <a href="{{ route('olts.show', $olt->id) }}" class="block w-full py-2 bg-white dark:bg-gray-800 text-center text-[10px] font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-100 transition-colors border border-gray-100 dark:border-gray-700">
+                                                DETAILS
+                                            </a>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
                     </div>
                 </div>
 
