@@ -209,9 +209,15 @@
                                         <img id="cpe-preview" class="h-16 w-16 object-cover rounded-lg border-2 border-amber-200 shadow-sm">
                                     </div>
                                 </div>
-                                <div class="mt-2 p-2 bg-amber-100/50 rounded-lg border border-amber-200 flex items-center">
-                                    <svg class="w-4 h-4 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <p class="text-[10px] text-amber-800 font-medium italic">Pastikan SN di foto sesuai dengan SN Inventory yang dipilih di atas.</p>
+                                <div class="mt-2 p-2 bg-amber-100/50 rounded-lg border border-amber-200 flex flex-col space-y-2">
+                                    <div class="flex items-center">
+                                        <svg id="ocr-status-icon" class="w-4 h-4 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <p id="ocr-status-text" class="text-[10px] text-amber-800 font-medium italic">Menunggu upload foto untuk verifikasi SN...</p>
+                                    </div>
+                                    <div id="ocr-result-container" class="hidden text-[10px] bg-white/50 p-2 rounded border border-amber-200/50">
+                                        <span class="font-bold text-gray-700">Terdeteksi di Foto:</span>
+                                        <span id="ocr-detected-sn" class="font-mono text-indigo-600 bg-indigo-50 px-1 rounded ml-1 tracking-wider">NONE</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -344,6 +350,7 @@
 
     @push('scripts')
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
         function previewImage(event, previewId) {
             const input = event.target;
@@ -355,8 +362,76 @@
                 reader.onload = function(e) {
                     preview.src = e.target.result;
                     container.classList.remove('hidden');
+                    
+                    // Trigger OCR if it's CPE Photo
+                    if (previewId === 'cpe-preview') {
+                        runOcr(e.target.result);
+                    }
                 }
                 reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function runOcr(imageSrc) {
+            const statusText = document.getElementById('ocr-status-text');
+            const statusIcon = document.getElementById('ocr-status-icon');
+            const resultContainer = document.getElementById('ocr-result-container');
+            const detectedSnSpan = document.getElementById('ocr-detected-sn');
+            const selectedSn = document.getElementById('onu_sn').value;
+
+            statusText.innerText = 'Memindai Serial Number dari foto (OCR)...';
+            statusText.className = 'text-[10px] text-indigo-600 font-bold animate-pulse';
+            statusIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>';
+            statusIcon.classList.add('animate-spin');
+
+            try {
+                const { data: { text } } = await Tesseract.recognize(imageSrc, 'eng', {
+                    logger: m => console.log(m)
+                });
+
+                console.log("OCR Extracted Text:", text);
+
+                // Simple regex to find common SN patterns (Alphanumeric 8-16 chars)
+                // Often starts with Brand prefix like ZTEG, ZTE, GPON, etc.
+                const snRegex = /[A-Z0-9]{8,16}/g;
+                const matches = text.match(snRegex) || [];
+                
+                let foundSn = null;
+                if (selectedSn && selectedSn.length > 5) {
+                    // Look for the exact selected SN in the text
+                    const normalizedSelected = selectedSn.toUpperCase().trim();
+                    if (text.toUpperCase().includes(normalizedSelected)) {
+                        foundSn = normalizedSelected;
+                    }
+                }
+
+                // If not found exact, take the first likely candidate
+                if (!foundSn && matches.length > 0) {
+                    foundSn = matches[0];
+                }
+
+                statusIcon.classList.remove('animate-spin');
+                resultContainer.classList.remove('hidden');
+
+                if (foundSn && selectedSn && foundSn.includes(selectedSn.toUpperCase())) {
+                    statusText.innerText = 'Verifikasi Berhasil: SN di foto cocok dengan Inventory!';
+                    statusText.className = 'text-[10px] text-green-600 font-bold';
+                    statusIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
+                    statusIcon.className = 'w-4 h-4 text-green-500 mr-2';
+                    detectedSnSpan.innerText = foundSn;
+                } else {
+                    statusText.innerText = 'Peringatan: SN di foto tidak terdeteksi cocok. Mohon cek manual!';
+                    statusText.className = 'text-[10px] text-red-600 font-bold';
+                    statusIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>';
+                    statusIcon.className = 'w-4 h-4 text-red-500 mr-2';
+                    detectedSnSpan.innerText = foundSn || 'Tidak terbaca';
+                }
+
+            } catch (err) {
+                console.error("OCR Error:", err);
+                statusText.innerText = 'Gagal memproses OCR. Gunakan verifikasi manual.';
+                statusText.className = 'text-[10px] text-gray-500 italic';
+                statusIcon.classList.remove('animate-spin');
             }
         }
 

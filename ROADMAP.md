@@ -90,7 +90,7 @@ Fase ini berfokus untuk melengkapi atribut *Subscriber* agar setara dengan stand
 ### 4.2. Dokumen KYC & Verifikasi
 - [x] Upload foto identitas (KTP/NPWP) dan foto rumah/lokasi pemasangan (House Photo) saat teknisi melakukan aktivasi. (Selesai: Terintegrasi di Wizard Aktivasi)
 - [x] Upload foto fisik Modem/Router (CPE). (Selesai: Terintegrasi di Wizard Aktivasi)
-- [ ] Fitur **OCR (Optical Character Recognition)** untuk mengekstrak Serial Number (SN) dan MAC Address secara otomatis dari foto modem yang diupload.
+- [x] Fitur **OCR (Optical Character Recognition)** untuk mengekstrak Serial Number (SN) dan MAC Address secara otomatis dari foto modem yang diupload. (Selesai: Terintegrasi dengan Tesseract.js di Wizard Aktivasi)
 - [x] Penambahan tipe pelanggan (Personal, Corporate, VIP) untuk prioritas penanganan tiket (SLA).
 - [x] **Kolom Deskripsi Tambahan:** Penambahan *field* `description` (catatan khusus) pada data subscriber untuk menyimpan keterangan detail/kronologi khusus yang tidak tercakup pada *field* standar. (Selesai: Terintegrasi di Wizard Aktivasi)
 
