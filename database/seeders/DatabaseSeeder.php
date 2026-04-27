@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ChartOfAccountSeeder::class,
             WhatsappTemplateSeeder::class,
+            TaxSeeder::class,
         ]);
     }
 }

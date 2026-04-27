@@ -4,6 +4,10 @@
     scannerOpen: false,
     html5QrCode: null,
     startScanner() {
+        if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+            alert('Akses Kamera Gagal: Browser hanya mengizinkan kamera pada koneksi aman (HTTPS). Silakan hubungi admin untuk aktivasi SSL.');
+            return;
+        }
         this.scannerOpen = true;
         this.$nextTick(() => {
             this.html5QrCode = new Html5Qrcode('reader');

@@ -16,6 +16,8 @@ class ChartOfAccountSeeder extends Seeder
             ['code' => '1101', 'name' => 'Kas Tunai', 'type' => 'asset', 'parent_id' => '1100'],
             ['code' => '1102', 'name' => 'Bank', 'type' => 'asset', 'parent_id' => '1100'],
             ['code' => '1103', 'name' => 'Piutang Pelanggan', 'type' => 'asset', 'parent_id' => '1100'],
+            ['code' => '1104', 'name' => 'Persediaan Barang', 'type' => 'asset', 'parent_id' => '1100'],
+            ['code' => '1105', 'name' => 'PPN Masukan (Pajak Pembelian)', 'type' => 'asset', 'parent_id' => '1100'],
             ['code' => '1200', 'name' => 'Aset Tetap', 'type' => 'asset', 'parent_id' => '1000'],
             ['code' => '1201', 'name' => 'Inventaris Kantor', 'type' => 'asset', 'parent_id' => '1200'],
             ['code' => '1202', 'name' => 'Peralatan Jaringan (OLT/Router)', 'type' => 'asset', 'parent_id' => '1200'],
@@ -25,6 +27,7 @@ class ChartOfAccountSeeder extends Seeder
             ['code' => '2100', 'name' => 'Hutang Lancar', 'type' => 'liability', 'parent_id' => '2000'],
             ['code' => '2101', 'name' => 'Hutang Vendor', 'type' => 'liability', 'parent_id' => '2100'],
             ['code' => '2102', 'name' => 'Uang Muka Pelanggan', 'type' => 'liability', 'parent_id' => '2100'],
+            ['code' => '2103', 'name' => 'Hutang Pajak (PPN)', 'type' => 'liability', 'parent_id' => '2100'],
 
             // EQUITY (3xxx)
             ['code' => '3000', 'name' => 'EKUITAS', 'type' => 'equity', 'parent_id' => null],
