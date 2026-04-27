@@ -7,6 +7,12 @@
 
         <title>{{ get_setting('company_name', config('app.name', 'Radius ISP')) }} - Login</title>
 
+        <!-- Dynamic Favicon -->
+        @php $appIcon = get_setting('app_icon'); @endphp
+        @if($appIcon)
+            <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . $appIcon) }}">
+        @endif
+
         <!-- Fonts: Inter -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />

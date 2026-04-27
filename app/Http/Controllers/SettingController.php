@@ -16,13 +16,22 @@ class SettingController extends Controller
 
     public function update(Request $request)
     {
-        $data = $request->except(['_token', 'company_logo']);
+        $data = $request->except(['_token', 'company_logo', 'app_icon']);
 
         // Handle Logo Upload
         if ($request->hasFile('company_logo')) {
             $path = $request->file('company_logo')->store('company', 'public');
             Setting::updateOrCreate(
                 ['key' => 'company_logo'],
+                ['value' => $path, 'type' => 'image']
+            );
+        }
+
+        // Handle App Icon Upload
+        if ($request->hasFile('app_icon')) {
+            $path = $request->file('app_icon')->store('company', 'public');
+            Setting::updateOrCreate(
+                ['key' => 'app_icon'],
                 ['value' => $path, 'type' => 'image']
             );
         }

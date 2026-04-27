@@ -22,21 +22,40 @@
                     @csrf
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <!-- Left: Logo Upload -->
-                        <div class="space-y-4">
-                            <x-input-label :value="__('Company Logo')" />
-                            <div class="relative group">
-                                <div class="w-full h-40 bg-gray-50 dark:bg-gray-900 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center overflow-hidden transition-all group-hover:border-indigo-300">
-                                    @if(isset($settings['company_logo']))
-                                        <img src="{{ asset('storage/' . $settings['company_logo']->value) }}" class="w-full h-full object-contain p-4" id="logo_preview">
-                                    @else
-                                        <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                        <p class="mt-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest">Click to upload</p>
-                                    @endif
+                        <!-- Left: Logo & Icon Upload -->
+                        <div class="space-y-6">
+                            <div>
+                                <x-input-label :value="__('Company Logo')" />
+                                <div class="relative group mt-2">
+                                    <div class="w-full h-32 bg-slate-50 dark:bg-slate-900 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center overflow-hidden transition-all group-hover:border-indigo-300">
+                                        @if(isset($settings['company_logo']))
+                                            <img src="{{ asset('storage/' . $settings['company_logo']->value) }}" class="w-full h-full object-contain p-4" id="logo_preview">
+                                        @else
+                                            <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        @endif
+                                    </div>
+                                    <input type="file" name="company_logo" class="absolute inset-0 opacity-0 cursor-pointer" onchange="const img = document.getElementById('logo_preview'); if(img) img.src = window.URL.createObjectURL(this.files[0]);">
                                 </div>
-                                <input type="file" name="company_logo" class="absolute inset-0 opacity-0 cursor-pointer" onchange="document.getElementById('logo_preview_new').src = window.URL.createObjectURL(this.files[0]); document.getElementById('logo_preview_new').classList.remove('hidden')">
+                                <p class="text-[9px] text-slate-400 mt-2 italic">* Digunakan pada Laporan & Halaman Login</p>
                             </div>
-                            <img id="logo_preview_new" class="hidden w-20 h-20 object-contain mx-auto mt-2 rounded-lg border border-indigo-100 shadow-sm">
+
+                            <div>
+                                <x-input-label :value="__('App Icon (Favicon)')" />
+                                <div class="flex items-center gap-4 mt-2">
+                                    <div class="w-16 h-16 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden relative group">
+                                        @if(isset($settings['app_icon']))
+                                            <img src="{{ asset('storage/' . $settings['app_icon']->value) }}" class="w-full h-full object-cover" id="icon_preview">
+                                        @else
+                                            <svg class="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"></path></svg>
+                                        @endif
+                                        <input type="file" name="app_icon" class="absolute inset-0 opacity-0 cursor-pointer" onchange="const img = document.getElementById('icon_preview'); if(img) img.src = window.URL.createObjectURL(this.files[0]);">
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] font-bold text-slate-700 dark:text-slate-300">Upload Icon</p>
+                                        <p class="text-[9px] text-slate-400">Format: ICO, PNG (Square)</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Right: Details -->

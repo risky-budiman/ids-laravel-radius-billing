@@ -16,8 +16,11 @@
     <!-- Logo -->
     <div class="flex items-center justify-center h-20 shrink-0 border-b border-gray-200 dark:border-gray-800">
         <div class="flex items-center space-x-3">
-            @if(get_setting('company_logo'))
-                <img src="{{ asset('storage/' . get_setting('company_logo')) }}" alt="Logo" class="w-10 h-10 object-contain">
+            @php 
+                $logo = get_setting('app_icon') ?: get_setting('company_logo');
+            @endphp
+            @if($logo)
+                <img src="{{ asset('storage/' . $logo) }}" alt="Logo" class="w-10 h-10 object-contain rounded-lg">
             @else
                 <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/30">
                     {{ substr(get_setting('company_name', 'Radius'), 0, 1) }}
