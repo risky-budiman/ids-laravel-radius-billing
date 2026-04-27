@@ -5,7 +5,7 @@
         </div>
         <div class="mt-2 sm:mt-0 flex items-center justify-center space-x-4">
             <a href="#" class="hover:text-gray-800 dark:hover:text-gray-300 transition-colors">Support</a>
-            <a href="#" class="hover:text-gray-800 dark:hover:text-gray-300 transition-colors">Documentation</a>
+            <a href="{{ route('docs.index') }}" target="_blank" class="hover:text-gray-800 dark:hover:text-gray-300 transition-colors">Documentation</a>
             <span class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-gray-400 font-mono">{{ \App\Models\Changelog::latestVersion() }}</span>
         </div>
     </div>

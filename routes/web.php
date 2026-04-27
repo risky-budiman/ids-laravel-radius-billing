@@ -308,6 +308,9 @@ Route::middleware('auth')->group(function () {
         Route::get('tax-settings', [\App\Http\Controllers\Accounting\TaxSettingController::class, 'index'])->name('tax-settings.index');
         Route::post('tax-settings', [\App\Http\Controllers\Accounting\TaxSettingController::class, 'update'])->name('tax-settings.update');
     });
+
+    // Documentation System
+    Route::get('/docs/{page?}', [\App\Http\Controllers\DocsController::class, 'index'])->name('docs.index');
 });
 
 require __DIR__.'/auth.php';

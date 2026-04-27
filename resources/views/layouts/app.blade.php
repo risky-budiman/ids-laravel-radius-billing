@@ -8,9 +8,14 @@
         <title>{{ get_setting('company_name', config('app.name', 'Radius ISP')) }}</title>
 
         <!-- Dynamic Favicon -->
-        @php $appIcon = get_setting('app_icon'); @endphp
+        @php 
+            $appIcon = get_setting('app_icon'); 
+            $companyLogo = get_setting('company_logo');
+        @endphp
         @if($appIcon)
-            <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . $appIcon) }}">
+            <link rel="icon" type="image/png" href="{{ asset('storage/' . $appIcon) }}">
+        @elseif($companyLogo)
+            <link rel="icon" type="image/png" href="{{ asset('storage/' . $companyLogo) }}">
         @endif
 
         <!-- Fonts -->
