@@ -324,6 +324,8 @@ Route::middleware('auth')->group(function () {
 
         Route::get('tax-settings', [\App\Http\Controllers\Accounting\TaxSettingController::class, 'index'])->name('tax-settings.index');
         Route::post('tax-settings', [\App\Http\Controllers\Accounting\TaxSettingController::class, 'update'])->name('tax-settings.update');
+        
+        Route::resource('taxes', \App\Http\Controllers\Accounting\TaxController::class);
     });
 
     // Documentation System
