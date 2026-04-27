@@ -115,6 +115,15 @@ class InventoryController extends Controller
 
         $item = InventoryItem::findOrFail($request->inventory_item_id);
 
+        // Validation for serial numbers if tracked
+        if ($item->track_serial) {
+            $serialCount = count(array_filter($request->serials ?? []));
+            if ($serialCount != $request->quantity) {
+                return back()->withErrors(['serials' => "Jumlah Serial Number ($serialCount) harus sama dengan Quantity ({$request->quantity})."])
+                             ->withInput();
+            }
+        }
+
         DB::transaction(function() use ($request, $item) {
             $subtotal = $request->unit_price * $request->quantity;
             $taxAmount = 0;
@@ -187,7 +196,15 @@ class InventoryController extends Controller
         
         // Validation for stock availability
         if ($item->stock_count < $request->quantity) {
-            return back()->withErrors(['quantity' => 'Insufficient stock. current stock: ' . $item->stock_count]);
+            return back()->withErrors(['quantity' => 'Insufficient stock. current stock: ' . $item->stock_count])->withInput();
+        }
+
+        // Validation for serial numbers if tracked
+        if ($item->track_serial) {
+            $serialCount = count($request->stock_ids ?? []);
+            if ($serialCount != $request->quantity) {
+                return back()->withErrors(['stock_ids' => "Anda harus memilih $request->quantity Serial Number."])->withInput();
+            }
         }
 
         DB::transaction(function() use ($request, $item) {

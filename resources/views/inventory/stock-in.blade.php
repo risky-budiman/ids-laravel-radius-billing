@@ -11,15 +11,37 @@
                 <h3 class="font-bold text-lg">Input Barang Masuk</h3>
                 <p class="text-indigo-100 text-xs mt-1">Tambahkan stok baru dari hasil pembelian atau pengadaan.</p>
             </div>
+            
+            @if($errors->any())
+                <div class="px-8 py-4 bg-red-50 border-b border-red-100">
+                    <ul class="list-disc list-inside text-sm text-red-600 font-medium">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
             <form action="{{ route('inventory.stock-in.store') }}" method="POST" class="p-8 space-y-6" x-data="{ 
                 trackSerial: false, 
                 quantity: 1,
                 updateProduct(e) {
-                    const selected = e.target.options[e.target.selectedIndex];
-                    this.trackSerial = selected.getAttribute('data-serial') === '1';
+                    const sel = e.target.options[e.target.selectedIndex];
+                    this.trackSerial = sel && sel.getAttribute('data-serial') === '1';
+                },
+                handleScan(sn) {
+                    const inputs = document.querySelectorAll('input[name=\'serials[]\']');
+                    for (let input of inputs) {
+                        if (!input.value) {
+                            input.value = sn;
+                            input.dispatchEvent(new Event('input'));
+                            input.dispatchEvent(new Event('change'));
+                            return;
+                        }
+                    }
+                    alert('Semua slot SN sudah terisi.');
                 }
-            }">
+            }" @scan-completed.window="handleScan($event.detail)">
                 @csrf
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -70,16 +92,24 @@
                     </div>
                 </div>
 
+                <div x-show="!trackSerial && quantity > 0" class="p-4 bg-gray-50 dark:bg-gray-900/30 rounded-2xl border border-gray-100 dark:border-gray-800 flex items-center">
+                    <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <p class="text-xs text-gray-500">Barang ini tidak menggunakan pelacakan Serial Number (Consumables).</p>
+                </div>
+
                 <!-- Dynamic Serial Number Input Section -->
-                <div x-show="trackSerial" x-transition class="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 space-y-4">
+                <div x-show="trackSerial" x-transition class="bg-indigo-50/50 dark:bg-indigo-900/10 p-6 rounded-2xl border border-dashed border-indigo-200 dark:border-indigo-800 space-y-4">
                     <p class="text-xs font-black text-indigo-600 uppercase tracking-widest">Serial Number Tracking</p>
-                    <p class="text-[10px] text-gray-500">Masukkan Serial Number untuk setiap unit barang yang masuk.</p>
+                    <div class="flex justify-between items-center">
+                        <p class="text-[10px] text-gray-500">Masukkan Serial Number untuk setiap unit barang yang masuk.</p>
+                        <x-barcode-scanner />
+                    </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-2">
-                        <template x-for="i in parseInt(quantity)" :key="i">
-                            <div>
+                        <template x-for="i in (parseInt(quantity) || 0)" :key="i">
+                            <div class="animate-in fade-in slide-in-from-top-2 duration-300">
                                 <label class="text-[9px] text-gray-400 font-bold ml-1">SN Unit <span x-text="i"></span></label>
-                                <input type="text" name="serials[]" class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm text-xs p-2 uppercase" placeholder="Enter SN...">
+                                <input type="text" name="serials[]" required class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm text-xs p-2 uppercase" placeholder="Enter SN...">
                             </div>
                         </template>
                     </div>

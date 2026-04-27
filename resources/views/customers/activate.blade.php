@@ -42,9 +42,12 @@
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <x-input-label for="onu_sn" :value="__('ONU Serial Number')" />
-                                <span id="sn-sync-badge" class="hidden text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">
-                                    Synced with Inventory
-                                </span>
+                                <div class="flex items-center space-x-2">
+                                    <span id="sn-sync-badge" class="hidden text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">
+                                        Synced with Inventory
+                                    </span>
+                                    <x-barcode-scanner targetInputId="onu_sn" />
+                                </div>
                             </div>
                             <x-text-input id="onu_sn" name="onu_sn" type="text" class="mt-1 block w-full font-mono uppercase" :value="old('onu_sn', $customer->onu_sn)" placeholder="e.g. ZTEGC000..." />
                             <p class="text-[9px] text-gray-400 mt-1 italic">Dapat diisi manual atau otomatis dari pilihan stok di bawah.</p>

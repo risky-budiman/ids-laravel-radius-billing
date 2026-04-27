@@ -101,9 +101,9 @@ Fase ini berfokus untuk melengkapi atribut *Subscriber* agar setara dengan stand
 ---
 
 ## FASE 5: Mobile & Camera Integration (Inventory & Aktivasi)
-- [ ] Fitur akses kamera langsung via Web/Android (WebRTC/HTML5 Camera) untuk scan Barcode/QR Code.
-- [ ] **Scan SN Inventory:** Penginputan data barang masuk (Stock In) dan keluar (Stock Out) di gudang cukup dengan scan Serial Number menggunakan kamera HP.
-- [ ] Proses *Zero Touch Provisioning* lapangan: Teknisi scan SN modem di rumah pelanggan -> otomatis mendaftarkan SN ke OLT tanpa ketik manual.
+- [x] Fitur akses kamera langsung via Web/Android (WebRTC/HTML5 Camera) untuk scan Barcode/QR Code. (Selesai: Komponen BarcodeScanner Terintegrasi)
+- [x] **Scan SN Inventory:** Penginputan data barang masuk (Stock In) dan keluar (Stock Out) di gudang cukup dengan scan Serial Number menggunakan kamera HP.
+- [x] Proses *Zero Touch Provisioning* lapangan: Teknisi scan SN modem di rumah pelanggan -> otomatis mendaftarkan SN ke OLT tanpa ketik manual.
 
 ---
 
