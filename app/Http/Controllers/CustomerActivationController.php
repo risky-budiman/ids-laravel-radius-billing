@@ -293,6 +293,29 @@ class CustomerActivationController extends Controller
                 }
             });
 
+            // 4. External System Orchestration (After DB Transaction)
+            // OLT Deprovisioning
+            if ($customer->olt_id && $customer->onu_index && $customer->onu_sn) {
+                \App\Jobs\DeprovisionOnuJob::dispatch($customer->olt_id, $customer->onu_index, $customer->onu_sn);
+            }
+
+            // Radius Cleanup
+            if ($customer->username) {
+                \App\Models\Radius\RadCheck::where('username', $customer->username)->delete();
+                \App\Models\Radius\RadUserGroup::where('username', $customer->username)->delete();
+                
+                // Kick active session via CoA
+                try {
+                    $nas = \App\Models\Radius\Nas::first();
+                    if ($nas) {
+                        $coa = new \App\Services\RadiusCoAService();
+                        $coa->disconnect($nas->nasipaddress, $nas->secret, $customer->username);
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning("CoA disconnect failed during dismantle: " . $e->getMessage());
+                }
+            }
+
             return redirect()->route('customers.index')->with('success', 'Customer dismantled and equipment returned to stock.');
         } catch (\Exception $e) {
             \Log::error('Dismantle failed: ' . $e->getMessage());
@@ -307,6 +330,17 @@ class CustomerActivationController extends Controller
         }
 
         $customer->update(['status' => Customer::STATUS_WAITING_DISMANTLE]);
+
+        // Auto-create Dismantle Ticket
+        \App\Models\Ticket::create([
+            'customer_id' => $customer->id,
+            'type' => 'dismantle',
+            'subject' => 'Permintaan Dismantle: ' . $customer->name,
+            'description' => 'Pelanggan ini mengajukan atau dijadwalkan untuk dismantle (cabut perangkat).',
+            'priority' => 'high',
+            'status' => 'open'
+        ]);
+
         return redirect()->back()->with('success', 'Permintaan dismantle telah diajukan. Tiket penarikan perangkat otomatis dibuat.');
     }
 }

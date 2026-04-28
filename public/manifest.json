@@ -1,0 +1,10 @@
+{
+    "name": "Radius ISP Portal",
+    "short_name": "Radius",
+    "description": "Portal Pelanggan Mandiri Radius ISP",
+    "start_url": "/client",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4f46e5",
+    "orientation": "portrait"
+}

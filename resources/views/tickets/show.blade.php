@@ -8,6 +8,15 @@
                 <a href="{{ route('tickets.edit', $ticket) }}" class="inline-flex items-center px-4 py-2 bg-amber-500 border border-transparent rounded-xl font-semibold text-xs text-white uppercase tracking-widest hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition ease-in-out duration-150">
                     Edit Ticket
                 </a>
+                @if(auth()->user()->isAdministrator())
+                    <form action="{{ route('tickets.destroy', $ticket) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tiket ini beserta seluruh riwayat chat secara permanen?');" class="inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-rose-600 border border-transparent rounded-xl font-semibold text-xs text-white uppercase tracking-widest hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-lg shadow-rose-500/30">
+                            Delete Ticket
+                        </button>
+                    </form>
+                @endif
             </div>
         </div>
     </x-slot>
@@ -59,6 +68,15 @@
                             <div class="prose dark:prose-invert max-w-none mb-8 bg-gray-50 dark:bg-gray-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
                                 <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Description</h4>
                                 <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ $ticket->description }}</p>
+                                
+                                @if($ticket->attachment)
+                                    <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                        <a href="{{ asset('storage/' . $ticket->attachment) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl text-xs font-bold transition-colors">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.415 6.414a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                            View Original Attachment
+                                        </a>
+                                    </div>
+                                @endif
                             </div>
 
                             @if($ticket->resolution_notes)
@@ -79,14 +97,16 @@
                                     @forelse($ticket->replies as $reply)
                                         <div class="flex space-x-4">
                                             <div class="flex-shrink-0">
-                                                <div class="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">
-                                                    {{ substr($reply->user->name, 0, 1) }}
+                                                <div class="w-10 h-10 rounded-2xl {{ $reply->user_id ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' }} flex items-center justify-center font-bold">
+                                                    {{ $reply->user_id ? substr($reply->user->name, 0, 1) : substr($ticket->customer->name, 0, 1) }}
                                                 </div>
                                             </div>
                                             <div class="flex-1">
-                                                <div class="bg-white dark:bg-gray-800/50 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                                                <div class="{{ $reply->user_id ? 'bg-white dark:bg-gray-800/50' : 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800' }} p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
                                                     <div class="flex justify-between items-center mb-3">
-                                                        <span class="font-bold text-gray-900 dark:text-white">{{ $reply->user->name }}</span>
+                                                        <span class="font-bold text-gray-900 dark:text-white">
+                                                            {{ $reply->user_id ? $reply->user->name : $ticket->customer->name . ' (Pelanggan)' }}
+                                                        </span>
                                                         <span class="text-[10px] text-gray-400 uppercase">{{ $reply->created_at->diffForHumans() }}</span>
                                                     </div>
                                                     <p class="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">{{ $reply->message }}</p>

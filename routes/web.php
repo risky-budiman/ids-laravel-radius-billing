@@ -20,6 +20,13 @@ Route::middleware(['auth:web,customer', 'role:customer,administrator,admin,tekni
     Route::get('/invoices', [\App\Http\Controllers\CustomerPortal\DashboardController::class, 'invoices'])->name('customer.invoices');
     Route::get('/boosters', [\App\Http\Controllers\CustomerPortal\DashboardController::class, 'boosters'])->name('customer.boosters');
     Route::post('/boosters/{booster}/buy', [\App\Http\Controllers\CustomerPortal\DashboardController::class, 'buyBooster'])->name('customer.boosters.buy');
+
+    // Customer Ticketing
+    Route::get('/tickets', [\App\Http\Controllers\CustomerPortal\TicketController::class, 'index'])->name('customer.tickets.index');
+    Route::get('/tickets/create', [\App\Http\Controllers\CustomerPortal\TicketController::class, 'create'])->name('customer.tickets.create');
+    Route::post('/tickets', [\App\Http\Controllers\CustomerPortal\TicketController::class, 'store'])->name('customer.tickets.store');
+    Route::get('/tickets/{ticket}', [\App\Http\Controllers\CustomerPortal\TicketController::class, 'show'])->name('customer.tickets.show');
+    Route::post('/tickets/{ticket}/reply', [\App\Http\Controllers\CustomerPortal\TicketController::class, 'reply'])->name('customer.tickets.reply');
 });
 
 // Public Customer Portal (Signed URL)
@@ -121,7 +128,6 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         Route::get('customers/{customer}/edit', [\App\Http\Controllers\CustomerController::class, 'edit'])->name('customers.edit');
         Route::put('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'update'])->name('customers.update');
         Route::patch('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'update']);
-        Route::post('customers/{customer}/portal-account', [\App\Http\Controllers\CustomerController::class, 'createPortalAccount'])->name('customers.create-portal-account');
     });
 
     // CUSTOMER ACTIVATION: Admin & Teknisi
@@ -180,6 +186,7 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         
         // Inventory - View & Stock Management (Technician/Admin/Administrator)
         Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
+        Route::resource('purchase-orders', \App\Http\Controllers\PurchaseOrderController::class)->except(['show', 'edit', 'update', 'destroy']);
         Route::get('inventory', [\App\Http\Controllers\InventoryController::class, 'index'])->name('inventory.index');
         Route::get('inventory/categories', [\App\Http\Controllers\InventoryController::class, 'categories'])->name('inventory.categories');
         Route::get('inventory/stock-in', [\App\Http\Controllers\InventoryController::class, 'stockIn'])->name('inventory.stock-in');
@@ -209,6 +216,9 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
             Route::put('inventory/categories/{category}', [\App\Http\Controllers\InventoryController::class, 'updateCategory'])->name('inventory.category.update');
             Route::delete('inventory/categories/{category}', [\App\Http\Controllers\InventoryController::class, 'destroyCategory'])->name('inventory.category.destroy');
         });
+
+        // Fixed Assets
+        Route::resource('fixed-assets', \App\Http\Controllers\FixedAssetController::class);
     });
     // APP CHANGELOG (Public/Shared)
     Route::get('changelog', [\App\Http\Controllers\ChangelogController::class, 'index'])->name('changelog.index');

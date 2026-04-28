@@ -59,6 +59,12 @@
                     Booster & Add-on
                 </a>
             </li>
+            <li>
+                <a href="{{ route('customer.tickets.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('customer.tickets.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    Lapor Gangguan
+                </a>
+            </li>
             @else
             <!-- ADMIN & STAFF MENU -->
             <li>
@@ -244,7 +250,7 @@
             </li>
 
             <li>
-                <div x-data="{ open: {{ request()->routeIs('inventory.*') || request()->routeIs('suppliers.*') ? 'true' : 'false' }} }">
+                <div x-data="{ open: {{ request()->routeIs('inventory.*') || request()->routeIs('suppliers.*') || request()->routeIs('purchase-orders.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" type="button" class="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 group">
                         <div class="flex items-center">
                             <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
@@ -269,6 +275,10 @@
                         <a href="{{ route('suppliers.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('suppliers.*') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
                             Suppliers
                         </a>
+
+                        <a href="{{ route('purchase-orders.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('purchase-orders.*') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            Purchase Orders
+                        </a>
                         
                         <a href="{{ route('inventory.categories') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('inventory.categories') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
                             Categories
@@ -287,6 +297,13 @@
                         </a>
                     </div>
                 </div>
+            </li>
+            
+            <li>
+                <a href="{{ route('fixed-assets.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('fixed-assets.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
+                    <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    Fixed Assets
+                </a>
             </li>
             @if(auth()->user()->isAdmin() || auth()->user()->isTeknisi() || auth()->user()->isSales())
             <li>

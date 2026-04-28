@@ -120,6 +120,10 @@ class TicketController extends Controller
 
     public function destroy(\App\Models\Ticket $ticket)
     {
+        if (!auth()->user()->isAdministrator()) {
+            abort(403, 'Unauthorized action. Only administrators can delete tickets.');
+        }
+
         $ticket->delete();
 
         return redirect()->route('tickets.index')->with('success', 'Ticket deleted successfully.');

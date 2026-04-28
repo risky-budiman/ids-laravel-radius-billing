@@ -18,6 +18,12 @@
             <link rel="icon" type="image/png" href="{{ asset('storage/' . $companyLogo) }}">
         @endif
 
+        <!-- PWA Meta Tags -->
+        <meta name="theme-color" content="#4f46e5">
+        <link rel="manifest" href="{{ asset('manifest.json') }}">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
@@ -60,9 +66,29 @@
     <body class="font-sans antialiased text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-900 transition-colors duration-300"
           x-data="{ sidebarOpen: false }">
         
+        @php 
+            $isPortal = request()->is('client*') || request()->routeIs('customer.*');
+        @endphp
+
         <div class="flex h-screen overflow-hidden">
             <!-- Sidebar Component -->
-            @include('components.sidebar')
+            @if(!$isPortal)
+                <!-- Default Admin Sidebar, hidden on mobile by default -->
+                <div class="hidden lg:block">
+                    @include('components.sidebar')
+                </div>
+                <!-- Mobile Admin Sidebar Backdrop -->
+                <div x-show="sidebarOpen" class="fixed inset-0 z-20 bg-black/50 lg:hidden" @click="sidebarOpen = false"></div>
+                <!-- Mobile Admin Sidebar -->
+                <div x-show="sidebarOpen" class="fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 lg:hidden">
+                    @include('components.sidebar')
+                </div>
+            @else
+                <!-- Customer Sidebar: Hidden entirely on mobile, visible on desktop -->
+                <div class="hidden lg:block">
+                    @include('components.sidebar')
+                </div>
+            @endif
 
             <!-- Main Content Area -->
             <div class="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
@@ -79,7 +105,7 @@
                 @endisset
 
                 <!-- Page Content -->
-                <main class="flex-grow p-6">
+                <main class="flex-grow p-6 {{ $isPortal ? 'pb-24 lg:pb-6' : '' }}">
                     {{ $slot }}
                 </main>
                 
@@ -88,8 +114,27 @@
             </div>
         </div>
         
+        @if($isPortal)
+            @include('components.customer-bottom-nav')
+        @endif
+
         @stack('modals')
 
         @stack('scripts')
+        
+        <!-- PWA Service Worker Registration -->
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(registration => {
+                            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                        })
+                        .catch(err => {
+                            console.log('ServiceWorker registration failed: ', err);
+                        });
+                });
+            }
+        </script>
     </body>
 </html>

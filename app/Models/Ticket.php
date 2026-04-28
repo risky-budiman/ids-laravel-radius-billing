@@ -18,6 +18,7 @@ class Ticket extends Model
         'priority',
         'subject',
         'description',
+        'attachment',
         'resolution_notes',
         'assigned_to',
     ];

@@ -45,7 +45,11 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="font-mono text-[10px] font-black text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded border border-gray-100 dark:border-gray-700/50 inline-block">
-                                    {{ $customer->password }}
+                                    @if(auth()->user()->isAdmin())
+                                        {{ $customer->cleartext_password ?? '••••••••' }}
+                                    @else
+                                        ••••••••
+                                    @endif
                                 </div>
                             </td>
                             <td class="px-6 py-4">

@@ -136,12 +136,12 @@ Setelah mengevaluasi sistem *automated billing* saat ini (`ProcessAutomatedBilli
 Setelah melakukan audit pada sistem `CustomerActivationController`, ditemukan beberapa *logical flaw* (celah logika) pada proses Dismantle yang harus diperbaiki agar sistem benar-benar terintegrasi (End-to-End).
 
 ### 7.1. Perbaikan Logika "Request Dismantle"
-- [ ] **Bugfix Pembuatan Tiket:** Saat ini aksi `requestDismantle` hanya mengubah status pelanggan, tetapi **belum ada kode untuk membuat Tiket Pekerjaan (Ticket)** di database. Kode pembuatan tiket otomatis harus ditambahkan.
+- [x] **Bugfix Pembuatan Tiket:** Saat ini aksi `requestDismantle` hanya mengubah status pelanggan, tetapi **belum ada kode untuk membuat Tiket Pekerjaan (Ticket)** di database. Kode pembuatan tiket otomatis harus ditambahkan.
 
 ### 7.2. Perbaikan Logika "Process Dismantle" (Eksekusi Cabut)
-- [ ] **Otomatisasi Deprovisioning OLT:** Saat teknisi mengeksekusi Dismantle (menarik barang), sistem harus otomatis memanggil `DeprovisionOnuJob` untuk menghapus konfigurasi modem di sisi OLT ZTE (agar port OLT tidak penuh dengan status LOS/Offline).
-- [ ] **Pembersihan Data RADIUS:** Sistem harus otomatis menghapus/menonaktifkan akun PPPoE pelanggan di tabel `radcheck` dan memutuskan koneksi aktif (Kick via CoA) agar akun tidak bisa digunakan kembali meski kabel belum terpotong fisik.
-- [ ] **Penanganan Bad Debt (Tagihan Menunggak):** Logika untuk menangani *Invoice* yang masih *Unpaid* saat pelanggan di-dismantle (apakah dihapus, dibiarkan, atau diubah statusnya menjadi *Bad Debt/Write-Off*).
+- [x] **Otomatisasi Deprovisioning OLT:** Saat teknisi mengeksekusi Dismantle (menarik barang), sistem harus otomatis memanggil `DeprovisionOnuJob` untuk menghapus konfigurasi modem di sisi OLT ZTE (agar port OLT tidak penuh dengan status LOS/Offline).
+- [x] **Pembersihan Data RADIUS:** Sistem harus otomatis menghapus/menonaktifkan akun PPPoE pelanggan di tabel `radcheck` dan memutuskan koneksi aktif (Kick via CoA) agar akun tidak bisa digunakan kembali meski kabel belum terpotong fisik.
+- [x] **Penanganan Bad Debt (Tagihan Menunggak):** Sesuai instruksi, tagihan *Unpaid* dibiarkan tetap ada sebagai tunggakan.
 
 ---
 
@@ -163,6 +163,13 @@ Setelah melakukan pengecekan pada `TicketController`, ditemukan beberapa celah l
 - [x] **Configurable Prefix Settings:** Membuat halaman pengaturan global agar Admin bisa mengubah atau mengaktifkan/menonaktifkan kode prefix ini secara dinamis sesuai kebutuhan operasional.
 - [x] **Ticket Numbering Logic:** Mengubah algoritma penomoran tiket agar menggunakan format profesional (Misal: `TT/20260427/001`) agar lebih mudah diidentifikasi dan diarsipkan.
 
+### 8.4. Manajemen Estimasi Waktu & SLA Dinamis (Dynamic SLA)
+- [ ] **Target Estimasi Pengerjaan (ETA):** Menambahkan field `estimated_completion_date` pada tiket. Penentuan SLA tidak lagi kaku (misal fix 1x24 jam), melainkan berdasarkan estimasi waktu yang disepakati atau ditentukan saat tiket diklaim.
+- [ ] **Revisi Estimasi (Pending Reason):** Fitur bagi teknisi untuk memodifikasi/memperpanjang estimasi penyelesaian jika tiket harus berstatus `pending` (tertunda) dengan syarat harus memasukkan alasan yang valid (misal: "Menunggu perangkat pengganti" atau "Pelanggan sedang tidak di rumah").
+- [ ] **Perhitungan SLA Berbasis Estimasi:** Indikator *Overdue* (Keterlambatan) dihitung berdasarkan `estimated_completion_date` terbaru, bukan murni dari waktu tiket dibuat.
+- [ ] **Otomatisasi Tiket Aktivasi (Pasang Baru):** Saat mendaftarkan *Subscriber* baru, Admin wajib memasukkan "Estimasi Tanggal Aktivasi". Setelah teknisi menyelesaikan proses di *Wizard Aktivasi*, sistem otomatis mengubah status tiket menjadi *Solved/Closed*.
+- [ ] **Otomatisasi Tiket Dismantle (Cabut):** Saat melakukan *Request Dismantle*, Admin wajib menunjuk rujukan teknisi (Assignee) dan "Estimasi Waktu Pencabutan". Saat teknisi menyelesaikan proses penarikan alat, tiket Dismantle otomatis diselesaikan (*Solved/Closed*).
+
 ---
 
 ## FASE 9: Enterprise ERP & Advanced Finance
@@ -173,7 +180,7 @@ Berdasarkan evaluasi modul `AccountingService` saat ini, sistem *Double-Entry Bo
 - [ ] **CSV Bank Statement Import:** Fitur untuk meng-upload mutasi rekening bank dari Excel/CSV dan melakukan proses rekonsiliasi manual/semi-otomatis untuk mencocokkan saldo sistem dengan saldo riil bank.
 
 ### 9.2. Manajemen Aset Tetap & Penyusutan (Fixed Assets & Depreciation)
-- [ ] **Master Aset Tetap (Fixed Assets):** Pencatatan barang modal bernilai tinggi (Server, OLT, Tiang, Kendaraan Kantor) beserta umur ekonomisnya.
+- [x] **Master Aset Tetap (Fixed Assets):** Pencatatan barang modal bernilai tinggi (Server, OLT, Tiang, Kendaraan Kantor) beserta umur ekonomisnya.
 - [ ] **Auto-Jurnal Penyusutan (Depreciation):** Sistem otomatis membuat jurnal Penyusutan Aset setiap akhir bulan (metode *Straight-Line* / Garis Lurus) untuk memotong nilai buku aset dan mencatat beban penyusutan secara otomatis.
 
 ### 9.3. Hutang Usaha & Pembelian Kredit (Accounts Payable)
@@ -200,7 +207,7 @@ Sistem *Enterprise* kini memiliki portal mandiri yang premium. Pelanggan dapat m
 - [x] **Dashboard Pelanggan (Web/Mobile App):** Berhasil diimplementasikan. Pelanggan dapat melihat status internet real-time, sisa FUP, info paket, dan kualitas sinyal NOC.
 - [x] **Self-Payment & Billing History:** Pelanggan dapat melihat riwayat pembayaran, mendownload invoice, dan melakukan pembayaran mandiri.
 - [x] **Pembelian Add-on Booster (FUP Reset):** Fitur booster aktif. Pembelian otomatis mereset statistik RADIUS via CoA Disconnect.
-- [ ] **Open Ticket (Lapor Gangguan):** Pelanggan dapat membuat tiket gangguan dari portal, yang akan langsung masuk ke sistem antrean teknisi *(Helpdesk)* tanpa perlu *chat* manual ke WA Admin.
+- [x] **Open Ticket (Lapor Gangguan):** Pelanggan dapat membuat tiket gangguan dari portal, yang akan langsung masuk ke sistem antrean teknisi *(Helpdesk)* tanpa perlu *chat* manual ke WA Admin.
 
 
 ---
@@ -345,3 +352,11 @@ Fase ini memastikan ISP mematuhi aturan regulasi pemerintah Indonesia terkait pa
 ### 20.3. Dashboard Pelaporan Pemerintah
 - [ ] **Regulatory Compliance Dashboard:** Dashboard ringkasan kewajiban PPN, PPh, BHP, dan USO per kuartal atau per tahun.
 - [ ] **Report Export for Kominfo:** Fitur ekspor data transaksi dan pendapatan ke format Excel yang sesuai dengan kebutuhan pelaporan di portal e-LPP Kominfo.
+
+---
+
+## FASE 21: Customer Mobile Experience & PWA
+Pengembangan *User Interface* (UI) portal pelanggan agar 100% *mobile-friendly* dan terasa seperti aplikasi *Native* kekinian.
+- [ ] **Mobile-First UI Redesign:** Mendesain ulang antarmuka portal dengan konsep aplikasi mobile sungguhan (misal: menambahkan *bottom navigation bar*, tombol yang *touch-friendly*, dan elemen *glassmorphism* atau animasi *swipe*).
+- [ ] **Progressive Web App (PWA):** Mengimplementasikan *manifest.json* dan *Service Worker* agar pelanggan dapat menginstal portal langsung ke layar utama (*homescreen*) *smartphone* mereka tanpa perlu mendownload dari App Store / Play Store.
+- [ ] **Push Notifications:** Mengintegrasikan *Web Push Notification* (misal: Firebase Cloud Messaging) agar pelanggan bisa menerima notifikasi pop-up di HP mereka (terkait tagihan baru, status tiket, atau promo) secara *real-time*.
