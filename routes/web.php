@@ -4,9 +4,11 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [\App\Http\Controllers\CustomerPortal\DashboardController::class, 'index'])
-    ->middleware(['auth:web,customer', 'role:customer,administrator,admin,teknisi,kasir,sales'])
-    ->name('customer.dashboard');
+Route::get('/', function() {
+    if (auth('customer')->check()) return redirect()->route('customer.dashboard');
+    if (auth('web')->check()) return redirect()->route('dashboard');
+    return redirect()->route('customer.login');
+});
 
 Route::get('/login', [\App\Http\Controllers\CustomerPortal\LoginController::class, 'showLoginForm'])->name('customer.login');
 Route::post('/login-client', [\App\Http\Controllers\CustomerPortal\LoginController::class, 'login'])->name('customer.login.post');
@@ -14,9 +16,8 @@ Route::post('/logout-client', [\App\Http\Controllers\CustomerPortal\LoginControl
 
 
 // Customer Portal Routes (Client Area)
-Route::middleware(['auth:web,customer', 'role:customer,administrator,admin,teknisi,kasir,sales'])->group(function () {
-    // Dashboard is now at /
-
+Route::middleware(['auth:web,customer', 'role:customer,administrator,admin,teknisi,kasir,sales'])->prefix('client')->group(function () {
+    Route::get('/', [\App\Http\Controllers\CustomerPortal\DashboardController::class, 'index'])->name('customer.dashboard');
     Route::get('/invoices', [\App\Http\Controllers\CustomerPortal\DashboardController::class, 'invoices'])->name('customer.invoices');
     Route::get('/boosters', [\App\Http\Controllers\CustomerPortal\DashboardController::class, 'boosters'])->name('customer.boosters');
     Route::post('/boosters/{booster}/buy', [\App\Http\Controllers\CustomerPortal\DashboardController::class, 'buyBooster'])->name('customer.boosters.buy');
@@ -27,7 +28,12 @@ Route::middleware(['auth:web,customer', 'role:customer,administrator,admin,tekni
     Route::post('/tickets', [\App\Http\Controllers\CustomerPortal\TicketController::class, 'store'])->name('customer.tickets.store');
     Route::get('/tickets/{ticket}', [\App\Http\Controllers\CustomerPortal\TicketController::class, 'show'])->name('customer.tickets.show');
     Route::post('/tickets/{ticket}/reply', [\App\Http\Controllers\CustomerPortal\TicketController::class, 'reply'])->name('customer.tickets.reply');
+
+    // Push Notifications
+    Route::post('/push/subscribe', [\App\Http\Controllers\CustomerPortal\PushSubscriptionController::class, 'subscribe'])->name('customer.push.subscribe');
+    Route::post('/push/unsubscribe', [\App\Http\Controllers\CustomerPortal\PushSubscriptionController::class, 'unsubscribe'])->name('customer.push.unsubscribe');
 });
+
 
 // Public Customer Portal (Signed URL)
 Route::get('/portal/invoice/{invoice}', [\App\Http\Controllers\PortalController::class, 'showInvoice'])

@@ -30,7 +30,7 @@
             <!-- Left: Ticket Conversation -->
             <div class="lg:col-span-2 space-y-6">
                 <!-- Original Ticket Description -->
-                <div class="glass bg-white dark:bg-gray-800 rounded-[2rem] p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div class="glass bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
                     <div class="flex items-start mb-4">
                         <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold shrink-0">
                             {{ substr(auth()->user()->name, 0, 1) }}
@@ -57,7 +57,7 @@
 
                 <!-- Replies -->
                 @foreach($ticket->replies as $reply)
-                    <div class="glass bg-white dark:bg-gray-800 rounded-[2rem] p-6 shadow-sm border {{ $reply->user_id ? 'border-emerald-100 dark:border-emerald-800' : 'border-gray-100 dark:border-gray-700' }}">
+                    <div class="glass bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border {{ $reply->user_id ? 'border-emerald-100 dark:border-emerald-800' : 'border-gray-100 dark:border-gray-700' }}">
                         <div class="flex items-start">
                             @if($reply->user_id)
                                 <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold shrink-0">
@@ -96,7 +96,7 @@
 
                 <!-- Reply Form -->
                 @if($ticket->status !== 'closed' && $ticket->status !== 'resolved')
-                    <div class="glass bg-white dark:bg-gray-800 rounded-[2rem] p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                    <div class="glass bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
                         <form action="{{ route('customer.tickets.reply', $ticket) }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             <h4 class="font-bold text-gray-900 dark:text-white mb-4">Balas Laporan</h4>
@@ -121,7 +121,7 @@
 
             <!-- Right: Ticket Info -->
             <div class="space-y-6">
-                <div class="glass bg-white dark:bg-gray-800 rounded-[2rem] p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div class="glass bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
                     <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Info Tiket</h3>
                     
                     <ul class="space-y-4">
@@ -158,7 +158,7 @@
                 </div>
 
                 @if($ticket->status === 'resolved' || $ticket->status === 'closed')
-                    <div class="p-6 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-[2rem]">
+                    <div class="p-6 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
                         <div class="flex items-center mb-3">
                             <svg class="w-6 h-6 text-emerald-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             <h3 class="text-lg font-bold text-emerald-800 dark:text-emerald-400">Masalah Selesai</h3>

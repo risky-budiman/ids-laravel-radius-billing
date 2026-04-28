@@ -14,7 +14,7 @@
         <form action="{{ route('customer.tickets.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
             
-            <div class="glass bg-white dark:bg-gray-800 rounded-[2rem] p-8 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div class="glass bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-gray-700">
                 <div class="mb-8">
                     <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Detail Keluhan</h3>
                     <p class="text-gray-500 dark:text-gray-400 text-sm">Ceritakan kendala koneksi yang Anda alami agar teknisi kami dapat segera memperbaikinya.</p>

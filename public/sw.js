@@ -69,3 +69,58 @@ self.addEventListener('fetch', event => {
             })
     );
 });
+
+// Push Event
+self.addEventListener('push', event => {
+    let data = {
+        title: 'Radius ISP',
+        body: 'Ada informasi baru untuk Anda.',
+        icon: '/icon-192.png',
+        badge: '/icon-192.png'
+    };
+
+    if (event.data) {
+        try {
+            data = event.data.json();
+        } catch (e) {
+            data.body = event.data.text();
+        }
+    }
+
+    const options = {
+        body: data.body,
+        icon: data.icon || '/icon-192.png',
+        badge: data.badge || '/icon-192.png',
+        vibrate: [100, 50, 100],
+        data: {
+            url: data.url || '/'
+        },
+        actions: data.actions || []
+    };
+
+    event.waitUntil(
+        self.registration.showNotification(data.title, options)
+    );
+});
+
+// Notification Click Event
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
+
+    const urlToOpen = event.notification.data.url || '/';
+
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+            for (let i = 0; i < windowClients.length; i++) {
+                const client = windowClients[i];
+                if (client.url === urlToOpen && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow(urlToOpen);
+            }
+        })
+    );
+});
+

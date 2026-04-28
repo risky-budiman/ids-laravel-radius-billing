@@ -355,8 +355,8 @@ Fase ini memastikan ISP mematuhi aturan regulasi pemerintah Indonesia terkait pa
 
 ---
 
-## FASE 21: Customer Mobile Experience & PWA
+## FASE 21: Customer Mobile Experience & PWA [SELESAI]
 Pengembangan *User Interface* (UI) portal pelanggan agar 100% *mobile-friendly* dan terasa seperti aplikasi *Native* kekinian.
-- [ ] **Mobile-First UI Redesign:** Mendesain ulang antarmuka portal dengan konsep aplikasi mobile sungguhan (misal: menambahkan *bottom navigation bar*, tombol yang *touch-friendly*, dan elemen *glassmorphism* atau animasi *swipe*).
-- [ ] **Progressive Web App (PWA):** Mengimplementasikan *manifest.json* dan *Service Worker* agar pelanggan dapat menginstal portal langsung ke layar utama (*homescreen*) *smartphone* mereka tanpa perlu mendownload dari App Store / Play Store.
-- [ ] **Push Notifications:** Mengintegrasikan *Web Push Notification* (misal: Firebase Cloud Messaging) agar pelanggan bisa menerima notifikasi pop-up di HP mereka (terkait tagihan baru, status tiket, atau promo) secara *real-time*.
+- [x] **Mobile-First UI Redesign:** Mendesain ulang antarmuka portal dengan konsep aplikasi mobile sungguhan (misal: menambahkan *bottom navigation bar*, tombol yang *touch-friendly*, dan elemen *glassmorphism* atau animasi *swipe*).
+- [x] **Progressive Web App (PWA):** Mengimplementasikan *manifest.json* and *Service Worker* agar pelanggan dapat menginstal portal langsung ke layar utama (*homescreen*) *smartphone* mereka tanpa perlu mendownload dari App Store / Play Store.
+- [x] **Push Notifications:** Mengintegrasikan *Web Push Notification* (misal: Firebase Cloud Messaging) agar pelanggan bisa menerima notifikasi pop-up di HP mereka (terkait tagihan baru, status tiket, atau promo) secara *real-time*.
