@@ -187,6 +187,13 @@ Berdasarkan evaluasi modul `AccountingService` saat ini, sistem *Double-Entry Bo
 - [ ] **Purchase Order (PO) & Vendor Bills:** Saat ini pembelian Inventory di sistem selalu dianggap tunai (memotong *Kas Utama*). Perlu ditambahkan sistem PO (*Term of Payment*, misal Net 30) agar sistem bisa menjurnalnya sebagai **Hutang Usaha (Accounts Payable)** terlebih dahulu sebelum dibayar lunas.
 - [ ] **Multi-Currency (Selisih Kurs):** Fitur untuk menghitung Laba/Rugi Selisih Kurs *(Foreign Exchange Gain/Loss)* secara otomatis apabila ada pembelian *Bandwidth* atau perangkat dari luar negeri menggunakan satuan USD.
 
+### 9.4. Perbaikan Tampilan Bagan Akun (CoA Bugfix) [SELESAI]
+- [x] **Manajemen Akun (CRUD):** Implementasi fitur Update dan Delete untuk memperbaiki kesalahan input (Dilengkapi validasi pencegahan hapus jika sudah ada transaksi/anak akun).
+- [x] **Fix Recursive Account Display:** Berhasil memperbaiki masalah tampilan list akun yang tidak muncul semua jika memiliki hirarki lebih dari 2 level (Grandchildren) menggunakan recursive rendering.
+  - [x] Update `ChartOfAccountController` untuk memuat data secara rekursif dengan pengelompokan parent.
+  - [x] Refactor `index.blade.php` menggunakan Blade partial rekursif `_account_row.blade.php`.
+  - [x] Sinkronisasi jumlah akun di header (Badge Summary) dengan jumlah riil di database.
+
 ---
 
 ## FASE 10: Enterprise NOC & Network Monitoring
@@ -340,6 +347,14 @@ Fase ini adalah lapisan keamanan untuk memastikan setiap pengembangan fitur baru
 
 ## FASE 20: Regulatory Compliance & Tax Reporting (BHP & USO)
 Fase ini memastikan ISP mematuhi aturan regulasi pemerintah Indonesia terkait pajak dan biaya hak penyelenggaraan jasa telekomunikasi.
+
+---
+
+## FASE 21: DevOps & Versioning Automation
+Mengotomatiskan alur kerja pengembangan agar lebih efisien dan terukur secara profesional.
+- [ ] **Automated Semantic Versioning:** Implementasi script otomatis (Git Hooks) yang akan menaikkan nomor versi aplikasi (misal: v1.0.5 ke v1.0.6) setiap kali melakukan `git push` atau `commit`.
+- [ ] **Version Display Integration:** Menampilkan nomor versi aktif secara dinamis di footer Dashboard Admin dan halaman Login untuk mempermudah tracking update.
+- [ ] **Changelog Generator:** Otomatisasi pembuatan catatan perubahan berdasarkan pesan commit git.
 
 ### 20.1. Perhitungan Otomatis BHP & USO
 - [ ] **BHP & USO Calculation Engine:** Menambahkan logika perhitungan otomatis untuk Biaya Hak Penyelenggaraan (BHP) dan Kontribusi Universal Service Obligation (USO) berdasarkan persentase pendapatan kotor dari akun pendapatan yang relevan.

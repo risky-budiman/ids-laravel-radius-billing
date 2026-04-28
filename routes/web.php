@@ -340,8 +340,7 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
     Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
     // ACCOUNTING SYSTEM (Admin & Administrator Only)
     Route::middleware('role:admin,administrator')->prefix('accounting')->name('accounting.')->group(function () {
-        Route::get('coa', [\App\Http\Controllers\Accounting\ChartOfAccountController::class, 'index'])->name('coa.index');
-        Route::post('coa', [\App\Http\Controllers\Accounting\ChartOfAccountController::class, 'store'])->name('coa.store');
+        Route::resource('coa', \App\Http\Controllers\Accounting\ChartOfAccountController::class)->only(['index', 'store', 'update', 'destroy']);
         
         Route::get('journals', [\App\Http\Controllers\Accounting\JournalController::class, 'index'])->name('journals.index');
         Route::get('journals/create', [\App\Http\Controllers\Accounting\JournalController::class, 'create'])->name('journals.create');

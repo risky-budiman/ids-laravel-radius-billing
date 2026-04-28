@@ -18,7 +18,10 @@
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-12" x-data="{ 
+        editAccount: { id: '', code: '', name: '', type: '', parent_id: '' },
+        deleteAccount: { id: '', name: '', code: '' }
+    }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             
             <!-- Summary Grid -->
@@ -67,42 +70,13 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
-                            @foreach($accounts as $parent)
-                                <!-- Parent Account Row -->
-                                <tr class="bg-indigo-50/10 dark:bg-indigo-900/5">
-                                    <td class="px-6 py-4 font-black text-gray-900 dark:text-white font-mono">{{ $parent->code }}</td>
-                                    <td class="px-6 py-4 font-bold text-gray-900 dark:text-white uppercase">{{ $parent->name }}</td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2 py-1 text-[10px] font-bold rounded-lg bg-{{ $types[$parent->type]['color'] }}-50 text-{{ $types[$parent->type]['color'] }}-600 uppercase">
-                                            {{ $parent->type }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right font-bold text-gray-900 dark:text-white font-mono text-sm">
-                                        Rp {{ number_format($parent->balance, 2, ',', '.') }}
-                                    </td>
-                                    <td class="px-6 py-4 text-center">
-                                        <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Children Accounts -->
-                                @foreach($parent->children as $child)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td class="px-6 py-4 pl-12 font-medium text-gray-500 dark:text-gray-400 font-mono text-sm">{{ $child->code }}</td>
-                                    <td class="px-6 py-4 font-semibold text-gray-700 dark:text-gray-300">{{ $child->name }}</td>
-                                    <td class="px-6 py-4">
-                                        <span class="text-xs text-gray-400 italic">{{ $child->type }}</span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right font-mono text-sm text-gray-900 dark:text-white">
-                                        Rp {{ number_format($child->balance, 2, ',', '.') }}
-                                    </td>
-                                    <td class="px-6 py-4 text-center">
-                                        <button class="text-gray-400 hover:text-indigo-500 p-1">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                        </button>
-                                    </td>
-                                </tr>
-                                @endforeach
+                            @foreach($rootAccounts as $root)
+                                @include('accounting.coa._account_row', [
+                                    'account' => $root,
+                                    'groupedAccounts' => $groupedAccounts,
+                                    'depth' => 0,
+                                    'types' => $types
+                                ])
                             @endforeach
                         </tbody>
                     </table>
@@ -140,8 +114,8 @@
                     <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Induk (Optional)</label>
                     <select name="parent_id" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900">
                         <option value="">-- Tanpa Induk --</option>
-                        @foreach($accounts as $parent)
-                            <option value="{{ $parent->id }}">{{ $parent->code }} - {{ $parent->name }}</option>
+                        @foreach(\App\Models\ChartOfAccount::orderBy('code')->get() as $acc)
+                            <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -150,6 +124,70 @@
             <div class="mt-8 flex justify-end space-x-3">
                 <button type="button" @click="$dispatch('close')" class="px-6 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Batal</button>
                 <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/20">Simpan Akun</button>
+            </div>
+        </form>
+    </x-modal>
+
+    <!-- Modal: Edit Akun -->
+    <x-modal name="edit-account" focusable>
+        <form method="post" :action="`{{ route('accounting.coa.index') }}/${editAccount.id}`" class="p-8">
+            @csrf
+            @method('PUT')
+            <h2 class="text-xl font-black text-gray-900 dark:text-white mb-6">Edit Akun</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Kode Akun</label>
+                    <input type="text" name="code" x-model="editAccount.code" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Nama Akun</label>
+                    <input type="text" name="name" x-model="editAccount.name" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Tipe</label>
+                    <select name="type" x-model="editAccount.type" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900">
+                        <option value="asset">Asset (Harta)</option>
+                        <option value="liability">Liability (Kewajiban)</option>
+                        <option value="equity">Equity (Modal)</option>
+                        <option value="income">Income (Pendapatan)</option>
+                        <option value="expense">Expense (Beban)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Induk (Optional)</label>
+                    <select name="parent_id" x-model="editAccount.parent_id" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900">
+                        <option value="">-- Tanpa Induk --</option>
+                        @foreach(\App\Models\ChartOfAccount::orderBy('code')->get() as $acc)
+                            <option value="{{ $acc->id }}" x-show="editAccount.id != {{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-8 flex justify-end space-x-3">
+                <button type="button" @click="$dispatch('close')" class="px-6 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Batal</button>
+                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/20">Simpan Perubahan</button>
+            </div>
+        </form>
+    </x-modal>
+
+    <!-- Modal: Konfirmasi Hapus -->
+    <x-modal name="confirm-account-deletion" focusable>
+        <form method="post" :action="`{{ route('accounting.coa.index') }}/${deleteAccount.id}`" class="p-8">
+            @csrf
+            @method('DELETE')
+            
+            <h2 class="text-xl font-black text-gray-900 dark:text-white mb-4">Hapus Akun?</h2>
+            
+            <p class="text-gray-600 dark:text-gray-400 mb-6">
+                Apakah Anda yakin ingin menghapus akun <span class="font-bold text-gray-900 dark:text-white" x-text="`${deleteAccount.code} - ${deleteAccount.name}`"></span>? 
+                Aksi ini tidak dapat dibatalkan jika akun tidak memiliki transaksi.
+            </p>
+
+            <div class="flex justify-end space-x-3">
+                <button type="button" @click="$dispatch('close')" class="px-6 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Batal</button>
+                <button type="submit" class="px-6 py-2 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 transition-colors shadow-lg shadow-rose-500/20">Hapus Sekarang</button>
             </div>
         </form>
     </x-modal>
