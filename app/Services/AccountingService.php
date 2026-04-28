@@ -17,7 +17,7 @@ class AccountingService
     public function recordInvoiceGenerated($invoice)
     {
         return DB::transaction(function () use ($invoice) {
-            $debitAccountId = ChartOfAccount::where('code', '1103')->first()->id; // Piutang Pelanggan
+            $debitAccountId = ChartOfAccount::where('code', '1104')->first()->id; // Piutang Pelanggan (New Code)
             $creditAccountId = ChartOfAccount::where('code', '4101')->first()->id; // Pendapatan Internet
             $taxAccountId = $invoice->tax?->chart_of_account_id ?? ChartOfAccount::where('code', '2103')->first()?->id;
 
@@ -77,8 +77,8 @@ class AccountingService
             // Debit: The Bank Account's CoA
             $debitAccountId = $bankAccount->chart_of_account_id ?? ChartOfAccount::where('code', '1102')->first()->id;
 
-            // Credit: Piutang Pelanggan (1103)
-            $creditAccountId = ChartOfAccount::where('code', '1103')->first()->id;
+            // Credit: Piutang Pelanggan (1104)
+            $creditAccountId = ChartOfAccount::where('code', '1104')->first()->id;
 
             $date = now();
             if (is_accounting_locked($date)) {
@@ -238,9 +238,9 @@ class AccountingService
         }
 
         return DB::transaction(function () use ($movement) {
-            $inventoryAccountId = ChartOfAccount::where('code', '1104')->first()?->id;
-            $taxInputAccountId = ChartOfAccount::where('code', '1105')->first()?->id;
-            $creditAccountId = ChartOfAccount::where('code', '1101')->first()?->id; // Kas Utama
+            $inventoryAccountId = ChartOfAccount::where('code', '1105')->first()?->id; // Persediaan Barang
+            $taxInputAccountId = ChartOfAccount::where('code', '1106')->first()?->id; // PPN Masukan
+            $creditAccountId = ChartOfAccount::where('code', '1101')->first()?->id; // Kas Tunai
 
             if (!$inventoryAccountId || !$creditAccountId) {
                 \Illuminate\Support\Facades\Log::error("Missing CoA for Inventory Purchase (1104/1101)");

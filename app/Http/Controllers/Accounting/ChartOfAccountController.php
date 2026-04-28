@@ -5,9 +5,18 @@ namespace App\Http\Controllers\Accounting;
 use App\Http\Controllers\Controller;
 use App\Models\ChartOfAccount;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class ChartOfAccountController extends Controller
+class ChartOfAccountController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('role:administrator', only: ['store', 'update', 'destroy']),
+        ];
+    }
+
     public function index()
     {
         // Get all accounts ordered by code and group by parent_id
@@ -51,6 +60,13 @@ class ChartOfAccountController extends Controller
             return back()->with('error', 'An account cannot be its own parent.');
         }
 
+        if ($validated['parent_id']) {
+            $parent = ChartOfAccount::find($validated['parent_id']);
+            if ($parent && $this->isDescendantOf($parent, $coa->id)) {
+                return back()->with('error', 'An account cannot be a child of its own sub-accounts.');
+            }
+        }
+
         $coa->update($validated);
 
         return back()->with('success', 'Account updated successfully.');
@@ -71,5 +87,15 @@ class ChartOfAccountController extends Controller
         $coa->delete();
 
         return back()->with('success', 'Account deleted successfully.');
+    }
+
+    private function isDescendantOf($potentialParent, $targetId)
+    {
+        $current = $potentialParent;
+        while ($current->parent_id) {
+            if ($current->parent_id == $targetId) return true;
+            $current = $current->parent;
+        }
+        return false;
     }
 }

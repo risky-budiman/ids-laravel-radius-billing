@@ -10,19 +10,22 @@
                 </p>
             </div>
             <div class="flex gap-3">
+                @if(auth()->user()->isAdministrator())
                 <button @click="$dispatch('open-modal', 'add-account')" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm shadow-indigo-500/20">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     Tambah Akun Baru
                 </button>
+                @endif
             </div>
         </div>
     </x-slot>
 
-    <div class="py-12" x-data="{ 
+    <div x-data="{ 
         editAccount: { id: '', code: '', name: '', type: '', parent_id: '' },
         deleteAccount: { id: '', name: '', code: '' }
     }">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-12">
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             
             <!-- Summary Grid -->
             <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
@@ -66,7 +69,7 @@
                                 <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Akun</th>
                                 <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Tipe</th>
                                 <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Saldo</th>
-                                <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Status</th>
+                                <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Aksi / Status</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
@@ -114,9 +117,18 @@
                     <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Induk (Optional)</label>
                     <select name="parent_id" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900">
                         <option value="">-- Tanpa Induk --</option>
-                        @foreach(\App\Models\ChartOfAccount::orderBy('code')->get() as $acc)
-                            <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
-                        @endforeach
+                        @php
+                            $allAccounts = \App\Models\ChartOfAccount::orderBy('code')->get();
+                            $renderOptions = function($accounts, $depth = 0) use (&$renderOptions) {
+                                foreach($accounts as $acc) {
+                                    echo '<option value="'.$acc->id.'">'.str_repeat('&nbsp;', $depth * 4).$acc->code.' - '.$acc->name.'</option>';
+                                    $children = \App\Models\ChartOfAccount::where('parent_id', $acc->id)->orderBy('code')->get();
+                                    if($children->count() > 0) $renderOptions($children, $depth + 1);
+                                }
+                            };
+                            $rootSelects = \App\Models\ChartOfAccount::whereNull('parent_id')->orderBy('code')->get();
+                            $renderOptions($rootSelects);
+                        @endphp
                     </select>
                 </div>
             </div>
@@ -158,9 +170,17 @@
                     <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Induk (Optional)</label>
                     <select name="parent_id" x-model="editAccount.parent_id" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900">
                         <option value="">-- Tanpa Induk --</option>
-                        @foreach(\App\Models\ChartOfAccount::orderBy('code')->get() as $acc)
-                            <option value="{{ $acc->id }}" x-show="editAccount.id != {{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
-                        @endforeach
+                        @php
+                            $renderEditOptions = function($accounts, $depth = 0) use (&$renderEditOptions) {
+                                foreach($accounts as $acc) {
+                                    // Use x-show to hide self in Alpine, but still render in Blade
+                                    echo '<option value="'.$acc->id.'" x-show="editAccount.id != \''.$acc->id.'\'">'.str_repeat('&nbsp;', $depth * 4).$acc->code.' - '.$acc->name.'</option>';
+                                    $children = \App\Models\ChartOfAccount::where('parent_id', $acc->id)->orderBy('code')->get();
+                                    if($children->count() > 0) $renderEditOptions($children, $depth + 1);
+                                }
+                            };
+                            $renderEditOptions($rootSelects);
+                        @endphp
                     </select>
                 </div>
             </div>
@@ -190,5 +210,6 @@
                 <button type="submit" class="px-6 py-2 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 transition-colors shadow-lg shadow-rose-500/20">Hapus Sekarang</button>
             </div>
         </form>
-    </x-modal>
+        </x-modal>
+    </div>
 </x-app-layout>

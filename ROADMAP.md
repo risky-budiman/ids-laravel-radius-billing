@@ -1,6 +1,11 @@
 # Blueprint & Roadmap Pengembangan Lanjutan ISP
 
-Dokumen ini merupakan kerangka kerja (blueprint) tingkat tinggi untuk pengembangan aplikasi manajemen ISP di masa mendatang. Anda dapat menandai kotak centang di bawah ini dengan tanda `x` (menjadi `[x]`) untuk melacak progres pengerjaan.
+Dokumen ini merupakan kerangka kerja (blueprint) tingkat tinggi untuk pengembangan aplikasi manajemen ISP di masa mendatang. 
+
+### Standar & Referensi Teknis:
+- **Finance Standard:** Mengacu pada [ISP_COA_Billing.md](file:///d:/AI%20Code/laravel-radius/ISP_COA_Billing.md) untuk struktur akuntansi produksi.
+- **Network Standard:** Zero Touch Provisioning (ZTE/Mikrotik).
+- **Security:** Advanced RBAC & Audit Trail.
 
 ---
 
@@ -193,6 +198,13 @@ Berdasarkan evaluasi modul `AccountingService` saat ini, sistem *Double-Entry Bo
   - [x] Update `ChartOfAccountController` untuk memuat data secara rekursif dengan pengelompokan parent.
   - [x] Refactor `index.blade.php` menggunakan Blade partial rekursif `_account_row.blade.php`.
   - [x] Sinkronisasi jumlah akun di header (Badge Summary) dengan jumlah riil di database.
+
+### 9.5. Sinkronisasi Standar CoA Produksi (ISP_COA_Billing.md) [SELESAI]
+Tujuan: Menyelaraskan seluruh struktur akun sistem dengan standar "Production Ready" yang telah didefinisikan di dokumen `ISP_COA_Billing.md`.
+- [x] **Update ChartOfAccountSeeder:** Berhasil menyesuaikan seluruh daftar akun, kode, dan hirarki sesuai dokumen standar.
+- [x] **Refactor Accounting Logic:** Berhasil memperbarui `AccountingService` agar merujuk pada kode akun baru (Piutang 1104, Persediaan 1105, PPN 1106).
+- [x] **Data Migration Script:** Telah membuat migration script `2026_04_29_000000_sync_coa_to_production_standard.php` untuk pembaruan data secara aman (preserving history).
+- [x] **Integrasi Biaya Payment Gateway:** Akun 5109 telah siap digunakan untuk pencatatan otomatis beban MDR.
 
 ---
 
