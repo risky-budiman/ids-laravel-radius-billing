@@ -332,4 +332,51 @@ class CustomerController extends Controller
 
         return redirect()->route('customers.index')->with('success', 'Subscriber deleted successfully. OLT Deprovisioning queued.');
     }
+
+    public function createPortalAccount(Customer $customer)
+    {
+        if ($customer->user_id) {
+            return back()->with('error', 'Akun portal sudah ada untuk pelanggan ini.');
+        }
+
+        if (!$customer->email && !$customer->username) {
+            return back()->with('error', 'Pelanggan harus memiliki username atau email untuk dibuatkan akun.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Create User
+            $user = \App\Models\User::create([
+                'name' => $customer->name,
+                'email' => $customer->email ?? ($customer->username . '@radius.local'),
+                'password' => \Illuminate\Support\Facades\Hash::make($customer->phone ?? '12345678'),
+                'role' => \App\Models\User::ROLE_CUSTOMER,
+                'is_active' => true,
+            ]);
+
+            // Link to Customer
+            $customer->update(['user_id' => $user->id]);
+
+            DB::commit();
+
+            // Notify via WhatsApp if available
+            if ($customer->phone) {
+                try {
+                    $waService = new \App\Services\WhatsAppService();
+                    $message = "Halo *{$customer->name}*,\n\nAkun Portal Pelanggan Anda telah aktif.\n\nLink: " . url('/login') . "\nUsername: " . ($customer->email ?? $customer->username) . "\nPassword: " . ($customer->phone ?? '12345678') . "\n\nTerima kasih telah berlangganan.";
+                    $waService->sendMessage($customer->phone, $message);
+                } catch (\Exception $e) {
+                    \Log::warning("WA Notification failed: " . $e->getMessage());
+                }
+            }
+
+            return back()->with('success', 'Akun portal berhasil dibuat dan notifikasi telah dikirim.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Portal Account Creation failed: " . $e->getMessage());
+            return back()->with('error', 'Gagal membuat akun portal: ' . $e->getMessage());
+        }
+    }
 }

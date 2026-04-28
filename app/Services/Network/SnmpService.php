@@ -58,8 +58,7 @@ class SnmpService
             $walk = $this->client->walk($oid);
             $results = [];
             
-            while ($walk->hasItems()) {
-                $item = $walk->next();
+            foreach ($walk as $item) {
                 $results[$item->getOid()->toString()] = $item->getValue()->getValue();
             }
             

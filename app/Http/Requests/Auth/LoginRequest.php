@@ -28,7 +28,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'login' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -42,11 +42,54 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $login = $this->input('login');
+        $password = $this->input('password');
+        $user = null;
+
+        // 1. Try to find by Email (Standard User/Admin)
+        if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
+            $user = \App\Models\User::where('email', $login)->first();
+        }
+
+        // 2. Try to find by Customer ID or Username
+        if (!$user) {
+            $customer = \App\Models\Customer::where('customer_code', $login)
+                ->orWhere('username', $login)
+                ->first();
+                
+            if ($customer) {
+                // Check if user account already linked
+                if ($customer->user_id) {
+                    $user = $customer->user;
+                } else {
+                    // ZERO-TOUCH LOGIC: Check password against Customer PHONE Number
+                    if ($customer->phone && $customer->phone === $password) {
+                        // Password correct! Auto-create the portal user
+                        $user = \App\Models\User::create([
+                            'name' => $customer->name,
+                            'email' => $customer->email ?? ($customer->username . '@radius.local'),
+                            'password' => \Illuminate\Support\Facades\Hash::make($password),
+                            'role' => \App\Models\User::ROLE_CUSTOMER,
+                            'is_active' => true,
+                        ]);
+                        
+                        $customer->update(['user_id' => $user->id]);
+                    }
+                }
+            }
+        }
+
+        // Use the found user's email for attempt
+        $credentials = [
+            'email' => $user ? $user->email : $login,
+            'password' => $password,
+        ];
+
+        if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'login' => trans('auth.failed'),
             ]);
         }
 
@@ -69,7 +112,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            'login' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -81,6 +124,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('login')).'|'.$this->ip());
     }
 }

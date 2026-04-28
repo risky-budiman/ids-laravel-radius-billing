@@ -34,7 +34,33 @@
 
     <!-- Navigation -->
     <div class="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 pb-20">
+        @php 
+            $isPortal = request()->is('client*') || request()->routeIs('customer.*');
+            $user = auth('customer')->user() ?: auth('web')->user(); 
+        @endphp
         <ul class="space-y-2">
+            @if($isPortal)
+            <!-- CUSTOMER PORTAL MENU -->
+            <li>
+                <a href="{{ route('customer.dashboard') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('customer.dashboard') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Dashboard Portal
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('customer.invoices') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('customer.invoices') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Tagihan Saya
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('customer.boosters') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('customer.boosters') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Booster & Add-on
+                </a>
+            </li>
+            @else
+            <!-- ADMIN & STAFF MENU -->
             <li>
                 <a href="{{ route('dashboard') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('dashboard') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
@@ -43,15 +69,31 @@
             </li>
 
             <!-- Network Operations Section -->
-            @if(auth()->user()->isTeknisi() || auth()->user()->isAdministrator())
+            @if(!$isPortal && (auth()->user()->isTeknisi() || auth()->user()->isAdministrator()))
             <li class="pt-4 pb-2">
                 <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">Network Operations</p>
             </li>
             <li>
-                <a href="{{ route('noc.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('noc.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
-                    <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2"></path></svg>
-                    NOC Center
-                </a>
+                <div x-data="{ open: {{ request()->routeIs('noc.*') ? 'true' : 'false' }} }">
+                    <button @click="open = !open" type="button" class="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 group">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-3 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2"></path></svg>
+                            NOC Center
+                        </div>
+                        <svg class="w-4 h-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div x-show="open" class="mt-1 space-y-1 pl-11 pr-4">
+                        <a href="{{ route('noc.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('noc.index') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            Network Overview
+                        </a>
+                        <a href="{{ route('noc.signals') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('noc.signals') || request()->routeIs('noc.history') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            Optical Signals
+                        </a>
+                        <a href="{{ route('noc.discovery') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('noc.discovery') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            Mass Discovery
+                        </a>
+                    </div>
+                </div>
             </li>
             <li>
                 <a href="{{ route('olts.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('olts.*') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
@@ -67,7 +109,7 @@
             </li>
             @endif
             
-            @if(auth()->user()->isAdmin() || auth()->user()->isSales() || auth()->user()->isTeknisi() || auth()->user()->isAdministrator())
+            @if(!$isPortal && (auth()->user()->isAdmin() || auth()->user()->isSales() || auth()->user()->isTeknisi() || auth()->user()->isAdministrator()))
             <li class="pt-4 pb-2">
                 <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">Management</p>
             </li>
@@ -111,7 +153,7 @@
 
 
 
-            @if(auth()->user()->isAdmin() || auth()->user()->isKasir() || auth()->user()->isTeknisi())
+            @if(!$isPortal && (auth()->user()->isAdmin() || auth()->user()->isKasir() || auth()->user()->isTeknisi()))
             <li class="pt-4 pb-2">
                 <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">Billing & Status</p>
             </li>
@@ -141,7 +183,7 @@
             </li>
             @endif
 
-            @if(auth()->user()->isAdmin() || auth()->user()->isAdministrator() || auth()->user()->isKasir())
+            @if(!$isPortal && (auth()->user() && (auth()->user()->isAdmin() || auth()->user()->isAdministrator() || auth()->user()->isKasir())))
             <li class="pt-4 pb-2">
                 <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">Finance & Accounting</p>
             </li>
@@ -196,7 +238,7 @@
             </li>
             @endif
 
-            @if(auth()->user()->isAdmin() || auth()->user()->isTeknisi())
+            @if(!$isPortal && (auth()->user() && (auth()->user()->isAdmin() || auth()->user()->isTeknisi())))
             <li class="pt-4 pb-2">
                 <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">Inventory & Assets</p>
             </li>
@@ -256,7 +298,7 @@
             @endif
             @endif
 
-            @if(auth()->user()->isAdministrator())
+            @if(!$isPortal && auth()->user() && auth()->user()->isAdministrator())
             <li class="pt-4 mt-2 border-t border-gray-200 dark:border-gray-700">
                 <p class="px-4 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Settings & Security</p>
                 
@@ -345,6 +387,10 @@
                         <a href="{{ route('acs-servers.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('acs-servers.index') ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
                             GenieACS Servers
                         </a>
+
+                        <a href="{{ route('integrations.noc-bot') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('integrations.noc-bot') ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            NOC Bot Integration
+                        </a>
                     </div>
                 </div>
             </li>
@@ -389,6 +435,7 @@
             </li>
             @endif
 
+            @if(!$isPortal)
             <li class="pt-4 pb-2 border-t border-gray-200/50 dark:border-gray-800/50">
                 <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">Application</p>
             </li>
@@ -399,8 +446,8 @@
                     App Changelog
                 </a>
             </li>
-
-
+            @endif
+            @endif
         </ul>
     </div>
 </aside>

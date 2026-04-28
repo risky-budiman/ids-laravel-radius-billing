@@ -5,25 +5,25 @@
     <form method="POST" action="{{ route('login') }}" class="space-y-6">
         @csrf
 
-        <!-- Email Address -->
+        <!-- Login (Email / Customer ID) -->
         <div>
-            <label for="email" class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-2 ml-1">Email Address</label>
+            <label for="login" class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-2 ml-1">Email / ID Pelanggan / Username</label>
             <div class="flex items-center bg-gray-50/50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-2xl focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-500 transition-all group overflow-hidden">
                 <div class="pl-5 pr-4 py-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors bg-gray-50 dark:bg-gray-900/50">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
                 </div>
                 <div class="w-px h-6 bg-gray-200 dark:bg-gray-800 group-focus-within:bg-indigo-500/50 transition-colors"></div>
-                <input id="email" 
+                <input id="login" 
                        class="block w-full px-5 py-4 bg-transparent border-none text-gray-900 dark:text-white focus:ring-0 outline-none text-sm font-semibold placeholder:text-gray-400 dark:placeholder:text-gray-600" 
-                       type="email" 
-                       name="email" 
-                       :value="old('email')" 
-                       placeholder="you@company.com"
+                       type="text" 
+                       name="login" 
+                       :value="old('login')" 
+                       placeholder="Email atau ID Pelanggan"
                        required autofocus autocomplete="username" />
             </div>
-            <x-input-error :messages="$errors->get('email')" class="mt-2 text-xs" />
+            <x-input-error :messages="$errors->get('login')" class="mt-2 text-xs" />
         </div>
 
         <!-- Password -->

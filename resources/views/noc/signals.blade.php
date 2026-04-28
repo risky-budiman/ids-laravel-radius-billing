@@ -34,10 +34,23 @@
                                     <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">ONU Index</th>
                                     <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">RX Power (OLT)</th>
                                     <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
+                                    <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                                 @foreach($customers as $customer)
+                                    @php
+                                        $cache = $customer->signalCache;
+                                        $rxPower = $cache ? $cache->rx_power : null;
+                                        $status = $cache ? $cache->status : 'unknown';
+                                        
+                                        $colorClass = 'text-emerald-500';
+                                        $displayPower = $rxPower ? $rxPower . ' dBm' : 'N/A';
+                                        
+                                        if ($rxPower === null) $colorClass = 'text-gray-400';
+                                        elseif ($rxPower < -27) $colorClass = 'text-rose-500 font-black animate-pulse';
+                                        elseif ($rxPower < -24) $colorClass = 'text-amber-500 font-bold';
+                                    @endphp
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                         <td class="px-8 py-5">
                                             <div>
@@ -52,23 +65,29 @@
                                             <span class="font-mono text-xs text-gray-500">{{ $customer->onu_index }}</span>
                                         </td>
                                         <td class="px-8 py-5">
-                                            @php
-                                                $powerVal = (float)str_replace(' dBm', '', $customer->optical_power);
-                                                $colorClass = 'text-emerald-500';
-                                                if ($powerVal < -27) $colorClass = 'text-rose-500 font-black animate-pulse';
-                                                elseif ($powerVal < -24) $colorClass = 'text-amber-500 font-bold';
-                                                elseif ($customer->optical_power == 'N/A' || $customer->optical_power == 'Error') $colorClass = 'text-gray-400';
-                                            @endphp
-                                            <span class="text-lg font-mono {{ $colorClass }}">{{ $customer->optical_power }}</span>
+                                            <div class="flex flex-col">
+                                                <span class="text-lg font-mono {{ $colorClass }}">{{ $displayPower }}</span>
+                                                @if($cache)
+                                                    <span class="text-[9px] text-gray-400">Polled: {{ $cache->last_polled_at->diffForHumans() }}</span>
+                                                @endif
+                                            </div>
                                         </td>
                                         <td class="px-8 py-5">
-                                            @if($customer->optical_power == 'N/A')
-                                                <span class="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-400 rounded text-[10px] font-bold">OFFLINE</span>
-                                            @elseif($powerVal < -27)
-                                                <span class="px-2 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded text-[10px] font-bold">CRITICAL</span>
+                                            @if($status == 'online')
+                                                <span class="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded text-[10px] font-bold">ONLINE</span>
+                                            @elseif($status == 'dying-gasp')
+                                                <span class="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded text-[10px] font-bold">DYING GASP</span>
+                                            @elseif($status == 'los')
+                                                <span class="px-2 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded text-[10px] font-bold">LOS (CUT)</span>
                                             @else
-                                                <span class="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded text-[10px] font-bold">NORMAL</span>
+                                                <span class="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-400 rounded text-[10px] font-bold uppercase">{{ $status }}</span>
                                             @endif
+                                        </td>
+                                        <td class="px-8 py-5 text-right">
+                                            <a href="{{ route('noc.history', $customer->id) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                                History
+                                            </a>
                                         </td>
                                     </tr>
                                 @endforeach

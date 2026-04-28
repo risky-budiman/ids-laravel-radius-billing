@@ -4,12 +4,13 @@ namespace App\Models;
 
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 
-class Customer extends Model
+class Customer extends Authenticatable
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, Notifiable, LogsActivity;
 
     const STATUS_NEW = 'new';
     const STATUS_WAITING_ACTIVATION = 'waiting_activation';
@@ -79,6 +80,16 @@ class Customer extends Model
         'cpe_model',
         'cpe_mac',
         'description',
+        'olt_id',
+        'onu_sn',
+        'onu_index',
+        'onu_type',
+        'password',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
     ];
 
     protected $casts = [
@@ -91,6 +102,7 @@ class Customer extends Model
         'installation_fee' => 'decimal:2',
         'is_active' => 'boolean',
         'use_tax' => 'boolean',
+        'password' => 'hashed',
     ];
 
     /**
@@ -160,6 +172,25 @@ class Customer extends Model
         $this->save();
     }
 
+    /**
+     * Helper to check if user is a customer (for shared layouts)
+     */
+    public function isCustomer()
+    {
+        return true;
+    }
+
+    /**
+     * Role Check Compatibility for Middleware
+     */
+    public function hasRole($role)
+    {
+        if (is_array($role)) {
+            return in_array('customer', $role);
+        }
+        return $role === 'customer';
+    }
+
     public function package()
     {
         return $this->belongsTo(Package::class);
@@ -180,5 +211,15 @@ class Customer extends Model
         return $this->hasMany(Invoice::class);
     }
 
-    // Auto-generation is now handled by the UI Form for better consistency
+    public function olt()
+    {
+        return $this->belongsTo(Olt::class);
+    }
+
+    public function signalCache()
+    {
+        return $this->hasOne(CustomerSignalCache::class);
+    }
+
+    // Removed user() relationship as customers now have their own credentials
 }

@@ -4,8 +4,22 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect()->route('login');
+Route::get('/', [\App\Http\Controllers\CustomerPortal\DashboardController::class, 'index'])
+    ->middleware(['auth:web,customer', 'role:customer,administrator,admin,teknisi,kasir,sales'])
+    ->name('customer.dashboard');
+
+Route::get('/login', [\App\Http\Controllers\CustomerPortal\LoginController::class, 'showLoginForm'])->name('customer.login');
+Route::post('/login-client', [\App\Http\Controllers\CustomerPortal\LoginController::class, 'login'])->name('customer.login.post');
+Route::post('/logout-client', [\App\Http\Controllers\CustomerPortal\LoginController::class, 'logout'])->name('customer.logout');
+
+
+// Customer Portal Routes (Client Area)
+Route::middleware(['auth:web,customer', 'role:customer,administrator,admin,teknisi,kasir,sales'])->group(function () {
+    // Dashboard is now at /
+
+    Route::get('/invoices', [\App\Http\Controllers\CustomerPortal\DashboardController::class, 'invoices'])->name('customer.invoices');
+    Route::get('/boosters', [\App\Http\Controllers\CustomerPortal\DashboardController::class, 'boosters'])->name('customer.boosters');
+    Route::post('/boosters/{booster}/buy', [\App\Http\Controllers\CustomerPortal\DashboardController::class, 'buyBooster'])->name('customer.boosters.buy');
 });
 
 // Public Customer Portal (Signed URL)
@@ -15,84 +29,88 @@ Route::get('/portal/invoice/{invoice}', [\App\Http\Controllers\PortalController:
 
 Route::post('/webhooks/midtrans', [\App\Http\Controllers\PaymentWebhookController::class, 'midtrans'])->name('webhooks.midtrans');
 
-Route::get('/dashboard', function () {
-    $totalSubscribers = \App\Models\Customer::count();
-    
-    // Active Users from billing
-    $activeUsers = \App\Models\Customer::where('is_active', true)->count();
-    
-    // Invoice stats
-    $unpaidInvoices = 0;
-    $revenue = 0;
-    if (class_exists(\App\Models\Invoice::class)) {
-        $unpaidInvoices = \App\Models\Invoice::where('status', 'unpaid')->count();
-        $revenue = \App\Models\Invoice::where('status', 'paid')
-            ->whereMonth('created_at', now()->month)
-            ->sum('amount') ?? 0;
-    }
 
-    $latestActivities = \App\Models\ActivityLog::with('user')
-        ->latest()
-        ->limit(10)
-        ->get();
 
-    // ── Live Traffic Data from RADIUS ──
-    $onlineNow = \App\Models\Radius\RadAcct::online()->count();
 
-    $onlineSessions = \App\Models\Radius\RadAcct::online()
-        ->selectRaw('SUM(acctinputoctets) as total_upload, SUM(acctoutputoctets) as total_download')
-        ->first();
-    $totalUpload = $onlineSessions->total_upload ?? 0;
-    $totalDownload = $onlineSessions->total_download ?? 0;
+Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,admin,teknisi,kasir,sales'])->group(function () {
+    Route::get('/', function () {
+        $totalSubscribers = \App\Models\Customer::count();
+        
+        // Active Users from billing
+        $activeUsers = \App\Models\Customer::where('is_active', true)->count();
+        
+        // Invoice stats
+        $unpaidInvoices = 0;
+        $revenue = 0;
+        if (class_exists(\App\Models\Invoice::class)) {
+            $unpaidInvoices = \App\Models\Invoice::where('status', 'unpaid')->count();
+            $revenue = \App\Models\Invoice::where('status', 'paid')
+                ->whereMonth('created_at', now()->month)
+                ->sum('amount') ?? 0;
+        }
 
-    // Top 5 users by current session traffic
-    $topUsers = \App\Models\Radius\RadAcct::online()
-        ->selectRaw('username, framedipaddress, acctsessiontime, (acctinputoctets + acctoutputoctets) as total_traffic, acctstarttime')
-        ->orderByDesc('total_traffic')
-        ->limit(5)
-        ->get();
+        $latestActivities = \App\Models\ActivityLog::with('user')
+            ->latest()
+            ->limit(10)
+            ->get();
 
-    // Hourly traffic for the last 24 hours (for chart)
-    $hourlyTraffic = \App\Models\Radius\RadAcct::where('acctstarttime', '>=', now()->subHours(24))
-        ->selectRaw('HOUR(acctstarttime) as hour, COUNT(*) as sessions, SUM(acctinputoctets) as upload, SUM(acctoutputoctets) as download')
-        ->groupByRaw('HOUR(acctstarttime)')
-        ->orderByRaw('HOUR(acctstarttime)')
-        ->get()
-        ->keyBy('hour');
+        // ── Live Traffic Data from RADIUS ──
+        $onlineNow = \App\Models\Radius\RadAcct::online()->count();
 
-    // Build 24-hour data array
-    $chartLabels = [];
-    $chartUpload = [];
-    $chartDownload = [];
-    $chartSessions = [];
-    for ($i = 23; $i >= 0; $i--) {
-        $h = now()->subHours($i)->format('H');
-        $hourInt = (int) $h;
-        $chartLabels[] = $h . ':00';
-        $chartUpload[] = round(($hourlyTraffic[$hourInt]->upload ?? 0) / 1048576, 2);
-        $chartDownload[] = round(($hourlyTraffic[$hourInt]->download ?? 0) / 1048576, 2);
-        $chartSessions[] = $hourlyTraffic[$hourInt]->sessions ?? 0;
-    }
+        $onlineSessions = \App\Models\Radius\RadAcct::online()
+            ->selectRaw('SUM(acctinputoctets) as total_upload, SUM(acctoutputoctets) as total_download')
+            ->first();
 
-    // Auth stats from radpostauth
-    $authAcceptToday = \App\Models\Radius\RadPostAuth::whereDate('authdate', today())->where('reply', 'Access-Accept')->count();
-    $authRejectToday = \App\Models\Radius\RadPostAuth::whereDate('authdate', today())->where('reply', 'Access-Reject')->count();
+        $totalUpload = $onlineSessions->total_upload ?? 0;
+        $totalDownload = $onlineSessions->total_download ?? 0;
 
-    return view('dashboard', compact(
-        'totalSubscribers', 'activeUsers', 'unpaidInvoices', 'revenue', 'latestActivities',
-        'onlineNow', 'totalUpload', 'totalDownload', 'topUsers',
-        'chartLabels', 'chartUpload', 'chartDownload', 'chartSessions',
-        'authAcceptToday', 'authRejectToday'
-    ));
-})->middleware(['auth', 'verified'])->name('dashboard');
+        // Top 5 users by current session traffic
+        $topUsers = \App\Models\Radius\RadAcct::online()
+            ->selectRaw('username, framedipaddress, acctsessiontime, (acctinputoctets + acctoutputoctets) as total_traffic, acctstarttime')
+            ->orderByDesc('total_traffic')
+            ->limit(5)
+            ->get();
 
-Route::middleware('auth')->group(function () {
+        // Hourly traffic for the last 24 hours (for chart)
+        $hourlyTraffic = \App\Models\Radius\RadAcct::where('acctstarttime', '>=', now()->subHours(24))
+            ->selectRaw('HOUR(acctstarttime) as hour, COUNT(*) as sessions, SUM(acctinputoctets) as upload, SUM(acctoutputoctets) as download')
+            ->groupByRaw('HOUR(acctstarttime)')
+            ->orderByRaw('HOUR(acctstarttime)')
+            ->get()
+            ->keyBy('hour');
+
+        // Build 24-hour data array
+        $chartLabels = [];
+        $chartUpload = [];
+        $chartDownload = [];
+        $chartSessions = [];
+        for ($i = 23; $i >= 0; $i--) {
+            $h = now()->subHours($i)->format('H');
+            $hourInt = (int) $h;
+            $chartLabels[] = $h . ':00';
+            $chartUpload[] = round(($hourlyTraffic[$hourInt]->upload ?? 0) / 1048576, 2);
+            $chartDownload[] = round(($hourlyTraffic[$hourInt]->download ?? 0) / 1048576, 2);
+            $chartSessions[] = $hourlyTraffic[$hourInt]->sessions ?? 0;
+        }
+
+        // Auth stats from radpostauth
+        $authAcceptToday = \App\Models\Radius\RadPostAuth::whereDate('authdate', today())->where('reply', 'Access-Accept')->count();
+        $authRejectToday = \App\Models\Radius\RadPostAuth::whereDate('authdate', today())->where('reply', 'Access-Reject')->count();
+
+        return view('dashboard', compact(
+            'totalSubscribers', 'activeUsers', 'unpaidInvoices', 'revenue', 'latestActivities',
+            'onlineNow', 'totalUpload', 'totalDownload', 'topUsers',
+            'chartLabels', 'chartUpload', 'chartDownload', 'chartSessions',
+            'authAcceptToday', 'authRejectToday'
+        ));
+    })->name('dashboard');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
-    // Universal Operational Routes (Multiple Roles)
-    
+
+    Route::resource('packages', \App\Http\Controllers\PackageController::class);
+
     // CUSTOMERS: All Operational Roles (View, Create, Edit)
     Route::middleware('role:administrator,admin,teknisi,sales')->group(function () {
         Route::get('customers/map', [\App\Http\Controllers\CustomerController::class, 'map'])->name('customers.map');
@@ -103,6 +121,7 @@ Route::middleware('auth')->group(function () {
         Route::get('customers/{customer}/edit', [\App\Http\Controllers\CustomerController::class, 'edit'])->name('customers.edit');
         Route::put('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'update'])->name('customers.update');
         Route::patch('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'update']);
+        Route::post('customers/{customer}/portal-account', [\App\Http\Controllers\CustomerController::class, 'createPortalAccount'])->name('customers.create-portal-account');
     });
 
     // CUSTOMER ACTIVATION: Admin & Teknisi
@@ -120,6 +139,7 @@ Route::middleware('auth')->group(function () {
             Route::get('noc', [\App\Http\Controllers\NocController::class, 'index'])->name('noc.index');
             Route::get('noc/discovery', [\App\Http\Controllers\NocController::class, 'discovery'])->name('noc.discovery');
             Route::get('noc/signals', [\App\Http\Controllers\NocController::class, 'signals'])->name('noc.signals');
+        Route::get('noc/history/{customer}', [\App\Http\Controllers\NocController::class, 'history'])->name('noc.history');
 
             // OLT Management
             Route::resource('olts', \App\Http\Controllers\OltController::class);
@@ -275,7 +295,9 @@ Route::middleware('auth')->group(function () {
         // Integrations & Settings
         Route::get('integrations/payment', [\App\Http\Controllers\IntegrationController::class, 'payment'])->name('integrations.payment');
         Route::get('integrations/whatsapp', [\App\Http\Controllers\IntegrationController::class, 'whatsapp'])->name('integrations.whatsapp');
+        Route::get('integrations/noc-bot', [\App\Http\Controllers\IntegrationController::class, 'nocBot'])->name('integrations.noc-bot');
         Route::post('integrations/update', [\App\Http\Controllers\IntegrationController::class, 'update'])->name('integrations.update');
+        Route::post('integrations/noc-bot', [\App\Http\Controllers\IntegrationController::class, 'updateNocBot'])->name('integrations.noc-bot.update');
         Route::get('acs-devices/details/{deviceId}', [\App\Http\Controllers\AcsServerController::class, 'deviceDetails'])->name('acs-servers.device-details')->where('deviceId', '[a-zA-Z0-9\-\.]+');
         Route::get('acs-devices/{deviceId}/show', [\App\Http\Controllers\AcsServerController::class, 'showDeviceRaw'])->name('acs-servers.show-device')->where('deviceId', '[a-zA-Z0-9\-\.]+');
         Route::post('acs-devices/{deviceId}/update-config', [\App\Http\Controllers\AcsServerController::class, 'updateConfig'])->name('acs-servers.update-config')->where('deviceId', '[a-zA-Z0-9\-\.]+');
@@ -332,4 +354,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/docs/{page?}', [\App\Http\Controllers\DocsController::class, 'index'])->name('docs.index');
 });
 
-require __DIR__.'/auth.php';
+// Admin Auth Routes
+Route::prefix('admin')->group(function () {
+    require __DIR__.'/auth.php';
+});
+
+Route::get('/test-ping', function() { return 'PONG'; });

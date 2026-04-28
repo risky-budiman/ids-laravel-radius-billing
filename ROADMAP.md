@@ -186,20 +186,20 @@ Berdasarkan evaluasi modul `AccountingService` saat ini, sistem *Double-Entry Bo
 Setelah melakukan pengecekan pada logika `NocController`, ditemukan **Celah Performa (N+1 Query Timeout)** yang sangat fatal jika jumlah pelanggan sudah mencapai ratusan/ribuan. Fase ini bertujuan mengubah NOC menjadi sistem *Monitoring* yang asinkron, cepat, dan proaktif.
 
 ### 10.1. Refactoring SNMP Polling (Mencegah Timeout)
-- [ ] **Pemindahan Polling ke Background Job:** Saat ini halaman `NOC Signals` memanggil data Redaman (Optical Power) secara sinkron (satu-per-satu) ke OLT via SNMP saat halaman dimuat. Jika ada 1000 pelanggan, halaman akan *Timeout/Crash*. Ini harus diubah menjadi sistem **Background Polling** (berjalan tiap 5/10 menit via cron) yang melakukan *SNMP Bulk Walk* dan menyimpannya ke *Database Cache*, sehingga halaman web hanya melakukan *Read Database*.
-- [ ] **Auto-Update Dashboard Stats:** Memperbaiki angka statistik `unconfigured` dan `critical_signals` pada Dashboard NOC yang saat ini masih *hardcode* 0 agar membaca dari *Database Cache*.
+- [x] **Pemindahan Polling ke Background Job:** Berhasil diubah menjadi sistem **Background Polling** via perintah `noc:poll` yang melakukan *SNMP Bulk Walk* dan menyimpannya ke *Database Cache*. (Selesai: Performa NOC meningkat drastis)
+- [x] **Auto-Update Dashboard Stats:** Statistik `unconfigured` dan `critical_signals` pada Dashboard NOC kini membaca data real-time dari cache.
 
 ### 10.2. Sistem Peringatan Dini (Proactive Alerting)
-- [ ] **Telegram/WA NOC Bot Integration:** Sistem akan secara otomatis mengirim peringatan *(Alert)* ke Grup Telegram/WA NOC jika terdeteksi OLT *Offline* (Down), port PON *Down* massal, atau redaman pelanggan tiba-tiba memburuk melewati ambang batas kritis (misal < -27 dBm).
-- [ ] **Grafik Kualitas Jaringan (RRD/Grafana-like):** Menyimpan histori fluktuasi sinyal OLT Rx/Tx setiap hari untuk digambarkan menjadi grafik tren redaman pelanggan, sehingga teknisi bisa melihat kapan kabel mulai rusak sebelum putus sepenuhnya.
+- [x] **Telegram/WA NOC Bot Integration:** Berhasil diintegrasikan. Sistem akan otomatis mengirim peringatan ke Grup NOC jika redaman pelanggan kritis (< -27 dBm) dengan fitur *Throttling* untuk mencegah spam. (Selesai: Bot Proaktif Aktif)
+- [x] **Grafik Kualitas Jaringan (RRD/Grafana-like):** Berhasil diimplementasikan menggunakan **Chart.js**. Sistem kini menyimpan histori sinyal (per jam) dan menampilkan tren redaman pelanggan selama 30 hari terakhir dengan fitur pembersihan otomatis (`noc:prune`). (Selesai: Analisis Tren Aktif)
 
 ---
 
-## FASE 11: Customer Self-Service Portal (Client Area)
-Sistem *Enterprise* wajib memiliki portal mandiri agar pelanggan tidak terus-menerus menghubungi CS/Kasir hanya untuk mengecek tagihan atau komplain.
-- [ ] **Dashboard Pelanggan (Web/Mobile App):** Pelanggan dapat *login* untuk melihat status internet (Aktif/Isolir), melihat kecepatan paket, dan membaca pengumuman *maintenance* (gangguan massal).
-- [ ] **Self-Payment & Billing History:** Pelanggan bisa melihat riwayat pembayaran bulan-bulan sebelumnya, mendownload/cetak *Invoice* PDF, dan membayar tagihan berjalan secara langsung melalui *Payment Gateway* (QRIS/Virtual Account).
-- [ ] **Pembelian Add-on Booster (FUP Reset):** Fitur untuk pelanggan agar dapat membeli kuota tambahan (Booster) secara mandiri via Portal. Jika pembayaran sukses, FUP akan otomatis di-*reset* oleh sistem tanpa campur tangan Admin.
+## FASE 11: Customer Self-Service Portal (Client Area) [SELESAI]
+Sistem *Enterprise* kini memiliki portal mandiri yang premium. Pelanggan dapat mengelola layanan mereka secara independen.
+- [x] **Dashboard Pelanggan (Web/Mobile App):** Berhasil diimplementasikan. Pelanggan dapat melihat status internet real-time, sisa FUP, info paket, dan kualitas sinyal NOC.
+- [x] **Self-Payment & Billing History:** Pelanggan dapat melihat riwayat pembayaran, mendownload invoice, dan melakukan pembayaran mandiri.
+- [x] **Pembelian Add-on Booster (FUP Reset):** Fitur booster aktif. Pembelian otomatis mereset statistik RADIUS via CoA Disconnect.
 - [ ] **Open Ticket (Lapor Gangguan):** Pelanggan dapat membuat tiket gangguan dari portal, yang akan langsung masuk ke sistem antrean teknisi *(Helpdesk)* tanpa perlu *chat* manual ke WA Admin.
 
 

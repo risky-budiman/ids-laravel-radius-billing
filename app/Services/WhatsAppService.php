@@ -24,50 +24,105 @@ class WhatsAppService
             ]);
         }
 
-        $gateway = Gateway::where('provider', 'fonnte')
+        // Get all active gateways ordered by latest updated or a specific logic
+        $gateways = Gateway::where('type', 'whatsapp')
             ->where('is_active', true)
-            ->first();
+            ->get();
 
-        if (!$gateway) {
-            $error = 'WhatsApp Notification: Fonnte is not active or configured.';
+        if ($gateways->isEmpty()) {
+            $error = 'WhatsApp Notification: No active gateway configured.';
             Log::warning($error);
             if ($log) $log->update(['status' => 'failed', 'error_reason' => $error]);
             return false;
         }
 
-        $token = $gateway->credentials['token'] ?? null;
-
-        if (!$token) {
-            $error = 'WhatsApp Notification: Fonnte token is missing.';
-            Log::warning($error);
-            if ($log) $log->update(['status' => 'failed', 'error_reason' => $error]);
-            return false;
-        }
-
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => $token,
-            ])->post('https://api.fonnte.com/send', [
-                'target' => $target,
-                'message' => $message,
-                'countryCode' => '62', // Default to Indonesia
-            ]);
-
-            if ($response->successful()) {
-                if ($log) $log->update(['status' => 'sent']);
-                return true;
+        $lastError = '';
+        foreach ($gateways as $gateway) {
+            $success = false;
+            
+            if ($gateway->provider === 'fonnte') {
+                $success = $this->sendViaFonnte($gateway, $target, $message);
+            } elseif ($gateway->provider === 'wablas') {
+                $success = $this->sendViaWablas($gateway, $target, $message);
+            } elseif ($gateway->provider === 'starsender') {
+                $success = $this->sendViaStarsender($gateway, $target, $message);
+            } elseif ($gateway->provider === 'mekari') {
+                $success = $this->sendViaMekari($gateway, $target, $message);
             }
 
-            $error = 'Fonnte API Error: ' . $response->body();
-            Log::error($error);
-            if ($log) $log->update(['status' => 'failed', 'error_reason' => $error]);
-            return false;
-
-        } catch (\Exception $e) {
-            $error = 'WhatsApp Service Exception: ' . $e->getMessage();
-            Log::error($error);
-            if ($log) $log->update(['status' => 'failed', 'error_reason' => $error]);
-            return false;
+            if ($success) {
+                if ($log) $log->update(['status' => 'sent', 'provider' => $gateway->provider]);
+                return true;
+            } else {
+                $lastError .= "[{$gateway->provider} Failed] ";
+            }
         }
+
+        if ($log) $log->update(['status' => 'failed', 'error_reason' => $lastError ?: 'All gateways failed.']);
+        return false;
+    }
+
+    protected function sendViaFonnte($gateway, $target, $message)
+    {
+        $token = $gateway->credentials['token'] ?? null;
+        try {
+            $response = Http::timeout(10)->withHeaders(['Authorization' => $token])->post('https://api.fonnte.com/send', [
+                'target' => $target,
+                'message' => $message,
+            ]);
+            return $response->successful();
+        } catch (\Exception $e) { return false; }
+    }
+
+    protected function sendViaWablas($gateway, $target, $message)
+    {
+        $domain = $gateway->credentials['domain'] ?? 'https://console.wablas.com';
+        $token = $gateway->credentials['token'] ?? null;
+        try {
+            $response = Http::timeout(10)->withHeaders(['Authorization' => $token])->post($domain . '/api/send-message', [
+                'phone' => $target,
+                'message' => $message,
+            ]);
+            return $response->successful();
+        } catch (\Exception $e) { return false; }
+    }
+
+    protected function sendViaStarsender($gateway, $target, $message)
+    {
+        $token = $gateway->credentials['token'] ?? null;
+        try {
+            // Starsender API Endpoint
+            $response = Http::timeout(10)->withHeaders(['Authorization' => $token])->post('https://starsender.online/api/sendText', [
+                'tujuan' => $target,
+                'message' => $message,
+            ]);
+            return $response->successful();
+        } catch (\Exception $e) { return false; }
+    }
+
+    protected function sendViaMekari($gateway, $target, $message)
+    {
+        $token = $gateway->credentials['token'] ?? null;
+        $channelId = $gateway->credentials['channel_id'] ?? null;
+        
+        try {
+            // Mekari Qontak Direct Message API
+            $response = Http::timeout(10)->withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type' => 'application/json'
+            ])->post('https://api-service.qontak.com/api/open/v1/broadcasts/whatsapp/direct', [
+                'to_number' => $target,
+                'to_name' => $target,
+                'message_template_id' => $gateway->credentials['template_id'] ?? '', // Mekari strictly uses templates
+                'channel_integration_id' => $channelId,
+                'language' => ['code' => 'id'],
+                'parameters' => [
+                    'body' => [
+                        ['key' => '1', 'value' => $message]
+                    ]
+                ]
+            ]);
+            return $response->successful();
+        } catch (\Exception $e) { return false; }
     }
 }

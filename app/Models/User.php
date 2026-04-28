@@ -36,6 +36,7 @@ class User extends Authenticatable
     const ROLE_TEKNISI = 'teknisi';
     const ROLE_KASIR = 'kasir';
     const ROLE_SALES = 'sales';
+    const ROLE_CUSTOMER = 'customer';
 
     /**
      * Check if user has specific role
@@ -56,6 +57,7 @@ class User extends Authenticatable
     public function isTeknisi(): bool { return $this->role === self::ROLE_TEKNISI; }
     public function isKasir(): bool { return $this->role === self::ROLE_KASIR; }
     public function isSales(): bool { return $this->role === self::ROLE_SALES; }
+    public function isCustomer(): bool { return $this->role === self::ROLE_CUSTOMER; }
 
     /**
      * Relationship to active sessions
@@ -63,6 +65,11 @@ class User extends Authenticatable
     public function sessions()
     {
         return $this->hasMany(Session::class);
+    }
+
+    public function customer()
+    {
+        return $this->hasOne(Customer::class);
     }
 
     /**

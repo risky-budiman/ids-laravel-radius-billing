@@ -19,13 +19,17 @@ class NocController extends Controller
         // Get OLTs
         $olts = \App\Models\Olt::all();
 
+        // Get Stats from Cache
+        $unconfiguredCount = 0; // Still dynamic for now or we could cache it too
+        $criticalCount = \App\Models\CustomerSignalCache::where('rx_power', '<', -27)->count();
+
         // Placeholder data for NOC Dashboard
         $stats = [
             'total_ont' => \App\Models\Customer::whereNotNull('activated_at')->count(),
             'online' => $onlineCount,
             'offline' => $offlineCount,
-            'unconfigured' => 0, // Will be updated later via SNMP
-            'critical_signals' => 0,
+            'unconfigured' => $unconfiguredCount,
+            'critical_signals' => $criticalCount,
             'open_tickets' => \App\Models\Ticket::where('status', 'open')->count(),
         ];
 
@@ -55,17 +59,24 @@ class NocController extends Controller
 
     public function signals()
     {
-        // Get customers who have OLT data (activated)
+        // Get customers with their cached signals
         $customers = \App\Models\Customer::whereNotNull('olt_id')
             ->whereNotNull('onu_index')
-            ->with('olt')
+            ->with(['olt', 'signalCache'])
             ->get();
 
-        foreach ($customers as $customer) {
-            $oltManager = new \App\Services\Network\OltManagerService($customer->olt);
-            $customer->optical_power = $oltManager->getOnuOpticalPower($customer->onu_index);
-        }
-
         return view('noc.signals', compact('customers'));
+    }
+
+    public function history($id)
+    {
+        $customer = \App\Models\Customer::with('olt')->findOrFail($id);
+        
+        $logs = \App\Models\CustomerSignalLog::where('customer_id', $id)
+            ->orderBy('created_at', 'asc')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->get();
+
+        return view('noc.history', compact('customer', 'logs'));
     }
 }

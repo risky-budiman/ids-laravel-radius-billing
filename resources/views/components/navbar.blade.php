@@ -3,6 +3,11 @@
     <div class="flex items-center justify-between px-6 py-4">
         
         <!-- Left Side: Hamburger & Search -->
+        @php 
+            $isPortal = request()->is('client*') || request()->routeIs('customer.*');
+            $user = auth('customer')->user() ?: auth('web')->user(); 
+        @endphp
+        
         <div class="flex items-center space-x-4" x-data="{ 
             searchQuery: '',
             searchResults: [],
@@ -26,6 +31,7 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
             </button>
 
+            @if(!$isPortal)
             <!-- Mobile Search Toggle -->
             <button @click="mobileSearchOpen = !mobileSearchOpen" class="sm:hidden text-gray-500 dark:text-gray-400 focus:outline-none">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -70,8 +76,10 @@
                     </div>
                 </div>
             </div>
+            @endif
         </div>
 
+        @php $user = auth('customer')->user() ?: auth('web')->user(); @endphp
         <!-- Right Side: Theme Switcher, Notifs, Profile -->
         <div class="flex items-center space-x-5" x-data="{ 
                 theme: localStorage.getItem('theme') || 'system',
@@ -113,6 +121,7 @@
                 </div>
             </div>
 
+            @if(!$isPortal)
             <!-- Notifications -->
             <div class="relative" x-data="{ 
                 notifications: {},
@@ -200,25 +209,29 @@
                 </div>
             </div>
 
+            @endif
+
             <!-- User Menu -->
             <x-dropdown align="right" width="48">
                 <x-slot name="trigger">
                     <button class="flex items-center space-x-2 focus:outline-none">
-                        <img class="w-9 h-9 rounded-full object-cover border-2 border-indigo-500/20" src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name ?? 'Admin') }}&color=4F46E5&background=EEF2FF" alt="Avatar">
-                        <span class="hidden text-sm font-medium text-gray-700 dark:text-gray-300 md:block">{{ Auth::user()->name ?? 'Administrator' }}</span>
+                        <img class="w-9 h-9 rounded-full object-cover border-2 border-indigo-500/20" src="https://ui-avatars.com/api/?name={{ urlencode($user->name ?? 'User') }}&color=4F46E5&background=EEF2FF" alt="Avatar">
+                        <span class="hidden text-sm font-medium text-gray-700 dark:text-gray-300 md:block">{{ $user->name ?? 'User' }}</span>
                         <svg class="hidden w-4 h-4 text-gray-500 dark:text-gray-400 md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
                 </x-slot>
 
                 <x-slot name="content">
+                    @if(!$isPortal)
                     <x-dropdown-link :href="route('profile.edit')">
                         {{ __('Profile') }}
                     </x-dropdown-link>
+                    @endif
 
                     <!-- Authentication -->
-                    <form method="POST" action="{{ route('logout') }}">
+                    <form method="POST" action="{{ $user && $user->isCustomer() ? route('customer.logout') : route('logout') }}">
                         @csrf
-                        <x-dropdown-link :href="route('logout')"
+                        <x-dropdown-link :href="$user && $user->isCustomer() ? route('customer.logout') : route('logout')"
                                 onclick="event.preventDefault(); this.closest('form').submit();">
                             {{ __('Log Out') }}
                         </x-dropdown-link>

@@ -19,6 +19,27 @@ class IntegrationController extends Controller
         return view('integrations.whatsapp', compact('gateways'));
     }
 
+    public function nocBot()
+    {
+        return view('integrations.noc-bot');
+    }
+
+    public function updateNocBot(Request $request)
+    {
+        $data = $request->only(['telegram_bot_token', 'telegram_noc_chat_id', 'whatsapp_noc_number', 'whatsapp_noc_target_type']);
+
+        foreach ($data as $key => $value) {
+            \App\Models\Setting::updateOrCreate(
+                ['key' => $key],
+                ['value' => $value, 'type' => 'string']
+            );
+        }
+
+        \Illuminate\Support\Facades\Cache::forget('app_settings');
+
+        return redirect()->back()->with('success', 'NOC Bot settings updated successfully!');
+    }
+
     public function update(Request $request)
     {
         // Example dynamic payload format:
