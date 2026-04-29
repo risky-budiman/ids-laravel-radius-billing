@@ -44,12 +44,19 @@
             </div>
             <div>
                 <h1 class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Selamat Datang, {{ explode(' ', auth()->user()->name)[0] }}!</h1>
-                <p class="text-gray-500 dark:text-gray-400 font-medium mt-1 flex items-center">
-                    <span class="px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest mr-3">
-                        {{ auth()->user()->role }}
-                    </span>
-                    {{ auth()->user()->email }}
-                </p>
+                <div class="flex items-center mt-1 space-x-3">
+                    <p class="text-gray-500 dark:text-gray-400 font-medium flex items-center">
+                        <span class="px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest mr-3">
+                            {{ auth()->user()->role }}
+                        </span>
+                        {{ auth()->user()->email }}
+                    </p>
+                    <span class="text-gray-300 dark:text-gray-600">|</span>
+                    <p id="live-clock" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 flex items-center">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        {{ now()->translatedFormat('l, d F Y | H:i:s') }}
+                    </p>
+                </div>
             </div>
         </div>
         <div class="mt-6 md:mt-0">
@@ -171,9 +178,28 @@
                         <span class="w-2 h-8 bg-green-600 rounded-full mr-3"></span>
                         Live Traffic & Network Status
                     </h3>
-                    <div class="flex items-center space-x-2">
-                        <span class="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                        <span class="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-widest">Live</span>
+                    <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-2 mr-4">
+                            <span class="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                            <span class="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-widest">Live</span>
+                        </div>
+                        
+                        @if(auth()->user()->isAdmin())
+                        <div class="flex items-center space-x-2">
+                            <form action="{{ route('radius.clear-stale') }}" method="POST" onsubmit="return confirm('Bersihkan sesi menggantung (idle > 2 jam)?')">
+                                @csrf
+                                <button type="submit" class="px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-amber-600 hover:text-white transition-all border border-amber-100 dark:border-amber-800/30">
+                                    Clear Stale
+                                </button>
+                            </form>
+                            <form action="{{ route('radius.disconnect-all') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin memutuskan SELURUH sesi online saat ini?')">
+                                @csrf
+                                <button type="submit" class="px-3 py-1.5 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-rose-600 hover:text-white transition-all border border-rose-100 dark:border-rose-800/30">
+                                    Disconnect All
+                                </button>
+                            </form>
+                        </div>
+                        @endif
                     </div>
                 </div>
 
@@ -447,5 +473,48 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+    
+    // Live Clock Update
+    function updateClock() {
+        const now = new Date();
+        const options = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        };
+        const formatter = new Intl.DateTimeFormat('id-ID', options);
+        const parts = formatter.formatToParts(now);
+        
+        let dateStr = "";
+        let timeStr = "";
+        
+        parts.forEach(part => {
+            if (part.type === 'hour' || part.type === 'minute' || part.type === 'second' || part.type === 'literal') {
+                if (part.value === ' ' && timeStr === "") return;
+                timeStr += part.value;
+            } else {
+                dateStr += part.value;
+            }
+        });
+
+        const clockElement = document.getElementById('live-clock');
+        if (clockElement) {
+            // Clean up strings
+            dateStr = dateStr.trim().replace(/,$/, '');
+            timeStr = timeStr.trim().replace(/^\./, '').replace(/^,/, '').trim();
+            
+            clockElement.innerHTML = `
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                ${dateStr} | ${timeStr}
+            `;
+        }
+    }
+    
+    setInterval(updateClock, 1000);
 });
 </script>

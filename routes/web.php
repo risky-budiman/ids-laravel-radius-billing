@@ -118,6 +118,10 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         ));
     })->name('dashboard');
 
+    // RADIUS Session Management
+    Route::post('radius/disconnect-all', [\App\Http\Controllers\Admin\RadiusController::class, 'disconnectAll'])->name('radius.disconnect-all');
+    Route::post('radius/clear-stale', [\App\Http\Controllers\Admin\RadiusController::class, 'clearStaleSessions'])->name('radius.clear-stale');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

@@ -1,7 +1,12 @@
 # Changelog
 
+## [1.3.6] - 2026-04-29
+- BugFix Jurnal ([HEAD])
+
+
+
 ## [1.3.5] - 2026-04-29
-- bugfix ([HEAD])
+- BugFix ([HEAD])
 
 
 
