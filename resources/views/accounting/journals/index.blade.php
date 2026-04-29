@@ -49,7 +49,10 @@
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
                                     {{ $journal->description }}
-                                    <div class="text-[10px] text-gray-400 mt-1 italic">Input by: {{ $journal->creator->name ?? 'System' }}</div>
+                                    <div class="text-[10px] text-gray-400 mt-1 italic">
+                                        Input by: {{ $journal->creator->name ?? 'System' }} 
+                                        ({{ $journal->created_at->format('H:i') }})
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="space-y-1">
