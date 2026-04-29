@@ -34,7 +34,7 @@ class CustomerController extends Controller
             ->pluck('value', 'username');
 
         foreach ($customers as $customer) {
-            $customer->cleartext_password = $passwords[$customer->username] ?? '-';
+            $customer->cleartext_password = $passwords[$customer->username] ?? $customer->password ?? '-';
         }
 
         return view('customers.index', compact('customers'));
@@ -138,6 +138,7 @@ class CustomerController extends Controller
                 'sto_code' => $validated['sto_code'] ?? '000',
                 'stb_code' => $validated['stb_code'] ?? '000',
                 'username' => $validated['username'],
+                'password' => $validated['password'],
                 'name' => $validated['name'],
                 'ktp' => $validated['ktp'] ?? null,
                 'email' => $validated['email'] ?? null,
@@ -211,8 +212,10 @@ class CustomerController extends Controller
         $stos = \App\Models\Sto::all();
         $stbs = \App\Models\Stb::all();
         
-        $radCheck = \App\Models\Radius\RadCheck::where('username', $customer->username)->first();
-        $customer->password = $radCheck ? $radCheck->value : '';
+        $radCheck = \App\Models\Radius\RadCheck::where('username', $customer->username)
+            ->where('attribute', 'Cleartext-Password')
+            ->first();
+        $customer->password = $radCheck ? $radCheck->value : ($customer->password ?? '');
         $olts = \App\Models\Olt::where('is_active', true)->get();
         $odcs = \App\Models\Odc::all();
         $odps = \App\Models\Odp::all();
@@ -269,12 +272,15 @@ class CustomerController extends Controller
         $oldStatus = $customer->is_active;
         $newUsername = $validated['username'];
         $package = \App\Models\Package::find($validated['package_id']);
-        $isActive = filter_var($request->input('is_active', false), FILTER_VALIDATE_BOOLEAN);
+        $isActive = $request->has('is_active') ? filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN) : $customer->is_active;
+
 
         DB::transaction(function () use ($customer, $validated, $oldUsername, $newUsername, $package, $isActive, $latitude, $longitude, $request) {
-            // 1. Update customer fields (excluding password and coordinates)
-            $updateData = collect($validated)->except(['password', 'latitude', 'longitude', 'identity_photo', 'house_photo', 'cpe_photo'])->toArray();
+            // 1. Update customer fields (excluding coordinates)
+            $updateData = collect($validated)->except(['latitude', 'longitude', 'identity_photo', 'house_photo', 'cpe_photo'])->toArray();
+            $updateData['password'] = $validated['password'];
             $updateData['is_active'] = $isActive;
+            $updateData['status'] = $isActive ? Customer::STATUS_ACTIVE : Customer::STATUS_SUSPENDED;
             $updateData['latitude'] = $latitude;
             $updateData['longitude'] = $longitude;
             $updateData['partner_id'] = $validated['partner_id'] ?? null;
@@ -299,10 +305,14 @@ class CustomerController extends Controller
             $customer->update($updateData);
 
             // 2. Sync radcheck (Update username & password)
-            \App\Models\Radius\RadCheck::where('username', $oldUsername)->update([
-                'username' => $newUsername,
-                'value' => $validated['password']
-            ]);
+            \App\Models\Radius\RadCheck::updateOrCreate(
+                ['username' => $oldUsername, 'attribute' => 'Cleartext-Password'],
+                [
+                    'username' => $newUsername,
+                    'value' => $validated['password'],
+                    'op' => ':='
+                ]
+            );
 
             // 3. Sync radusergroup
             \App\Models\Radius\RadUserGroup::where('username', $oldUsername)->update([

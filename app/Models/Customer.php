@@ -96,7 +96,6 @@ class Customer extends Authenticatable
     ];
 
     protected $hidden = [
-        'password',
         'remember_token',
     ];
 
@@ -110,7 +109,7 @@ class Customer extends Authenticatable
         'installation_fee' => 'decimal:2',
         'is_active' => 'boolean',
         'use_tax' => 'boolean',
-        'password' => 'hashed',
+        // 'password' => 'hashed',
         'commission_rate' => 'decimal:2',
         'current_month_usage_gb' => 'decimal:2',
         'last_usage_sync' => 'datetime',

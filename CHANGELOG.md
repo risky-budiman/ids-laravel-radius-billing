@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.0] - 2026-04-29
+- Add Fitur Sales ([HEAD])
+
+
+
 ## [1.2.0] - 2026-04-29
 - Add Fitur FUP ([HEAD])
 
