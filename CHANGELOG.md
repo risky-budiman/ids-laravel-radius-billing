@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.0] - 2026-04-29
+- Add Fitur FUP ([HEAD])
+
+
+
 ## [1.1.3] - 2026-04-29
 - BugFix Changelog ([HEAD])
 

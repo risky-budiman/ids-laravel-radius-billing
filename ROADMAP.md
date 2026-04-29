@@ -248,6 +248,8 @@ Banyak ISP melakukan ekspansi wilayah dengan cara menggandeng mitra lokal (RT/RW
 
 ---
 
+---
+
 ## FASE 14: System Audit, Security & Compliance
 Fase ini berfokus pada transparansi aktivitas sistem, pelacakan perubahan data secara mendalam, dan pemeliharaan integritas log untuk kebutuhan audit skala enterprise.
 
@@ -271,6 +273,19 @@ Fase ini bertujuan untuk meningkatkan keamanan dan relevansi data bagi setiap pe
 - [ ] **Permission-Based Authorization:** Migrasi dari pengecekan Role *hardcode* ke sistem Permission (ACL). Contoh: User bisa memiliki role "Teknisi" tapi diberikan permission khusus edit_billing jika diperlukan.
 - [ ] **Role & Permission Management UI:** Membuat antarmuka untuk Admin Utama dalam menentukan menu dan aksi apa saja yang boleh diakses oleh role tertentu (Checklist Permission).
 - [ ] **Middleware Security Audit:** Menstandarisasi Middleware pada setiap Route agar sesuai dengan Matrix Hak Akses yang baru.
+
+---
+
+## FASE 16: Sales Force & Staff Incentive System
+Fase ini bertujuan untuk memberikan penghargaan kepada tim Sales internal atas setiap pelanggan yang berhasil didaftarkan.
+- [ ] **Sales Attribution:** Penambahan field `sales_id` di tabel pelanggan untuk melacak performa masing-masing staff sales.
+- [ ] **Global Sales Commission Settings:** Pengaturan default komisi sales (Persentase atau Fixed) yang dapat dikelola oleh Administrator.
+- [ ] **Sales Incentive Logic:** Perhitungan bonus otomatis yang terintegrasi dengan sistem Billing saat invoice pelanggan dibayar.
+- [ ] **Detailed Commission Ledger Table:** Pembuatan tabel database khusus untuk mencatat rincian setiap transaksi komisi (Referensi Tagihan, Nominal Dasar, Nilai Komisi, dan Status Pembayaran ke Sales) guna audit transparansi.
+- [ ] **Sales Wallet & Ledger:** Pencatatan saldo berjalan (Balance) dan riwayat bonus sales.
+- [ ] **Withdrawal & Settlement System:** Fitur bagi Admin untuk memproses pembayaran komisi. Mendukung penarikan sebagian (**Partial Withdrawal**) sesuai nominal yang diinginkan sales, di mana sisa dana tetap tersimpan sebagai saldo berjalan.
+- [ ] **Sales Dashboard:** Antarmuka bagi staff sales untuk memantau target, daftar pelanggan yang direferensikan, dan total pendapatan bonus mereka.
+- [ ] **Accounting Journal Integration:** Otomatisasi pencatatan jurnal akuntansi (Beban Insentif vs Hutang Insentif) saat komisi terbentuk dan saat pembayaran dilakukan ke sales.
 
 ### 15.2. Personalisasi Dashboard (Role-Based Widgets)
 - [ ] **Finance Dashboard:** Menampilkan widget khusus keuangan (Pendapatan hari ini, Invoice menunggak, Saldo Kas/Bank) untuk Role Kasir/Finance.
