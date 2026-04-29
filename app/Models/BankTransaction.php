@@ -67,8 +67,14 @@ class BankTransaction extends Model
         static::deleted(function ($transaction) {
             $transaction->updateBalance(true);
             
-            // Reverse/Delete Journal when transaction is deleted
+            // Delete associated Journal
+            // 1. Auto-journal (TRX-ID)
             \App\Models\Journal::where('reference', 'TRX-' . $transaction->id)->delete();
+            
+            // 2. Manual Journal if linked via reference (e.g. JV-xxx)
+            if ($transaction->reference_number && strpos($transaction->reference_number, 'JV-') === 0) {
+                \App\Models\Journal::where('reference', $transaction->reference_number)->delete();
+            }
         });
     }
 
