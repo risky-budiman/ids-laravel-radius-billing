@@ -40,3 +40,16 @@ if (!function_exists('get_setting')) {
         return $settings[$key] ?? $default;
     }
 }
+if (!function_exists('app_version')) {
+    /**
+     * Get the current application version.
+     */
+    function app_version()
+    {
+        $versionFile = base_path('VERSION');
+        if (file_exists($versionFile)) {
+            return trim(file_get_contents($versionFile));
+        }
+        return 'v1.0.0';
+    }
+}

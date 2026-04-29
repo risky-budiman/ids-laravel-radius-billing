@@ -67,8 +67,10 @@
 
                 <!-- Left Footer -->
                 <div class="absolute bottom-10 left-0 right-0 text-center">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em]">
-                        &copy; {{ date('Y') }} {{ $companyName }} &bull; Next-Gen Network Control
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] flex items-center justify-center gap-3">
+                        <span>&copy; {{ date('Y') }} {{ $companyName }}</span>
+                        <span class="w-1 h-1 bg-slate-700 rounded-full"></span>
+                        <span class="px-2 py-0.5 bg-slate-900/50 border border-white/10 rounded text-blue-400 font-mono tracking-normal lowercase">v{{ app_version() }}</span>
                     </p>
                 </div>
             </div>

@@ -19,11 +19,10 @@ class Changelog extends Model
     ];
 
     /**
-     * Get the latest application version from changelogs
+     * Get the latest application version
      */
     public static function latestVersion()
     {
-        $latest = self::latest('id')->first();
-        return $latest ? $latest->version : 'v1.0.0';
+        return app_version();
     }
 }

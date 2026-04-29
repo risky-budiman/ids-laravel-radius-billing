@@ -362,11 +362,11 @@ Fase ini memastikan ISP mematuhi aturan regulasi pemerintah Indonesia terkait pa
 
 ---
 
-## FASE 21: DevOps & Versioning Automation
+## FASE 21: DevOps & Versioning Automation [SELESAI]
 Mengotomatiskan alur kerja pengembangan agar lebih efisien dan terukur secara profesional.
-- [ ] **Automated Semantic Versioning:** Implementasi script otomatis (Git Hooks) yang akan menaikkan nomor versi aplikasi (misal: v1.0.5 ke v1.0.6) setiap kali melakukan `git push` atau `commit`.
-- [ ] **Version Display Integration:** Menampilkan nomor versi aktif secara dinamis di footer Dashboard Admin dan halaman Login untuk mempermudah tracking update.
-- [ ] **Changelog Generator:** Otomatisasi pembuatan catatan perubahan berdasarkan pesan commit git.
+- [x] **Automated Semantic Versioning:** Implementasi script otomatis (Git Hooks) yang akan menaikkan nomor versi aplikasi (misal: v1.0.5 ke v1.0.6) setiap kali melakukan `git push` atau `commit`.
+- [x] **Version Display Integration:** Menampilkan nomor versi aktif secara dinamis di footer Dashboard Admin dan halaman Login untuk mempermudah tracking update.
+- [x] **Changelog Generator:** Otomatisasi pembuatan catatan perubahan berdasarkan pesan commit git.
 
 ### 20.1. Perhitungan Otomatis BHP & USO
 - [ ] **BHP & USO Calculation Engine:** Menambahkan logika perhitungan otomatis untuk Biaya Hak Penyelenggaraan (BHP) dan Kontribusi Universal Service Obligation (USO) berdasarkan persentase pendapatan kotor dari akun pendapatan yang relevan.
@@ -382,7 +382,7 @@ Mengotomatiskan alur kerja pengembangan agar lebih efisien dan terukur secara pr
 
 ---
 
-## FASE 21: Customer Mobile Experience & PWA [SELESAI]
+## FASE 22: Customer Mobile Experience & PWA [SELESAI]
 Pengembangan *User Interface* (UI) portal pelanggan agar 100% *mobile-friendly* dan terasa seperti aplikasi *Native* kekinian.
 - [x] **Mobile-First UI Redesign:** Mendesain ulang antarmuka portal dengan konsep aplikasi mobile sungguhan (misal: menambahkan *bottom navigation bar*, tombol yang *touch-friendly*, dan elemen *glassmorphism* atau animasi *swipe*).
 - [x] **Progressive Web App (PWA):** Mengimplementasikan *manifest.json* and *Service Worker* agar pelanggan dapat menginstal portal langsung ke layar utama (*homescreen*) *smartphone* mereka tanpa perlu mendownload dari App Store / Play Store.

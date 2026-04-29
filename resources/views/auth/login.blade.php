@@ -76,9 +76,10 @@
     </div>
 
     <!-- Mobile Footer -->
-    <div class="lg:hidden mt-12 text-center">
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-            &copy; {{ date('Y') }} {{ get_setting('company_name') }}
+    <div class="lg:hidden mt-12 text-center pb-8">
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+            <span>&copy; {{ date('Y') }} {{ get_setting('company_name') }}</span>
+            <span class="px-2 py-0.5 bg-slate-100 rounded text-slate-400 font-mono tracking-normal lowercase">v{{ app_version() }}</span>
         </p>
     </div>
 </x-guest-layout>
