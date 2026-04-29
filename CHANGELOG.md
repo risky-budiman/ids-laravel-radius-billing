@@ -1,0 +1,16 @@
+# Changelog
+
+Semua perubahan penting pada proyek ini akan dicatat di file ini.
+
+## [1.1.1] - 2026-04-29
+- Perbaikan sistem otomatisasi changelog ([HEAD])
+- Implementasi Fitur Manajemen Reseller & Kemitraan (B2B) ([HEAD])
+
+## [1.1.0] - 2026-04-29
+- Release Fitur Reseller & Kemitraan ([HEAD])
+
+## [1.0.2] - 2026-04-29
+- Perbaikan Bug Version Release #patch ([HEAD])
+
+## [1.0.0] - 2026-04-28
+- Initial Release

@@ -55,9 +55,6 @@ class GenerateChangelog extends Command
             return;
         }
 
-        $lines = explode("\n", trim($output));
-        $newChanges = [];
-
         foreach ($lines as $line) {
             $parts = explode('|', $line);
             if (count($parts) < 2) continue;
