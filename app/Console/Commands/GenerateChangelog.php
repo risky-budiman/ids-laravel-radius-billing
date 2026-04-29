@@ -107,7 +107,14 @@ class GenerateChangelog extends Command
         
         $newContent = "## [{$version}] - {$date}\n";
         foreach ($changes as $change) {
-            $newContent .= "- {$change['subject']} ([{$change['hash']}])\n";
+            $lines = explode("\n", $change['subject']);
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (empty($line)) continue;
+                // Remove existing dashes if any to prevent double bullets
+                $line = ltrim($line, '- ');
+                $newContent .= "- {$line} ([{$change['hash']}])\n";
+            }
         }
         $newContent .= "\n";
 
@@ -133,7 +140,13 @@ class GenerateChangelog extends Command
         
         $description = "";
         foreach ($changes as $change) {
-            $description .= "- {$change['subject']}\n";
+            $lines = explode("\n", $change['subject']);
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (empty($line)) continue;
+                $line = ltrim($line, '- ');
+                $description .= "- {$line}\n";
+            }
         }
 
         if ($entry) {

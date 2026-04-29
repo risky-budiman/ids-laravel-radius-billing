@@ -24,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         \App\Models\Customer::observe(\App\Observers\CustomerObserver::class);
+        \App\Models\Radius\Nas::observe(\App\Observers\NasObserver::class);
         
         Event::listen(
             [Login::class, Logout::class],
