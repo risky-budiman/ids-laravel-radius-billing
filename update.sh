@@ -8,6 +8,8 @@ php artisan down || true
 
 # 2. Tarik kode terbaru
 echo "📥 Pulling latest code from Git..."
+# Reset auto-generated files to avoid conflicts during pull
+git checkout CHANGELOG.md VERSION
 git pull origin main
 
 # 3. Install/Update dependensi

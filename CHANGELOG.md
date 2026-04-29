@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.4] - 2026-04-29
+- BugFix TimeZone ([HEAD])
+
+
+
 ## [1.3.3] - 2026-04-29
 - BugFix Jurnal Umum ([HEAD])
 
