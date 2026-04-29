@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.7] - 2026-04-29
+- BugFix Session Online ([HEAD])
+
+
+
 ## [1.3.6] - 2026-04-29
 - BugFix Jurnal ([HEAD])
 

@@ -404,3 +404,23 @@ Pengembangan *User Interface* (UI) portal pelanggan agar 100% *mobile-friendly* 
 - [x] **Mobile-First UI Redesign:** Mendesain ulang antarmuka portal dengan konsep aplikasi mobile sungguhan (misal: menambahkan *bottom navigation bar*, tombol yang *touch-friendly*, dan elemen *glassmorphism* atau animasi *swipe*).
 - [x] **Progressive Web App (PWA):** Mengimplementasikan *manifest.json* and *Service Worker* agar pelanggan dapat menginstal portal langsung ke layar utama (*homescreen*) *smartphone* mereka tanpa perlu mendownload dari App Store / Play Store.
 - [x] **Push Notifications:** Mengintegrasikan *Web Push Notification* (misal: Firebase Cloud Messaging) agar pelanggan bisa menerima notifikasi pop-up di HP mereka (terkait tagihan baru, status tiket, atau promo) secara *real-time*.
+407: 
+408: ---
+409: 
+410: ## FASE 23: Multi-Role Staff & Hybrid Sales Capability
+411: Fase ini bertujuan untuk memberikan fleksibilitas kepada staf (Teknisi, Admin, Kasir) agar dapat berperan ganda sebagai Sales tanpa kehilangan hak akses peran utamanya.
+412: 
+413: ### 23.1. Fleksibilitas Peran (Sales-Enabled Staff)
+414: - [ ] **Database Migration:** Penambahan kolom `is_sales_enabled` pada tabel `users`.
+415: - [ ] **UI User Management:** Update form edit user agar Administrator dapat mengaktifkan fitur "Sales" untuk role apa pun (Teknisi/Admin/Kasir).
+416: - [ ] **Sales Profile for All Roles:** Memberikan kolom `commission_rate` dan `bank_info` kepada semua staf yang diaktifkan fitur sales-nya.
+417: 
+418: ### 23.2. Referal & Komisi Lintas Peran
+419: - [ ] **Unified Referral Selection:** Memperbarui dropdown "Sales/Referral" pada form pendaftaran pelanggan agar menampilkan semua staf yang memiliki flag `is_sales_enabled`.
+420: - [ ] **Universal Commission Logic:** Memastikan `SalesCommissionService` dapat menghitung bonus untuk user ID mana pun selama fitur sales-nya aktif, tanpa harus mengganti role utama user tersebut.
+421: 
+422: ### 23.3. Dashboard Hibrida (Shared Dashboard Widgets)
+423: - [ ] **Adaptive Sales Widget:** Staf (misal Teknisi) akan melihat widget "Komisi Saya" dan "Referal Saya" di dashboard utama mereka jika fitur sales diaktifkan.
+424: - [ ] **Staff-Sales Profile:** Halaman profil staf yang menunjukkan performa teknis (misal tiket yang selesai) berdampingan dengan performa sales (pelanggan yang didaftarkan).
+425: 
+426: ---
