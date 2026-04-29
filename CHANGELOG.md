@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.1] - 2026-04-29
+- BugFix Subribers ([HEAD])
+
+
+
 ## [1.3.0] - 2026-04-29
 - Add Fitur Sales ([HEAD])
 
