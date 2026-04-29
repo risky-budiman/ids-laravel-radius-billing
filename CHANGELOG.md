@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.2] - 2026-04-29
+- BugFix Changelog  ([HEAD])
+
+
+
 Semua perubahan penting pada proyek ini akan dicatat di file ini.
 
 ## [1.1.1] - 2026-04-29

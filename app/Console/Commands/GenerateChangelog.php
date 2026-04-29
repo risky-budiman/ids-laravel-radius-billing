@@ -42,9 +42,10 @@ class GenerateChangelog extends Command
 
         // Add manual message if provided (e.g. from commit-msg hook)
         if ($this->option('message')) {
+            $cleanMsg = trim(str_ireplace(['#major', '#minor', '#patch'], '', $this->option('message')));
             $newChanges[] = [
                 'hash' => 'HEAD',
-                'subject' => $this->option('message'),
+                'subject' => $cleanMsg,
                 'author' => 'System',
                 'date' => now()->toDateString()
             ];
@@ -60,7 +61,7 @@ class GenerateChangelog extends Command
             if (count($parts) < 2) continue;
 
             $hash = $parts[0];
-            $subject = $parts[1];
+            $subject = trim(str_ireplace(['#major', '#minor', '#patch'], '', $parts[1]));
             $author = $parts[2] ?? 'Unknown';
             $date = $parts[3] ?? now()->toDateString();
 
