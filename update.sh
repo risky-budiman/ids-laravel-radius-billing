@@ -6,11 +6,10 @@ echo "🔄 Starting application update..."
 # 1. Masuk ke mode maintenance
 php artisan down || true
 
-# 2. Tarik kode terbaru
-echo "📥 Pulling latest code from Git..."
-# Reset auto-generated files to avoid conflicts during pull
-git checkout CHANGELOG.md VERSION
-git pull origin main
+# 2. Tarik kode terbaru (Paksa sama dengan GitHub)
+echo "📥 Resetting and pulling latest code from Git..."
+git fetch origin main
+git reset --hard origin/main
 
 # 3. Install/Update dependensi
 echo "📦 Updating dependencies..."
