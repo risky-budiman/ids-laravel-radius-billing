@@ -88,6 +88,8 @@ class Customer extends Authenticatable
         'onu_index',
         'onu_type',
         'password',
+        'current_month_usage_gb',
+        'last_usage_sync',
     ];
 
     protected $hidden = [
@@ -107,6 +109,8 @@ class Customer extends Authenticatable
         'use_tax' => 'boolean',
         'password' => 'hashed',
         'commission_rate' => 'decimal:2',
+        'current_month_usage_gb' => 'decimal:2',
+        'last_usage_sync' => 'datetime',
     ];
 
     /**

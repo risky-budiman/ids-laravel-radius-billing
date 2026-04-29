@@ -24,6 +24,10 @@ class Package extends Model
         'limit_at_down',
         'priority',
         'description',
+        'is_active',
+        'enable_fup',
+        'fup_limit_gb',
+        'fup_speed_limit',
     ];
 
     public function getMikrotikRateLimitAttribute()

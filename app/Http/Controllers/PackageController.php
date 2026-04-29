@@ -37,7 +37,12 @@ class PackageController extends Controller
             'limit_at_down' => 'nullable|string',
             'priority' => 'nullable|integer|min:1|max:8',
             'description' => 'nullable|string',
+            'enable_fup' => 'nullable|boolean',
+            'fup_limit_gb' => 'nullable|integer|min:0',
+            'fup_speed_limit' => 'nullable|string',
         ]);
+
+        $validated['enable_fup'] = $request->has('enable_fup');
 
         DB::transaction(function () use ($validated) {
             $package = Package::create($validated);
@@ -78,7 +83,12 @@ class PackageController extends Controller
             'limit_at_down' => 'nullable|string',
             'priority' => 'nullable|integer|min:1|max:8',
             'description' => 'nullable|string',
+            'enable_fup' => 'nullable|boolean',
+            'fup_limit_gb' => 'nullable|integer|min:0',
+            'fup_speed_limit' => 'nullable|string',
         ]);
+
+        $validated['enable_fup'] = $request->has('enable_fup');
 
         $oldName = $package->name;
 

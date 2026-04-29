@@ -359,8 +359,36 @@ class CustomerController extends Controller
             \App\Jobs\DeprovisionOnuJob::dispatch($oltId, $onuIndex, $onuSn);
         }
 
-        return redirect()->route('customers.index')->with('success', 'Subscriber deleted successfully. OLT Deprovisioning queued.');
+    public function resetFup(Customer $customer)
+    {
+        abort_if(!auth()->user()->isAdmin(), 403);
+
+        $customer->update([
+            'current_month_usage_gb' => 0,
+            'last_usage_sync' => now()
+        ]);
+
+        // Restore normal speed in RADIUS
+        $package = $customer->package;
+        if ($package) {
+            $normalSpeed = $package->mikrotik_rate_limit;
+            \App\Models\Radius\RadReply::updateOrCreate(
+                ['username' => $customer->username, 'attribute' => 'Mikrotik-Rate-Limit'],
+                ['op' => '=', 'value' => $normalSpeed]
+            );
+
+            // Trigger Disconnect so they get normal speed back
+            try {
+                $nas = \App\Models\Radius\Nas::first();
+                if ($nas) {
+                    $coaService = new \App\Services\RadiusCoAService();
+                    $coaService->disconnect($nas->nasipaddress, $nas->secret, $customer->username);
+                }
+            } catch (\Exception $e) {
+                \Log::warning("CoA Disconnect failed: " . $e->getMessage());
+            }
+        }
+
+        return redirect()->back()->with('success', 'FUP usage has been reset and normal speed restored.');
     }
-
-
 }

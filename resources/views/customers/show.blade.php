@@ -110,6 +110,50 @@
                     </div>
                 </div>
             </div>
+
+            <!-- FUP Usage Card (Optional) -->
+            @if(get_setting('enable_fup_module') == '1' && $customer->package && $customer->package->enable_fup)
+            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+                <div class="flex justify-between items-center">
+                    <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest">FUP Statistics</h4>
+                    @php 
+                        $percentage = ($customer->package->fup_limit_gb > 0) ? ($customer->current_month_usage_gb / $customer->package->fup_limit_gb) * 100 : 0;
+                        $colorClass = $percentage >= 100 ? 'bg-rose-500' : ($percentage >= 80 ? 'bg-amber-500' : 'bg-emerald-500');
+                    @endphp
+                    <span class="text-[10px] font-bold {{ $percentage >= 100 ? 'text-rose-600' : 'text-emerald-600' }}">
+                        {{ round($percentage, 1) }}% Used
+                    </span>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                        <div class="{{ $colorClass }} h-2 rounded-full transition-all duration-1000" style="width: {{ min(100, $percentage) }}%"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-2xl">
+                            <p class="text-[9px] text-gray-400 uppercase font-bold">Usage</p>
+                            <p class="text-sm font-black text-gray-900 dark:text-white">{{ $customer->current_month_usage_gb }} GB</p>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-2xl">
+                            <p class="text-[9px] text-gray-400 uppercase font-bold">Limit</p>
+                            <p class="text-sm font-black text-gray-900 dark:text-white">{{ $customer->package->fup_limit_gb }} GB</p>
+                        </div>
+                    </div>
+
+                    <p class="text-[10px] text-gray-400 italic text-center">Last sync: {{ $customer->last_usage_sync ? $customer->last_usage_sync->diffForHumans() : 'Never' }}</p>
+
+                    @if(auth()->user()->isAdmin())
+                    <form action="{{ route('customers.reset-fup', $customer) }}" method="POST" onsubmit="return confirm('Reset usage to 0 and restore normal speed?')">
+                        @csrf
+                        <button type="submit" class="w-full py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[10px] font-black uppercase tracking-widest rounded-xl hover:opacity-90 transition-opacity">
+                            Reset FUP Manually
+                        </button>
+                    </form>
+                    @endif
+                </div>
+            </div>
+            @endif
         </div>
 
         <!-- Main Content: Tabs -->

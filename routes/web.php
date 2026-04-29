@@ -134,6 +134,7 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         Route::get('customers/{customer}/edit', [\App\Http\Controllers\CustomerController::class, 'edit'])->name('customers.edit');
         Route::put('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'update'])->name('customers.update');
         Route::patch('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'update']);
+        Route::post('customers/{customer}/reset-fup', [\App\Http\Controllers\CustomerController::class, 'resetFup'])->name('customers.reset-fup');
     });
 
     // CUSTOMER ACTIVATION: Admin & Teknisi

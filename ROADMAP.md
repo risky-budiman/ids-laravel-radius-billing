@@ -238,10 +238,12 @@ Banyak ISP melakukan ekspansi wilayah dengan cara menggandeng mitra lokal (RT/RW
 
 ---
 
-## FASE 13: Fair Usage Policy (FUP) & Manajemen Kuota
-- [ ] **Data Usage Tracking:** Mengumpulkan data pemakaian *Bandwidth* harian pelanggan (Download/Upload bytes) dari RADIUS *Accounting* (`radacct`) untuk ditampilkan di Dashboard Admin dan Dashboard Pelanggan.
-- [ ] **Auto-Downgrade Speed (FUP):** Logika otomatis untuk menurunkan *Speed Profile* di OLT/Mikrotik (misal dari 50Mbps menjadi 10Mbps) ketika pelanggan telah melewati batas kuota FUP (misal 1 Terabyte) dalam bulan tersebut. Kecepatan akan di-*reset* normal kembali setiap tanggal 1.
-- [ ] **Manual FUP Reset:** Tombol khusus untuk Admin agar dapat mereset kuota FUP pelanggan secara manual ke 0 di pertengahan bulan (misalnya jika pelanggan komplain atau membeli *add-on booster*).
+## FASE 13: Fair Usage Policy (FUP) & Manajemen Kuota [DONE]
+- [x] **FUP Module Toggle:** Fitur untuk mengaktifkan/mematikan pembatasan kuota secara global di menu Settings. [DONE]
+- [x] **Package Quota Definition:** Penambahan kolom batas kuota (GB) dan kecepatan Post-FUP pada profil paket. [DONE]
+- [x] **Data Usage Tracking:** Mengumpulkan data pemakaian *Bandwidth* harian pelanggan (Download/Upload bytes) dari RADIUS *Accounting* (`radacct`) untuk ditampilkan di Dashboard Admin dan Dashboard Pelanggan. [DONE]
+- [x] **Auto-Downgrade Speed (FUP):** Logika otomatis untuk menurunkan *Speed Profile* di OLT/Mikrotik (misal dari 50Mbps menjadi 10Mbps) ketika pelanggan telah melewati batas kuota FUP (misal 1 Terabyte) dalam bulan tersebut. Kecepatan akan di-*reset* normal kembali setiap tanggal 1. [DONE]
+- [x] **Manual FUP Reset:** Tombol khusus untuk Admin agar dapat mereset kuota FUP pelanggan secara manual ke 0 di pertengahan bulan (misalnya jika pelanggan komplain atau membeli *add-on booster*). [DONE]
 
 
 ---
