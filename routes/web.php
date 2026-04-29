@@ -166,6 +166,19 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         Route::delete('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'destroy'])->name('customers.destroy');
     });
 
+    // PARTNER MANAGEMENT (B2B): Admin & Mitra
+    Route::middleware('role:administrator,admin,mitra')->group(function () {
+        Route::get('partners', [\App\Http\Controllers\PartnerController::class, 'index'])->name('partners.index');
+        Route::get('partners/create', [\App\Http\Controllers\PartnerController::class, 'create'])->name('partners.create');
+        Route::post('partners', [\App\Http\Controllers\PartnerController::class, 'store'])->name('partners.store');
+        Route::get('partners/withdrawals', [\App\Http\Controllers\PartnerController::class, 'withdrawals'])->name('partners.withdrawals');
+        Route::post('partners/withdrawals/request', [\App\Http\Controllers\PartnerController::class, 'requestWithdrawal'])->name('partners.withdrawals.request');
+        Route::post('partners/withdrawals/{withdrawal}/process', [\App\Http\Controllers\PartnerController::class, 'processWithdrawal'])->name('partners.withdrawals.process');
+        Route::get('partners/{partner}', [\App\Http\Controllers\PartnerController::class, 'show'])->name('partners.show');
+        Route::get('partners/{partner}/edit', [\App\Http\Controllers\PartnerController::class, 'edit'])->name('partners.edit');
+        Route::put('partners/{partner}', [\App\Http\Controllers\PartnerController::class, 'update'])->name('partners.update');
+    });
+
     // TICKETS: Admin, Teknisi & Sales
     Route::middleware('role:administrator,admin,teknisi,sales')->group(function () {
         Route::resource('tickets', \App\Http\Controllers\TicketController::class);

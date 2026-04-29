@@ -283,4 +283,96 @@ class AccountingService
             return $journal;
         });
     }
+
+    /**
+     * Record a journal entry for partner commission earn
+     * Debit: Beban Komisi Mitra (5110)
+     * Credit: Hutang Komisi Mitra (2104)
+     */
+    public function recordPartnerCommission($commission)
+    {
+        return DB::transaction(function () use ($commission) {
+            $debitAccountId = ChartOfAccount::where('code', '5110')->first()?->id;
+            $creditAccountId = ChartOfAccount::where('code', '2104')->first()?->id;
+
+            if (!$debitAccountId || !$creditAccountId) {
+                \Illuminate\Support\Facades\Log::error("Missing CoA for Partner Commission (5110/2104)");
+                return null;
+            }
+
+            $date = $commission->created_at ?? now();
+            if (is_accounting_locked($date)) {
+                return null;
+            }
+
+            $journal = Journal::create([
+                'date' => $date,
+                'reference' => 'COMM-' . $commission->id,
+                'description' => 'Komisi Mitra: ' . $commission->partner->name . ' - ' . $commission->customer->name . ' (Inv: ' . $commission->invoice->invoice_number . ')',
+                'created_by' => auth()->id() ?? 1,
+            ]);
+
+            JournalItem::create([
+                'journal_id' => $journal->id,
+                'account_id' => $debitAccountId,
+                'debit' => $commission->amount,
+                'credit' => 0,
+            ]);
+
+            JournalItem::create([
+                'journal_id' => $journal->id,
+                'account_id' => $creditAccountId,
+                'debit' => 0,
+                'credit' => $commission->amount,
+            ]);
+
+            return $journal;
+        });
+    }
+
+    /**
+     * Record a journal entry for partner withdrawal payment
+     * Debit: Hutang Komisi Mitra (2104)
+     * Credit: Bank/Kas Account Linked to the withdrawal
+     */
+    public function recordPartnerWithdrawal($withdrawal, $bankAccount)
+    {
+        return DB::transaction(function () use ($withdrawal, $bankAccount) {
+            $debitAccountId = ChartOfAccount::where('code', '2104')->first()?->id;
+            $creditAccountId = $bankAccount->chart_of_account_id ?? ChartOfAccount::where('code', '1102')->first()->id;
+
+            if (!$debitAccountId || !$creditAccountId) {
+                \Illuminate\Support\Facades\Log::error("Missing CoA for Partner Withdrawal (2104/Bank)");
+                return null;
+            }
+
+            $date = $withdrawal->payment_date ?? now();
+            if (is_accounting_locked($date)) {
+                return null;
+            }
+
+            $journal = Journal::create([
+                'date' => $date,
+                'reference' => 'WD-' . $withdrawal->id,
+                'description' => 'Pencairan Komisi Mitra: ' . $withdrawal->partner->name . ' - Reff: ' . ($withdrawal->notes ?? $withdrawal->id),
+                'created_by' => auth()->id() ?? 1,
+            ]);
+
+            JournalItem::create([
+                'journal_id' => $journal->id,
+                'account_id' => $debitAccountId,
+                'debit' => $withdrawal->amount,
+                'credit' => 0,
+            ]);
+
+            JournalItem::create([
+                'journal_id' => $journal->id,
+                'account_id' => $creditAccountId,
+                'debit' => 0,
+                'credit' => $withdrawal->amount,
+            ]);
+
+            return $journal;
+        });
+    }
 }

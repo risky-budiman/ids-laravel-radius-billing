@@ -123,56 +123,13 @@ class InvoiceController extends Controller
     public function update(Request $request, Invoice $invoice)
     {
         if ($request->has('mark_as_paid')) {
-            DB::transaction(function() use ($invoice, $request) {
-                $invoice->update([
-                    'status' => 'paid',
-                    'paid_at' => now(),
-                ]);
-
-                // Record to Treasury
+            try {
                 $bankAccountId = $request->input('bank_account_id');
-                
-                // If manual payment and no account selected, default to KAS TUNAI
-                if (!$bankAccountId) {
-                    $cashAccount = \App\Models\BankAccount::firstOrCreate(
-                        ['bank_name' => 'KAS TUNAI'],
-                        ['account_name' => 'Kas Kantor Utama', 'type' => 'cash', 'is_active' => true]
-                    );
-                    $bankAccountId = $cashAccount->id;
-                }
-
-                \App\Models\BankTransaction::create([
-                    'bank_account_id' => $bankAccountId,
-                    'type' => 'deposit',
-                    'amount' => $invoice->amount,
-                    'description' => '[Pembayaran Invoice] ' . $invoice->invoice_number . ' - Pelanggan: ' . $invoice->customer->name,
-                    'transaction_date' => now(),
-                    'created_by' => auth()->id(),
-                ]);
-
-                $customer = $invoice->customer;
-                if ($customer) {
-                    // Reactivate if suspended
-                    $customer->update([
-                        'is_active' => true,
-                        'status' => \App\Models\Customer::STATUS_ACTIVE
-                    ]);
-
-                    // For Renewal method, we sync dates ON payment
-                    if ($customer->billing_method === 'renewal') {
-                        $customer->syncBillingDates();
-                    }
-                }
-
-                // Auto-Journal: Invoice Payment
-                try {
-                    $bankAccount = \App\Models\BankAccount::find($bankAccountId);
-                    (new AccountingService())->recordInvoicePayment($invoice, $bankAccount);
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error("Auto-journal failed for PAY-{$invoice->invoice_number}: " . $e->getMessage());
-                }
-            });
-            return redirect()->route('invoices.index')->with('success', 'Invoice marked as paid and customer reactivated.');
+                app(\App\Services\InvoiceService::class)->markAsPaid($invoice, $bankAccountId);
+                return redirect()->route('invoices.index')->with('success', 'Invoice marked as paid and customer reactivated.');
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error', 'Error processing payment: ' . $e->getMessage());
+            }
         } elseif ($request->has('cancel_payment')) {
             $invoice->update([
                 'status' => 'unpaid',

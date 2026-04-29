@@ -23,6 +23,11 @@ class User extends Authenticatable
         'role',
         'is_active',
         'profile_photo',
+        'commission_rate',
+        'commission_type',
+        'bank_name',
+        'bank_account_number',
+        'bank_account_name',
     ];
 
     protected $hidden = [
@@ -36,6 +41,7 @@ class User extends Authenticatable
     const ROLE_TEKNISI = 'teknisi';
     const ROLE_KASIR = 'kasir';
     const ROLE_SALES = 'sales';
+    const ROLE_MITRA = 'mitra';
     const ROLE_CUSTOMER = 'customer';
 
     /**
@@ -57,6 +63,7 @@ class User extends Authenticatable
     public function isTeknisi(): bool { return $this->role === self::ROLE_TEKNISI; }
     public function isKasir(): bool { return $this->role === self::ROLE_KASIR; }
     public function isSales(): bool { return $this->role === self::ROLE_SALES; }
+    public function isMitra(): bool { return $this->role === self::ROLE_MITRA; }
     public function isCustomer(): bool { return $this->role === self::ROLE_CUSTOMER; }
 
     /**

@@ -164,6 +164,44 @@
                 </div>
             </div>
 
+            <!-- Section: Partner & Reseller -->
+            @if(get_setting('enable_partner_module') == '1' && auth()->user()->isAdmin())
+            <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700 bg-indigo-50/20 dark:bg-indigo-900/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-800">
+                <h3 class="text-lg font-semibold text-indigo-900 dark:text-indigo-100 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Partner & Reseller Referral
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-1">
+                        <x-input-label for="partner_id" :value="__('Select Partner')" />
+                        <select id="partner_id" name="partner_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm">
+                            <option value="">-- No Partner (Direct) --</option>
+                            @foreach($partners as $p)
+                                <option value="{{ $p->id }}" {{ old('partner_id') == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-[10px] text-gray-500 italic">Assign this customer to a partner for commission tracking.</p>
+                    </div>
+
+                    <div class="md:col-span-1">
+                        <x-input-label for="commission_rate" :value="__('Override Commission Rate')" />
+                        <x-text-input id="commission_rate" name="commission_rate" type="number" step="0.01" class="mt-1 block w-full" :value="old('commission_rate')" placeholder="Optional override" />
+                        <p class="mt-1 text-[10px] text-gray-500 italic">Leave empty to use partner's default rate.</p>
+                    </div>
+
+                    <div class="md:col-span-1">
+                        <x-input-label for="commission_type" :value="__('Override Rate Type')" />
+                        <select id="commission_type" name="commission_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm">
+                            <option value="">-- Use Partner Default --</option>
+                            <option value="percentage" {{ old('commission_type') == 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
+                            <option value="fixed" {{ old('commission_type') == 'fixed' ? 'selected' : '' }}>Fixed Amount</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <!-- Section: Subscription -->
             <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Subscription Plan</h3>

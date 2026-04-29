@@ -98,7 +98,42 @@
                                 <textarea id="company_address" name="company_address" rows="3" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ $settings['company_address']->value ?? '' }}</textarea>
                             </div>
 
-                            <div class="md:col-span-2 mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
+                        <div class="md:col-span-2 mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
+                            <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                                Advanced Modules
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div>
+                                            <h5 class="text-sm font-bold text-gray-900 dark:text-white">B2B Partner Management</h5>
+                                            <p class="text-xs text-gray-500 mt-1">Enable agent/reseller system with automated commissions.</p>
+                                        </div>
+                                        <div class="flex items-center space-x-3">
+                                            <input type="checkbox" id="enable_partner_module" name="enable_partner_module" value="1" {{ (isset($settings['enable_partner_module']) && $settings['enable_partner_module']->value == '1') ? 'checked' : '' }} class="w-6 h-6 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 cursor-pointer">
+                                            <label for="enable_partner_module" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer">Aktifkan Modul</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-4 mt-6">
+                                        <div>
+                                            <x-input-label for="default_commission_rate" :value="__('Default Rate')" />
+                                            <x-text-input id="default_commission_rate" name="default_commission_rate" type="number" step="0.01" class="mt-1 block w-full text-xs" :value="$settings['default_commission_rate']->value ?? '10.00'" />
+                                        </div>
+                                        <div>
+                                            <x-input-label for="default_commission_type" :value="__('Rate Type')" />
+                                            <select id="default_commission_type" name="default_commission_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-xs">
+                                                <option value="percentage" {{ (isset($settings['default_commission_type']) && $settings['default_commission_type']->value == 'percentage') ? 'selected' : '' }}>Percentage (%)</option>
+                                                <option value="fixed" {{ (isset($settings['default_commission_type']) && $settings['default_commission_type']->value == 'fixed') ? 'selected' : '' }}>Fixed Amount (Nominal)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2 mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
                                 <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center">
                                     <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
                                     Ticket Numbering Prefixes

@@ -16,8 +16,6 @@ class SettingController extends Controller
 
     public function update(Request $request)
     {
-        $data = $request->except(['_token', 'company_logo', 'app_icon']);
-
         // Handle Logo Upload
         if ($request->hasFile('company_logo')) {
             $path = $request->file('company_logo')->store('company', 'public');
@@ -34,6 +32,16 @@ class SettingController extends Controller
                 ['key' => 'app_icon'],
                 ['value' => $path, 'type' => 'image']
             );
+        }
+
+        $data = $request->except(['_token', 'company_logo', 'app_icon']);
+        
+        // Handle explicit checkbox booleans
+        $checkboxes = ['enable_partner_module'];
+        foreach ($checkboxes as $cb) {
+            if (!$request->has($cb)) {
+                $data[$cb] = '0';
+            }
         }
 
         foreach ($data as $key => $value) {

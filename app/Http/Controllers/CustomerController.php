@@ -8,6 +8,7 @@ use App\Models\Radius\RadCheck;
 use App\Models\Radius\RadUserGroup;
 use App\Models\Radius\Nas;
 use App\Services\RadiusCoAService;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,7 +18,13 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        $customers = Customer::with('package')->paginate(10);
+        $query = Customer::with('package');
+        
+        if (auth()->user()->isMitra()) {
+            $query->where('partner_id', auth()->id());
+        }
+
+        $customers = $query->paginate(10);
         
         // Fetch passwords for these customers from radcheck
         $usernames = $customers->pluck('username')->toArray();
@@ -36,16 +43,24 @@ class CustomerController extends Controller
     public function map()
     {
         // Simple query: just get those that have something in latitude
-        $customers = Customer::where('latitude', '!=', '')
+        $query = Customer::where('latitude', '!=', '')
             ->whereNotNull('latitude')
-            ->with('package')
-            ->get();
+            ->with('package');
+
+        if (auth()->user()->isMitra()) {
+            $query->where('partner_id', auth()->id());
+        }
+
+        $customers = $query->get();
             
         return view('customers.map', compact('customers'));
     }
 
     public function show(Customer $customer)
     {
+        if (auth()->user()->isMitra() && $customer->partner_id !== auth()->id()) {
+            abort(403);
+        }
         $customer->load('package');
         
         // Fetch recent session history from RADIUS
@@ -66,7 +81,8 @@ class CustomerController extends Controller
         $olts = \App\Models\Olt::where('is_active', true)->get();
         $odcs = \App\Models\Odc::all();
         $odps = \App\Models\Odp::all();
-        return view('customers.create', compact('packages', 'regions', 'stos', 'stbs', 'olts', 'odcs', 'odps'));
+        $partners = User::where('role', User::ROLE_MITRA)->get();
+        return view('customers.create', compact('packages', 'regions', 'stos', 'stbs', 'olts', 'odcs', 'odps', 'partners'));
     }
 
     public function store(Request $request)
@@ -94,6 +110,9 @@ class CustomerController extends Controller
             'longitude' => 'nullable|numeric',
             'installation_fee' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
+            'partner_id' => 'nullable|exists:users,id',
+            'commission_rate' => 'nullable|numeric|min:0',
+            'commission_type' => 'nullable|in:percentage,fixed',
         ]);
 
         $package = Package::find($validated['package_id']);
@@ -147,6 +166,9 @@ class CustomerController extends Controller
                 'cpe_model' => $validated['cpe_model'] ?? null,
                 'cpe_mac' => $validated['cpe_mac'] ?? null,
                 'description' => $validated['description'] ?? null,
+                'partner_id' => $validated['partner_id'] ?? null,
+                'commission_rate' => $validated['commission_rate'] ?? null,
+                'commission_type' => $validated['commission_type'] ?? null,
             ], $photos));
 
             // Create in RADIUS (Authentication)
@@ -187,8 +209,9 @@ class CustomerController extends Controller
         $olts = \App\Models\Olt::where('is_active', true)->get();
         $odcs = \App\Models\Odc::all();
         $odps = \App\Models\Odp::all();
+        $partners = User::where('role', User::ROLE_MITRA)->get();
 
-        return view('customers.edit', compact('customer', 'packages', 'regions', 'stos', 'stbs', 'olts', 'odcs', 'odps'));
+        return view('customers.edit', compact('customer', 'packages', 'regions', 'stos', 'stbs', 'olts', 'odcs', 'odps', 'partners'));
     }
 
     public function update(Request $request, Customer $customer)
@@ -223,6 +246,9 @@ class CustomerController extends Controller
             'longitude' => 'nullable|numeric',
             'installation_fee' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
+            'partner_id' => 'nullable|exists:users,id',
+            'commission_rate' => 'nullable|numeric|min:0',
+            'commission_type' => 'nullable|in:percentage,fixed',
         ]);
 
         $latitude = $validated['latitude'] ?? null;
@@ -240,6 +266,9 @@ class CustomerController extends Controller
             $updateData['is_active'] = $isActive;
             $updateData['latitude'] = $latitude;
             $updateData['longitude'] = $longitude;
+            $updateData['partner_id'] = $validated['partner_id'] ?? null;
+            $updateData['commission_rate'] = $validated['commission_rate'] ?? null;
+            $updateData['commission_type'] = $validated['commission_type'] ?? null;
             $updateData['use_tax'] = $request->has('use_tax');
 
             // Handle File Uploads

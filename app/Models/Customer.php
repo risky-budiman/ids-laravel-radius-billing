@@ -42,6 +42,9 @@ class Customer extends Authenticatable
         'region_code',
         'sto_code',
         'stb_code',
+        'partner_id',
+        'commission_rate',
+        'commission_type',
         'username',
         'ktp',
         'name',
@@ -103,6 +106,7 @@ class Customer extends Authenticatable
         'is_active' => 'boolean',
         'use_tax' => 'boolean',
         'password' => 'hashed',
+        'commission_rate' => 'decimal:2',
     ];
 
     /**
@@ -219,6 +223,11 @@ class Customer extends Authenticatable
     public function signalCache()
     {
         return $this->hasOne(CustomerSignalCache::class);
+    }
+
+    public function partner()
+    {
+        return $this->belongsTo(User::class, 'partner_id');
     }
 
     // Removed user() relationship as customers now have their own credentials

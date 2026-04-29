@@ -51,13 +51,7 @@ class PaymentWebhookController extends Controller
         // Handle Status
         if (in_array($transactionStatus, ['settlement', 'capture'])) {
             if ($invoice->status !== 'paid') {
-                DB::transaction(function() use ($invoice) {
-                    $invoice->update([
-                        'status' => 'paid',
-                        'paid_at' => now(),
-                    ]);
-
-                    // 1. Record to PG Bank Account
+                try {
                     $pgAccount = BankAccount::where('bank_name', 'MIDTRANS')->first();
                     if (!$pgAccount) {
                         $pgAccount = BankAccount::create([
@@ -67,33 +61,11 @@ class PaymentWebhookController extends Controller
                             'is_active' => true,
                         ]);
                     }
-
-                    BankTransaction::create([
-                        'bank_account_id' => $pgAccount->id,
-                        'type' => 'deposit',
-                        'amount' => $invoice->amount,
-                        'description' => '[PG SETTLEMENT] Midtrans - ' . $invoice->invoice_number,
-                        'transaction_date' => now(),
-                    ]);
-
-                    // 2. Reactivate Customer if suspended
-                    $customer = $invoice->customer;
-                    if ($customer) {
-                        $customer->update([
-                            'is_active' => true,
-                            'status' => Customer::STATUS_ACTIVE,
-                        ]);
-
-                        // Handle Installation specific marking
-                        if (str_contains($invoice->invoice_number, 'INV-INST')) {
-                            $customer->update([
-                                'installation_paid_at' => now(),
-                                'installation_bank_account_id' => $pgAccount->id,
-                                'activation_grace_expires_at' => null, // Clear grace period
-                            ]);
-                        }
-                    }
-                });
+                    
+                    app(\App\Services\InvoiceService::class)->markAsPaid($invoice, $pgAccount->id);
+                } catch (\Exception $e) {
+                    Log::error('Webhook Payment Processing Failed: ' . $e->getMessage());
+                }
             }
         }
 

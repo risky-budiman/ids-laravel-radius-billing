@@ -23,7 +23,8 @@ class UserController extends Controller
             User::ROLE_ADMIN => 'Admin',
             User::ROLE_TEKNISI => 'Teknisi',
             User::ROLE_KASIR => 'Kasir',
-            User::ROLE_SALES => 'Sales'
+            User::ROLE_SALES => 'Sales',
+            User::ROLE_MITRA => 'Partner / Mitra'
         ];
         return view('users.create', compact('roles'));
     }
@@ -34,7 +35,12 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_TEKNISI, User::ROLE_KASIR, User::ROLE_SALES])],
+            'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_TEKNISI, User::ROLE_KASIR, User::ROLE_SALES, User::ROLE_MITRA])],
+            'commission_rate' => 'nullable|numeric|min:0',
+            'commission_type' => 'nullable|in:percentage,fixed',
+            'bank_name' => 'nullable|string',
+            'bank_account_number' => 'nullable|string',
+            'bank_account_name' => 'nullable|string',
         ]);
 
         User::create([
@@ -42,6 +48,11 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
+            'commission_rate' => $request->commission_rate,
+            'commission_type' => $request->commission_type,
+            'bank_name' => $request->bank_name,
+            'bank_account_number' => $request->bank_account_number,
+            'bank_account_name' => $request->bank_account_name,
             'is_active' => true,
         ]);
 
@@ -55,7 +66,8 @@ class UserController extends Controller
             User::ROLE_ADMIN => 'Admin',
             User::ROLE_TEKNISI => 'Teknisi',
             User::ROLE_KASIR => 'Kasir',
-            User::ROLE_SALES => 'Sales'
+            User::ROLE_SALES => 'Sales',
+            User::ROLE_MITRA => 'Partner / Mitra'
         ];
         return view('users.edit', compact('user', 'roles'));
     }
@@ -66,13 +78,23 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|string|min:8|confirmed',
-            'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_TEKNISI, User::ROLE_KASIR, User::ROLE_SALES])],
+            'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_TEKNISI, User::ROLE_KASIR, User::ROLE_SALES, User::ROLE_MITRA])],
+            'commission_rate' => 'nullable|numeric|min:0',
+            'commission_type' => 'nullable|in:percentage,fixed',
+            'bank_name' => 'nullable|string',
+            'bank_account_number' => 'nullable|string',
+            'bank_account_name' => 'nullable|string',
         ]);
 
         $data = [
             'name' => $request->name,
             'email' => $request->email,
             'role' => $request->role,
+            'commission_rate' => $request->commission_rate,
+            'commission_type' => $request->commission_type,
+            'bank_name' => $request->bank_name,
+            'bank_account_number' => $request->bank_account_number,
+            'bank_account_name' => $request->bank_account_name,
         ];
 
         if ($request->filled('password')) {

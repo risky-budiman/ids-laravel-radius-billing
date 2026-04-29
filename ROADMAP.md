@@ -231,10 +231,10 @@ Sistem *Enterprise* kini memiliki portal mandiri yang premium. Pelanggan dapat m
 
 ---
 
-## FASE 12: Manajemen Kemitraan & Reseller (B2B)
+## FASE 12: Manajemen Kemitraan & Reseller (B2B) [SELESAI]
 Banyak ISP melakukan ekspansi wilayah dengan cara menggandeng mitra lokal (RT/RW Net atau Agen).
-- [ ] **Sistem Komisi Mitra:** Menambahkan level *User Role* baru (Mitra/Agen). Sistem akan otomatis menghitung pembagian komisi (misal: 15% dari tagihan) setiap kali pelanggan yang berada di bawah naungan mitra tersebut membayar tagihan.
-- [ ] **Pencairan Saldo (Withdrawal):** Fitur untuk mencatat dan menjurnal proses pencairan komisi bulanan dari kas utama perusahaan ke rekening agen/mitra.
+- [x] **Sistem Komisi Mitra:** Menambahkan level *User Role* baru (Mitra/Agen). Sistem akan otomatis menghitung pembagian komisi (misal: 15% dari tagihan) setiap kali pelanggan yang berada di bawah naungan mitra tersebut membayar tagihan.
+- [x] **Pencairan Saldo (Withdrawal):** Fitur untuk mencatat dan menjurnal proses pencairan komisi bulanan dari kas utama perusahaan ke rekening agen/mitra.
 
 ---
 
