@@ -13,7 +13,7 @@ class GenerateChangelog extends Command
      *
      * @var string
      */
-    protected $signature = 'app:generate-changelog {--dry-run : Only show changes without writing}';
+    protected $signature = 'app:generate-changelog {--dry-run : Only show changes without writing} {--message= : Include this message as a manual entry}';
 
     /**
      * The console command description.
@@ -37,7 +37,20 @@ class GenerateChangelog extends Command
         $gitCommand = "git log " . ($since ? "--since=\"{$since}\" " : "") . "--pretty=format:\"%h|%s|%an|%ad\" --date=short";
         $output = shell_exec($gitCommand);
 
-        if (!$output) {
+        $lines = $output ? explode("\n", trim($output)) : [];
+        $newChanges = [];
+
+        // Add manual message if provided (e.g. from commit-msg hook)
+        if ($this->option('message')) {
+            $newChanges[] = [
+                'hash' => 'HEAD',
+                'subject' => $this->option('message'),
+                'author' => 'System',
+                'date' => now()->toDateString()
+            ];
+        }
+
+        if (!$output && empty($newChanges)) {
             $this->warn('No new changes found since last release.');
             return;
         }
