@@ -180,6 +180,20 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         Route::put('partners/{partner}', [\App\Http\Controllers\PartnerController::class, 'update'])->name('partners.update');
     });
 
+    // SALES COMMISSION MANAGEMENT: Admin only
+    Route::middleware('role:administrator,admin')->group(function () {
+        Route::get('sales-commissions', [\App\Http\Controllers\Admin\SalesCommissionController::class, 'index'])->name('sales-commissions.index');
+        Route::get('sales-commissions/{sales}', [\App\Http\Controllers\Admin\SalesCommissionController::class, 'show'])->name('sales-commissions.show');
+        Route::post('sales-commissions/{sales}/withdrawals', [\App\Http\Controllers\Admin\SalesCommissionController::class, 'storeWithdrawal'])->name('sales-commissions.withdrawals.store');
+    });
+
+    // SALES STAFF PORTAL (Personal Ledger & Dashboard)
+    Route::middleware('role:sales')->prefix('sales')->name('sales.')->group(function () {
+        Route::get('dashboard', [\App\Http\Controllers\Sales\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('ledger', [\App\Http\Controllers\Sales\DashboardController::class, 'ledger'])->name('ledger');
+        Route::get('my-customers', [\App\Http\Controllers\Sales\DashboardController::class, 'customers'])->name('customers');
+    });
+
     // TICKETS: Admin, Teknisi & Sales
     Route::middleware('role:administrator,admin,teknisi,sales')->group(function () {
         Route::resource('tickets', \App\Http\Controllers\TicketController::class);

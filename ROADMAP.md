@@ -278,14 +278,14 @@ Fase ini bertujuan untuk meningkatkan keamanan dan relevansi data bagi setiap pe
 
 ## FASE 16: Sales Force & Staff Incentive System
 Fase ini bertujuan untuk memberikan penghargaan kepada tim Sales internal atas setiap pelanggan yang berhasil didaftarkan.
-- [ ] **Sales Attribution:** Penambahan field `sales_id` di tabel pelanggan untuk melacak performa masing-masing staff sales.
-- [ ] **Global Sales Commission Settings:** Pengaturan default komisi sales (Persentase atau Fixed) yang dapat dikelola oleh Administrator.
-- [ ] **Sales Incentive Logic:** Perhitungan bonus otomatis yang terintegrasi dengan sistem Billing saat invoice pelanggan dibayar.
-- [ ] **Detailed Commission Ledger Table:** Pembuatan tabel database khusus untuk mencatat rincian setiap transaksi komisi (Referensi Tagihan, Nominal Dasar, Nilai Komisi, dan Status Pembayaran ke Sales) guna audit transparansi.
-- [ ] **Sales Wallet & Ledger:** Pencatatan saldo berjalan (Balance) dan riwayat bonus sales.
-- [ ] **Withdrawal & Settlement System:** Fitur bagi Admin untuk memproses pembayaran komisi. Mendukung penarikan sebagian (**Partial Withdrawal**) sesuai nominal yang diinginkan sales, di mana sisa dana tetap tersimpan sebagai saldo berjalan.
-- [ ] **Sales Dashboard:** Antarmuka bagi staff sales untuk memantau target, daftar pelanggan yang direferensikan, dan total pendapatan bonus mereka.
-- [ ] **Accounting Journal Integration:** Otomatisasi pencatatan jurnal akuntansi (Beban Insentif vs Hutang Insentif) saat komisi terbentuk dan saat pembayaran dilakukan ke sales.
+- [x] **Sales Attribution:** Penambahan field `sales_id` di tabel pelanggan untuk melacak performa masing-masing staff sales.
+- [x] **Global Sales Commission Settings:** Pengaturan default komisi sales (Persentase atau Fixed) yang dapat dikelola oleh Administrator.
+- [x] **Sales Incentive Logic:** Perhitungan bonus otomatis yang terintegrasi dengan sistem Billing saat invoice pelanggan dibayar.
+- [x] **Detailed Commission Ledger Table:** Pembuatan tabel database khusus untuk mencatat rincian setiap transaksi komisi (Referensi Tagihan, Nominal Dasar, Nilai Komisi, dan Status Pembayaran ke Sales) guna audit transparansi.
+- [x] **Sales Wallet & Ledger:** Pencatatan saldo berjalan (Balance) dan riwayat bonus sales.
+- [x] **Withdrawal & Settlement System:** Fitur bagi Admin untuk memproses pembayaran komisi. Mendukung penarikan sebagian (**Partial Withdrawal**) sesuai nominal yang diinginkan sales, di mana sisa dana tetap tersimpan sebagai saldo berjalan.
+- [x] **Sales Dashboard:** Antarmuka bagi staff sales untuk memantau target, daftar pelanggan yang direferensikan, dan total pendapatan bonus mereka.
+- [x] **Accounting Journal Integration:** Otomatisasi pencatatan jurnal akuntansi (Beban Insentif vs Hutang Insentif) saat komisi terbentuk dan saat pembayaran dilakukan ke sales.
 
 ### 15.2. Personalisasi Dashboard (Role-Based Widgets)
 - [ ] **Finance Dashboard:** Menampilkan widget khusus keuangan (Pendapatan hari ini, Invoice menunggak, Saldo Kas/Bank) untuk Role Kasir/Finance.
@@ -299,14 +299,14 @@ Fase ini bertujuan untuk memberikan penghargaan kepada tim Sales internal atas s
 
 ---
 
-## FASE 16: Advanced Accounting & Financial Integrity
+## FASE 17: Advanced Accounting & Financial Integrity
 Fase ini bertujuan untuk menstandarisasi modul keuangan agar setara dengan software akuntansi profesional (ERP) dan memudahkan audit keuangan eksternal.
 
-### 16.1. Konfigurasi Akun Sistem (System Accounts Mapping)
+### 17.1. Konfigurasi Akun Sistem (System Accounts Mapping)
 - [ ] **Dynamic Account Mapping:** Menghilangkan hardcode kode akun (seperti 1103, 4101) di dalam kode program dan memindahkannya ke halaman pengaturan. Admin bisa menentukan akun mana yang bertindak sebagai "Piutang Pelanggan", "Pendapatan", dll.
 - [ ] **Multi-Currency Baseline:** Persiapan struktur database untuk mendukung transaksi dalam mata uang asing (USD/SGD) dan perhitungan selisih kurs.
 
-### 16.2. Otomatisasi Biaya Admin & MDR
+### 17.2. Otomatisasi Biaya Admin & MDR
 - [ ] **Payment Gateway MDR Handling:** Fitur untuk memisahkan otomatis biaya admin (MDR) saat pembayaran diterima via Payment Gateway (Misal: Bayar 100rb, masuk Bank 98rb, Beban Admin 2rb) dalam satu jurnal.
 - [ ] **Bank Fee Reconciliation:** Modul untuk mencatat beban administrasi bank bulanan secara kolektif saat proses rekonsiliasi.
 

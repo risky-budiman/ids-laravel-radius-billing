@@ -90,6 +90,9 @@ class Customer extends Authenticatable
         'password',
         'current_month_usage_gb',
         'last_usage_sync',
+        'sales_id',
+        'sales_commission_rate',
+        'sales_commission_type',
     ];
 
     protected $hidden = [
@@ -234,5 +237,13 @@ class Customer extends Authenticatable
         return $this->belongsTo(User::class, 'partner_id');
     }
 
-    // Removed user() relationship as customers now have their own credentials
+    public function sales()
+    {
+        return $this->belongsTo(User::class, 'sales_id');
+    }
+
+    public function salesCommissions()
+    {
+        return $this->hasMany(SalesCommission::class);
+    }
 }

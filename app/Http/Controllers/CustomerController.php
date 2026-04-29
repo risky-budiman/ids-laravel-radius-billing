@@ -82,7 +82,8 @@ class CustomerController extends Controller
         $odcs = \App\Models\Odc::all();
         $odps = \App\Models\Odp::all();
         $partners = User::where('role', User::ROLE_MITRA)->get();
-        return view('customers.create', compact('packages', 'regions', 'stos', 'stbs', 'olts', 'odcs', 'odps', 'partners'));
+        $sales = User::where('role', User::ROLE_SALES)->get();
+        return view('customers.create', compact('packages', 'regions', 'stos', 'stbs', 'olts', 'odcs', 'odps', 'partners', 'sales'));
     }
 
     public function store(Request $request)
@@ -113,6 +114,9 @@ class CustomerController extends Controller
             'partner_id' => 'nullable|exists:users,id',
             'commission_rate' => 'nullable|numeric|min:0',
             'commission_type' => 'nullable|in:percentage,fixed',
+            'sales_id' => 'nullable|exists:users,id',
+            'sales_commission_rate' => 'nullable|numeric|min:0',
+            'sales_commission_type' => 'nullable|in:percentage,fixed',
         ]);
 
         $package = Package::find($validated['package_id']);
@@ -169,6 +173,9 @@ class CustomerController extends Controller
                 'partner_id' => $validated['partner_id'] ?? null,
                 'commission_rate' => $validated['commission_rate'] ?? null,
                 'commission_type' => $validated['commission_type'] ?? null,
+                'sales_id' => $validated['sales_id'] ?? null,
+                'sales_commission_rate' => $validated['sales_commission_rate'] ?? null,
+                'sales_commission_type' => $validated['sales_commission_type'] ?? null,
             ], $photos));
 
             // Create in RADIUS (Authentication)
@@ -210,8 +217,9 @@ class CustomerController extends Controller
         $odcs = \App\Models\Odc::all();
         $odps = \App\Models\Odp::all();
         $partners = User::where('role', User::ROLE_MITRA)->get();
+        $sales = User::where('role', User::ROLE_SALES)->get();
 
-        return view('customers.edit', compact('customer', 'packages', 'regions', 'stos', 'stbs', 'olts', 'odcs', 'odps', 'partners'));
+        return view('customers.edit', compact('customer', 'packages', 'regions', 'stos', 'stbs', 'olts', 'odcs', 'odps', 'partners', 'sales'));
     }
 
     public function update(Request $request, Customer $customer)
@@ -249,6 +257,9 @@ class CustomerController extends Controller
             'partner_id' => 'nullable|exists:users,id',
             'commission_rate' => 'nullable|numeric|min:0',
             'commission_type' => 'nullable|in:percentage,fixed',
+            'sales_id' => 'nullable|exists:users,id',
+            'sales_commission_rate' => 'nullable|numeric|min:0',
+            'sales_commission_type' => 'nullable|in:percentage,fixed',
         ]);
 
         $latitude = $validated['latitude'] ?? null;
@@ -269,6 +280,9 @@ class CustomerController extends Controller
             $updateData['partner_id'] = $validated['partner_id'] ?? null;
             $updateData['commission_rate'] = $validated['commission_rate'] ?? null;
             $updateData['commission_type'] = $validated['commission_type'] ?? null;
+            $updateData['sales_id'] = $validated['sales_id'] ?? null;
+            $updateData['sales_commission_rate'] = $validated['sales_commission_rate'] ?? null;
+            $updateData['sales_commission_type'] = $validated['sales_commission_type'] ?? null;
             $updateData['use_tax'] = $request->has('use_tax');
 
             // Handle File Uploads
@@ -358,6 +372,9 @@ class CustomerController extends Controller
         if ($oltId && $onuIndex) {
             \App\Jobs\DeprovisionOnuJob::dispatch($oltId, $onuIndex, $onuSn);
         }
+
+        return redirect()->route('customers.index')->with('success', 'Subscriber deleted successfully.');
+    }
 
     public function resetFup(Customer $customer)
     {

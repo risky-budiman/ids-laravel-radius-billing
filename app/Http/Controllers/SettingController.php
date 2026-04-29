@@ -37,7 +37,7 @@ class SettingController extends Controller
         $data = $request->except(['_token', 'company_logo', 'app_icon']);
         
         // Handle explicit checkbox booleans
-        $checkboxes = ['enable_partner_module', 'enable_fup_module'];
+        $checkboxes = ['enable_partner_module', 'enable_fup_module', 'enable_sales_commission_module'];
         foreach ($checkboxes as $cb) {
             if (!$request->has($cb)) {
                 $data[$cb] = '0';

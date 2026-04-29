@@ -146,6 +146,34 @@
                                     </div>
                                     <p class="text-[10px] text-gray-400 italic mt-8">Modul ini memungkinkan sistem mendeteksi pemakaian kuota dan menurunkan kecepatan secara otomatis.</p>
                                 </div>
+
+                                <!-- Card 3: Sales Force Commission -->
+                                <div class="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div>
+                                            <h5 class="text-sm font-bold text-gray-900 dark:text-white">Internal Sales Incentive</h5>
+                                            <p class="text-xs text-gray-500 mt-1">Enable commission for internal sales staff.</p>
+                                        </div>
+                                        <div class="flex items-center space-x-3">
+                                            <input type="checkbox" id="enable_sales_commission_module" name="enable_sales_commission_module" value="1" {{ (isset($settings['enable_sales_commission_module']) && $settings['enable_sales_commission_module']->value == '1') ? 'checked' : '' }} class="w-6 h-6 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 cursor-pointer">
+                                            <label for="enable_sales_commission_module" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer">Aktifkan Sales Fee</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-4 mt-6">
+                                        <div>
+                                            <x-input-label for="default_sales_commission_rate" :value="__('Default Rate')" />
+                                            <x-text-input id="default_sales_commission_rate" name="default_sales_commission_rate" type="number" step="0.01" class="mt-1 block w-full text-xs" :value="$settings['default_sales_commission_rate']->value ?? '5.00'" />
+                                        </div>
+                                        <div>
+                                            <x-input-label for="default_sales_commission_type" :value="__('Type')" />
+                                            <select name="default_sales_commission_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm text-xs">
+                                                <option value="percentage" {{ ($settings['default_sales_commission_type']->value ?? 'percentage') == 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
+                                                <option value="fixed" {{ ($settings['default_sales_commission_type']->value ?? 'percentage') == 'fixed' ? 'selected' : '' }}>Fixed Amount</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

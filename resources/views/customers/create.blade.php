@@ -202,6 +202,44 @@
             </div>
             @endif
 
+            <!-- Section: Internal Sales Referral -->
+            @if(get_setting('enable_sales_commission_module') == '1' && auth()->user()->isAdmin())
+            <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700 bg-emerald-50/20 dark:bg-emerald-900/10 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+                <h3 class="text-lg font-semibold text-emerald-900 dark:text-emerald-100 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m.599-1H11.401M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    Internal Sales Referral (Staff)
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-1">
+                        <x-input-label for="sales_id" :value="__('Select Sales Staff')" />
+                        <select id="sales_id" name="sales_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-emerald-500 rounded-md shadow-sm">
+                            <option value="">-- No Sales (Direct / Walk-in) --</option>
+                            @foreach($sales as $s)
+                                <option value="{{ $s->id }}" {{ old('sales_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-[10px] text-gray-500 italic">Assign this customer to a sales staff for incentive tracking.</p>
+                    </div>
+
+                    <div class="md:col-span-1">
+                        <x-input-label for="sales_commission_rate" :value="__('Override Incentive Rate')" />
+                        <x-text-input id="sales_commission_rate" name="sales_commission_rate" type="number" step="0.01" class="mt-1 block w-full" :value="old('sales_commission_rate')" placeholder="Optional override" />
+                        <p class="mt-1 text-[10px] text-gray-500 italic">Leave empty to use global default rate.</p>
+                    </div>
+
+                    <div class="md:col-span-1">
+                        <x-input-label for="sales_commission_type" :value="__('Override Rate Type')" />
+                        <select id="sales_commission_type" name="sales_commission_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-emerald-500 rounded-md shadow-sm">
+                            <option value="">-- Use Global Default --</option>
+                            <option value="percentage" {{ old('sales_commission_type') == 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
+                            <option value="fixed" {{ old('sales_commission_type') == 'fixed' ? 'selected' : '' }}>Fixed Amount</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <!-- Section: Subscription -->
             <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Subscription Plan</h3>

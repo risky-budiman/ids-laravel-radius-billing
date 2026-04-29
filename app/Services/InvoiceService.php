@@ -13,11 +13,13 @@ class InvoiceService
 {
     protected $accountingService;
     protected $partnerService;
+    protected $salesService;
 
-    public function __construct(AccountingService $accountingService, PartnerService $partnerService)
+    public function __construct(AccountingService $accountingService, PartnerService $partnerService, SalesCommissionService $salesService)
     {
         $this->accountingService = $accountingService;
         $this->partnerService = $partnerService;
+        $this->salesService = $salesService;
     }
 
     /**
@@ -86,6 +88,13 @@ class InvoiceService
                 $this->partnerService->processPaymentCommission($invoice);
             } catch (\Exception $e) {
                 Log::error("Partner commission processing failed for {$invoice->invoice_number}: " . $e->getMessage());
+            }
+
+            // 5. Sales Commission (Internal)
+            try {
+                $this->salesService->processPaymentCommission($invoice);
+            } catch (\Exception $e) {
+                Log::error("Sales commission processing failed for {$invoice->invoice_number}: " . $e->getMessage());
             }
 
             return $invoice;

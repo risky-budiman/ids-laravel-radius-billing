@@ -375,4 +375,96 @@ class AccountingService
             return $journal;
         });
     }
+
+    /**
+     * Record a journal entry for sales commission earn
+     * Debit: Beban Insentif Sales (5111)
+     * Credit: Hutang Insentif Sales (2105)
+     */
+    public function recordSalesCommission($commission)
+    {
+        return DB::transaction(function () use ($commission) {
+            $debitAccountId = ChartOfAccount::where('code', '5111')->first()?->id;
+            $creditAccountId = ChartOfAccount::where('code', '2105')->first()?->id;
+
+            if (!$debitAccountId || !$creditAccountId) {
+                \Illuminate\Support\Facades\Log::error("Missing CoA for Sales Incentive (5111/2105)");
+                return null;
+            }
+
+            $date = $commission->created_at ?? now();
+            if (is_accounting_locked($date)) {
+                return null;
+            }
+
+            $journal = Journal::create([
+                'date' => $date,
+                'reference' => 'SALE-COMM-' . $commission->id,
+                'description' => 'Insentif Sales: ' . $commission->sales->name . ' - ' . $commission->customer->name . ' (Inv: ' . $commission->invoice->invoice_number . ')',
+                'created_by' => auth()->id() ?? 1,
+            ]);
+
+            JournalItem::create([
+                'journal_id' => $journal->id,
+                'account_id' => $debitAccountId,
+                'debit' => $commission->commission_amount,
+                'credit' => 0,
+            ]);
+
+            JournalItem::create([
+                'journal_id' => $journal->id,
+                'account_id' => $creditAccountId,
+                'debit' => 0,
+                'credit' => $commission->commission_amount,
+            ]);
+
+            return $journal;
+        });
+    }
+
+    /**
+     * Record a journal entry for sales withdrawal payment
+     * Debit: Hutang Insentif Sales (2105)
+     * Credit: Bank/Kas Account
+     */
+    public function recordSalesWithdrawal($withdrawal, $bankAccount)
+    {
+        return DB::transaction(function () use ($withdrawal, $bankAccount) {
+            $debitAccountId = ChartOfAccount::where('code', '2105')->first()?->id;
+            $creditAccountId = $bankAccount->chart_of_account_id ?? ChartOfAccount::where('code', '1102')->first()->id;
+
+            if (!$debitAccountId || !$creditAccountId) {
+                \Illuminate\Support\Facades\Log::error("Missing CoA for Sales Withdrawal (2105/Bank)");
+                return null;
+            }
+
+            $date = $withdrawal->processed_at ?? now();
+            if (is_accounting_locked($date)) {
+                return null;
+            }
+
+            $journal = Journal::create([
+                'date' => $date,
+                'reference' => 'SALE-WD-' . $withdrawal->id,
+                'description' => 'Pencairan Insentif Sales: ' . $withdrawal->sales->name . ' - Reff: ' . ($withdrawal->reference_number ?? $withdrawal->id),
+                'created_by' => auth()->id() ?? 1,
+            ]);
+
+            JournalItem::create([
+                'journal_id' => $journal->id,
+                'account_id' => $debitAccountId,
+                'debit' => $withdrawal->amount,
+                'credit' => 0,
+            ]);
+
+            JournalItem::create([
+                'journal_id' => $journal->id,
+                'account_id' => $creditAccountId,
+                'debit' => 0,
+                'credit' => $withdrawal->amount,
+            ]);
+
+            return $journal;
+        });
+    }
 }
