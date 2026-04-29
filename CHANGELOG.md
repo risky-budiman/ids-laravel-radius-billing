@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.2] - 2026-04-29
+- BugFix Dashboard ([HEAD])
+
+
+
 ## [1.3.1] - 2026-04-29
 - BugFix Subribers ([HEAD])
 

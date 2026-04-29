@@ -374,6 +374,7 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         Route::get('journals/create', [\App\Http\Controllers\Accounting\JournalController::class, 'create'])->name('journals.create');
         Route::post('journals', [\App\Http\Controllers\Accounting\JournalController::class, 'store'])->name('journals.store');
         Route::get('journals/{journal}', [\App\Http\Controllers\Accounting\JournalController::class, 'show'])->name('journals.show');
+        Route::delete('journals/{journal}', [\App\Http\Controllers\Accounting\JournalController::class, 'destroy'])->name('journals.destroy');
         
         // Reports
         Route::get('reports/profit-loss', [\App\Http\Controllers\Accounting\ReportController::class, 'profitLoss'])->name('reports.profit-loss');

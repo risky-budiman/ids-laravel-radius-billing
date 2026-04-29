@@ -47,16 +47,20 @@ class BankTransaction extends Model
         return $this->belongsTo(ChartOfAccount::class, 'chart_of_account_id');
     }
 
+    public $skipAutoJournal = false;
+
     protected static function booted()
     {
         static::created(function ($transaction) {
             $transaction->updateBalance();
             
             // Auto-Journal for Bank Transaction
-            try {
-                (new \App\Services\AccountingService())->recordBankTransaction($transaction);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Auto-journal failed for TRX-{$transaction->id}: " . $e->getMessage());
+            if (!$transaction->skipAutoJournal) {
+                try {
+                    (new \App\Services\AccountingService())->recordBankTransaction($transaction);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Auto-journal failed for TRX-{$transaction->id}: " . $e->getMessage());
+                }
             }
         });
 

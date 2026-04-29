@@ -60,6 +60,10 @@ class JournalController extends Controller
                 'created_by' => auth()->id(),
             ]);
 
+            // Map CoA to Bank Accounts to check if any item hits a bank
+            $accountIds = collect($request->items)->pluck('account_id')->unique();
+            $bankAccounts = \App\Models\BankAccount::whereIn('chart_of_account_id', $accountIds)->get()->keyBy('chart_of_account_id');
+
             foreach ($request->items as $item) {
                 if ($item['debit'] > 0 || $item['credit'] > 0) {
                     JournalItem::create([
@@ -68,6 +72,28 @@ class JournalController extends Controller
                         'debit' => $item['debit'] ?? 0,
                         'credit' => $item['credit'] ?? 0,
                     ]);
+
+                    // If this account is a bank account, record a bank transaction
+                    if (isset($bankAccounts[$item['account_id']])) {
+                        $bankAccount = $bankAccounts[$item['account_id']];
+                        $amount = ($item['debit'] > 0) ? $item['debit'] : $item['credit'];
+                        $type = ($item['debit'] > 0) ? 'deposit' : 'withdrawal';
+
+                        $bankTx = new \App\Models\BankTransaction();
+                        $bankTx->bank_account_id = $bankAccount->id;
+                        $bankTx->chart_of_account_id = $item['account_id']; // This is optional as it's the bank's CoA
+                        $bankTx->type = $type;
+                        $bankTx->amount = $amount;
+                        $bankTx->reference_number = $journal->reference;
+                        $bankTx->description = $request->description;
+                        $bankTx->transaction_date = $request->date;
+                        $bankTx->status = 'completed';
+                        $bankTx->created_by = auth()->id();
+                        
+                        // IMPORTANT: Skip auto-journal because we are already in a journal creation process
+                        $bankTx->skipAutoJournal = true;
+                        $bankTx->save();
+                    }
                 }
             }
         });
@@ -79,6 +105,34 @@ class JournalController extends Controller
     {
         $journal->load(['items.account', 'creator']);
         return view('accounting.journals.show', compact('journal'));
+    }
+
+    public function destroy(Journal $journal)
+    {
+        if (is_accounting_locked($journal->date)) {
+            return back()->with('error', 'Gagal: Transaksi pada periode yang sudah dikunci (Tutup Buku) tidak dapat dihapus.');
+        }
+
+        DB::transaction(function () use ($journal) {
+            // If this journal is linked to a bank transaction, delete that too
+            // Note: We use reference to find linked TRX
+            if (strpos($journal->reference, 'JV-') !== 0) {
+                // If it's not a Manual Journal (JV), it might be an auto-journal from TRX or BILL
+                // We check if it matches TRX-ID
+                if (preg_match('/^TRX-(\d+)$/', $journal->reference, $matches)) {
+                    $trxId = $matches[1];
+                    \App\Models\BankTransaction::where('id', $trxId)->delete();
+                }
+            }
+
+            // Also check if any manual journal items hit bank accounts
+            // If so, deleting the journal should ideally delete the BankTransaction we created in store()
+            \App\Models\BankTransaction::where('reference_number', $journal->reference)->delete();
+
+            $journal->delete();
+        });
+
+        return redirect()->route('accounting.journals.index')->with('success', 'Jurnal berhasil dihapus.');
     }
 
     private function generateReference($date)
