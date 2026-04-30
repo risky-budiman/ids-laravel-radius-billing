@@ -20,19 +20,31 @@ class OltDiscoveryService
     public function scanUnconfiguredOnus()
     {
         try {
-            // ZTE OID for unconfigured ONUs: 1.3.6.1.4.1.3902.1012.3.28.1.1.5 (zxAnGponOnuOnuSn)
-            // Or use zxAnGponOnuUncfgTable: 1.3.6.1.4.1.3902.1012.3.28.1.1
-            
-            // For ZTE, unconfigured ONUs are often in a separate table or found via specific walk
-            // This is a placeholder for the actual OID walk logic
-            $results = $this->snmp->walk('1.3.6.1.4.1.3902.1012.3.28.1.1.5');
+            // ZTE OID for unconfigured ONUs SN: .1.3.6.1.4.1.3902.1012.3.28.1.1.5
+            $results = $this->snmp->walk('.1.3.6.1.4.1.3902.1012.3.28.1.1.5');
             
             $onus = [];
             foreach ($results as $oid => $sn) {
-                // Parse OID to get shelf/slot/port
-                // OID format for ZTE unconfigured is often different
+                // Parse OID: .1.3.6.1.4.1.3902.1012.3.28.1.1.5.{INDEX}.{UNCONFIG_ID}
+                $parts = explode('.', $oid);
+                $unconfigId = array_pop($parts);
+                $index = array_pop($parts);
+
+                // Decode ZTE SNMP Index to S/S/P
+                // Formula: (shelf << 24) | (slot << 16) | (port << 8)
+                $shelf = ($index >> 24) & 0xFF;
+                $slot = ($index >> 16) & 0xFF;
+                $port = ($index >> 8) & 0xFF;
+
+                // Ensure shelf is at least 1 if 0
+                $shelf = $shelf ?: 1;
+
                 $onus[] = [
                     'sn' => $this->parseSn($sn),
+                    'shelf' => $shelf,
+                    'slot' => $slot,
+                    'port' => $port,
+                    'full_index' => "{$shelf}/{$slot}/{$port}:{$unconfigId}",
                     'oid' => $oid,
                     'type' => 'ZTE-ONU',
                 ];

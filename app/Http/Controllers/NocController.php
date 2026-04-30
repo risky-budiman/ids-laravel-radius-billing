@@ -61,7 +61,7 @@ class NocController extends Controller
             $snmp = new \App\Services\Network\SnmpService($olt->ip_address, $olt->snmp_read_community, $olt->snmp_port);
             $discovery = new \App\Services\Network\OltDiscoveryService($snmp);
             
-            $onus = $discovery->scanUnconfigured();
+            $onus = $discovery->scanUnconfiguredOnus();
             
             foreach ($onus as $onu) {
                 $onu['olt_name'] = $olt->name;
