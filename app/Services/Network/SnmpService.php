@@ -105,4 +105,9 @@ class SnmpService
             ];
         }
     }
+
+    public function getHost()
+    {
+        return $this->host;
+    }
 }

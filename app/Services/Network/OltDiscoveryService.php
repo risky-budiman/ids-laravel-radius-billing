@@ -19,24 +19,26 @@ class OltDiscoveryService
      */
     public function scanUnconfiguredOnus()
     {
-        try {
+            Log::info("Starting SNMP ONU Discovery for OLT: {$this->snmp->getHost()}");
+            
             // ZTE OID for unconfigured ONUs SN: .1.3.6.1.4.1.3902.1012.3.28.1.1.5
             $results = $this->snmp->walk('.1.3.6.1.4.1.3902.1012.3.28.1.1.5');
             
+            Log::debug("SNMP Walk results count: " . count($results));
+            
             $onus = [];
             foreach ($results as $oid => $sn) {
+                Log::debug("Found Uncfg ONU OID: {$oid}, Raw SN: " . bin2hex($sn));
                 // Parse OID: .1.3.6.1.4.1.3902.1012.3.28.1.1.5.{INDEX}.{UNCONFIG_ID}
                 $parts = explode('.', $oid);
                 $unconfigId = array_pop($parts);
                 $index = array_pop($parts);
 
                 // Decode ZTE SNMP Index to S/S/P
-                // Formula: (shelf << 24) | (slot << 16) | (port << 8)
                 $shelf = ($index >> 24) & 0xFF;
                 $slot = ($index >> 16) & 0xFF;
                 $port = ($index >> 8) & 0xFF;
 
-                // Ensure shelf is at least 1 if 0
                 $shelf = $shelf ?: 1;
 
                 $onus[] = [
@@ -50,6 +52,7 @@ class OltDiscoveryService
                 ];
             }
             
+            Log::info("Discovery finished. Found " . count($onus) . " unconfigured ONUs.");
             return $onus;
         } catch (Exception $e) {
             Log::error("Failed to scan unconfigured ONUs: " . $e->getMessage());
