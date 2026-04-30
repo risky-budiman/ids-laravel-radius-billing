@@ -50,11 +50,40 @@ class FetchOltPortDataJob implements ShouldQueue
             // Sync Port Status to Database
             $newStatus = count($onus) > 0 ? 'active' : 'inactive';
             $this->port->update(['status' => $newStatus]);
+
+            // UPDATE NOC DATA (CustomerSignalCache)
+            foreach ($onus as $onuData) {
+                try {
+                    $sn = $onuData['sn'];
+                    $customer = \App\Models\Customer::where('olt_id', $this->olt->id)
+                        ->where('onu_sn', $sn)
+                        ->first();
+
+                    if ($customer) {
+                        \App\Models\CustomerSignalCache::updateOrCreate(
+                            ['customer_id' => $customer->id],
+                            [
+                                'onu_index' => $onuData['index'],
+                                'rx_power' => is_numeric($onuData['signal']) ? $onuData['signal'] : null,
+                                'status' => $onuData['status'],
+                                'last_polled_at' => now(),
+                            ]
+                        );
+
+                        // If status is online, also update the main customer table if needed
+                        if ($onuData['status'] === 'online' && $customer->onu_index !== $onuData['index']) {
+                            $customer->update(['onu_index' => $onuData['index']]);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("Failed to sync NOC data for ONU {$onuData['sn']}: " . $e->getMessage());
+                }
+            }
             
             // Broadcast the result
             broadcast(new OltPortDataFetched($this->olt->id, $this->port->id, $onus));
             
-            Log::info("Successfully fetched and broadcasted data for Port: {$this->port->id}. New Status: {$newStatus}");
+            Log::info("Successfully fetched and broadcasted data for Port: {$this->port->id}. New Status: {$newStatus} (Synced " . count($onus) . " ONUs to NOC)");
         } catch (\Exception $e) {
             Log::error("Error in FetchOltPortDataJob: " . $e->getMessage());
         }

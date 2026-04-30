@@ -6,8 +6,12 @@ use Illuminate\Http\Request;
 
 class NocController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        if ($request->has('refresh')) {
+            \Illuminate\Support\Facades\Cache::forget('noc_olt_stats');
+        }
+
         // Get Online Usernames from Radius
         $onlineUsernames = \App\Models\Radius\RadAcct::online()->pluck('username')->unique()->toArray();
         $onlineCount = count($onlineUsernames);
@@ -16,14 +20,26 @@ class NocController extends Controller
         $activeCustomers = \App\Models\Customer::where('status', 'active')->count();
         $offlineCount = max(0, $activeCustomers - $onlineCount);
 
-        // Get OLTs
-        $olts = \App\Models\Olt::all();
+        // Get OLT Hardware Stats (Cached for 5 minutes)
+        $olts = \App\Models\Olt::where('is_active', true)->get();
+        $oltStats = \Illuminate\Support\Facades\Cache::remember('noc_olt_stats', 300, function() use ($olts) {
+            $data = [];
+            foreach ($olts as $olt) {
+                try {
+                    $service = new \App\Services\Network\ZteOltProvisioningService($olt);
+                    $stats = $service->getOltStats();
+                    $data[$olt->id] = $stats;
+                } catch (\Exception $e) {
+                    $data[$olt->id] = ['status' => 'offline', 'cpu' => 0, 'uptime' => 'N/A'];
+                }
+            }
+            return $data;
+        });
 
-        // Get Stats from Cache
-        $unconfiguredCount = 0; // Still dynamic for now or we could cache it too
+        // Get Stats from Cache for Dashboard Boxes
+        $unconfiguredCount = 0; 
         $criticalCount = \App\Models\CustomerSignalCache::where('rx_power', '<', -27)->count();
 
-        // Placeholder data for NOC Dashboard
         $stats = [
             'total_ont' => \App\Models\Customer::whereNotNull('activated_at')->count(),
             'online' => $onlineCount,
@@ -33,7 +49,7 @@ class NocController extends Controller
             'open_tickets' => \App\Models\Ticket::where('status', 'open')->count(),
         ];
 
-        return view('noc.index', compact('stats', 'olts'));
+        return view('noc.index', compact('stats', 'olts', 'oltStats'));
     }
 
     public function discovery()

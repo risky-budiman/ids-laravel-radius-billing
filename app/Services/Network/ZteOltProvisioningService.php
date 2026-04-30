@@ -237,6 +237,74 @@ class ZteOltProvisioningService
     }
 
     /**
+     * Get OLT-level statistics (CPU, Uptime) via SNMP
+     */
+    public function getOltStats()
+    {
+        if (!$this->olt->snmp_community) return null;
+
+        try {
+            $snmpService = new \App\Services\Network\SnmpService(
+                $this->olt->ip_address, 
+                $this->olt->snmp_community, 
+                $this->olt->snmp_port ?? 161
+            );
+
+            // 1. Check Uptime First (Standard Global OID - if this works, OLT is ONLINE)
+            $status = 'offline';
+            $uptime = 'N/A';
+            try {
+                $rawUptime = $snmpService->get('.1.3.6.1.2.1.1.3.0');
+                if ($rawUptime) {
+                    $status = 'online';
+                    $uptime = (string)$rawUptime;
+                }
+            } catch (\Exception $e) {
+                Log::debug("SNMP Uptime check failed for {$this->olt->ip_address}");
+            }
+
+            if ($status === 'offline') {
+                return ['status' => 'offline', 'cpu' => 0, 'uptime' => 'N/A', 'temp' => 0];
+            }
+
+            // 2. Fetch Extra Stats (CPU & Temp)
+            $cpu = 0;
+            $temp = 0;
+            
+            // Try common ZTE CPU OIDs
+            $cpuOids = [
+                '.1.3.6.1.4.1.3902.1012.3.1.3.1.1.3.1',        // Card 1
+                '.1.3.6.1.4.1.3902.1012.3.1.3.1.1.3.50331650', // C320 Main Card
+                '.1.3.6.1.4.1.3902.1012.3.1.3.1.1.3.16777474', // Another variant
+            ];
+
+            foreach ($cpuOids as $oid) {
+                try {
+                    $val = $snmpService->get($oid);
+                    if ($val && (int)$val > 0) {
+                        $cpu = (int)$val;
+                        break;
+                    }
+                } catch (\Exception $e) { }
+            }
+
+            // Try common ZTE Temp OIDs
+            try {
+                $temp = (int)$snmpService->get('.1.3.6.1.4.1.3902.1012.3.1.2.1.1.3.1');
+            } catch (\Exception $e) { }
+
+            return [
+                'status' => 'online',
+                'cpu' => $cpu,
+                'uptime' => $uptime,
+                'temp' => $temp
+            ];
+        } catch (\Exception $e) {
+            return ['status' => 'offline', 'cpu' => 0, 'uptime' => 'N/A', 'temp' => 0];
+        }
+    }
+
+    /**
      * Test the Telnet connection to the OLT
      */
     public function testConnection()
