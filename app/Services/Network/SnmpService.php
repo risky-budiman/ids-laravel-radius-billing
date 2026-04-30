@@ -37,14 +37,27 @@ class SnmpService
      */
     public function get(string $oid)
     {
+        // Normalize OID (remove leading dot for library)
+        $cleanOid = ltrim($oid, '.');
+
         try {
-            $response = $this->client->getValue($oid);
+            $response = $this->client->getValue($cleanOid);
             return $response;
-        } catch (SnmpRequestException $e) {
-            Log::error("SNMP GET Error for {$this->host}: " . $e->getMessage());
-            throw $e;
         } catch (Exception $e) {
-            Log::error("General SNMP Error for {$this->host}: " . $e->getMessage());
+            // Fallback for Ubuntu/Linux: Try system snmpget
+            if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
+                try {
+                    $cmd = "snmpget -v{$this->version}c -c {$this->community} -t 2 -r 1 {$this->host} {$oid} 2>&1";
+                    $output = shell_exec($cmd);
+                    if ($output && preg_match('/= (\w+): (.*)/i', $output, $matches)) {
+                        return trim($matches[2], '" ');
+                    }
+                } catch (\Exception $systemEx) {
+                    Log::debug("System snmpget also failed: " . $systemEx->getMessage());
+                }
+            }
+
+            Log::error("SNMP GET Error for {$this->host} OID {$oid}: " . $e->getMessage());
             throw $e;
         }
     }
@@ -54,8 +67,11 @@ class SnmpService
      */
     public function walk(string $oid)
     {
+        // Normalize OID (remove leading dot for library)
+        $cleanOid = ltrim($oid, '.');
+
         try {
-            $walk = $this->client->walk($oid);
+            $walk = $this->client->walk($cleanOid);
             $results = [];
             
             foreach ($walk as $item) {
@@ -64,7 +80,27 @@ class SnmpService
             
             return $results;
         } catch (Exception $e) {
-            Log::error("SNMP WALK Error for {$this->host}: " . $e->getMessage());
+            // Fallback for Ubuntu/Linux: Try system snmpwalk
+            if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
+                try {
+                    $cmd = "snmpwalk -v{$this->version}c -c {$this->community} -t 5 -r 1 {$this->host} {$oid} 2>&1";
+                    $output = shell_exec($cmd);
+                    if ($output && !str_contains($output, 'No response')) {
+                        $results = [];
+                        // Parse format: .1.3.6... = STRING: "VALUE"
+                        if (preg_match_all('/(\.\d+(?:\.\d+)*)\s+=\s+(\w+):\s+(.*)/i', $output, $matches, PREG_SET_ORDER)) {
+                            foreach ($matches as $m) {
+                                $results[$m[1]] = trim($m[3], '" ');
+                            }
+                        }
+                        if (!empty($results)) return $results;
+                    }
+                } catch (\Exception $systemEx) {
+                    Log::debug("System snmpwalk also failed: " . $systemEx->getMessage());
+                }
+            }
+
+            Log::error("SNMP WALK Error for {$this->host} OID {$oid}: " . $e->getMessage());
             throw $e;
         }
     }

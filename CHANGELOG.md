@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.14] - 2026-05-01
+- BugFix NOC ([HEAD])
+
+
+
 ## [1.3.13] - 2026-05-01
 - BugFix OLT2 ([HEAD])
 
