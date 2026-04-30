@@ -62,6 +62,14 @@ class OltDiscoveryService
     }
 
     /**
+     * Alias for backward compatibility on some deploys
+     */
+    public function scanUnconfigured()
+    {
+        return $this->scanUnconfiguredOnus();
+    }
+
+    /**
      * Parse Serial Number from SNMP response (ZTE format)
      */
     public function parseSn($sn)
