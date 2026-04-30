@@ -111,65 +111,44 @@ class ZteOltProvisioningService
             $configOutput = $this->telnet->read('/ZXAN#/i');
             Log::debug("OLT Raw Config Output for {$interface}: " . $configOutput);
 
-            // 1.5 Get Descriptions (Smart OLT Strategy: Native PHP SNMP + Telnet V2)
+            // 1.5 Get Descriptions (Smart OLT Strategy: FreeDSx SNMP + Telnet V2)
             $descriptions = [];
             
-            // OPTION 1: Try Native PHP SNMP if extension is loaded
-            if ($this->olt->snmp_community && extension_loaded('snmp')) {
+            if ($this->olt->snmp_community) {
                 try {
-                    $ip = $this->olt->ip_address;
-                    $community = $this->olt->snmp_community;
+                    $snmpService = new \App\Services\Network\SnmpService(
+                        $this->olt->ip_address, 
+                        $this->olt->snmp_community, 
+                        $this->olt->snmp_port ?? 161
+                    );
+                    
                     $portIdx = $this->calculateSnmpPortIndex($interface);
                     $oid = ".1.3.6.1.4.1.3902.1012.3.28.1.1.3.{$portIdx}";
                     
-                    // Use native PHP snmp2_real_walk
-                    // timeout 1s, retries 1
-                    $snmpData = @snmp2_real_walk($ip, $community, $oid, 1000000, 1);
+                    $snmpData = $snmpService->walk($oid);
                     
-                    if ($snmpData) {
-                        Log::debug("Native SNMP Data found for port {$interface}");
+                    if (!empty($snmpData)) {
+                        Log::debug("SnmpService found data for port {$interface}");
                         foreach ($snmpData as $key => $value) {
-                            // Key looks like: iso.3.6.1.4.1.3902.1012.3.28.1.1.3.PORTIDX.ONUID
-                            // Value looks like: STRING: "NAME"
+                            // Key looks like: .1.3.6.1.4.1.3902.1012.3.28.1.1.3.PORTIDX.ONUID
                             if (preg_match('/\.(\d+)$/', $key, $m)) {
                                 $onuId = $m[1];
-                                $name = trim(str_replace('STRING: ', '', $value), '" ');
-                                if ($name && $name !== 'N/A') {
-                                    $descriptions[$onuId] = $name;
+                                if ($value && $value !== 'N/A') {
+                                    $descriptions[$onuId] = trim($value);
                                 }
                             }
                         }
                     }
                 } catch (\Exception $e) {
-                    Log::warning("Native SNMP Fetch failed: " . $e->getMessage());
+                    Log::warning("SnmpService fetch failed: " . $e->getMessage());
                 }
             }
 
-            // OPTION 2: Try shell snmpwalk (Legacy/Fallback)
-            if (empty($descriptions) && $this->olt->snmp_community) {
-                try {
-                    $ip = $this->olt->ip_address;
-                    $community = $this->olt->snmp_community;
-                    $portIdx = $this->calculateSnmpPortIndex($interface);
-                    $command = "snmpwalk -v2c -c {$community} {$ip} .1.3.6.1.4.1.3902.1012.3.28.1.1.3.{$portIdx} 2>&1";
-                    $snmpOutput = @shell_exec($command);
-                    
-                    if ($snmpOutput && !str_contains($snmpOutput, 'not found') && !str_contains($snmpOutput, 'error')) {
-                        if (preg_match_all('/\.(\d+)\s+=\s+STRING:\s+"([^"]+)"/i', $snmpOutput, $snmpMatches, PREG_SET_ORDER)) {
-                            foreach ($snmpMatches as $sm) {
-                                $descriptions[$sm[1]] = trim($sm[2]);
-                            }
-                        }
-                    }
-                } catch (\Exception $e) { }
-            }
-
-            // OPTION 3: Try Telnet V2 Variations (Fallback)
+            // OPTION 2: Try Telnet V2 Variations (Fallback)
             if (empty($descriptions)) {
                 // Variation 1: show onu description (Common in V2)
                 $this->telnet->write("show onu description {$interface}\r\n");
                 $v2Output = $this->telnet->read('/ZXAN#/i');
-                Log::debug("OLT V2 Description Output: " . $v2Output);
                 
                 if (preg_match_all('/' . preg_quote($interface, '/') . ':(\d+)\s+(.*)/i', $v2Output, $v2Matches, PREG_SET_ORDER)) {
                     foreach ($v2Matches as $vm) {
@@ -230,6 +209,23 @@ class ZteOltProvisioningService
             Log::error("OLT ONU Discovery Error: " . $e->getMessage());
             return [];
         }
+    }
+
+    /**
+     * Test the Telnet connection to the OLT
+     */
+    public function testConnection()
+    {
+        try {
+            $this->connect();
+            $this->telnet->disconnect();
+            return true;
+        } catch (\Exception $e) {
+            Log::error("OLT Connection Test Failed: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
     /**
      * Calculate the SNMP index for a given interface string (e.g., 1/1/13)
      * Formula for ZTE GPON: (shelf << 24) | (slot << 16) | (port << 8)
