@@ -111,11 +111,13 @@ class ZteOltProvisioningService
             $configOutput = $this->telnet->read('/ZXAN#/i');
             Log::debug("OLT Raw Config Output for {$interface}: " . $configOutput);
 
-            // 1.5 Get Descriptions (Smart OLT Strategy: FreeDSx SNMP + Telnet V2)
+            // 1.5 Get Descriptions (SNMP FIRST PRIORITY)
             $descriptions = [];
             
             if ($this->olt->snmp_community) {
+                // METHOD A: Use Internal SnmpService (FreeDSx Library)
                 try {
+                    Log::debug("Attempting SNMP Fetch (Method A: Library) for port {$interface}");
                     $snmpService = new \App\Services\Network\SnmpService(
                         $this->olt->ip_address, 
                         $this->olt->snmp_community, 
@@ -128,9 +130,7 @@ class ZteOltProvisioningService
                     $snmpData = $snmpService->walk($oid);
                     
                     if (!empty($snmpData)) {
-                        Log::debug("SnmpService found data for port {$interface}");
                         foreach ($snmpData as $key => $value) {
-                            // Key looks like: .1.3.6.1.4.1.3902.1012.3.28.1.1.3.PORTIDX.ONUID
                             if (preg_match('/\.(\d+)$/', $key, $m)) {
                                 $onuId = $m[1];
                                 if ($value && $value !== 'N/A') {
@@ -138,14 +138,39 @@ class ZteOltProvisioningService
                                 }
                             }
                         }
+                        if (!empty($descriptions)) Log::info("Successfully fetched " . count($descriptions) . " names via SNMP Library.");
                     }
                 } catch (\Exception $e) {
-                    Log::warning("SnmpService fetch failed: " . $e->getMessage());
+                    Log::warning("SNMP Library Fetch failed: " . $e->getMessage());
+                }
+
+                // METHOD B: Use System snmpwalk (Especially good for Ubuntu)
+                if (empty($descriptions)) {
+                    try {
+                        Log::debug("Attempting SNMP Fetch (Method B: snmpwalk) for port {$interface}");
+                        $ip = $this->olt->ip_address;
+                        $community = $this->olt->snmp_community;
+                        $portIdx = $this->calculateSnmpPortIndex($interface);
+                        $command = "snmpwalk -v2c -c {$community} {$ip} .1.3.6.1.4.1.3902.1012.3.28.1.1.3.{$portIdx} 2>&1";
+                        $snmpOutput = shell_exec($command);
+                        
+                        if ($snmpOutput && !str_contains($snmpOutput, 'not found')) {
+                            if (preg_match_all('/\.(\d+)\s+=\s+STRING:\s+"([^"]+)"/i', $snmpOutput, $snmpMatches, PREG_SET_ORDER)) {
+                                foreach ($snmpMatches as $sm) {
+                                    $descriptions[$sm[1]] = trim($sm[2]);
+                                }
+                            }
+                            if (!empty($descriptions)) Log::info("Successfully fetched " . count($descriptions) . " names via System snmpwalk.");
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning("System snmpwalk failed: " . $e->getMessage());
+                    }
                 }
             }
 
-            // OPTION 2: Try Telnet V2 Variations (Fallback)
+            // OPTION 2: Try Telnet V2 Variations (Fallback Only)
             if (empty($descriptions)) {
+                Log::debug("SNMP failed, falling back to Telnet for descriptions on port {$interface}");
                 // Variation 1: show onu description (Common in V2)
                 $this->telnet->write("show onu description {$interface}\r\n");
                 $v2Output = $this->telnet->read('/ZXAN#/i');
