@@ -161,8 +161,12 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
             // OLT Management
             Route::resource('olts', \App\Http\Controllers\OltController::class);
             Route::post('olts/{olt}/test-connection', [\App\Http\Controllers\OltController::class, 'testConnection'])->name('olts.test-connection');
+            Route::post('olts/{olt}/auto-discover-ports', [\App\Http\Controllers\OltController::class, 'autoDiscoverPorts'])->name('olts.auto-discover-ports');
             Route::post('olts/{olt}/generate-ports', [\App\Http\Controllers\OltController::class, 'generatePorts'])->name('olts.generate-ports');
             Route::post('olts/{olt}/manual-delete-onu', [\App\Http\Controllers\OltController::class, 'manualDeleteOnu'])->name('olts.manual-delete-onu');
+            Route::get('olts/{olt}/ports/{port}', [\App\Http\Controllers\OltController::class, 'showPort'])->name('olts.show-port');
+            Route::post('olts/{olt}/sync-all-ports', [\App\Http\Controllers\OltController::class, 'syncAllPorts'])->name('olts.sync-all-ports');
+            Route::get('olts/{olt}/ports/{port}/data', [\App\Http\Controllers\OltController::class, 'getPortData'])->name('olts.get-port-data');
         });
     });
 

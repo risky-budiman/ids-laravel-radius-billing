@@ -2,188 +2,251 @@
 
 namespace App\Services\Network;
 
-use phpseclib3\Net\Telnet;
-use Exception;
+use App\Models\Olt;
 use Illuminate\Support\Facades\Log;
 
 class ZteOltProvisioningService
 {
-    protected $telnet;
     protected $olt;
+    protected $telnet;
 
-    public function __construct($olt)
+    public function __construct(Olt $olt)
     {
         $this->olt = $olt;
+        $this->telnet = new CustomTelnetClient($olt->ip_address, $olt->telnet_port ?? 23);
     }
 
-    /**
-     * Connect to OLT via Telnet
-     */
     protected function connect()
     {
         try {
-            $this->telnet = new Telnet($this->olt->ip_address, $this->olt->telnet_port);
-            $this->telnet->login($this->olt->username, $this->olt->password);
-            
-            // Wait for prompt and enter enable mode if needed
-            // This part depends on OLT configuration (enable password etc)
-            $this->telnet->write("enable\n");
-            $this->telnet->read("Password:");
-            $this->telnet->write($this->olt->password . "\n"); // Assuming same password for enable
-            
-            return true;
-        } catch (Exception $e) {
-            Log::error("OLT Telnet Connection Failed: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Basic Provisioning Script for ZTE
-     */
-    public function registerOnu($shelf, $slot, $port, $onuId, $sn, $type, $vlan, $package)
-    {
-        if (!$this->connect()) return false;
-
-        try {
-            $commands = [
-                "conf t",
-                "interface gpon-olt_{$shelf}/{$slot}/{$port}",
-                "onu {$onuId} type {$type} sn {$sn}",
-                "exit",
-                "interface gpon-onu_{$shelf}/{$slot}/{$port}:{$onuId}",
-                "tcont 1 name T1 profile DBA-{$package}", // Assumes DBA profile exists
-                "gemport 1 name G1 tcont 1",
-                "exit",
-                "pon-onu-mng gpon-onu_{$shelf}/{$slot}/{$port}:{$onuId}",
-                "service HSI gemport 1 vlan {$vlan}",
-                "exit",
-                "interface gpon-onu_{$shelf}/{$slot}/{$port}:{$onuId}",
-                "vlan port eth_0/1 mode tag vlan {$vlan}",
-                "exit"
-            ];
-
-            foreach ($commands as $cmd) {
-                $this->telnet->write($cmd . "\n");
-                usleep(200000); // Wait 200ms
+            if (!$this->telnet->connect()) {
+                return false;
             }
 
-            $this->telnet->write("exit\n");
+            // Give OLT a moment to send banner/username prompt
+            usleep(200000); // 0.2 seconds
+
+            // Standard Login
+            $this->telnet->read('/Username:/i');
+            $this->telnet->write($this->olt->username . "\r\n");
+            $this->telnet->read('/Password:/i');
+            $this->telnet->write($this->olt->password . "\r\n");
+            
+            $prompt = $this->telnet->read('/ZXAN[>#]/i');
+            
+            // If we are at ">", we need to send "enable"
+            if (strpos($prompt, '>') !== false) {
+                $this->telnet->write("enable\r\n");
+                $res = $this->telnet->read(['/Password:/i', '/ZXAN#/i']);
+                
+                if (stripos($res, 'Password:') !== false) {
+                    // Give OLT a moment to breathe before sending password
+                    usleep(500000); // 0.5 seconds
+                    $this->telnet->write(($this->olt->enable_password ?: $this->olt->password) . "\r\n");
+                    $this->telnet->read('/ZXAN#/i');
+                }
+            }
+            
+            // Turn off pagination
+            $this->telnet->write("terminal length 0\r\n");
+            $this->telnet->read('/ZXAN#/i');
+            
             return true;
-        } catch (Exception $e) {
-            Log::error("Provisioning failed: " . $e->getMessage());
+        } catch (\Exception $e) {
+            Log::error("OLT Telnet Connection Error: " . $e->getMessage());
             return false;
-        } finally {
-            $this->telnet->disconnect();
         }
     }
 
-    /**
-     * Create DBA Profile (ZTE)
-     */
-    public function createDbaProfile($name, $bandwidth)
+    public function discoverPortsViaCli()
     {
-        if (!$this->connect()) return false;
+        try {
+            if (!$this->connect()) return [];
+
+            $this->telnet->write("show card\r\n");
+            $output = $this->telnet->read('/[>#]$/');
+            Log::debug("OLT Card Output: " . $output);
+
+            $ports = [];
+            $lines = explode("\n", $output);
+            
+            foreach ($lines as $line) {
+                // Match GPON cards like GTGH, GTGO, etc.
+                if (preg_match('/(\d+)\s+(\d+)\s+(\d+)\s+(GTG[HO]|GPON|PUMA)\S*\s+\S*\s+(\d+)/i', $line, $matches)) {
+                    $shelf = $matches[2];
+                    $slot = $matches[3];
+                    $maxPorts = $matches[5];
+
+                    for ($p = 1; $p <= $maxPorts; $p++) {
+                        $ports[] = [
+                            'shelf' => $shelf,
+                            'slot' => $slot,
+                            'port' => $p,
+                            'name' => "GPON {$shelf}/{$slot}/{$p}",
+                            'type' => 'GPON'
+                        ];
+                    }
+                }
+            }
+
+            $this->telnet->disconnect();
+            return $ports;
+        } catch (\Exception $e) {
+            Log::error("OLT Port Discovery Error: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getOnusOnPortViaCli($shelf, $slot, $port)
+    {
+        try {
+            if (!$this->connect()) return [];
+            
+            // Default shelf to 1 if empty
+            $shelf = $shelf ?: 1;
+            $interface = "gpon-olt_{$shelf}/{$slot}/{$port}";
+
+            // 1. Get Running Config (Contains SN and Type)
+            $this->telnet->write("show running-config interface {$interface}\r\n");
+            $configOutput = $this->telnet->read('/ZXAN#/i');
+            Log::debug("OLT Raw Config Output for {$interface}: " . $configOutput);
+
+            // 1.5 Get Descriptions (Smart OLT Strategy: Native PHP SNMP + Telnet V2)
+            $descriptions = [];
+            
+            // OPTION 1: Try Native PHP SNMP if extension is loaded
+            if ($this->olt->snmp_community && extension_loaded('snmp')) {
+                try {
+                    $ip = $this->olt->ip_address;
+                    $community = $this->olt->snmp_community;
+                    $portIdx = $this->calculateSnmpPortIndex($interface);
+                    $oid = ".1.3.6.1.4.1.3902.1012.3.28.1.1.3.{$portIdx}";
+                    
+                    // Use native PHP snmp2_real_walk
+                    // timeout 1s, retries 1
+                    $snmpData = @snmp2_real_walk($ip, $community, $oid, 1000000, 1);
+                    
+                    if ($snmpData) {
+                        Log::debug("Native SNMP Data found for port {$interface}");
+                        foreach ($snmpData as $key => $value) {
+                            // Key looks like: iso.3.6.1.4.1.3902.1012.3.28.1.1.3.PORTIDX.ONUID
+                            // Value looks like: STRING: "NAME"
+                            if (preg_match('/\.(\d+)$/', $key, $m)) {
+                                $onuId = $m[1];
+                                $name = trim(str_replace('STRING: ', '', $value), '" ');
+                                if ($name && $name !== 'N/A') {
+                                    $descriptions[$onuId] = $name;
+                                }
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("Native SNMP Fetch failed: " . $e->getMessage());
+                }
+            }
+
+            // OPTION 2: Try shell snmpwalk (Legacy/Fallback)
+            if (empty($descriptions) && $this->olt->snmp_community) {
+                try {
+                    $ip = $this->olt->ip_address;
+                    $community = $this->olt->snmp_community;
+                    $portIdx = $this->calculateSnmpPortIndex($interface);
+                    $command = "snmpwalk -v2c -c {$community} {$ip} .1.3.6.1.4.1.3902.1012.3.28.1.1.3.{$portIdx} 2>&1";
+                    $snmpOutput = @shell_exec($command);
+                    
+                    if ($snmpOutput && !str_contains($snmpOutput, 'not found') && !str_contains($snmpOutput, 'error')) {
+                        if (preg_match_all('/\.(\d+)\s+=\s+STRING:\s+"([^"]+)"/i', $snmpOutput, $snmpMatches, PREG_SET_ORDER)) {
+                            foreach ($snmpMatches as $sm) {
+                                $descriptions[$sm[1]] = trim($sm[2]);
+                            }
+                        }
+                    }
+                } catch (\Exception $e) { }
+            }
+
+            // OPTION 3: Try Telnet V2 Variations (Fallback)
+            if (empty($descriptions)) {
+                // Variation 1: show onu description (Common in V2)
+                $this->telnet->write("show onu description {$interface}\r\n");
+                $v2Output = $this->telnet->read('/ZXAN#/i');
+                Log::debug("OLT V2 Description Output: " . $v2Output);
+                
+                if (preg_match_all('/' . preg_quote($interface, '/') . ':(\d+)\s+(.*)/i', $v2Output, $v2Matches, PREG_SET_ORDER)) {
+                    foreach ($v2Matches as $vm) {
+                        $descriptions[$vm[1]] = trim($vm[2]);
+                    }
+                }
+            }
+            
+            // 2. Get Power (Attenuation)
+            $this->telnet->write("show pon power onu-rx {$interface}\r\n");
+            $powerOutput = $this->telnet->read('/ZXAN#/i');
+            
+            // 3. Get State
+            $this->telnet->write("show gpon onu state {$interface}\r\n");
+            $stateOutput = $this->telnet->read('/ZXAN#/i');
+
+            $onus = [];
+            
+            // Step 1: Parse SNs and Types from config
+            preg_match_all('/onu (\d+) type (\S+) sn (\S+)/i', $configOutput, $snMatches, PREG_SET_ORDER);
+            
+            foreach ($snMatches as $match) {
+                $onuId = $match[1];
+                $type = $match[2];
+                $sn = str_ireplace('SN:', '', $match[3]);
+                
+                $description = $descriptions[$onuId] ?? 'ONU ' . $onuId;
+
+                // Extract phase state/reason from state output
+                $reason = 'Unknown';
+                if (preg_match("/:{$onuId}\s+\S+\s+\S+\s+(\S+)/i", $stateOutput, $sMatches)) {
+                    $reason = $sMatches[1];
+                }
+                
+                // Signal from power output
+                $signal = 'N/A';
+                if (preg_match("/:{$onuId}\s+([-+]?\d+\.?\d*)/i", $powerOutput, $pMatches)) {
+                    $signal = $pMatches[1];
+                }
+
+                $finalStatus = (strtolower($reason) === 'working') ? 'online' : 'offline';
+
+                $onus[] = [
+                    'index' => "{$shelf}.{$slot}.{$port}.{$onuId}",
+                    'onu_id' => $onuId,
+                    'sn' => $sn,
+                    'name' => $description,
+                    'type' => $type,
+                    'status' => $finalStatus,
+                    'reason' => $reason,
+                    'signal' => $finalStatus === 'online' ? $signal : 'LOST'
+                ];
+            }
+            
+            $this->telnet->disconnect();
+            return $onus;
+        } catch (\Exception $e) {
+            Log::error("OLT ONU Discovery Error: " . $e->getMessage());
+            return [];
+        }
+    /**
+     * Calculate the SNMP index for a given interface string (e.g., 1/1/13)
+     * Formula for ZTE GPON: (shelf << 24) | (slot << 16) | (port << 8)
+     */
+    private function calculateSnmpPortIndex($interface)
+    {
+        // Remove 'gpon-olt_' or similar prefix
+        $clean = preg_replace('/[^0-9\/]/', '', $interface);
+        $parts = explode('/', $clean);
         
-        $this->telnet->write("conf t\n");
-        $this->telnet->write("pon\n");
-        $this->telnet->write("onu-profile dba {$name} type 3 bandwidth {$bandwidth}\n");
-        $this->telnet->write("exit\n");
-        $this->telnet->write("exit\n");
-        $this->telnet->disconnect();
+        if (count($parts) < 3) return 0;
         
-        return true;
-    }
-
-    /**
-     * Deprovision/Delete ONU from OLT
-     */
-    public function deleteOnu($shelf, $slot, $port, $onuId)
-    {
-        if (!$this->connect()) return false;
-
-        try {
-            $this->telnet->write("conf t\n");
-            $this->telnet->write("interface gpon-olt_{$shelf}/{$slot}/{$port}\n");
-            $this->telnet->write("no onu {$onuId}\n");
-            $this->telnet->write("exit\n");
-            $this->telnet->write("exit\n");
-            return true;
-        } catch (Exception $e) {
-            Log::error("OLT Delete ONU failed: " . $e->getMessage());
-            return false;
-        } finally {
-            $this->telnet->disconnect();
-        }
-    }
-
-    /**
-     * Suspend/Isolir ONU (Block Traffic)
-     * Note: For ZTE, we can disable the ONU admin state.
-     */
-    public function suspendOnu($shelf, $slot, $port, $onuId)
-    {
-        if (!$this->connect()) return false;
-
-        try {
-            $this->telnet->write("conf t\n");
-            $this->telnet->write("interface gpon-onu_{$shelf}/{$slot}/{$port}:{$onuId}\n");
-            $this->telnet->write("admin state disable\n"); // Disable ONU
-            $this->telnet->write("exit\n");
-            $this->telnet->write("exit\n");
-            return true;
-        } catch (Exception $e) {
-            Log::error("OLT Suspend ONU failed: " . $e->getMessage());
-            return false;
-        } finally {
-            $this->telnet->disconnect();
-        }
-    }
-
-    /**
-     * Resume ONU (Unblock Traffic)
-     */
-    public function resumeOnu($shelf, $slot, $port, $onuId)
-    {
-        if (!$this->connect()) return false;
-
-        try {
-            $this->telnet->write("conf t\n");
-            $this->telnet->write("interface gpon-onu_{$shelf}/{$slot}/{$port}:{$onuId}\n");
-            $this->telnet->write("admin state enable\n"); // Enable ONU
-            $this->telnet->write("exit\n");
-            $this->telnet->write("exit\n");
-            return true;
-        } catch (Exception $e) {
-            Log::error("OLT Resume ONU failed: " . $e->getMessage());
-            return false;
-        } finally {
-            $this->telnet->disconnect();
-        }
-    }
-
-    /**
-     * Update ONU DBA Profile (Speed Update)
-     */
-    public function updateOnuProfile($shelf, $slot, $port, $onuId, $package)
-    {
-        if (!$this->connect()) return false;
-
-        try {
-            $this->telnet->write("conf t\n");
-            $this->telnet->write("interface gpon-onu_{$shelf}/{$slot}/{$port}:{$onuId}\n");
-            // Delete old tcont first or just reassign if supported
-            // On ZTE, usually you have to remove it and recreate it, or just overwrite it
-            // Assuming overwrite is supported:
-            $this->telnet->write("tcont 1 name T1 profile DBA-{$package}\n");
-            $this->telnet->write("exit\n");
-            $this->telnet->write("exit\n");
-            return true;
-        } catch (Exception $e) {
-            Log::error("OLT Update Profile failed: " . $e->getMessage());
-            return false;
-        } finally {
-            $this->telnet->disconnect();
-        }
+        $shelf = (int)$parts[0];
+        $slot = (int)$parts[1];
+        $port = (int)$parts[2];
+        
+        // Typical ZTE GPON Index calculation
+        return ($shelf << 24) | ($slot << 16) | ($port << 8);
     }
 }

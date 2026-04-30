@@ -8,65 +8,50 @@ use Illuminate\Support\Facades\Log;
 class OltDiscoveryService
 {
     protected $snmp;
-    
-    // OIDs for ZTE ZXA10 (Standard GPON)
-    // Note: OIDs can vary based on firmware. These are common for C300/C320.
-    const OID_UNCONFIGURED_ONU_SN = '1.3.6.1.4.1.3902.1012.3.13.1.1.5'; // zxAnGponOnuUncfgSn
-    const OID_UNCONFIGURED_ONU_TYPE = '1.3.6.1.4.1.3902.1012.3.13.1.1.2'; // zxAnGponOnuUncfgType
-    
+
     public function __construct(SnmpService $snmp)
     {
         $this->snmp = $snmp;
     }
 
     /**
-     * Scan for unconfigured ONUs on the OLT.
+     * Scan for unconfigured ONUs on the OLT
      */
-    public function scanUnconfigured()
+    public function scanUnconfiguredOnus()
     {
         try {
-            // Walk the Unconfigured ONU Serial Number table
-            $rawSn = $this->snmp->walk(self::OID_UNCONFIGURED_ONU_SN);
-            $rawTypes = $this->snmp->walk(self::OID_UNCONFIGURED_ONU_TYPE);
+            // ZTE OID for unconfigured ONUs: 1.3.6.1.4.1.3902.1012.3.28.1.1.5 (zxAnGponOnuOnuSn)
+            // Or use zxAnGponOnuUncfgTable: 1.3.6.1.4.1.3902.1012.3.28.1.1
+            
+            // For ZTE, unconfigured ONUs are often in a separate table or found via specific walk
+            // This is a placeholder for the actual OID walk logic
+            $results = $this->snmp->walk('1.3.6.1.4.1.3902.1012.3.28.1.1.5');
             
             $onus = [];
-            
-            foreach ($rawSn as $oid => $sn) {
-                // Suffix format is usually .Shelf.Slot.Port.OnuIndex
-                $parts = explode('.', $oid);
-                $index = array_slice($parts, -4);
-                
-                $key = implode('.', $index);
-                
-                // Convert Binary SN to Hex/String if needed
-                // ZTE often returns SN as binary/hex
-                $formattedSn = $this->formatSerialNumber($sn);
-                
+            foreach ($results as $oid => $sn) {
+                // Parse OID to get shelf/slot/port
+                // OID format for ZTE unconfigured is often different
                 $onus[] = [
-                    'sn' => $formattedSn,
-                    'shelf' => $index[0] ?? 0,
-                    'slot' => $index[1] ?? 0,
-                    'port' => $index[2] ?? 0,
-                    'raw_index' => $index[3] ?? 0,
-                    'type' => $rawTypes[$oid] ?? 'Unknown',
-                    'full_index' => $key
+                    'sn' => $this->parseSn($sn),
+                    'oid' => $oid,
+                    'type' => 'ZTE-ONU',
                 ];
             }
             
             return $onus;
         } catch (Exception $e) {
-            Log::error("OLT Discovery Scan Failed: " . $e->getMessage());
+            Log::error("Failed to scan unconfigured ONUs: " . $e->getMessage());
             return [];
         }
     }
 
     /**
-     * Format ZTE Binary Serial Number to readable string (e.g. ZTEGC000...)
+     * Parse Serial Number from SNMP response (ZTE format)
      */
-    protected function formatSerialNumber($sn)
+    public function parseSn($sn)
     {
-        if (is_string($sn) && strlen($sn) == 8) {
-            // ZTE Serial Number is usually 8 bytes
+        // ZTE SNs are often returned as binary/hex
+        if (strlen($sn) == 8) {
             // First 4 bytes are Vendor ID (e.g. ZTEG)
             // Last 4 bytes are Hex Serial
             $vendor = substr($sn, 0, 4);
@@ -76,5 +61,118 @@ class OltDiscoveryService
         
         // If it's already a string or hex, try to sanitize
         return bin2hex($sn);
+    }
+
+    public function discoverPonPorts()
+    {
+        try {
+            // ZTE Specific OID for GPON Port Description: 1.3.6.1.4.1.3902.1012.3.1.2.1.1.3
+            $ifNames = $this->snmp->walk('1.3.6.1.4.1.3902.1012.3.1.2.1.1.3');
+            // ZTE Specific OID for Operational Status: 1.3.6.1.4.1.3902.1012.3.1.2.1.1.7
+            $ifStatus = $this->snmp->walk('1.3.6.1.4.1.3902.1012.3.1.2.1.1.7');
+
+            if (empty($ifNames)) {
+                // Fallback to standard ifNames if ZTE specific fails
+                $ifNames = $this->snmp->walk('1.3.6.1.2.1.31.1.1.1.1');
+                $ifStatus = $this->snmp->walk('1.3.6.1.2.1.2.2.1.8');
+            }
+
+            $ports = [];
+            Log::debug("SNMP Discovery: Found " . count($ifNames) . " port names");
+
+            foreach ($ifNames as $oid => $desc) {
+                // ZTE Index is usually encoded in the OID tail
+                // Example: ...1.1.3.268435457 (Rack 1, Shelf 1, Slot 1, Port 1)
+                if (preg_match('/gpon-olt_(\d+)\/(\d+)\/(\d+)/i', $desc, $matches)) {
+                    $shelf = $matches[1];
+                    $slot = $matches[2];
+                    $portNum = $matches[3];
+                    
+                    // Extract index from the end of the OID
+                    $parts = explode('.', $oid);
+                    $index = end($parts);
+                    
+                    // Find status for this specific index
+                    $statusValue = 2; // Default inactive
+                    foreach ($ifStatus as $sOid => $sVal) {
+                        if (str_ends_with($sOid, ".{$index}")) {
+                            $statusValue = $sVal;
+                            break;
+                        }
+                    }
+
+                    $ports[] = [
+                        'shelf' => $shelf,
+                        'slot' => $slot,
+                        'port' => $portNum,
+                        'status' => ($statusValue == 1) ? 'active' : 'inactive',
+                        'description' => "GPON Port {$shelf}/{$slot}/{$portNum} ({$desc})"
+                    ];
+                }
+            }
+            
+            return $ports;
+        } catch (Exception $e) {
+            Log::error("Failed to discover PON ports via SNMP: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get all registered ONUs on a specific Shelf/Slot/Port via SNMP
+     */
+    public function getOnusOnPort($shelf, $slot, $port)
+    {
+        try {
+            // OID for ONU SN: .1.3.6.1.4.1.3902.1012.3.28.1.1.5
+            // ZTE Index format: .shelf.slot.port.onu_id
+            $snOidRoot = "1.3.6.1.4.1.3902.1012.3.28.1.1.5";
+            $allSns = $this->snmp->walk($snOidRoot);
+            Log::debug("SNMP allSns found: " . count($allSns));
+            
+            // OID for Signal: .1.3.6.1.4.1.3902.1012.3.50.12.1.1.10
+            $signalOidRoot = "1.3.6.1.4.1.3902.1012.3.50.12.1.1.10";
+            $allSignals = [];
+            try {
+                $allSignals = $this->snmp->walk($signalOidRoot);
+                Log::debug("SNMP allSignals found: " . count($allSignals));
+            } catch (\Exception $e) {}
+
+            $onus = [];
+            $searchPrefix = ".{$shelf}.{$slot}.{$port}.";
+            
+            foreach ($allSns as $oid => $sn) {
+                if (str_contains($oid, $searchPrefix)) {
+                    $parts = explode('.', $oid);
+                    $onuId = end($parts);
+                    
+                    // Find signal matching this OID's index
+                    $signalValue = 0;
+                    foreach ($allSignals as $sOid => $val) {
+                        if (str_ends_with($sOid, $searchPrefix . $onuId)) {
+                            $signalValue = $val;
+                            break;
+                        }
+                    }
+
+                    // Convert ZTE signal (0.1 dBm or 0.01 dBm)
+                    $actualSignal = $signalValue > 30000 ? ($signalValue - 65536) * 0.1 : $signalValue * 0.1;
+                    if ($actualSignal == 0) $actualSignal = "N/A";
+
+                    $onus[] = [
+                        'index' => "{$shelf}.{$slot}.{$port}.{$onuId}",
+                        'onu_id' => $onuId,
+                        'sn' => $this->parseSn($sn),
+                        'signal' => $actualSignal,
+                        'status' => 'online'
+                    ];
+                }
+            }
+            
+            return $onus;
+        } catch (\Exception $e) {
+            Log::error("Failed to get ONUs via SNMP: " . $e->getMessage());
+            return [];
+        }
     }
 }

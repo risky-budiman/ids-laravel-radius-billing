@@ -27,8 +27,8 @@ class SnmpService
             'port' => $port,
             'community' => $community,
             'version' => $version,
-            'timeout' => 3,
-            'retries' => 1,
+            'timeout' => 10,
+            'retries' => 3,
         ]);
     }
 

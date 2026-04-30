@@ -24,11 +24,12 @@
                     <div class="space-y-2">
                         <label for="olt_type" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">OLT Type</label>
                         <select name="olt_type" id="olt_type" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
-                            <option value="ZTE_C320">ZTE ZXA10 C320</option>
-                            <option value="ZTE_C300">ZTE ZXA10 C300</option>
-                            <option value="HIOSO">Hioso (Generic)</option>
-                            <option value="OTHER">Other / Generic</option>
+                            <option value="ZTE_C320" {{ old('olt_type') == 'ZTE_C320' ? 'selected' : '' }}>ZTE ZXA10 C320</option>
+                            <option value="ZTE_C300" {{ old('olt_type') == 'ZTE_C300' ? 'selected' : '' }}>ZTE ZXA10 C300</option>
+                            <option value="HIOSO" {{ old('olt_type') == 'HIOSO' ? 'selected' : '' }}>Hioso (Generic)</option>
+                            <option value="OTHER" {{ old('olt_type') == 'OTHER' ? 'selected' : '' }}>Other / Generic</option>
                         </select>
+                        @error('olt_type') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="space-y-2">
@@ -50,16 +51,28 @@
                     <div class="space-y-2">
                         <label for="snmp_port" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">SNMP Port</label>
                         <input type="number" name="snmp_port" id="snmp_port" value="{{ old('snmp_port', 161) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" required>
+                        @error('snmp_port') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="snmp_version" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">SNMP Version</label>
+                        <select name="snmp_version" id="snmp_version" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
+                            <option value="1" {{ old('snmp_version') == '1' ? 'selected' : '' }}>Version 1</option>
+                            <option value="2" {{ old('snmp_version', '2') == '2' ? 'selected' : '' }}>Version 2c</option>
+                        </select>
+                        @error('snmp_version') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="space-y-2">
                         <label for="snmp_read_community" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Read Community</label>
                         <input type="text" name="snmp_read_community" id="snmp_read_community" value="{{ old('snmp_read_community', 'public') }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" required>
+                        @error('snmp_read_community') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="space-y-2">
                         <label for="snmp_write_community" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Write Community</label>
                         <input type="text" name="snmp_write_community" id="snmp_write_community" value="{{ old('snmp_write_community', 'private') }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" required>
+                        @error('snmp_write_community') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <!-- CLI / Telnet Fallback Section -->
@@ -70,6 +83,7 @@
                     <div class="space-y-2">
                         <label for="telnet_port" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Telnet/SSH Port</label>
                         <input type="number" name="telnet_port" id="telnet_port" value="{{ old('telnet_port', 23) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" required>
+                        @error('telnet_port') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="space-y-2">
@@ -78,8 +92,13 @@
                     </div>
 
                     <div class="space-y-2">
-                        <label for="password" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Password</label>
+                        <label for="password" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Login Password</label>
                         <input type="password" name="password" id="password" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="enable_password" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Enable Password</label>
+                        <input type="password" name="enable_password" id="enable_password" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="Usually same as login password">
                     </div>
 
                     <div class="flex items-center space-x-3 mt-4">

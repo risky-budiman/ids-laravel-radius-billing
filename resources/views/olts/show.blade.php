@@ -48,6 +48,20 @@
                 <h3 class="font-bold text-lg mb-2">Initialize PON Ports</h3>
                 <p class="text-indigo-100 text-sm mb-6">Generate PON ports for this OLT to start monitoring subscribers.</p>
                 
+                <form action="{{ route('olts.auto-discover-ports', $olt->id) }}" method="POST" class="mb-4">
+                    @csrf
+                    <button type="submit" class="w-full py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-indigo-50 transition-all shadow-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        Auto Discover Ports
+                    </button>
+                </form>
+
+                <div class="flex items-center my-4">
+                    <div class="flex-grow border-t border-indigo-400"></div>
+                    <span class="mx-3 text-xs text-indigo-200 uppercase font-bold">Or Manual</span>
+                    <div class="flex-grow border-t border-indigo-400"></div>
+                </div>
+                
                 <form action="{{ route('olts.generate-ports', $olt->id) }}" method="POST" class="space-y-4">
                     @csrf
                     <div>
@@ -61,8 +75,8 @@
                             <option value="16" selected>16 Ports</option>
                         </select>
                     </div>
-                    <button type="submit" class="w-full py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-indigo-50 transition-all shadow-lg">
-                        Generate Ports
+                    <button type="submit" class="w-full py-3 bg-indigo-700 text-white rounded-xl font-bold hover:bg-indigo-800 transition-all shadow-lg">
+                        Generate Manual
                     </button>
                 </form>
             </div>
@@ -82,17 +96,21 @@
                 <div class="p-6">
                     <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-4">
                         @foreach($olt->ponPorts->sortBy(['slot', 'pon_port']) as $port)
-                            <div class="group relative flex flex-col items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-2xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all cursor-pointer border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800">
-                                <div class="w-8 h-8 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 font-bold text-xs mb-2 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                            <a href="{{ route('olts.show-port', [$olt->id, $port->id]) }}" class="group relative flex flex-col items-center p-4 {{ $port->status == 'active' ? 'bg-green-50 dark:bg-green-900/10 border-green-100 dark:border-green-900/30' : 'bg-gray-50 dark:bg-gray-700/50' }} rounded-2xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all cursor-pointer border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800">
+                                @if($port->status == 'active')
+                                    <div class="absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full shadow-sm shadow-green-500/50"></div>
+                                @endif
+                                
+                                <div class="w-8 h-8 rounded-lg {{ $port->status == 'active' ? 'bg-green-500 text-white' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400' }} flex items-center justify-center font-bold text-xs mb-2 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all">
                                     {{ $port->pon_port }}
                                 </div>
-                                <span class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Slot {{ $port->slot }}</span>
+                                <span class="text-[10px] {{ $port->status == 'active' ? 'text-green-600 dark:text-green-400' : 'text-gray-400' }} uppercase font-bold tracking-tighter">Slot {{ $port->slot }}</span>
                                 
                                 <!-- Tooltip/Hover effect -->
                                 <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-indigo-600/10 rounded-2xl">
                                     <span class="bg-indigo-600 text-white text-[10px] px-2 py-1 rounded-md font-bold shadow-lg">VIEW ONU</span>
                                 </div>
-                            </div>
+                            </a>
                         @endforeach
 
                         @if($olt->ponPorts->isEmpty())
@@ -111,10 +129,13 @@
                         <span class="block font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600">Scan Unconfigured ONUs</span>
                         <span class="text-xs text-gray-500">Detect new modems via SNMP walk</span>
                     </button>
-                    <button class="p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl text-left hover:bg-gray-100 transition-all group">
-                        <span class="block font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600">Sync Port Status</span>
-                        <span class="text-xs text-gray-500">Refresh physical port metrics</span>
-                    </button>
+                    <form action="{{ route('olts.sync-all-ports', $olt->id) }}" method="POST" class="w-full">
+                        @csrf
+                        <button type="submit" class="w-full p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl text-left hover:bg-gray-100 transition-all group">
+                            <span class="block font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600">Sync Port Status</span>
+                            <span class="text-xs text-gray-500">Refresh physical port metrics in background</span>
+                        </button>
+                    </form>
                     <button onclick="document.getElementById('manual-delete-modal').classList.remove('hidden')" class="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl text-left hover:bg-rose-100 transition-all group md:col-span-2">
                         <span class="block font-bold text-rose-700 dark:text-rose-400 group-hover:text-rose-800">Manual Delete ONU</span>
                         <span class="text-xs text-rose-500">Force delete an ONU configuration directly from OLT</span>
