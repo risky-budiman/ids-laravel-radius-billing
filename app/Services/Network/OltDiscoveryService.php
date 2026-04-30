@@ -19,6 +19,7 @@ class OltDiscoveryService
      */
     public function scanUnconfiguredOnus()
     {
+        try {
             Log::info("Starting SNMP ONU Discovery for OLT: {$this->snmp->getHost()}");
             
             // ZTE OID for unconfigured ONUs SN: .1.3.6.1.4.1.3902.1012.3.28.1.1.5
