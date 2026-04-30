@@ -73,13 +73,21 @@ class NocController extends Controller
         return view('noc.discovery', compact('discoveredOnus'));
     }
 
-    public function signals()
+    public function signals(Request $request)
     {
         // Get customers with their cached signals
-        $customers = \App\Models\Customer::whereNotNull('olt_id')
+        $query = \App\Models\Customer::whereNotNull('olt_id')
             ->whereNotNull('onu_index')
-            ->with(['olt', 'signalCache'])
-            ->get();
+            ->with(['olt', 'signalCache']);
+
+        // Handle filtering from Dashboard
+        if ($request->get('filter') === 'critical') {
+            $query->whereHas('signalCache', function($q) {
+                $q->where('rx_power', '<', -27);
+            });
+        }
+
+        $customers = $query->get();
 
         return view('noc.signals', compact('customers'));
     }
