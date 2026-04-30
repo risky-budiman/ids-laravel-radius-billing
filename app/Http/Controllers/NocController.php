@@ -37,7 +37,15 @@ class NocController extends Controller
         });
 
         // Get Stats from Cache for Dashboard Boxes
-        $unconfiguredCount = 0; 
+        $unconfiguredCount = 0;
+        foreach ($olts as $olt) {
+            try {
+                $snmp = new \App\Services\Network\SnmpService($olt->ip_address, $olt->snmp_read_community, $olt->snmp_port);
+                $discovery = new \App\Services\Network\OltDiscoveryService($snmp);
+                $unconfiguredCount += count($discovery->scanUnconfiguredOnus());
+            } catch (\Exception $e) { }
+        }
+        
         $criticalCount = \App\Models\CustomerSignalCache::where('rx_power', '<', -27)->count();
 
         $stats = [
