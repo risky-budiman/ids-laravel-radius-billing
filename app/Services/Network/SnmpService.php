@@ -47,7 +47,7 @@ class SnmpService
             // Fallback for Ubuntu/Linux: Try system snmpget
             if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
                 try {
-                    $cmd = "snmpget -v{$this->version}c -c {$this->community} -t 2 -r 1 {$this->host} {$oid} 2>&1";
+                    $cmd = "snmpget -On -v{$this->version}c -c {$this->community} -t 2 -r 1 {$this->host} {$oid} 2>&1";
                     $output = shell_exec($cmd);
                     if ($output && preg_match('/= (\w+): (.*)/i', $output, $matches)) {
                         return trim($matches[2], '" ');
@@ -83,14 +83,15 @@ class SnmpService
             // Fallback for Ubuntu/Linux: Try system snmpwalk
             if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
                 try {
-                    $cmd = "snmpwalk -v{$this->version}c -c {$this->community} -t 5 -r 1 {$this->host} {$oid} 2>&1";
+                    $cmd = "snmpwalk -On -v{$this->version}c -c {$this->community} -t 5 -r 1 {$this->host} {$oid} 2>&1";
                     $output = shell_exec($cmd);
                     if ($output && !str_contains($output, 'No response')) {
                         $results = [];
-                        // Parse format: .1.3.6... = STRING: "VALUE"
-                        if (preg_match_all('/(\.\d+(?:\.\d+)*)\s+=\s+(\w+):\s+(.*)/i', $output, $matches, PREG_SET_ORDER)) {
+                        // Parse format: .1.3.6... = STRING: "VALUE" or INTEGER: 25
+                        // Also support outputs that don't start with a dot
+                        if (preg_match_all('/\.?(\d+(?:\.\d+)*)\s+=\s+(\w+):\s+(.*)/i', $output, $matches, PREG_SET_ORDER)) {
                             foreach ($matches as $m) {
-                                $results[$m[1]] = trim($m[3], '" ');
+                                $results['.' . $m[1]] = trim($m[3], '" ');
                             }
                         }
                         if (!empty($results)) return $results;

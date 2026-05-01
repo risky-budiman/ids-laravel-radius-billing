@@ -114,31 +114,48 @@ class ZteOltProvisioningService
             // 1.5 Get Descriptions (SNMP FIRST PRIORITY)
             $descriptions = [];
             
-            if ($this->olt->snmp_community) {
+            if ($this->olt->snmp_read_community) {
                 // METHOD A: Use Internal SnmpService (FreeDSx Library)
                 try {
                     Log::debug("Attempting SNMP Fetch (Method A: Library) for port {$interface}");
                     $snmpService = new \App\Services\Network\SnmpService(
                         $this->olt->ip_address, 
-                        $this->olt->snmp_community, 
+                        $this->olt->snmp_read_community, 
                         $this->olt->snmp_port ?? 161
                     );
                     
                     $portIdx = $this->calculateSnmpPortIndex($interface);
-                    $oid = ".1.3.6.1.4.1.3902.1012.3.28.1.1.3.{$portIdx}";
                     
-                    $snmpData = $snmpService->walk($oid);
-                    
+                    // 1. Try standard C300 series OID (Port Specific)
+                    $oidC300 = ".1.3.6.1.4.1.3902.1012.3.28.1.1.3.{$portIdx}";
+                    $snmpData = $snmpService->walk($oidC300);
                     if (!empty($snmpData)) {
                         foreach ($snmpData as $key => $value) {
                             if (preg_match('/\.(\d+)$/', $key, $m)) {
                                 $onuId = $m[1];
-                                if ($value && $value !== 'N/A') {
-                                    $descriptions[$onuId] = trim($value);
+                                if ($value && $value !== 'N/A') $descriptions[$onuId] = trim($value);
+                            }
+                        }
+                    }
+
+                    // 2. Try Titan C600 series OID (Base Walk + Filter)
+                    if (empty($descriptions)) {
+                        $oidTitan = ".1.3.6.1.4.1.3902.1082.10.1.2.4.1.4";
+                        $titanData = $snmpService->walk($oidTitan);
+                        if (!empty($titanData)) {
+                            foreach ($titanData as $key => $value) {
+                                // Titan OID format usually: ...4.1.4.{PORT_IDX}.{ONU_IDX}
+                                if (str_contains($key, ".{$portIdx}.")) {
+                                    $parts = explode('.', $key);
+                                    $onuId = end($parts);
+                                    if ($value && $value !== 'N/A') $descriptions[$onuId] = trim($value);
                                 }
                             }
                         }
-                        if (!empty($descriptions)) Log::info("Successfully fetched " . count($descriptions) . " names via SNMP Library.");
+                    }
+
+                    if (!empty($descriptions)) {
+                        Log::info("Successfully fetched " . count($descriptions) . " names via SNMP.");
                     }
                 } catch (\Exception $e) {
                     Log::warning("SNMP Library Fetch failed: " . $e->getMessage());
@@ -149,19 +166,32 @@ class ZteOltProvisioningService
                     try {
                         Log::debug("Attempting SNMP Fetch (Method B: snmpwalk) for port {$interface}");
                         $ip = $this->olt->ip_address;
-                        $community = $this->olt->snmp_community;
+                        $community = $this->olt->snmp_read_community;
                         $portIdx = $this->calculateSnmpPortIndex($interface);
-                        $command = "snmpwalk -v2c -c {$community} {$ip} .1.3.6.1.4.1.3902.1012.3.28.1.1.3.{$portIdx} 2>&1";
-                        $snmpOutput = shell_exec($command);
                         
-                        if ($snmpOutput && !str_contains($snmpOutput, 'not found')) {
-                            if (preg_match_all('/\.(\d+)\s+=\s+STRING:\s+"([^"]+)"/i', $snmpOutput, $snmpMatches, PREG_SET_ORDER)) {
-                                foreach ($snmpMatches as $sm) {
-                                    $descriptions[$sm[1]] = trim($sm[2]);
+                        // 1. Try C300 OID
+                        $cmdC300 = "snmpwalk -v2c -c {$community} {$ip} .1.3.6.1.4.1.3902.1012.3.28.1.1.3.{$portIdx} 2>&1";
+                        $outC300 = shell_exec($cmdC300);
+                        if ($outC300 && preg_match_all('/\.(\d+)\s+=\s+STRING:\s+"([^"]+)"/i', $outC300, $mC300, PREG_SET_ORDER)) {
+                            foreach ($mC300 as $m) {
+                                if ($m[2] !== 'N/A') $descriptions[$m[1]] = trim($m[2]);
+                            }
+                        }
+
+                        // 2. Try Titan C600 OID (Walk Base + Filter)
+                        if (empty($descriptions)) {
+                            $cmdTitan = "snmpwalk -v2c -c {$community} {$ip} .1.3.6.1.4.1.3902.1082.10.1.2.4.1.4 2>&1";
+                            $outTitan = shell_exec($cmdTitan);
+                            if ($outTitan && preg_match_all('/\.(\d+)\.(\d+)\s+=\s+STRING:\s+"([^"]+)"/i', $outTitan, $mTitan, PREG_SET_ORDER)) {
+                                foreach ($mTitan as $m) {
+                                    if ($m[1] == $portIdx && $m[3] !== 'N/A') {
+                                        $descriptions[$m[2]] = trim($m[3]);
+                                    }
                                 }
                             }
-                            if (!empty($descriptions)) Log::info("Successfully fetched " . count($descriptions) . " names via System snmpwalk.");
                         }
+                        
+                        if (!empty($descriptions)) Log::info("Successfully fetched " . count($descriptions) . " names via System snmpwalk.");
                     } catch (\Exception $e) {
                         Log::warning("System snmpwalk failed: " . $e->getMessage());
                     }
@@ -241,12 +271,12 @@ class ZteOltProvisioningService
      */
     public function getOltStats()
     {
-        if (!$this->olt->snmp_community) return null;
+        if (!$this->olt->snmp_read_community) return null;
 
         try {
             $snmpService = new \App\Services\Network\SnmpService(
                 $this->olt->ip_address, 
-                $this->olt->snmp_community, 
+                $this->olt->snmp_read_community, 
                 $this->olt->snmp_port ?? 161
             );
 
@@ -257,7 +287,7 @@ class ZteOltProvisioningService
                 $rawUptime = $snmpService->get('.1.3.6.1.2.1.1.3.0');
                 if ($rawUptime) {
                     $status = 'online';
-                    $uptime = (string)$rawUptime;
+                    $uptime = $this->formatTimeticks((string)$rawUptime);
                 }
             } catch (\Exception $e) {
                 Log::debug("SNMP Uptime check failed for {$this->olt->ip_address}");
@@ -271,27 +301,52 @@ class ZteOltProvisioningService
             $cpu = 0;
             $temp = 0;
             
-            // Try common ZTE CPU OIDs
-            $cpuOids = [
-                '.1.3.6.1.4.1.3902.1012.3.1.3.1.1.3.1',        // Card 1
-                '.1.3.6.1.4.1.3902.1012.3.1.3.1.1.3.50331650', // C320 Main Card
-                '.1.3.6.1.4.1.3902.1012.3.1.3.1.1.3.16777474', // Another variant
+            Log::info("Starting Hardware Debug for OLT: {$this->olt->ip_address}");
+
+            // Dynamic CPU Discovery (Try ZTE Titan, ZTE C300, then Global)
+            $cpuOidTables = [
+                '.1.3.6.1.4.1.3902.1082.10.1.3.1.1.3', // ZTE Titan CPU (New)
+                '.1.3.6.1.4.1.3902.1012.3.1.3.1.1.3', // ZTE C300 CPU
+                '.1.3.6.1.2.1.25.3.3.1.2',           // Global Host Resources CPU
             ];
 
-            foreach ($cpuOids as $oid) {
+            foreach ($cpuOidTables as $tableOid) {
                 try {
-                    $val = $snmpService->get($oid);
-                    if ($val && (int)$val > 0) {
-                        $cpu = (int)$val;
-                        break;
+                    $cpuTable = $snmpService->walk($tableOid);
+                    Log::debug("CPU Table Walk for {$tableOid}: " . json_encode($cpuTable));
+                    if (!empty($cpuTable)) {
+                        foreach ($cpuTable as $val) {
+                            if ((int)$val > 0 && (int)$val <= 100) {
+                                $cpu = (int)$val;
+                                break 2;
+                            }
+                        }
                     }
                 } catch (\Exception $e) { }
             }
 
-            // Try common ZTE Temp OIDs
-            try {
-                $temp = (int)$snmpService->get('.1.3.6.1.4.1.3902.1012.3.1.2.1.1.3.1');
-            } catch (\Exception $e) { }
+            // Dynamic Temp Discovery (ZTE Titan then ZTE C300)
+            $tempOidTables = [
+                '.1.3.6.1.4.1.3902.1082.10.1.3.1.1.2', // ZTE Titan Temp (New)
+                '.1.3.6.1.4.1.3902.1012.3.1.2.1.1.3', // ZTE C300 Temp
+            ];
+
+            foreach ($tempOidTables as $tableOid) {
+                try {
+                    $tempTable = $snmpService->walk($tableOid);
+                    Log::debug("Temp Table Walk for {$tableOid}: " . json_encode($tempTable));
+                    if (!empty($tempTable)) {
+                        foreach ($tempTable as $val) {
+                            if ((int)$val > 10 && (int)$val < 100) { 
+                                $temp = (int)$val;
+                                break 2;
+                            }
+                        }
+                    }
+                } catch (\Exception $e) { }
+            }
+
+            Log::info("Hardware Stats Final: CPU={$cpu}%, Temp={$temp}C");
 
             return [
                 'status' => 'online',
@@ -337,5 +392,38 @@ class ZteOltProvisioningService
         
         // Typical ZTE GPON Index calculation
         return ($shelf << 24) | ($slot << 16) | ($port << 8);
+    }
+
+    /**
+     * Format SNMP Timeticks to Human Readable string
+     */
+    private function formatTimeticks($ticks)
+    {
+        // If it already contains a time format like "0:02:03.45"
+        if (preg_match('/(\d+):(\d+):(\d+)/', $ticks)) {
+            // If it has the (ticks) prefix, just take the part after it
+            if (preg_match('/\)\s*(.*)/', $ticks, $m)) {
+                return $m[1];
+            }
+            return $ticks;
+        }
+        
+        // Clean up: remove non-numeric
+        $ticksVal = preg_replace('/[^0-9]/', '', $ticks);
+        if (!$ticksVal || !is_numeric($ticksVal)) return $ticks;
+
+        $seconds = (int)($ticksVal / 100);
+        $days = floor($seconds / 86400);
+        $seconds %= 86400;
+        $hours = floor($seconds / 3600);
+        $seconds %= 3600;
+        $minutes = floor($seconds / 60);
+        $seconds %= 60;
+
+        $parts = [];
+        if ($days > 0) $parts[] = "{$days}d";
+        $parts[] = sprintf("%02d:%02d:%02d", $hours, $minutes, $seconds);
+        
+        return implode(" ", $parts);
     }
 }
