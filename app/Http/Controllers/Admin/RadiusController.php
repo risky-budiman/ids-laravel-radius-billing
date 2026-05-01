@@ -23,32 +23,42 @@ class RadiusController extends Controller
      */
     public function disconnectAll(Request $request)
     {
+        // Prevent timeout for large numbers of users
+        set_time_limit(0);
+        
         $onlineSessions = RadAcct::online()->get();
         $count = 0;
         $failed = 0;
+        
+        // Cache NAS info to avoid redundant DB queries
+        $nasCache = [];
 
         foreach ($onlineSessions as $session) {
-            // We need NAS IP and Secret to send PoD
-            // Usually NAS Info is in nas table
-            $nas = DB::connection('radius')->table('nas')->where('nasname', $session->nasipaddress)->first();
+            $nasIp = $session->nasipaddress;
+            
+            if (!isset($nasCache[$nasIp])) {
+                $nasCache[$nasIp] = DB::connection('radius')->table('nas')->where('nasname', $nasIp)->first();
+            }
+            
+            $nas = $nasCache[$nasIp];
             
             if ($nas) {
                 $success = $this->coaService->disconnect($nas->nasname, $nas->secret, $session->username);
                 if ($success) {
                     $count++;
                 } else {
+                    // If disconnect fails (e.g., NAS unreachable), PERMANENTLY DELETE the stale online session
+                    $session->delete();
                     $failed++;
                 }
             } else {
-                Log::warning("NAS Info not found for IP: {$session->nasipaddress}");
+                Log::warning("NAS Info not found for IP: {$nasIp}. Deleting stale session.");
+                $session->delete();
                 $failed++;
             }
         }
 
-        // Also optionally clear stale sessions from DB if they don't have a stop time but NAS is rebooted
-        // But for "Disconnect All", we just try to send PoD to everyone.
-
-        return back()->with('success', "Berhasil mengirim perintah disconnect ke {$count} sesi. " . ($failed > 0 ? "Gagal pada {$failed} sesi." : ""));
+        return back()->with('success', "Proses selesai. Berhasil memutus {$count} sesi. " . ($failed > 0 ? "Berhasil menghapus {$failed} sesi online yang macet/tidak merespon." : ""));
     }
 
     /**
