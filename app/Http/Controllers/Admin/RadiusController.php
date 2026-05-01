@@ -23,42 +23,10 @@ class RadiusController extends Controller
      */
     public function disconnectAll(Request $request)
     {
-        // Prevent timeout for large numbers of users
-        set_time_limit(0);
-        
-        $onlineSessions = RadAcct::online()->get();
-        $count = 0;
-        $failed = 0;
-        
-        // Cache NAS info to avoid redundant DB queries
-        $nasCache = [];
+        // Dispatch the job to the background queue
+        \App\Jobs\DisconnectAllSessionsJob::dispatch();
 
-        foreach ($onlineSessions as $session) {
-            $nasIp = $session->nasipaddress;
-            
-            if (!isset($nasCache[$nasIp])) {
-                $nasCache[$nasIp] = DB::connection('radius')->table('nas')->where('nasname', $nasIp)->first();
-            }
-            
-            $nas = $nasCache[$nasIp];
-            
-            if ($nas) {
-                $success = $this->coaService->disconnect($nas->nasname, $nas->secret, $session->username);
-                if ($success) {
-                    $count++;
-                } else {
-                    // If disconnect fails (e.g., NAS unreachable), PERMANENTLY DELETE the stale online session
-                    $session->delete();
-                    $failed++;
-                }
-            } else {
-                Log::warning("NAS Info not found for IP: {$nasIp}. Deleting stale session.");
-                $session->delete();
-                $failed++;
-            }
-        }
-
-        return back()->with('success', "Proses selesai. Berhasil memutus {$count} sesi. " . ($failed > 0 ? "Berhasil menghapus {$failed} sesi online yang macet/tidak merespon." : ""));
+        return back()->with('success', "Proses pemutusan koneksi telah dimulai di latar belakang. Daftar online akan segera diperbarui secara bertahap.");
     }
 
     /**
