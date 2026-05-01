@@ -119,7 +119,7 @@ return [
             'driver' => 'mysql',
             'host' => env('RADIUS_DB_HOST', env('DB_HOST', '127.0.0.1')),
             'port' => env('RADIUS_DB_PORT', env('DB_PORT', '3306')),
-            'database' => env('RADIUS_DB_DATABASE', 'radius'),
+            'database' => env('RADIUS_DB_DATABASE', env('DB_DATABASE', 'radius')),
             'username' => env('RADIUS_DB_USERNAME', env('DB_USERNAME', 'root')),
             'password' => env('RADIUS_DB_PASSWORD', env('DB_PASSWORD', '')),
             'charset' => 'utf8mb4',
