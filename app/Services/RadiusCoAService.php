@@ -14,15 +14,22 @@ class RadiusCoAService
      * @param string $nasIp NAS IP Address
      * @param string $secret NAS Secret 
      * @param string $username Radius User-Name
+     * @param string|null $sessionId Radius Acct-Session-Id (Optional but recommended)
      * @return bool True if successfully disconnected
      */
-    public function disconnect(string $nasIp, string $secret, string $username): bool
+    public function disconnect(string $nasIp, string $secret, string $username, ?string $sessionId = null): bool
     {
         try {
+            // Prepare the packet payload. Including Acct-Session-Id makes the request more precise.
+            $attributes = "User-Name=\"$username\"";
+            if ($sessionId) {
+                $attributes .= ",Acct-Session-Id=\"$sessionId\"";
+            }
+
             // Added -t 2 (timeout 2s) to prevent hanging if NAS doesn't respond
             $command = sprintf(
-                'echo "User-Name=\"%s\"" | radclient -t 2 -x %s:3799 disconnect "%s" 2>&1',
-                $username,
+                'echo \'%s\' | radclient -t 2 -x %s:3799 disconnect "%s" 2>&1',
+                $attributes,
                 $nasIp,
                 $secret
             );

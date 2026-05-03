@@ -46,7 +46,7 @@ class DisconnectAllSessionsJob implements ShouldQueue
             $nas = $nasCache[$nasIp];
             
             if ($nas) {
-                $success = $coaService->disconnect($nas->nasname, $nas->secret, $session->username);
+                $success = $coaService->disconnect($nas->nasname, $nas->secret, $session->username, $session->acctsessionid);
                 if ($success) {
                     $count++;
                 } else {

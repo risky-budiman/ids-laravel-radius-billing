@@ -47,7 +47,7 @@ class OnlineUserController extends Controller
         }
 
         $coa = new RadiusCoAService();
-        $success = $coa->disconnect($nas->nasname, $nas->secret, $session->username);
+        $success = $coa->disconnect($nas->nasname, $nas->secret, $session->username, $session->acctsessionid);
 
         if ($success) {
             return back()->with('success', "Disconnect signal sent to Router for {$session->username}.");
