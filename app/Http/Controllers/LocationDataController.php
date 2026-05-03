@@ -20,9 +20,24 @@ class LocationDataController extends Controller
 
     public function storeRegion(Request $request)
     {
-        $request->validate(['name' => 'required|string']);
+        $request->validate([
+            'name' => 'required|string',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string'
+        ]);
         Region::create($request->all());
         return redirect()->back()->with('success', 'Region added.');
+    }
+
+    public function updateRegion(Request $request, Region $region)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string'
+        ]);
+        $region->update($request->all());
+        return redirect()->back()->with('success', 'Region updated.');
     }
 
     public function destroyRegion(Region $region)
@@ -43,10 +58,24 @@ class LocationDataController extends Controller
     {
         $request->validate([
             'region_id' => 'required|exists:regions,id',
-            'name' => 'required|string'
+            'name' => 'required|string',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string'
         ]);
         Sto::create($request->all());
         return redirect()->back()->with('success', 'STO added.');
+    }
+
+    public function updateSto(Request $request, Sto $sto)
+    {
+        $request->validate([
+            'region_id' => 'required|exists:regions,id',
+            'name' => 'required|string',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string'
+        ]);
+        $sto->update($request->all());
+        return redirect()->back()->with('success', 'STO updated.');
     }
 
     public function destroySto(Sto $sto)
@@ -67,10 +96,24 @@ class LocationDataController extends Controller
     {
         $request->validate([
             'sto_id' => 'required|exists:stos,id',
-            'name' => 'required|string'
+            'name' => 'required|string',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string'
         ]);
         Stb::create($request->all());
         return redirect()->back()->with('success', 'STB added.');
+    }
+
+    public function updateStb(Request $request, Stb $stb)
+    {
+        $request->validate([
+            'sto_id' => 'required|exists:stos,id',
+            'name' => 'required|string',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string'
+        ]);
+        $stb->update($request->all());
+        return redirect()->back()->with('success', 'STB updated.');
     }
 
     public function destroyStb(Stb $stb)
@@ -104,10 +147,25 @@ class LocationDataController extends Controller
             'id' => 'required|string|unique:odcs,id',
             'stb_id' => 'nullable|exists:stbs,id',
             'name' => 'required|string',
-            'total_ports' => 'nullable|integer'
+            'total_ports' => 'nullable|integer',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string'
         ]);
         Odc::create($request->all());
         return redirect()->back()->with('success', 'ODC added.');
+    }
+
+    public function updateOdc(Request $request, Odc $odc)
+    {
+        $request->validate([
+            'stb_id' => 'nullable|exists:stbs,id',
+            'name' => 'required|string',
+            'total_ports' => 'nullable|integer',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string'
+        ]);
+        $odc->update($request->all());
+        return redirect()->back()->with('success', 'ODC updated.');
     }
 
     public function destroyOdc(Odc $odc)
@@ -130,10 +188,25 @@ class LocationDataController extends Controller
             'id' => 'required|string|unique:odps,id',
             'odc_id' => 'required|exists:odcs,id',
             'name' => 'required|string',
-            'total_ports' => 'nullable|integer'
+            'total_ports' => 'nullable|integer',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string'
         ]);
         Odp::create($request->all());
         return redirect()->back()->with('success', 'ODP added.');
+    }
+
+    public function updateOdp(Request $request, Odp $odp)
+    {
+        $request->validate([
+            'odc_id' => 'required|exists:odcs,id',
+            'name' => 'required|string',
+            'total_ports' => 'nullable|integer',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string'
+        ]);
+        $odp->update($request->all());
+        return redirect()->back()->with('success', 'ODP updated.');
     }
 
     public function destroyOdp(Odp $odp)

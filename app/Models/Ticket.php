@@ -21,6 +21,11 @@ class Ticket extends Model
         'attachment',
         'resolution_notes',
         'assigned_to',
+        'due_date',
+    ];
+
+    protected $casts = [
+        'due_date' => 'date',
     ];
 
     public function customer()

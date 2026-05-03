@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Sto extends Model
 {
     use LogsActivity;
-    protected $fillable = ['region_id', 'acs_server_id', 'code', 'name'];
+    protected $fillable = ['region_id', 'acs_server_id', 'code', 'name', 'latitude', 'longitude'];
 
     public function region()
     {

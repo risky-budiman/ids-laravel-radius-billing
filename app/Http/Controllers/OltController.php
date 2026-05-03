@@ -47,6 +47,8 @@ class OltController extends Controller
             'olt_type' => 'required|string',
             'is_active' => 'nullable',
             'description' => 'nullable|string',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string',
         ]);
 
         $validated['is_active'] = $request->has('is_active');
@@ -91,6 +93,8 @@ class OltController extends Controller
             'olt_type' => 'required|string',
             'is_active' => 'nullable',
             'description' => 'nullable|string',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string',
         ]);
 
         $validated['is_active'] = $request->has('is_active');

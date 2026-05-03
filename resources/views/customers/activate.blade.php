@@ -40,6 +40,12 @@
                         </div>
 
                         <div>
+                            <x-input-label for="activated_at" :value="__('Activation Date')" />
+                            <x-text-input id="activated_at" name="activated_at" type="date" class="mt-1 block w-full" :value="old('activated_at', date('Y-m-d'))" />
+                            <p class="text-[9px] text-indigo-500 mt-1 italic font-bold uppercase">Tanggal layanan mulai aktif (Prorata akan dihitung dari sini).</p>
+                        </div>
+
+                        <div>
                             <div class="flex justify-between items-center mb-1">
                                 <x-input-label for="onu_sn" :value="__('ONU Serial Number')" />
                                 <div class="flex items-center space-x-2">

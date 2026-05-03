@@ -80,10 +80,12 @@ class CustomerActivationController extends Controller
 
         DB::transaction(function() use ($request, $customer) {
             // 1. Activate Customer and Set Initial Billing
+            $activatedAt = $request->input('activated_at') ? \Carbon\Carbon::parse($request->input('activated_at')) : now();
+            
             $updateData = [
                 'is_active' => true,
                 'status' => Customer::STATUS_ACTIVE,
-                'activated_at' => now(),
+                'activated_at' => $activatedAt,
                 'installation_paid_at' => ($request->payment_method === 'pg') ? null : now(),
                 'activation_grace_expires_at' => ($request->payment_method === 'pg') ? now()->addHour() : null,
                 'installation_bank_account_id' => $request->bank_account_id,

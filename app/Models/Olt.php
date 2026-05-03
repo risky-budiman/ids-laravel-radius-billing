@@ -24,6 +24,8 @@ class Olt extends Model
         'olt_type',
         'is_active',
         'description',
+        'latitude',
+        'longitude',
     ];
 
     protected $casts = [

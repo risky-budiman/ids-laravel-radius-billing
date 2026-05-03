@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Stb extends Model
 {
     use LogsActivity;
-    protected $fillable = ['sto_id', 'code', 'name'];
+    protected $fillable = ['sto_id', 'code', 'name', 'latitude', 'longitude'];
 
     public function sto()
     {

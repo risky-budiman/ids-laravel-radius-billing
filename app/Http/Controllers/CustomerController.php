@@ -42,18 +42,31 @@ class CustomerController extends Controller
 
     public function map()
     {
-        // Simple query: just get those that have something in latitude
+        // 1. Get Customers
         $query = Customer::where('latitude', '!=', '')
             ->whereNotNull('latitude')
-            ->with('package');
+            ->with(['package', 'odp']);
 
         if (auth()->user()->isMitra()) {
             $query->where('partner_id', auth()->id());
         }
 
         $customers = $query->get();
+
+        // 2. Get Infrastructure (Only for Admin/Technical)
+        $infrastructure = [];
+        if (auth()->user()->isAdmin() || auth()->user()->isTeknisi()) {
+            $infrastructure = [
+                'regions' => \App\Models\Region::whereNotNull('latitude')->get(),
+                'olts' => \App\Models\Olt::whereNotNull('latitude')->get(),
+                'stos' => \App\Models\Sto::whereNotNull('latitude')->with('region')->get(),
+                'stbs' => \App\Models\Stb::whereNotNull('latitude')->with('sto')->get(),
+                'odcs' => \App\Models\Odc::whereNotNull('latitude')->with('stb')->get(),
+                'odps' => \App\Models\Odp::whereNotNull('latitude')->with('odc')->get(),
+            ];
+        }
             
-        return view('customers.map', compact('customers'));
+        return view('customers.map', compact('customers', 'infrastructure'));
     }
 
     public function show(Customer $customer)
@@ -118,15 +131,16 @@ class CustomerController extends Controller
             'sales_commission_rate' => 'nullable|numeric|min:0',
             'sales_commission_type' => 'nullable|in:percentage,fixed',
             'olt_id' => 'nullable|exists:olts,id',
-            'onu_sn' => 'nullable|string|max:64',
             'onu_index' => 'nullable|string|max:64',
             'onu_type' => 'nullable|string|max:64',
+            'scheduled_activation_at' => 'nullable|date',
         ]);
 
         $package = Package::find($validated['package_id']);
         $isActive = filter_var($request->input('is_active', false), FILTER_VALIDATE_BOOLEAN);
+        $scheduledAt = $validated['scheduled_activation_at'] ?? null;
 
-        DB::transaction(function () use ($validated, $package, $isActive, $request) {
+        DB::transaction(function () use ($validated, $package, $isActive, $scheduledAt, $request) {
             // Handle File Uploads
             $photos = [];
             foreach(['identity_photo', 'house_photo', 'cpe_photo'] as $field) {
@@ -157,6 +171,7 @@ class CustomerController extends Controller
                 'billing_due_day' => $validated['billing_due_day'] ?? 20,
                 'latitude' => $validated['latitude'] ?? null,
                 'longitude' => $validated['longitude'] ?? null,
+                'scheduled_activation_at' => $scheduledAt,
                 'installation_fee' => $validated['installation_fee'] ?? 0,
                 'use_tax' => $request->has('use_tax'),
                 'olt_id' => $validated['olt_id'] ?? null,
@@ -282,8 +297,7 @@ class CustomerController extends Controller
         $newUsername = $validated['username'];
         $package = \App\Models\Package::find($validated['package_id']);
         $isActive = $request->has('is_active') ? filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN) : $customer->is_active;
-
-
+        
         DB::transaction(function () use ($customer, $validated, $oldUsername, $newUsername, $package, $isActive, $latitude, $longitude, $request) {
             // 1. Update customer fields (excluding coordinates)
             $updateData = collect($validated)->except(['latitude', 'longitude', 'identity_photo', 'house_photo', 'cpe_photo'])->toArray();

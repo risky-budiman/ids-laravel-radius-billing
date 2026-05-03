@@ -45,6 +45,16 @@
                         <input type="text" name="description" id="description" value="{{ old('description', $olt->description) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="Optional notes">
                     </div>
 
+                    <div class="space-y-2">
+                        <label for="latitude" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Latitude</label>
+                        <input type="text" name="latitude" id="latitude" value="{{ old('latitude', $olt->latitude) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="-6.123456">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="longitude" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Longitude</label>
+                        <input type="text" name="longitude" id="longitude" value="{{ old('longitude', $olt->longitude) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="106.123456">
+                    </div>
+
                     <!-- SNMP Configuration Section -->
                     <div class="md:col-span-2 mt-4">
                         <h3 class="text-sm font-bold text-amber-600 dark:text-amber-500 uppercase tracking-wider mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">SNMP Configuration</h3>

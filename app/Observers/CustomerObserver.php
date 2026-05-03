@@ -21,7 +21,9 @@ class CustomerObserver
                 'status' => 'open',
                 'priority' => 'high',
                 'subject' => 'Aktivasi Baru: ' . $customer->name,
-                'description' => 'Aktivasi pelanggan baru dengan username: ' . $customer->username,
+                'description' => 'Aktivasi pelanggan baru dengan username: ' . $customer->username . 
+                               ($customer->scheduled_activation_at ? ' | Jadwal: ' . $customer->scheduled_activation_at->format('d M Y') : ''),
+                'due_date' => $customer->scheduled_activation_at,
             ]);
         }
     }

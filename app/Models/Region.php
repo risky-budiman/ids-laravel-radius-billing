@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Region extends Model
 {
     use LogsActivity;
-    protected $fillable = ['code', 'name'];
+    protected $fillable = ['code', 'name', 'latitude', 'longitude'];
 
     public function stos()
     {

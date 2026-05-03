@@ -328,20 +328,25 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         // Location Master Data
         Route::get('locations/regions', [\App\Http\Controllers\LocationDataController::class, 'regions'])->name('locations.regions');
         Route::post('locations/regions', [\App\Http\Controllers\LocationDataController::class, 'storeRegion'])->name('locations.region.store');
+        Route::put('locations/regions/{region}', [\App\Http\Controllers\LocationDataController::class, 'updateRegion'])->name('locations.region.update');
         Route::delete('locations/regions/{region}', [\App\Http\Controllers\LocationDataController::class, 'destroyRegion'])->name('locations.region.destroy');
         Route::get('locations/stos', [\App\Http\Controllers\LocationDataController::class, 'stos'])->name('locations.stos');
         Route::post('locations/stos', [\App\Http\Controllers\LocationDataController::class, 'storeSto'])->name('locations.sto.store');
+        Route::put('locations/stos/{sto}', [\App\Http\Controllers\LocationDataController::class, 'updateSto'])->name('locations.sto.update');
         Route::delete('locations/stos/{sto}', [\App\Http\Controllers\LocationDataController::class, 'destroySto'])->name('locations.sto.destroy');
         Route::get('locations/stbs', [\App\Http\Controllers\LocationDataController::class, 'stbs'])->name('locations.stbs');
         Route::post('locations/stbs', [\App\Http\Controllers\LocationDataController::class, 'storeStb'])->name('locations.stb.store');
+        Route::put('locations/stbs/{stb}', [\App\Http\Controllers\LocationDataController::class, 'updateStb'])->name('locations.stb.update');
         Route::delete('locations/stbs/{stb}', [\App\Http\Controllers\LocationDataController::class, 'destroyStb'])->name('locations.stb.destroy');
         
         Route::get('locations/odcs', [\App\Http\Controllers\LocationDataController::class, 'odcs'])->name('locations.odcs');
         Route::post('locations/odcs', [\App\Http\Controllers\LocationDataController::class, 'storeOdc'])->name('locations.odc.store');
+        Route::put('locations/odcs/{odc}', [\App\Http\Controllers\LocationDataController::class, 'updateOdc'])->name('locations.odc.update');
         Route::delete('locations/odcs/{odc}', [\App\Http\Controllers\LocationDataController::class, 'destroyOdc'])->name('locations.odc.destroy');
         
         Route::get('locations/odps', [\App\Http\Controllers\LocationDataController::class, 'odps'])->name('locations.odps');
         Route::post('locations/odps', [\App\Http\Controllers\LocationDataController::class, 'storeOdp'])->name('locations.odp.store');
+        Route::put('locations/odps/{odp}', [\App\Http\Controllers\LocationDataController::class, 'updateOdp'])->name('locations.odp.update');
         Route::delete('locations/odps/{odp}', [\App\Http\Controllers\LocationDataController::class, 'destroyOdp'])->name('locations.odp.destroy');
 
         // Integrations & Settings

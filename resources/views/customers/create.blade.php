@@ -154,7 +154,6 @@
                         </select>
                         <x-input-error class="mt-2" :messages="$errors->get('billing_method')" />
                     </div>
-
                     <div id="billing_cycle_dates" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
                         <div>
                             <x-input-label for="billing_day" :value="__('Generate Bill Day (1-28)')" />
@@ -166,6 +165,12 @@
                             <x-text-input id="billing_due_day" name="billing_due_day" type="number" min="1" max="28" class="mt-1 block w-full" :value="old('billing_due_day', 20)" />
                             <p class="mt-1 text-[10px] text-gray-500 italic">Day of the month to suspend if unpaid (Default: 20th)</p>
                         </div>
+                    </div>
+
+                    <div class="md:col-span-2 mt-4">
+                        <x-input-label for="scheduled_activation_at" :value="__('Jadwal Aktivasi (SLA)')" />
+                        <x-text-input id="scheduled_activation_at" name="scheduled_activation_at" type="date" class="mt-1 block w-full" :value="old('scheduled_activation_at')" />
+                        <p class="mt-1 text-[10px] text-gray-500 italic text-rose-500">Tanggal target pemasangan. Akan muncul sebagai SLA pada tiket aktivasi teknisi.</p>
                     </div>
                 </div>
             </div>
