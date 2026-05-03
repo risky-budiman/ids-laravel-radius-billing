@@ -149,21 +149,8 @@ class CustomerActivationController extends Controller
                 }
             }
 
-            // Handle Initial Invoicing for Postpaid Cycle
-            if ($customer->billing_type === 'postpaid' && $customer->billing_method === 'cycle') {
-                $prorataAmount = $customer->calculateProrata($customer->package->price);
-                
-                if ($prorataAmount > 0) {
-                    \App\Models\Invoice::create([
-                        'invoice_number' => 'INV-PR-' . strtoupper(uniqid()),
-                        'customer_id' => $customer->id,
-                        'amount' => $prorataAmount,
-                        'status' => 'unpaid',
-                        'due_date' => now()->day($customer->billing_due_day ?? 20),
-                        'description' => 'Tagihan Prorata (Aktivasi Baru)',
-                    ]);
-                }
-            }
+            // Postpaid Cycle: No initial invoice. Usage in current month will be billed on the 1st of next month (Post-usage billing).
+            // Prorata will be calculated automatically on the first cycle invoice.
 
             // Sync next billing dates
             $customer->syncBillingDates();

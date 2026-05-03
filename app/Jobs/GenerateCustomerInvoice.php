@@ -39,11 +39,34 @@ class GenerateCustomerInvoice implements ShouldQueue
             return;
         }
 
-        // Generate Invoice
-        $subtotal = $customer->package->price;
-        $tax = \App\Models\Tax::where('is_active', true)->first(); // Pick active tax
-        
-        // Taxation Logic: Check Global Setting then Individual Preference
+        $nextDate = $customer->billing_next_date ?? now();
+
+        if ($customer->billing_type === 'postpaid' && $customer->billing_method === 'cycle') {
+            $startDate = $nextDate->copy()->subMonth()->startOfMonth();
+            $endDate = $nextDate->copy()->subDay();
+
+            // If activated during the billing period (first month), adjust start date and amount
+            if ($customer->activated_at && $customer->activated_at->isBetween($startDate, $endDate)) {
+                $startDate = $customer->activated_at->copy()->startOfDay();
+                
+                // Calculate prorata
+                $daysInMonth = $startDate->daysInMonth;
+                $usedDays = $endDate->day - $startDate->day + 1;
+                $subtotal = ($usedDays / $daysInMonth) * $customer->package->price;
+                $notes = 'Tagihan pemakaian proporsional (Prorata) periode ' . $startDate->format('d/m') . ' s/d ' . $endDate->format('d/m');
+            } else {
+                $subtotal = $customer->package->price;
+                $notes = 'Tagihan pemakaian periode ' . $startDate->translatedFormat('F Y');
+            }
+        } else {
+            $startDate = $nextDate->copy();
+            $endDate = $startDate->copy()->addMonth()->subDay();
+            $subtotal = $customer->package->price;
+            $notes = 'Tagihan otomatis skema ' . ucfirst($customer->billing_method);
+        }
+
+        // Tax Calculation based on the final subtotal
+        $tax = \App\Models\Tax::where('is_active', true)->first();
         $taxMode = \App\Models\Setting::where('key', 'tax_mode')->first()?->value ?? 'individual';
         $applyTax = ($taxMode === 'all') || ($taxMode === 'individual' && $customer->use_tax);
 
@@ -51,19 +74,9 @@ class GenerateCustomerInvoice implements ShouldQueue
         if ($tax && $applyTax) {
             $taxAmount = ($subtotal * $tax->rate) / 100;
         } else {
-            $tax = null; // Clear tax if not applied
+            $tax = null;
         }
         $totalAmount = $subtotal + $taxAmount;
-
-        $nextDate = $customer->billing_next_date ?? now();
-        
-        if ($customer->billing_type === 'postpaid' && $customer->billing_method === 'cycle') {
-            $startDate = $nextDate->copy()->subMonth()->startOfMonth();
-            $endDate = $nextDate->copy()->subDay();
-        } else {
-            $startDate = $nextDate->copy();
-            $endDate = $startDate->copy()->addMonth()->subDay();
-        }
 
         $invoice = Invoice::create([
             'invoice_number' => 'INV-' . strtoupper(uniqid()),
@@ -77,7 +90,7 @@ class GenerateCustomerInvoice implements ShouldQueue
             'tax_amount' => $taxAmount,
             'status' => 'unpaid',
             'due_date' => $customer->billing_due_date,
-            'notes' => 'Tagihan otomatis skema ' . ucfirst($customer->billing_method),
+            'notes' => $notes,
         ]);
 
         Log::info("Generated invoice {$invoice->invoice_number} for {$customer->username}");
