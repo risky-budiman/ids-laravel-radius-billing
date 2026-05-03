@@ -90,7 +90,7 @@ class PurchaseOrderController extends Controller
             $inventoryAccount = ChartOfAccount::where('code', '1140')->first(); // Persediaan
             $apAccount = ChartOfAccount::where('code', '2110')->first(); // Hutang Usaha
 
-            if ($inventoryAccount && $apAccount) {
+            if ($inventoryAccount && $apAccount && $totalAmount > 0) {
                 $journal = Journal::create([
                     'journal_number' => 'JRN-PO-' . $purchaseOrder->id,
                     'date' => $validated['date'],

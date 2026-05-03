@@ -86,9 +86,9 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <x-input-label value="Pilih Perangkat" />
-                            <select name="modem_stock_id" required class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
-                                <option value="">-- Pilih SN Modem Ready --</option>
+                            <x-input-label value="Pilih Perangkat (Opsional)" />
+                            <select name="modem_stock_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                                <option value="">-- Lewati / Tanpa Perangkat --</option>
                                 @foreach($serialItems as $item)
                                     <optgroup label="{{ $item->name }}">
                                         @foreach($item->stocks as $stock)

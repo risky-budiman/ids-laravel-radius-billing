@@ -247,6 +247,10 @@ class AccountingService
                 return null;
             }
 
+            if ($movement->total_amount <= 0) {
+                return null;
+            }
+
             $journal = Journal::create([
                 'date' => $movement->created_at,
                 'reference' => 'STOCK-IN-' . ($movement->reference ?? $movement->id),

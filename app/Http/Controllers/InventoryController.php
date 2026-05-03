@@ -98,7 +98,8 @@ class InventoryController extends Controller
     {
         $items = InventoryItem::orderBy('name')->get();
         $suppliers = Supplier::where('is_active', true)->get();
-        return view('inventory.stock-in', compact('items', 'suppliers'));
+        $customers = \App\Models\Customer::orderBy('name')->get();
+        return view('inventory.stock-in', compact('items', 'suppliers', 'customers'));
     }
 
     public function storeStockIn(Request $request)
@@ -111,6 +112,8 @@ class InventoryController extends Controller
             'supplier_id' => 'nullable|exists:suppliers,id',
             'reference' => 'nullable|string',
             'serials' => 'nullable|array', // For SN tracking
+            'is_existing' => 'boolean',
+            'customer_id' => 'required_if:is_existing,1|nullable|exists:customers,id',
         ]);
 
         $item = InventoryItem::findOrFail($request->inventory_item_id);
@@ -133,7 +136,7 @@ class InventoryController extends Controller
             }
             $totalAmount = $subtotal + $taxAmount;
 
-            // 1. Create movement log
+            // 1. Create movement log (IN)
             $movement = InventoryMovement::create([
                 'inventory_item_id' => $item->id,
                 'type' => 'in',
@@ -145,23 +148,41 @@ class InventoryController extends Controller
                 'total_amount' => $totalAmount,
                 'supplier_id' => $request->supplier_id,
                 'reference' => $request->reference,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
+                'notes' => $request->is_existing ? 'Existing at customer' : $request->notes,
             ]);
 
             // 2. If track SN, create individual stocks
+            $status = $request->is_existing ? 'used' : 'ready';
+            $customerId = $request->is_existing ? $request->customer_id : null;
+
             if ($item->track_serial && $request->has('serials')) {
                 foreach ($request->serials as $sn) {
                     if (!empty($sn)) {
                         InventoryStock::create([
                             'inventory_item_id' => $item->id,
                             'serial_number' => $sn,
-                            'status' => 'ready'
+                            'status' => $status,
+                            'customer_id' => $customerId
                         ]);
                     }
                 }
             }
 
-            // 3. Auto-Journal: Inventory Purchase
+            // 3. If existing at customer, create movement log (OUT)
+            if ($request->is_existing) {
+                InventoryMovement::create([
+                    'inventory_item_id' => $item->id,
+                    'type' => 'out',
+                    'quantity' => $request->quantity,
+                    'reference' => 'Existing Adjustment',
+                    'notes' => 'Recorded as existing at customer during stock-in',
+                    'user_id' => Auth::id(),
+                    'customer_id' => $customerId,
+                ]);
+            }
+
+            // 4. Auto-Journal: Inventory Purchase
             try {
                 (new \App\Services\AccountingService())->recordInventoryPurchase($movement);
             } catch (\Exception $e) {

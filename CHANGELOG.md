@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.4] - 2026-05-03
+- Bugfix: customer, data master ([HEAD])
+
+
+
 ## [1.5.3] - 2026-05-03
 - bugfix akutasi ([HEAD])
 

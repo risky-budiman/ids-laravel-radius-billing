@@ -54,8 +54,27 @@
                             @endforeach
                         </select>
                     </div>
+                    <div x-data="{ isExisting: false }">
+                        <div class="flex items-center mt-6">
+                            <input type="checkbox" name="is_existing" value="1" x-model="isExisting" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                            <label class="ml-2 text-sm text-gray-600 dark:text-gray-400">Barang sudah ada di pelanggan?</label>
+                        </div>
+                        
+                        <div x-show="isExisting" x-transition class="mt-4">
+                            <x-input-label value="Pilih Pelanggan" />
+                            <select name="customer_id" :required="isExisting" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                                <option value="">Pilih Pelanggan</option>
+                                @foreach($customers as $customer)
+                                    <option value="{{ $customer->id }}">{{ $customer->name }} ({{ $customer->customer_code }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <x-input-label value="Supplier (Vendor)" />
+                        <x-input-label value="Supplier (Vendor) / Pengadaan" />
                         <select name="supplier_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
                             <option value="">Pilih Supplier</option>
                             @foreach($suppliers as $supplier)
@@ -63,12 +82,16 @@
                             @endforeach
                         </select>
                     </div>
+                    <div>
+                        <x-input-label value="Reference / Invoice No." />
+                        <x-text-input name="reference" class="mt-1 w-full" placeholder="e.g. INV/2026/001" />
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <x-input-label value="Harga Beli Per Unit (Rp)" />
-                        <x-text-input name="unit_price" type="number" class="mt-1 w-full" required placeholder="0" />
+                        <x-text-input name="unit_price" type="number" step="any" min="0" class="mt-1 w-full" :value="old('unit_price', 0)" placeholder="0" />
                     </div>
                     <div>
                         <x-input-label value="Pajak Pembelian (Tax Input)" />
@@ -86,9 +109,9 @@
                         <x-input-label value="Quantity / Jumlah" />
                         <x-text-input name="quantity" type="number" x-model="quantity" min="1" class="mt-1 w-full" required />
                     </div>
-                    <div>
-                        <x-input-label value="Reference / Invoice No." />
-                        <x-text-input name="reference" class="mt-1 w-full" placeholder="e.g. INV/2026/001" />
+                    <div class="flex items-center pt-6">
+                        <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <p class="text-[10px] text-gray-500 italic">Gunakan nominal 0 jika barang adalah aset lama atau hibah.</p>
                     </div>
                 </div>
 

@@ -48,7 +48,7 @@ class CustomerActivationController extends Controller
         abort_if(auth()->user()->isSales(), 403, 'Unauthorized: Sales staff cannot perform subscriber activations.');
 
         $request->validate([
-            'modem_stock_id' => 'required|exists:inventory_stocks,id',
+            'modem_stock_id' => 'nullable|exists:inventory_stocks,id',
             'consumables' => 'nullable|array',
             'consumables.*.item_id' => 'required|exists:inventory_items,id',
             'consumables.*.quantity' => 'required|numeric|min:0',
@@ -91,8 +91,11 @@ class CustomerActivationController extends Controller
                 'installation_bank_account_id' => $request->bank_account_id,
             ];
 
-            // Load the selected modem stock to get its serial number
-            $modem = InventoryStock::findOrFail($request->modem_stock_id);
+            // Load the selected modem stock to get its serial number if provided
+            $modem = null;
+            if ($request->filled('modem_stock_id')) {
+                $modem = InventoryStock::find($request->modem_stock_id);
+            }
 
             // Map and save enterprise fields from activation form
             $enterpriseFields = [
@@ -108,7 +111,7 @@ class CustomerActivationController extends Controller
             }
 
             // [PROGRES] Ensure ONU SN is taken from inventory if not provided or to ensure sync
-            if (empty($updateData['onu_sn']) || $updateData['onu_sn'] === 'e.g. ZTEGC000...') {
+            if ($modem && (empty($updateData['onu_sn']) || $updateData['onu_sn'] === 'e.g. ZTEGC000...')) {
                 $updateData['onu_sn'] = $modem->serial_number;
             }
 
@@ -174,22 +177,24 @@ class CustomerActivationController extends Controller
                     'resolution_notes' => 'Aktivasi selesai. Perangkat telah dipasang.'
                 ]);
 
-            // 3. Install Modem (Serialized Item) - Already fetched above
-            $modem->update([
-                'status' => 'installed',
-                'customer_id' => $customer->id
-            ]);
+            // 3. Install Modem (Serialized Item) - If selected
+            if ($modem) {
+                $modem->update([
+                    'status' => 'installed',
+                    'customer_id' => $customer->id
+                ]);
 
-            // Record movement for the modem
-            InventoryMovement::create([
-                'inventory_item_id' => $modem->inventory_item_id,
-                'customer_id' => $customer->id,
-                'type' => 'out',
-                'quantity' => 1,
-                'reference' => 'Activation: ' . $customer->customer_code,
-                'notes' => 'Installed at Customer: ' . $customer->name . ' (SN: ' . $modem->serial_number . ')',
-                'user_id' => Auth::id()
-            ]);
+                // Record movement for the modem
+                InventoryMovement::create([
+                    'inventory_item_id' => $modem->inventory_item_id,
+                    'customer_id' => $customer->id,
+                    'type' => 'out',
+                    'quantity' => 1,
+                    'reference' => 'Activation: ' . $customer->customer_code,
+                    'notes' => 'Installed at Customer: ' . $customer->name . ' (SN: ' . $modem->serial_number . ')',
+                    'user_id' => Auth::id()
+                ]);
+            }
 
             // 3. Process Consumables (Cables, etc)
             if ($request->has('consumables')) {
