@@ -18,15 +18,17 @@ class SnmpService
     public function __construct(string $host, string $community = 'public', int $port = 161, int $version = 2)
     {
         $this->host = $host;
-        $this->port = $port;
-        $this->community = $community;
+        $this->port = $port ?: 161;
+        $this->community = $community ?: 'public';
         $this->version = $version;
 
+        Log::debug("Initializing SNMP Client: {$this->host}:{$this->port} (v{$this->version}c, community: {$this->community})");
+
         $this->client = new SnmpClient([
-            'host' => $host,
-            'port' => $port,
-            'community' => $community,
-            'version' => $version,
+            'host' => $this->host,
+            'port' => $this->port,
+            'community' => $this->community,
+            'version' => $this->version,
             'timeout' => 10,
             'retries' => 3,
         ]);
@@ -129,16 +131,19 @@ class SnmpService
     {
         try {
             // Try to get sysName (1.3.6.1.2.1.1.5.0)
-            $name = $this->get('1.3.6.1.2.1.1.5.0');
+            $name = $this->get('.1.3.6.1.2.1.1.5.0');
+            $descr = $this->get('.1.3.6.1.2.1.1.1.0');
+            
             return [
                 'status' => true,
                 'message' => 'Connected successfully',
-                'device_name' => (string)$name
+                'device_name' => (string)$name,
+                'description' => (string)$descr
             ];
         } catch (Exception $e) {
             return [
                 'status' => false,
-                'message' => $e->getMessage()
+                'message' => "SNMP Query Failed: " . $e->getMessage() . ". Check IP and Community String."
             ];
         }
     }

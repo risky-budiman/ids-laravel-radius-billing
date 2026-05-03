@@ -72,7 +72,7 @@ class CustomerController extends Controller
         return view('customers.show', compact('customer', 'sessions'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $packages = Package::where('is_active', true)->get();
         $regions = \App\Models\Region::all();
@@ -117,6 +117,10 @@ class CustomerController extends Controller
             'sales_id' => 'nullable|exists:users,id',
             'sales_commission_rate' => 'nullable|numeric|min:0',
             'sales_commission_type' => 'nullable|in:percentage,fixed',
+            'olt_id' => 'nullable|exists:olts,id',
+            'onu_sn' => 'nullable|string|max:64',
+            'onu_index' => 'nullable|string|max:64',
+            'onu_type' => 'nullable|string|max:64',
         ]);
 
         $package = Package::find($validated['package_id']);
@@ -132,7 +136,7 @@ class CustomerController extends Controller
             }
 
             // Create in Billing
-            Customer::create(array_merge([
+            $customer = Customer::create(array_merge([
                 'customer_code' => $validated['customer_code'],
                 'region_code' => $validated['region_code'] ?? '000',
                 'sto_code' => $validated['sto_code'] ?? '000',
@@ -151,8 +155,8 @@ class CustomerController extends Controller
                 'billing_method' => $validated['billing_method'],
                 'billing_day' => $validated['billing_day'] ?? 1,
                 'billing_due_day' => $validated['billing_due_day'] ?? 20,
-                'latitude' => $validated['latitude'],
-                'longitude' => $validated['longitude'],
+                'latitude' => $validated['latitude'] ?? null,
+                'longitude' => $validated['longitude'] ?? null,
                 'installation_fee' => $validated['installation_fee'] ?? 0,
                 'use_tax' => $request->has('use_tax'),
                 'olt_id' => $validated['olt_id'] ?? null,
@@ -178,6 +182,11 @@ class CustomerController extends Controller
                 'sales_commission_rate' => $validated['sales_commission_rate'] ?? null,
                 'sales_commission_type' => $validated['sales_commission_type'] ?? null,
             ], $photos));
+
+            // NEW: Auto-Provisioning on OLT if SN is provided
+            if ($customer->olt_id && $customer->onu_sn) {
+                \App\Jobs\ProvisionOnuJob::dispatch($customer->id);
+            }
 
             // Create in RADIUS (Authentication)
             RadCheck::create([

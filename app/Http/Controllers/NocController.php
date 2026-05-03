@@ -60,32 +60,70 @@ class NocController extends Controller
         return view('noc.index', compact('stats', 'olts', 'oltStats'));
     }
 
-    public function discovery()
+    public function discovery(Request $request)
     {
-        $activeOlts = \App\Models\Olt::where('is_active', true)->get();
-        $discoveredOnus = [];
-
-        foreach ($activeOlts as $olt) {
-            $snmp = new \App\Services\Network\SnmpService($olt->ip_address, $olt->snmp_read_community, $olt->snmp_port);
-            $discovery = new \App\Services\Network\OltDiscoveryService($snmp);
-            
-            $onus = $discovery->scanUnconfiguredOnus();
-            
-            foreach ($onus as $onu) {
-                $onu['olt_name'] = $olt->name;
-                $onu['olt_id'] = $olt->id;
-                $discoveredOnus[] = $onu;
+        $lastRun = \Illuminate\Support\Facades\Cache::get('noc_discovery_last_run');
+        
+        // Robust fix for "incomplete object" or serialization issues
+        if ($lastRun) {
+            try {
+                if (!($lastRun instanceof \Illuminate\Support\Carbon)) {
+                    $lastRun = \Illuminate\Support\Carbon::parse($lastRun);
+                }
+            } catch (\Throwable $e) {
+                // If it's a corrupt object, just ignore it and treat as never run
+                $lastRun = null;
+                \Illuminate\Support\Facades\Cache::forget('noc_discovery_last_run');
             }
         }
+        $discoveredOnus = \Illuminate\Support\Facades\Cache::get('noc_discovered_onus', []);
+        $isRunning = \Illuminate\Support\Facades\Cache::has('noc_discovery_running');
 
-        return view('noc.discovery', compact('discoveredOnus'));
+        if ($request->has('refresh') || (!$lastRun && !$isRunning)) {
+            \Illuminate\Support\Facades\Log::info("Dispatching ScanOltDiscoveryJob...");
+            \Illuminate\Support\Facades\Cache::forget('noc_discovery_running'); // Force clear before starting
+            \Illuminate\Support\Facades\Cache::put('noc_discovery_running', true, 600);
+            \App\Jobs\ScanOltDiscoveryJob::dispatch();
+            
+            if ($request->ajax()) {
+                return response()->json(['status' => 'started']);
+            }
+            
+            return redirect()->route('noc.discovery')->with('status', 'Pemindaian dimulai di latar belakang. Silakan tunggu beberapa saat.');
+        }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'onus' => $discoveredOnus,
+                'last_run' => $lastRun ? $lastRun->diffForHumans() : 'Never',
+                'is_running' => $isRunning
+            ]);
+        }
+
+        return view('noc.discovery', compact('discoveredOnus', 'lastRun', 'isRunning'));
     }
 
     public function signals(Request $request)
     {
+        $isRunning = \Illuminate\Support\Facades\Cache::has('noc_signals_running');
+
+        if ($request->has('refresh') && !$isRunning) {
+            \App\Jobs\SyncOltSignalsJob::dispatch();
+            
+            if ($request->ajax()) {
+                return response()->json(['status' => 'started']);
+            }
+            
+            return redirect()->back()->with('status', 'Sinkronisasi sinyal sedang berjalan di latar belakang.');
+        }
+
         // Get customers with their cached signals
+        // Show customers who have either an index OR a serial number
         $query = \App\Models\Customer::whereNotNull('olt_id')
-            ->whereNotNull('onu_index')
+            ->where(function($q) {
+                $q->whereNotNull('onu_index')
+                  ->orWhereNotNull('onu_sn');
+            })
             ->with(['olt', 'signalCache']);
 
         // Handle filtering from Dashboard
@@ -97,7 +135,14 @@ class NocController extends Controller
 
         $customers = $query->get();
 
-        return view('noc.signals', compact('customers'));
+        if ($request->ajax()) {
+            return response()->json([
+                'customers' => $customers,
+                'is_running' => $isRunning
+            ]);
+        }
+
+        return view('noc.signals', compact('customers', 'isRunning'));
     }
 
     public function history($id)

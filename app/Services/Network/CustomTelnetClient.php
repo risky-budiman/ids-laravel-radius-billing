@@ -59,19 +59,19 @@ class CustomTelnetClient
     public function write($data)
     {
         if (!$this->socket) return false;
+        if ($this->debug) Log::debug("Telnet Writing: " . trim($data));
         return fwrite($this->socket, $data);
     }
 
-    /**
-     * Read from the socket until a regex is matched or timeout
-     * Supports array of regexes
-     */
     /**
      * Read from the socket until a regex is matched or timeout
      */
     public function read($regex = null)
     {
         if (!$this->socket) return "";
+        
+        // Wait a tiny bit before reading to let OLT process
+        usleep(500000); 
 
         $buffer = "";
         $startTime = microtime(true);
@@ -82,15 +82,15 @@ class CustomTelnetClient
         while (true) {
             // Check for total timeout
             if (microtime(true) - $startTime > $this->timeout) {
-                if ($this->debug) Log::debug("Telnet Read Timeout after {$this->timeout}s. Buffer: " . $buffer);
+                if ($this->debug && strlen($buffer) > 0) {
+                    Log::debug("Telnet Read Timeout after {$this->timeout}s. Buffer: " . $buffer);
+                }
                 break;
             }
 
-            $data = fread($this->socket, 1024);
+            $data = fread($this->socket, 2048);
             
-            if ($data === false) {
-                break; 
-            }
+            if ($data === false) break; 
 
             if (strlen($data) > 0) {
                 // Handle Telnet Negotiation
@@ -101,43 +101,39 @@ class CustomTelnetClient
 
                     // Telnet IAC (Interpret As Command)
                     if ($cOrd == 255) {
-                        $command = isset($data[$i+1]) ? ord($data[$i+1]) : 0;
-                        $option = isset($data[$i+2]) ? ord($data[$i+2]) : 0;
-                        
-                        if ($command == 253) fwrite($this->socket, chr(255) . chr(252) . chr($option)); // DO -> WONT
-                        elseif ($command == 251) fwrite($this->socket, chr(255) . chr(254) . chr($option)); // WILL -> DONT
-                        elseif ($command == 254) fwrite($this->socket, chr(255) . chr(252) . chr($option)); // DONT -> WONT
-                        elseif ($command == 252) fwrite($this->socket, chr(255) . chr(254) . chr($option)); // WONT -> DONT
-                        
-                        $i += 2;
-                        continue;
+                        $i += 2; continue;
                     }
                     $cleanData .= $char;
                 }
                 
-                // Strip ANSI escape codes (important for network devices)
+                // Strip ANSI escape codes
                 $cleanData = preg_replace('/\x1b[\[()][0-9;]*[a-zA-Z]/', '', $cleanData);
                 
                 $buffer .= $cleanData;
 
+                // Handle Pagination (--More--)
+                if (str_contains($buffer, '--More--')) {
+                    $buffer = str_replace('--More--', '', $buffer);
+                    $this->write(" "); 
+                }
+
                 if ($regex) {
+                    // Normalize regex to handle trailing spaces in prompt
+                    if (str_contains($regex, 'ZXAN')) {
+                        if (preg_match('/ZXAN[>#]\s*$/m', $buffer)) break;
+                    }
                     if (is_array($regex)) {
-                        foreach ($regex as $r) {
-                            if (preg_match($r, $buffer)) break 2;
-                        }
+                        foreach ($regex as $r) { if (preg_match($r, $buffer)) break 2; }
                     } else {
                         if (preg_match($regex, $buffer)) break;
                     }
                 }
             } else {
-                // Wait a bit if no data to save CPU
                 usleep(50000); // 50ms
             }
         }
         
-        // Set back to blocking for safety
         stream_set_blocking($this->socket, true);
-
         return $buffer;
     }
 

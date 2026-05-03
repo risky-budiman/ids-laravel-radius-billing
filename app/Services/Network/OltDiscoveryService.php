@@ -22,8 +22,22 @@ class OltDiscoveryService
         try {
             Log::info("Starting SNMP ONU Discovery for OLT: {$this->snmp->getHost()}");
             
-            // ZTE OID for unconfigured ONUs SN: .1.3.6.1.4.1.3902.1012.3.28.1.1.5
-            $results = $this->snmp->walk('.1.3.6.1.4.1.3902.1012.3.28.1.1.5');
+            // Try different OIDs for unconfigured ONUs
+            $oids = [
+                '.1.3.6.1.4.1.3902.1012.3.28.1.1.5',         // ZTE C300/C320 (Standard)
+                '.1.3.6.1.4.1.3902.1082.500.10.1.2.1.10',    // ZTE C320 zxAnGponSrvUnConfOnuTable
+                '.1.3.6.1.4.1.3902.1082.500.1.2.4.1.3.1.5',  // ZTE Titan C600/C650
+            ];
+
+            $results = [];
+            foreach ($oids as $oid) {
+                try {
+                    $res = $this->snmp->walk($oid);
+                    if (!empty($res)) {
+                        $results = array_merge($results, $res);
+                    }
+                } catch (\Exception $e) {}
+            }
             
             Log::debug("SNMP Walk results count: " . count($results));
             
@@ -47,7 +61,7 @@ class OltDiscoveryService
                     'shelf' => $shelf,
                     'slot' => $slot,
                     'port' => $port,
-                    'full_index' => "{$shelf}/{$slot}/{$port}:{$unconfigId}",
+                    'full_index' => ".{$shelf}.{$slot}.{$port}.{$unconfigId}",
                     'oid' => $oid,
                     'type' => 'ZTE-ONU',
                 ];

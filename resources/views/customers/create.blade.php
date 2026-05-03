@@ -8,6 +8,12 @@
     <div class="glass max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
         <form action="{{ route('customers.store') }}" method="POST" enctype="multipart/form-data" class="p-8">
             @csrf
+            
+            <!-- Hidden Fields from Mass Discovery -->
+            <input type="hidden" name="olt_id" value="{{ request('olt_id') }}">
+            <input type="hidden" name="onu_sn" value="{{ request('sn') }}">
+            <input type="hidden" name="onu_index" value="{{ request('pos') }}">
+            <input type="hidden" name="onu_type" value="{{ request('onu_type') }}">
 
 
             <!-- Section: RADIUS Auth -->
@@ -281,6 +287,36 @@
                         Pilih metode billing untuk melihat detail aturan penagihan.
                     </div>
                 </div>
+            </div>
+
+            <!-- Section: Installation Details & Location -->
+            <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700 bg-amber-50/10 dark:bg-amber-900/5 p-6 rounded-2xl border border-amber-100 dark:border-amber-800">
+                <h3 class="text-lg font-semibold text-amber-900 dark:text-amber-100 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Installation Details & Location
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <x-input-label for="latitude" :value="__('Latitude')" />
+                        <x-text-input id="latitude" name="latitude" type="text" class="mt-1 block w-full font-mono text-sm" :value="old('latitude')" placeholder="-6.xxxxxx" />
+                    </div>
+                    <div>
+                        <x-input-label for="longitude" :value="__('Longitude')" />
+                        <x-text-input id="longitude" name="longitude" type="text" class="mt-1 block w-full font-mono text-sm" :value="old('longitude')" placeholder="106.xxxxxx" />
+                    </div>
+                </div>
+
+                <div class="relative">
+                    <div id="map-picker" class="h-64 rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner z-0"></div>
+                    <div id="locate-no-https" class="hidden absolute top-2 right-2 bg-rose-50 border border-rose-200 text-rose-600 px-3 py-1 rounded-lg text-[10px] font-bold z-10">
+                        HTTPS Required for Auto-Locate
+                    </div>
+                    <button type="button" id="locate-me" class="hidden absolute bottom-4 right-4 bg-white dark:bg-gray-800 p-3 rounded-full shadow-lg border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all z-10 group">
+                        <svg class="w-5 h-5 text-indigo-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </button>
+                </div>
+                <p class="mt-2 text-[10px] text-gray-500 italic text-center">Klik pada peta untuk menentukan lokasi instalasi.</p>
             </div>
 
             <!-- Section: Taxation Settings -->

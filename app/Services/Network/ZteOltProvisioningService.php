@@ -266,6 +266,76 @@ class ZteOltProvisioningService
         }
     }
 
+    public function findNextAvailableOnuId($shelf, $slot, $port)
+    {
+        $onus = $this->getOnusOnPortViaCli($shelf, $slot, $port);
+        $usedIds = array_column($onus, 'onu_id');
+        
+        for ($id = 1; $id <= 128; $id++) {
+            if (!in_array($id, $usedIds)) {
+                return $id;
+            }
+        }
+        return null;
+    }
+
+    public function registerOnu($shelf, $slot, $port, $onuId, $sn, $type, $vlan, $bandwidth)
+    {
+        try {
+            if (!$this->connect()) return false;
+
+            // If onuId is passed as part of an index (e.g. .1.1.1.5) or a temporary unconfig ID
+            // We might want to find the REAL next ID if we are doing a fresh registration.
+            // But if ProvisionOnuJob passes a specific ID, we try to use it.
+            // For now, let's ensure we have a valid ID.
+            if (!$onuId || $onuId > 128) {
+                $onuId = $this->findNextAvailableOnuId($shelf, $slot, $port);
+            }
+
+            if (!$onuId) {
+                Log::error("No available ONU ID found on port {$shelf}/{$slot}/{$port}");
+                return false;
+            }
+
+            $interface = "gpon-olt_{$shelf}/{$slot}/{$port}";
+            $onuType = $type ?: 'F660';
+            
+            Log::info("Registering ONU {$sn} on {$interface}:{$onuId} as type {$onuType}");
+
+            $commands = [
+                "configure terminal",
+                "interface {$interface}",
+                "onu {$onuId} type {$onuType} sn {$sn}",
+                "exit",
+                "interface gpon-onu_{$shelf}/{$slot}/{$port}:{$onuId}",
+                "name SUB-{$sn}",
+                "description RADIUS-AUTO",
+                "tcont 1 profile UP-100M", // Assuming profile exists
+                "gemport 1 tcont 1",
+                "gemport 1 service-port 1",
+                "exit",
+                "pon-onu-mng gpon-onu_{$shelf}/{$slot}/{$port}:{$onuId}",
+                "service INTERNET gemport 1 cos 0 vlan {$vlan}",
+                "exit",
+                "interface gpon-onu_{$shelf}/{$slot}/{$port}:{$onuId}",
+                "service-port 1 vlan {$vlan} user-vlan {$vlan} svlan {$vlan}", // Simplified
+                "exit",
+                "write",
+            ];
+
+            foreach ($commands as $cmd) {
+                $this->telnet->write($cmd . "\r\n");
+                $this->telnet->read('/ZXAN/i'); // Wait for prompt
+            }
+
+            $this->telnet->disconnect();
+            return true;
+        } catch (\Exception $e) {
+            Log::error("OLT ONU Registration Error: " . $e->getMessage());
+            return false;
+        }
+    }
+
     /**
      * Get OLT-level statistics (CPU, Uptime) via SNMP
      */
@@ -425,5 +495,144 @@ class ZteOltProvisioningService
         $parts[] = sprintf("%02d:%02d:%02d", $hours, $minutes, $seconds);
         
         return implode(" ", $parts);
+    }
+    /**
+     * Find the first available ONU ID on a specific port
+     */
+    public function findFirstFreeOnuId($shelf, $slot, $port)
+    {
+        if (!$this->connect()) return 1;
+        
+        $this->telnet->write("show gpon onu state gpon-olt_{$shelf}/{$slot}/{$port}\n");
+        $output = $this->telnet->read('/ZXAN#/i');
+        
+        $usedIds = [];
+        // Match lines like: gpon-onu_1/1/1:1   Ready
+        if (preg_match_all('/:\s*(\d+)\s+/i', $output, $matches)) {
+            $usedIds = array_map('intval', $matches[1]);
+        }
+        
+        for ($i = 1; $i <= 128; $i++) {
+            if (!in_array($i, $usedIds)) {
+                return $i;
+            }
+        }
+        return 1;
+    }
+
+    /**
+     * Provision (Activate) an ONU on the OLT
+     */
+    public function provisionOnu($shelf, $slot, $port, $sn, $onuType, $vlan = 100, $description = 'NextLink-Customer')
+    {
+        try {
+            if (!$this->connect()) return false;
+            
+            $onuId = $this->findFirstFreeOnuId($shelf, $slot, $port);
+            $oltPort = "gpon-olt_{$shelf}/{$slot}/{$port}";
+            $onuPort = "gpon-onu_{$shelf}/{$slot}/{$port}:{$onuId}";
+            
+            \Illuminate\Support\Facades\Log::info("Provisioning ONU {$sn} on {$onuPort} with VLAN {$vlan}");
+
+            $commands = [
+                "conf t",
+                "interface {$oltPort}",
+                "onu {$onuId} type {$onuType} sn {$sn}",
+                "exit",
+                "interface {$onuPort}",
+                "name {$description}",
+                "description {$description}",
+                "sn-bind enable sn",
+                "tcont 1 profile UP-100M", // Assuming default profile exists
+                "gemport 1 tcont 1",
+                "gemport 1 traffic-limit upstream default downstream default",
+                "exit",
+                "interface vport-{$onuPort}.1", // Virtual port for VLAN
+                "service-port 1 user-vlan {$vlan} vlan {$vlan}", 
+                "exit",
+                "pon-onu-mng {$onuPort}",
+                "service HSI gemport 1 vlan {$vlan}",
+                "exit",
+                "write" // Save config
+            ];
+            
+            foreach ($commands as $cmd) {
+                $this->telnet->write($cmd . "\n");
+                usleep(200000); // 0.2s delay for stability
+                $this->telnet->read(['/ZXAN#/i', '/(config)#/i', '/(config-if)#/i']);
+            }
+            
+            $this->telnet->disconnect();
+            return "{$shelf}/{$slot}/{$port}:{$onuId}";
+            
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Provisioning failed: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get unconfigured ONUs via Telnet as a fallback
+     */
+    public function getUnconfiguredOnus()
+    {
+        $onus = [];
+        try {
+            if (!$this->connect()) {
+                return [];
+            }
+            
+            // Log OLT version/model for better debugging
+            $this->telnet->write("show version-running\n");
+            $verOutput = $this->telnet->read('/ZXAN#/i');
+            \Illuminate\Support\Facades\Log::info("OLT Version Info: " . $verOutput);
+
+            // Try standard command
+            $this->telnet->write("show gpon onu unconfigured\n");
+            $output = $this->telnet->read(['/ZXAN#/i', '/%Error/i']);
+            
+            // If failed, try alternative command (some firmwares)
+            if (str_contains($output, '%Error')) {
+                \Illuminate\Support\Facades\Log::warning("Standard command failed, trying alternative...");
+                $this->telnet->write("show gpon onu uncfg\n");
+                $output = $this->telnet->read('/ZXAN#/i');
+            }
+
+            \Illuminate\Support\Facades\Log::debug("Telnet Raw Output: " . $output);
+            
+            // Example output variations:
+            // gpon-olt_1/1/1:1  HWTCF05DD69C  sn  
+            // gpon-onu_1/1/1:1  HWTCF05DD69C  sn
+            // 1/1/1:1  HWTCF05DD69C  sn
+            
+            preg_match_all('/(?:gpon-olt_|gpon-onu_|onu\s+|)(\d+\/\d+\/\d+):(\d+)\s+([A-Z0-9]{12,})/i', $output, $matches, PREG_SET_ORDER);
+            
+            foreach ($matches as $match) {
+                $portIndex = $match[1]; // 1/1/1
+                $unconfigId = $match[2];
+                $sn = $match[3];
+                
+                $parts = explode('/', $portIndex);
+                $shelf = $parts[0] ?? 1;
+                $slot = $parts[1] ?? 1;
+                $port = $parts[2] ?? 1;
+
+                $onus[] = [
+                    'sn' => $sn,
+                    'shelf' => $shelf,
+                    'slot' => $slot,
+                    'port' => $port,
+                    'full_index' => ".{$shelf}.{$slot}.{$port}.{$unconfigId}",
+                    'type' => 'ZTE-ONU',
+                    'method' => 'telnet'
+                ];
+            }
+            
+            $this->telnet->disconnect();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Telnet Discovery failed: " . $e->getMessage());
+        }
+        
+        return $onus;
     }
 }

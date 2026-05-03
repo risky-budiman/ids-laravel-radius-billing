@@ -15,65 +15,56 @@ class ProvisionOnuJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $customer;
+    protected $customerId;
 
-    /**
-     * Create a new job instance.
-     */
-    public function __construct(Customer $customer)
+    public function __construct($customerId)
     {
-        $this->customer = $customer;
+        $this->customerId = $customerId;
     }
 
-    /**
-     * Execute the job.
-     */
-    public function handle(): void
+    public function handle()
     {
-        $customer = $this->customer;
-        
-        if (!$customer->olt_id || !$customer->onu_index) {
-            Log::error("Provisioning failed: Customer {$customer->id} has no OLT or ONU index assigned.");
+        $customer = Customer::with('olt')->find($this->customerId);
+        if (!$customer || !$customer->olt || !$customer->onu_sn) {
+            Log::warning("Provisioning Job: Missing data for customer ID {$this->customerId}");
             return;
         }
 
-        $olt = $customer->olt;
-        $provisioning = new ZteOltProvisioningService($olt);
+        Log::info("Starting background provisioning for customer: {$customer->name}");
 
-        // Parse index .shelf.slot.port.onu_id
-        $parts = explode('.', ltrim($customer->onu_index, '.'));
-        if (count($parts) < 4) {
-            Log::error("Provisioning failed: Invalid ONU index format for customer {$customer->id}.");
+        $service = new ZteOltProvisioningService($customer->olt);
+        
+        // Parse shelf/slot/port from onu_index (.1.1.7.1)
+        $pos = $customer->onu_index; 
+        $parts = explode('.', trim($pos, '.'));
+        
+        if (count($parts) < 3) {
+            Log::error("Invalid ONU index format for provisioning: {$pos}");
             return;
         }
 
         $shelf = $parts[0];
         $slot = $parts[1];
         $port = $parts[2];
-        $onuId = $parts[3];
 
-        // VLAN from regional/STO settings or static for now
-        $vlan = 100; // Placeholder
-        $bandwidth = $customer->package->speed_limit_down ?? 102400; // kbps
-
-        Log::info("Starting OLT Provisioning for Customer: {$customer->name} (SN: {$customer->onu_sn})");
-
-        $success = $provisioning->registerOnu(
-            $shelf, $slot, $port, $onuId, 
+        // Default VLAN 100
+        $vlan = 100;
+        
+        $result = $service->provisionOnu(
+            $shelf, 
+            $slot, 
+            $port, 
             $customer->onu_sn, 
-            $customer->onu_type ?? 'F660', 
-            $vlan, 
-            $bandwidth
+            $customer->onu_type ?: 'ZTE-ONU',
+            $vlan,
+            $customer->name
         );
 
-        if ($success) {
-            $customer->update([
-                'status' => 'active',
-                'activated_at' => now(),
-            ]);
-            Log::info("Provisioning successful for Customer: {$customer->name}");
+        if ($result) {
+            $customer->update(['onu_index' => $result]);
+            Log::info("Provisioning successful for {$customer->name}: New Index is {$result}");
         } else {
-            Log::error("Provisioning FAILED for Customer: {$customer->name}");
+            Log::error("Provisioning failed for {$customer->name}");
         }
     }
 }

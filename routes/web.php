@@ -411,4 +411,6 @@ Route::prefix('admin')->group(function () {
     require __DIR__.'/auth.php';
 });
 
+Route::get('/diagnostic', [\App\Http\Controllers\DiagnosticController::class, 'index'])->middleware(['auth:web', 'role:administrator']);
+
 Route::get('/test-ping', function() { return 'PONG'; });

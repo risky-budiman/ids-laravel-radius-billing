@@ -1,14 +1,55 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center gap-4">
-            <a href="{{ route('noc.index') }}" class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 text-gray-500 hover:text-indigo-500 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-            </a>
-            <div>
-                <h2 class="font-bold text-2xl text-gray-900 dark:text-white tracking-tight">
-                    Optical Signal Monitoring
-                </h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Pantau kualitas redaman (Optical Power) pelanggan secara real-time via SNMP.</p>
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <a href="{{ route('noc.index') }}" class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 text-gray-500 hover:text-indigo-500 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </a>
+                <div>
+                    <h2 class="font-bold text-2xl text-gray-900 dark:text-white tracking-tight">
+                        Optical Signal Monitoring
+                    </h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Pantau kualitas redaman (Optical Power) pelanggan secara real-time via SNMP.</p>
+                </div>
+            </div>
+
+            <div x-data="{ 
+                isRunning: {{ $isRunning ? 'true' : 'false' }},
+                syncSignals() {
+                    this.isRunning = true;
+                    fetch('{{ route('noc.signals') }}?refresh=1', {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    }).then(() => this.pollStatus());
+                },
+                pollStatus() {
+                    let timer = setInterval(() => {
+                        fetch('{{ route('noc.signals') }}', {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            this.isRunning = data.is_running;
+                            if (!this.isRunning) {
+                                clearInterval(timer);
+                                window.location.reload();
+                            }
+                        });
+                    }, 3000);
+                }
+            }" x-init="if(isRunning) pollStatus()">
+                <button 
+                    @click="syncSignals()"
+                    :disabled="isRunning"
+                    class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-200 dark:shadow-none"
+                >
+                    <template x-if="isRunning">
+                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    </template>
+                    <template x-if="!isRunning">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    </template>
+                    <span x-text="isRunning ? 'Syncing Signals...' : 'Sync All Signals'"></span>
+                </button>
             </div>
         </div>
     </x-slot>
