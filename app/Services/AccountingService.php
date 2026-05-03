@@ -520,6 +520,8 @@ class AccountingService
             'total_liabilities' => $totalLiabilities,
             'total_equity' => $totalEquity,
         ];
+    }
+
     /**
      * Convert numeric amount to Indonesian words
      */

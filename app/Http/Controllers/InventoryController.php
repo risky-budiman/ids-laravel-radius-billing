@@ -153,7 +153,8 @@ class InventoryController extends Controller
             ]);
 
             // 2. If track SN, create individual stocks
-            $status = $request->is_existing ? 'used' : 'ready';
+            $status = $request->is_existing ? 'installed' : 'ready';
+            $condition = $request->is_existing ? 'used' : 'new';
             $customerId = $request->is_existing ? $request->customer_id : null;
 
             if ($item->track_serial && $request->has('serials')) {
@@ -162,6 +163,7 @@ class InventoryController extends Controller
                         InventoryStock::create([
                             'inventory_item_id' => $item->id,
                             'serial_number' => $sn,
+                            'condition' => $condition,
                             'status' => $status,
                             'customer_id' => $customerId
                         ]);
@@ -242,7 +244,7 @@ class InventoryController extends Controller
             // 2. If track SN, mark selected stocks as used
             if ($item->track_serial && $request->has('stock_ids')) {
                 InventoryStock::whereIn('id', $request->stock_ids)
-                    ->update(['status' => 'used']);
+                    ->update(['status' => 'installed']);
             }
         });
 
