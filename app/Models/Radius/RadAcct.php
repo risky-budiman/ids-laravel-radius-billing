@@ -20,6 +20,11 @@ class RadAcct extends Model
         'callingstationid', 'acctterminatecause', 'servicetype',
         'framedprotocol', 'framedipaddress'
     ];
+    
+    protected $casts = [
+        'acctstarttime' => 'datetime',
+        'acctstoptime' => 'datetime',
+    ];
     public function scopeOnline($query)
     {
         return $query->whereNull('acctstoptime');
