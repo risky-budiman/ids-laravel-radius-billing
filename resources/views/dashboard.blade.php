@@ -185,77 +185,97 @@
         </div>
 
         @if(auth()->user()->isAdmin())
-        <!-- Monthly Financial Performance -->
+        <!-- Monthly Financial Performance (Synced with Journal) -->
+        <div class="mb-6 flex items-center justify-between">
+            <h2 class="text-xl font-black text-gray-900 dark:text-white flex items-center">
+                <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                Financial Overview (Profit & Loss)
+            </h2>
+            <div class="px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-full border border-indigo-100 dark:border-indigo-800/30">
+                <span class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Period: {{ now()->translatedFormat('F Y') }}</span>
+            </div>
+        </div>
+        
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <!-- Income This Month -->
-            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-emerald-500 transition-all hover:shadow-lg hover:scale-[1.01]">
+            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-emerald-500 transition-all hover:shadow-xl hover:scale-[1.02] group">
                 <div>
-                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Pendapatan Bulan Ini</p>
+                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Total Pendapatan</p>
                     <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($revenue, 0, ',', '.') }}</h3>
-                    <p class="text-[10px] text-gray-400 font-bold mt-1">Total Paid Invoices</p>
+                    <p class="text-[10px] text-gray-400 font-bold mt-1">Berdasarkan Jurnal Pendapatan</p>
                 </div>
-                <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-sm">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m.599-1H11"></path></svg>
                 </div>
             </div>
 
             <!-- Expense This Month -->
-            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-rose-500 transition-all hover:shadow-lg hover:scale-[1.01]">
+            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-rose-500 transition-all hover:shadow-xl hover:scale-[1.02] group">
                 <div>
-                    <p class="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">Pengeluaran Bulan Ini</p>
+                    <p class="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">Total Pengeluaran</p>
                     <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($expense, 0, ',', '.') }}</h3>
-                    <p class="text-[10px] text-gray-400 font-bold mt-1">Total Bank Withdrawals</p>
+                    <p class="text-[10px] text-gray-400 font-bold mt-1">Berdasarkan Jurnal Pengeluaran</p>
                 </div>
-                <div class="p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-2xl">
+                <div class="p-4 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-2xl group-hover:bg-rose-500 group-hover:text-white transition-all shadow-sm">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
             </div>
 
             <!-- Profit This Month -->
-            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-blue-500 transition-all hover:shadow-lg hover:scale-[1.01]">
-                <div>
-                    <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Estimasi Laba (Net)</p>
-                    <h3 class="text-2xl font-black text-gray-900 dark:text-white {{ $profit < 0 ? 'text-rose-600' : '' }}">Rp {{ number_format($profit, 0, ',', '.') }}</h3>
-                    <p class="text-[10px] text-gray-400 font-bold mt-1">Income - Expense</p>
+            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-blue-500 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-500/5 rounded-full blur-3xl"></div>
+                <div class="relative z-10">
+                    <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Laba Bersih (Net)</p>
+                    <h3 class="text-2xl font-black text-gray-900 dark:text-white {{ $profit < 0 ? 'text-rose-600' : 'text-blue-600 dark:text-blue-400' }}">Rp {{ number_format($profit, 0, ',', '.') }}</h3>
+                    <p class="text-[10px] text-gray-400 font-bold mt-1">Pendapatan - Pengeluaran</p>
                 </div>
-                <div class="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl">
+                <div class="p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl group-hover:bg-blue-500 group-hover:text-white transition-all shadow-sm relative z-10">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                 </div>
             </div>
         </div>
         @endif
 
-        <!-- PSB (New Installations) Overview -->
+        <!-- Installation Insights -->
+        <div class="mb-6">
+            <h2 class="text-xl font-black text-gray-900 dark:text-white flex items-center">
+                <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                Installation Performance (PSB)
+            </h2>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             <!-- PSB Today -->
-            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-indigo-500 transition-all hover:shadow-lg hover:scale-[1.01]">
+            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-indigo-500 transition-all hover:shadow-xl hover:scale-[1.02] group">
                 <div>
-                    <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">PSB Hari Ini</p>
+                    <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Pemasangan Hari Ini</p>
                     <h3 class="text-3xl font-black text-gray-900 dark:text-white">{{ number_format($psbToday) }}</h3>
+                    <p class="text-[10px] text-gray-400 font-bold mt-1">Live Updates</p>
                 </div>
-                <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+                <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl group-hover:bg-indigo-500 group-hover:text-white transition-all shadow-sm">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 </div>
             </div>
 
             <!-- PSB This Month -->
-            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-emerald-500 transition-all hover:shadow-lg hover:scale-[1.01]">
+            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-emerald-500 transition-all hover:shadow-xl hover:scale-[1.02] group">
                 <div>
-                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">PSB Bulan Ini</p>
+                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Pemasangan Bulan Ini</p>
                     <h3 class="text-3xl font-black text-gray-900 dark:text-white">{{ number_format($psbMonth) }}</h3>
+                    <p class="text-[10px] text-gray-400 font-bold mt-1">{{ now()->translatedFormat('F Y') }}</p>
                 </div>
-                <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-sm">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                 </div>
             </div>
 
             <!-- PSB This Year -->
-            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-purple-500 transition-all hover:shadow-lg hover:scale-[1.01]">
+            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-purple-500 transition-all hover:shadow-xl hover:scale-[1.02] group">
                 <div>
-                    <p class="text-[10px] font-black text-purple-500 uppercase tracking-widest mb-1">PSB Tahun Ini</p>
+                    <p class="text-[10px] font-black text-purple-500 uppercase tracking-widest mb-1">Pemasangan Tahun Ini</p>
                     <h3 class="text-3xl font-black text-gray-900 dark:text-white">{{ number_format($psbYear) }}</h3>
+                    <p class="text-[10px] text-gray-400 font-bold mt-1">Calendar Year {{ now()->year }}</p>
                 </div>
-                <div class="p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-2xl">
+                <div class="p-4 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-2xl group-hover:bg-purple-500 group-hover:text-white transition-all shadow-sm">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                 </div>
             </div>
