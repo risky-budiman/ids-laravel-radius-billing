@@ -24,6 +24,7 @@ class PackageController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:packages,name',
+            'mikrotik_group' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:0',
             'download_speed' => 'nullable|string',
             'upload_speed' => 'nullable|string',
@@ -56,6 +57,15 @@ class PackageController extends Controller
                     'value' => $rateLimit,
                 ]);
             }
+
+            if ($package->mikrotik_group) {
+                RadGroupReply::create([
+                    'groupname' => $package->name,
+                    'attribute' => 'Mikrotik-Group',
+                    'op' => '=',
+                    'value' => $package->mikrotik_group,
+                ]);
+            }
         });
 
         return redirect()->route('packages.index')->with('success', 'Package created successfully.');
@@ -70,6 +80,7 @@ class PackageController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:packages,name,' . $package->id,
+            'mikrotik_group' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:0',
             'download_speed' => 'nullable|string',
             'upload_speed' => 'nullable|string',
@@ -108,6 +119,15 @@ class PackageController extends Controller
                 );
             } else {
                 RadGroupReply::where('groupname', $package->name)->where('attribute', 'Mikrotik-Rate-Limit')->delete();
+            }
+
+            if ($package->mikrotik_group) {
+                RadGroupReply::updateOrCreate(
+                    ['groupname' => $package->name, 'attribute' => 'Mikrotik-Group'],
+                    ['op' => '=', 'value' => $package->mikrotik_group]
+                );
+            } else {
+                RadGroupReply::where('groupname', $package->name)->where('attribute', 'Mikrotik-Group')->delete();
             }
         });
 

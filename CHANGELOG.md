@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.5] - 2026-05-03
+- Bugfix: wirehouse ([HEAD])
+
+
+
 ## [1.5.4] - 2026-05-03
 - Bugfix: customer, data master ([HEAD])
 

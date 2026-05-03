@@ -11,6 +11,7 @@ class Package extends Model
 
     protected $fillable = [
         'name',
+        'mikrotik_group',
         'price',
         'upload_speed',
         'download_speed',
