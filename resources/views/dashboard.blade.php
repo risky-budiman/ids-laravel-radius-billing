@@ -1,520 +1,594 @@
 <x-app-layout>
     <style>
-        .stat-card {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            perspective: 1000px;
-        }
-        .stat-card:hover {
-            transform: translateY(-10px) scale(1.02);
-        }
-        .stat-card-indigo:hover { box-shadow: 0 25px 30px -12px rgba(79, 70, 229, 0.25); border-color: rgba(79, 70, 229, 0.4); }
-        .stat-card-green:hover { box-shadow: 0 25px 30px -12px rgba(16, 185, 129, 0.25); border-color: rgba(16, 185, 129, 0.4); }
-        .stat-card-purple:hover { box-shadow: 0 25px 30px -12px rgba(139, 92, 246, 0.25); border-color: rgba(139, 92, 246, 0.4); }
-        .stat-card-orange:hover { box-shadow: 0 25px 30px -12px rgba(249, 115, 22, 0.25); border-color: rgba(249, 115, 22, 0.4); }
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
         
-        .glass-premium {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(229, 231, 235, 0.8);
+        .dashboard-container {
+            font-family: 'Outfit', sans-serif;
         }
-        .dark .glass-premium {
-            background: rgba(31, 41, 55, 0.7);
+
+        .glass-card {
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+        
+        .dark .glass-card {
+            background-color: rgba(17, 24, 39, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
         }
+
+        .stat-card-glow {
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card-glow::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            transform: scale(0);
+            transition: transform 0.6s ease-out;
+        }
+        .stat-card-glow:hover::after {
+            transform: scale(1);
+        }
+
+        .chart-container {
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.05));
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .float-animation { animation: float 6s ease-in-out infinite; }
     </style>
 
-    <x-slot name="header">
-        <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
-            {{ __('Dashboard Overview') }}
-        </h2>
-    </x-slot>
-
-    @if(session('success'))
-        <div class="mb-4 px-4 py-3 bg-green-100/80 border border-green-200 text-green-700 rounded-2xl dark:bg-green-900/30 dark:border-green-800 dark:text-green-400 font-medium animate-pulse">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    <!-- Profile Summary Section -->
-    <div class="mb-8 p-6 glass-premium bg-white/80 dark:bg-gray-800/80 rounded-[2rem] shadow-xl shadow-indigo-500/5 border border-white/50 dark:border-gray-700/50 flex flex-col md:flex-row items-center justify-between">
-        <div class="flex items-center space-x-6">
-            <div class="relative">
-                <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="h-24 w-24 rounded-3xl object-cover border-4 border-white dark:border-gray-700 shadow-2xl shadow-indigo-500/20">
-                <div class="absolute -bottom-2 -right-2 h-8 w-8 bg-green-500 border-4 border-white dark:border-gray-800 rounded-full shadow-lg"></div>
+    <div class="dashboard-container pb-12">
+        <!-- Dynamic Header & Greeting -->
+        <div class="mb-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div class="animate-fade-in">
+                @php
+                    $hour = now()->hour;
+                    $greeting = 'Selamat Malam';
+                    if ($hour >= 5 && $hour < 11) $greeting = 'Selamat Pagi';
+                    elseif ($hour >= 11 && $hour < 15) $greeting = 'Selamat Siang';
+                    elseif ($hour >= 15 && $hour < 18) $greeting = 'Selamat Sore';
+                @endphp
+                <h1 class="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+                    {{ $greeting }}, <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">{{ explode(' ', auth()->user()->name)[0] }}!</span>
+                </h1>
+                <p class="text-gray-500 dark:text-gray-400 mt-2 font-medium flex items-center">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 mr-3">
+                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        {{ auth()->user()->role }}
+                    </span>
+                    Monitoring network performance and billing today.
+                </p>
             </div>
-            <div>
-                <h1 class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Selamat Datang, {{ explode(' ', auth()->user()->name)[0] }}!</h1>
-                <div class="flex items-center mt-1 space-x-3">
-                    <p class="text-gray-500 dark:text-gray-400 font-medium flex items-center">
-                        <span class="px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest mr-3">
-                            {{ auth()->user()->role }}
-                        </span>
-                        {{ auth()->user()->email }}
-                    </p>
-                    <span class="text-gray-300 dark:text-gray-600">|</span>
-                    <p id="live-clock" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 flex items-center">
-                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        {{ now()->translatedFormat('l, d F Y | H:i:s') }}
-                    </p>
+            
+            <div class="flex items-center space-x-3 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md p-2 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm animate-fade-in-right">
+                <div class="px-4 py-2 text-right border-r border-gray-100 dark:border-gray-700">
+                    <p id="live-date" class="text-[10px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest">{{ now()->translatedFormat('l, d F Y') }}</p>
+                    <p id="live-clock-detailed" class="text-sm font-black text-gray-800 dark:text-gray-100 font-mono">00:00:00</p>
                 </div>
-            </div>
-        </div>
-        <div class="mt-6 md:mt-0">
-            <a href="{{ route('profile.edit') }}" class="inline-flex items-center px-6 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl font-bold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-300 shadow-sm">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                Edit Profile
-            </a>
-        </div>
-    </div>
-
-    <!-- Stats Overview -->
-    <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Stat Card 1 -->
-        <div class="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
-            <div class="flex items-center justify-between mb-4">
-                <div class="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                </div>
-                <div class="text-right">
-                    <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">Subscribers</span>
-                    <p class="text-3xl font-black text-gray-900 dark:text-white mt-1">{{ number_format($totalSubscribers) }}</p>
-                </div>
-            </div>
-            <div class="h-1 w-full bg-gray-50 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div class="h-full bg-indigo-500 rounded-full w-2/3"></div>
+                <button onclick="window.location.reload()" class="p-3 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30 rounded-xl transition-all active:scale-95" title="Refresh Dashboard">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </button>
             </div>
         </div>
 
-        <!-- Stat Card 2 -->
-        <div class="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
-            <div class="flex items-center justify-between mb-4">
-                <div class="p-3 rounded-2xl bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 group-hover:bg-green-600 group-hover:text-white transition-all">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-                <div class="text-right">
-                    <span class="text-[10px] font-bold text-green-500 uppercase tracking-widest">Active Users</span>
-                    <p class="text-3xl font-black text-gray-900 dark:text-white mt-1">{{ number_format($activeUsers) }}</p>
-                </div>
-            </div>
-            <div class="h-1 w-full bg-gray-50 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div class="h-full bg-green-500 rounded-full w-full"></div>
-            </div>
-        </div>
-
-        <!-- Stat Card 3 -->
-        <div class="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
-            <div class="flex items-center justify-between mb-4">
-                <div class="p-3 rounded-2xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 group-hover:bg-purple-600 group-hover:text-white transition-all">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-                <div class="text-right">
-                    <span class="text-[10px] font-bold text-purple-500 uppercase tracking-widest">Revenue</span>
-                    <p class="text-2xl font-black text-gray-900 dark:text-white mt-1"><span class="text-sm font-bold opacity-50">Rp</span> {{ number_format($revenue, 0, ',', '.') }}</p>
-                </div>
-            </div>
-            <div class="h-1 w-full bg-gray-50 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div class="h-full bg-purple-500 rounded-full w-3/4"></div>
-            </div>
-        </div>
-
-        <!-- Stat Card 4 -->
-        <div class="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
-            <div class="flex items-center justify-between mb-4">
-                <div class="p-3 rounded-2xl bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 group-hover:bg-orange-600 group-hover:text-white transition-all">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                </div>
-                <div class="text-right">
-                    <span class="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Unpaid</span>
-                    <p class="text-3xl font-black text-gray-900 dark:text-white mt-1">{{ number_format($unpaidInvoices) }}</p>
-                </div>
-            </div>
-            <div class="h-1 w-full bg-gray-50 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div class="h-full bg-orange-500 rounded-full w-1/4"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content Grid -->
-    <div class="space-y-8">
-        <!-- Row 2: Quick Actions & Live Traffic -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Quick Actions -->
-            <div class="glass-premium bg-white/80 dark:bg-gray-800/80 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
-                    <span class="w-2 h-8 bg-indigo-600 rounded-full mr-3"></span>
-                    Quick Actions
-                </h3>
-                <div class="space-y-4">
-                    <a href="{{ route('customers.create') }}" class="w-full flex items-center p-5 rounded-2xl border border-gray-100 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all group">
-                        <div class="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 mr-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        </div>
-                        <div class="text-left">
-                            <p class="font-bold text-gray-900 dark:text-gray-100">Add Subscriber</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Register a new user</p>
-                        </div>
-                    </a>
-                    @if(!auth()->user()->isKasir())
-                    <form action="{{ route('invoices.generate-automated') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="w-full flex items-center p-5 rounded-2xl border border-gray-100 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl hover:shadow-green-500/10 hover:border-green-200 dark:hover:border-green-800 transition-all group">
-                            <div class="p-3 rounded-xl bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 mr-4 group-hover:bg-green-600 group-hover:text-white transition-colors">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            </div>
-                            <div class="text-left">
-                                <p class="font-bold text-gray-900 dark:text-gray-100">Generate Invoices</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Automated billing cycle</p>
-                            </div>
-                        </button>
-                    </form>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Live Traffic & Network Status -->
-            <div class="lg:col-span-2 glass-premium bg-white/80 dark:bg-gray-800/80 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
-                <div class="px-8 py-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                        <span class="w-2 h-8 bg-green-600 rounded-full mr-3"></span>
-                        Live Traffic & Network Status
-                    </h3>
-                    <div class="flex items-center space-x-3">
-                        <div class="flex items-center space-x-2 mr-4">
-                            <span class="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                            <span class="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-widest">Live</span>
-                        </div>
-                        
-                        @if(auth()->user()->isAdmin())
-                        <div class="flex items-center space-x-2">
-                            <form action="{{ route('radius.clear-stale') }}" method="POST" onsubmit="return confirm('Bersihkan sesi menggantung (idle > 2 jam)?')">
-                                @csrf
-                                <button type="submit" class="px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-amber-600 hover:text-white transition-all border border-amber-100 dark:border-amber-800/30">
-                                    Clear Stale
-                                </button>
-                            </form>
-                            <form action="{{ route('radius.disconnect-all') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin memutuskan SELURUH sesi online saat ini?')">
-                                @csrf
-                                <button type="submit" class="px-3 py-1.5 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-rose-600 hover:text-white transition-all border border-rose-100 dark:border-rose-800/30">
-                                    Disconnect All
-                                </button>
-                            </form>
-                        </div>
-                        @endif
+        <!-- Stats Grid: Re-imagined -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
+            <!-- Stat: Subscribers -->
+            <div class="glass-card stat-card-glow p-7 rounded-[2rem] transition-all hover:-translate-y-2 group">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 group-hover:rotate-6 transition-transform">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em]">Total Clients</p>
+                        <h2 class="text-4xl font-black text-gray-900 dark:text-white mt-1">{{ number_format($totalSubscribers) }}</h2>
                     </div>
                 </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-green-500 font-bold text-xs flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"></path></svg>
+                        Healthy Growth
+                    </span>
+                </div>
+            </div>
 
-                <!-- Mini Stats Row -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 pb-2">
-                    <!-- Online Now -->
-                    <div class="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-2xl p-4 border border-emerald-100 dark:border-emerald-800/30">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Online</span>
-                        </div>
-                        <p class="text-2xl font-black text-emerald-700 dark:text-emerald-300">{{ number_format($onlineNow) }}</p>
+            <!-- Stat: Active RADIUS Sessions -->
+            <div class="glass-card stat-card-glow p-7 rounded-[2rem] transition-all hover:-translate-y-2 group">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 group-hover:rotate-6 transition-transform">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     </div>
-                    <!-- Upload -->
-                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-4 border border-blue-100 dark:border-blue-800/30">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-                            <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">Upload</span>
-                        </div>
-                        <p class="text-xl font-black text-blue-700 dark:text-blue-300">
-                            @if($totalUpload > 1073741824)
-                                {{ number_format($totalUpload / 1073741824, 2) }} <span class="text-xs font-bold opacity-60">GB</span>
-                            @else
-                                {{ number_format($totalUpload / 1048576, 1) }} <span class="text-xs font-bold opacity-60">MB</span>
-                            @endif
-                        </p>
-                    </div>
-                    <!-- Download -->
-                    <div class="bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 rounded-2xl p-4 border border-green-100 dark:border-green-800/30">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <svg class="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
-                            <span class="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-widest">Download</span>
-                        </div>
-                        <p class="text-xl font-black text-green-700 dark:text-green-300">
-                            @if($totalDownload > 1073741824)
-                                {{ number_format($totalDownload / 1073741824, 2) }} <span class="text-xs font-bold opacity-60">GB</span>
-                            @else
-                                {{ number_format($totalDownload / 1048576, 1) }} <span class="text-xs font-bold opacity-60">MB</span>
-                            @endif
-                        </p>
-                    </div>
-                    <!-- Auth Today -->
-                    <div class="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-2xl p-4 border border-purple-100 dark:border-purple-800/30">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <svg class="w-3 h-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                            <span class="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest">Auth</span>
-                        </div>
-                        <p class="text-lg font-black">
-                            <span class="text-emerald-600 dark:text-emerald-400">{{ $authAcceptToday }}</span>
-                            <span class="text-gray-300 dark:text-gray-600 mx-1">/</span>
-                            <span class="text-rose-600 dark:text-rose-400">{{ $authRejectToday }}</span>
-                        </p>
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Live Sessions</p>
+                        <h2 class="text-4xl font-black text-gray-900 dark:text-white mt-1">{{ number_format($onlineNow) }}</h2>
                     </div>
                 </div>
-
-                <!-- Traffic Chart -->
-                <div class="px-6 py-4">
-                    <canvas id="trafficChart" height="140"></canvas>
+                <div class="flex items-center space-x-2">
+                    <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                    <span class="text-gray-500 dark:text-gray-400 font-bold text-xs">Currently Authenticated</span>
                 </div>
+            </div>
 
-                <!-- Top Bandwidth Users -->
-                @if($topUsers->count() > 0)
-                <div class="px-6 pb-6">
-                    <h4 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 px-2">Top Bandwidth Consumers</h4>
-                    <div class="space-y-2">
-                        @foreach($topUsers as $idx => $user)
-                        <div class="flex items-center justify-between px-4 py-3 rounded-xl bg-gray-50/80 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group">
-                            <div class="flex items-center space-x-3">
-                                <span class="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black
-                                    {{ $idx === 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400' }}">
-                                    {{ $idx + 1 }}
-                                </span>
-                                <div>
-                                    <p class="text-sm font-bold text-gray-900 dark:text-gray-100 font-mono">{{ $user->username }}</p>
-                                    <p class="text-[10px] text-gray-400">{{ $user->framedipaddress ?? 'N/A' }}</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-sm font-bold text-gray-900 dark:text-gray-100">
-                                    @if($user->total_traffic > 1073741824)
-                                        {{ number_format($user->total_traffic / 1073741824, 2) }} GB
+            @if(auth()->user()->isAdmin())
+            <!-- Stat: Monthly Revenue -->
+            <div class="glass-card stat-card-glow p-7 rounded-[2rem] transition-all hover:-translate-y-2 group">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/20 group-hover:rotate-6 transition-transform">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-purple-500 uppercase tracking-[0.2em]">MTD Revenue</p>
+                        <h2 class="text-2xl font-black text-gray-900 dark:text-white mt-1"><span class="text-sm font-bold opacity-30">Rp</span> {{ number_format($revenue, 0, ',', '.') }}</h2>
+                    </div>
+                </div>
+                <div class="text-gray-400 text-[10px] font-bold uppercase">{{ now()->format('F Y') }} Collection</div>
+            </div>
+
+            <!-- Stat: Critical Invoices -->
+            <div class="glass-card stat-card-glow p-7 rounded-[2rem] transition-all hover:-translate-y-2 group">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/20 group-hover:rotate-6 transition-transform">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">Unpaid Tags</p>
+                        <h2 class="text-4xl font-black text-gray-900 dark:text-white mt-1">{{ number_format($unpaidInvoices) }}</h2>
+                    </div>
+                </div>
+                <div class="text-orange-600 dark:text-orange-400 text-xs font-bold flex items-center">
+                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                    Requires Attention
+                </div>
+            </div>
+            @else
+            <!-- Stat: Auth Success Today -->
+            <div class="glass-card stat-card-glow p-7 rounded-[2rem] transition-all hover:-translate-y-2 group">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 group-hover:rotate-6 transition-transform">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Auth Success</p>
+                        <h2 class="text-4xl font-black text-gray-900 dark:text-white mt-1">{{ number_format($authAcceptToday) }}</h2>
+                    </div>
+                </div>
+                <div class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">Accepted Today</div>
+            </div>
+
+            <!-- Stat: Auth Failures Today -->
+            <div class="glass-card stat-card-glow p-7 rounded-[2rem] transition-all hover:-translate-y-2 group">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white shadow-lg shadow-rose-500/20 group-hover:rotate-6 transition-transform">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em]">Auth Failed</p>
+                        <h2 class="text-4xl font-black text-gray-900 dark:text-white mt-1">{{ number_format($authRejectToday) }}</h2>
+                    </div>
+                </div>
+                <div class="text-rose-600 dark:text-rose-400 text-xs font-bold uppercase tracking-wider">Rejected Today</div>
+            </div>
+            @endif
+        </div>
+
+        @if(auth()->user()->isAdmin())
+        <!-- Monthly Financial Performance -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Income This Month -->
+            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-emerald-500 transition-all hover:shadow-lg hover:scale-[1.01]">
+                <div>
+                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Pendapatan Bulan Ini</p>
+                    <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($revenue, 0, ',', '.') }}</h3>
+                    <p class="text-[10px] text-gray-400 font-bold mt-1">Total Paid Invoices</p>
+                </div>
+                <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m.599-1H11"></path></svg>
+                </div>
+            </div>
+
+            <!-- Expense This Month -->
+            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-rose-500 transition-all hover:shadow-lg hover:scale-[1.01]">
+                <div>
+                    <p class="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">Pengeluaran Bulan Ini</p>
+                    <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($expense, 0, ',', '.') }}</h3>
+                    <p class="text-[10px] text-gray-400 font-bold mt-1">Total Bank Withdrawals</p>
+                </div>
+                <div class="p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-2xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+
+            <!-- Profit This Month -->
+            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-blue-500 transition-all hover:shadow-lg hover:scale-[1.01]">
+                <div>
+                    <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Estimasi Laba (Net)</p>
+                    <h3 class="text-2xl font-black text-gray-900 dark:text-white {{ $profit < 0 ? 'text-rose-600' : '' }}">Rp {{ number_format($profit, 0, ',', '.') }}</h3>
+                    <p class="text-[10px] text-gray-400 font-bold mt-1">Income - Expense</p>
+                </div>
+                <div class="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- PSB (New Installations) Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <!-- PSB Today -->
+            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-indigo-500 transition-all hover:shadow-lg hover:scale-[1.01]">
+                <div>
+                    <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">PSB Hari Ini</p>
+                    <h3 class="text-3xl font-black text-gray-900 dark:text-white">{{ number_format($psbToday) }}</h3>
+                </div>
+                <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </div>
+            </div>
+
+            <!-- PSB This Month -->
+            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-emerald-500 transition-all hover:shadow-lg hover:scale-[1.01]">
+                <div>
+                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">PSB Bulan Ini</p>
+                    <h3 class="text-3xl font-black text-gray-900 dark:text-white">{{ number_format($psbMonth) }}</h3>
+                </div>
+                <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                </div>
+            </div>
+
+            <!-- PSB This Year -->
+            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-purple-500 transition-all hover:shadow-lg hover:scale-[1.01]">
+                <div>
+                    <p class="text-[10px] font-black text-purple-500 uppercase tracking-widest mb-1">PSB Tahun Ini</p>
+                    <h3 class="text-3xl font-black text-gray-900 dark:text-white">{{ number_format($psbYear) }}</h3>
+                </div>
+                <div class="p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-2xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Content -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <!-- Left Side: Network Analytics -->
+            <div class="xl:col-span-2 space-y-8">
+                <!-- Live Traffic Analysis Card -->
+                <div class="glass-card rounded-[2.5rem] overflow-hidden border border-white/40 dark:border-gray-700/50">
+                    <div class="px-8 py-8 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white/30 dark:bg-gray-900/20">
+                        <div>
+                            <h3 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Real-time Traffic Metrics</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">Monitoring bandwidth utilization for the last 24 hours</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                             <div class="hidden md:flex px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl items-center mr-2">
+                                <span class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse mr-2"></span>
+                                <span class="text-[10px] font-black text-indigo-700 dark:text-indigo-400 uppercase tracking-widest">Live Metrics</span>
+                             </div>
+
+                             @if(auth()->user()->isAdmin())
+                             <div class="flex items-center space-x-2">
+                                 <form action="{{ route('radius.clear-stale') }}" method="POST" onsubmit="return confirm('Clean idle sessions (>2h)?')">
+                                     @csrf
+                                     <button type="submit" class="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-amber-600 hover:text-white transition-all border border-amber-100 dark:border-amber-800/30 shadow-sm">
+                                         Clear Stale
+                                     </button>
+                                 </form>
+                                 <form action="{{ route('radius.disconnect-all') }}" method="POST" onsubmit="return confirm('Disconnect ALL sessions?')">
+                                     @csrf
+                                     <button type="submit" class="px-4 py-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-rose-600 hover:text-white transition-all border border-rose-100 dark:border-rose-800/30 shadow-sm">
+                                         Disconnect All
+                                     </button>
+                                 </form>
+                             </div>
+                             @endif
+                        </div>
+                    </div>
+                    
+                    <div class="p-8">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
+                            <div class="p-5 bg-gray-50 dark:bg-gray-900/50 rounded-3xl border border-gray-100 dark:border-gray-800">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Aggregate Up</p>
+                                <p class="text-xl font-black text-indigo-600 dark:text-indigo-400">
+                                    @if($totalUpload > 1073741824)
+                                        {{ number_format($totalUpload / 1073741824, 2) }} <span class="text-xs font-bold opacity-40">GB</span>
                                     @else
-                                        {{ number_format($user->total_traffic / 1048576, 1) }} MB
+                                        {{ number_format($totalUpload / 1048576, 1) }} <span class="text-xs font-bold opacity-40">MB</span>
                                     @endif
                                 </p>
-                                <p class="text-[10px] text-gray-400">{{ gmdate('H:i:s', $user->acctsessiontime ?? 0) }} uptime</p>
+                            </div>
+                            <div class="p-5 bg-gray-50 dark:bg-gray-900/50 rounded-3xl border border-gray-100 dark:border-gray-800">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Aggregate Down</p>
+                                <p class="text-xl font-black text-emerald-600 dark:text-emerald-400">
+                                    @if($totalDownload > 1073741824)
+                                        {{ number_format($totalDownload / 1073741824, 2) }} <span class="text-xs font-bold opacity-40">GB</span>
+                                    @else
+                                        {{ number_format($totalDownload / 1048576, 1) }} <span class="text-xs font-bold opacity-40">MB</span>
+                                    @endif
+                                </p>
+                            </div>
+                            <div class="p-5 bg-gray-50 dark:bg-gray-900/50 rounded-3xl border border-gray-100 dark:border-gray-800">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Auth Success</p>
+                                <p class="text-xl font-black text-blue-600 dark:text-blue-400">{{ number_format($authAcceptToday) }}</p>
+                            </div>
+                            <div class="p-5 bg-gray-50 dark:bg-gray-900/50 rounded-3xl border border-gray-100 dark:border-gray-800">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Auth Failed</p>
+                                <p class="text-xl font-black text-rose-600 dark:text-rose-400">{{ number_format($authRejectToday) }}</p>
                             </div>
                         </div>
-                        @endforeach
+
+                        <div class="chart-container relative h-[350px]">
+                            <canvas id="trafficChartMain"></canvas>
+                        </div>
                     </div>
                 </div>
-                @else
-                <div class="px-6 pb-6 text-center text-gray-400 dark:text-gray-500 py-4">
-                    <p class="text-sm font-medium">No active sessions at the moment</p>
+
+                <!-- Top Consumers & Activity -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <!-- Top Users -->
+                     <div class="glass-card rounded-[2.5rem] p-8">
+                         <h3 class="text-xl font-black text-gray-900 dark:text-white mb-6 flex items-center">
+                            <span class="w-1.5 h-6 bg-amber-500 rounded-full mr-3"></span>
+                            Heavy Consumers
+                         </h3>
+                         <div class="space-y-4">
+                            @forelse($topUsers as $idx => $user)
+                            <div class="flex items-center justify-between p-4 rounded-3xl bg-white/40 dark:bg-gray-900/40 border border-white/60 dark:border-gray-800/60 hover:scale-[1.02] transition-all">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center font-black text-xs text-gray-500">
+                                        #{{ $idx + 1 }}
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-gray-900 dark:text-white font-mono text-sm">{{ $user->username }}</p>
+                                        <p class="text-[10px] text-gray-400 font-medium">{{ $user->framedipaddress }}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-black text-indigo-600 dark:text-indigo-400">
+                                        {{ $user->total_traffic > 1073741824 ? number_format($user->total_traffic / 1073741824, 2) . ' GB' : number_format($user->total_traffic / 1048576, 1) . ' MB' }}
+                                    </p>
+                                    <p class="text-[10px] text-gray-400 font-bold uppercase">{{ gmdate('H:i', $user->acctsessiontime) }} Session</p>
+                                </div>
+                            </div>
+                            @empty
+                            <div class="py-12 text-center text-gray-400 italic">No heavy usage detected.</div>
+                            @endforelse
+                         </div>
+                     </div>
+
+                     <!-- Mini Activity Feed -->
+                     <div class="glass-card rounded-[2.5rem] p-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-black text-gray-900 dark:text-white flex items-center">
+                                <span class="w-1.5 h-6 bg-indigo-500 rounded-full mr-3"></span>
+                                Recent Pulse
+                            </h3>
+                            <a href="{{ route('activity-logs.index') }}" class="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-600 hover:text-white transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </a>
+                        </div>
+                        <div class="space-y-6">
+                            @foreach($latestActivities->take(5) as $activity)
+                            <div class="flex space-x-4 relative">
+                                @if(!$loop->last)
+                                <div class="absolute left-2.5 top-6 bottom-0 w-px bg-gray-100 dark:bg-gray-800"></div>
+                                @endif
+                                <div class="w-5 h-5 rounded-full mt-1 z-10 flex items-center justify-center
+                                    {{ $activity->action === 'created' ? 'bg-green-500' : ($activity->action === 'updated' ? 'bg-blue-500' : 'bg-indigo-500') }} border-4 border-white dark:border-gray-800 shadow-sm">
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-bold text-gray-900 dark:text-white truncate">{{ $activity->description }}</p>
+                                    <p class="text-[10px] text-gray-400 font-medium mt-0.5">{{ $activity->created_at->diffForHumans() }} &bull; {{ $activity->user->name ?? 'System' }}</p>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                     </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Quick Actions & Intelligence -->
+            <div class="space-y-8">
+                <!-- Quick Actions Console -->
+                <div class="glass-card rounded-[2.5rem] p-8">
+                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-6">Action Console</h3>
+                    <div class="grid grid-cols-1 gap-4">
+                        <a href="{{ route('customers.create') }}" class="flex items-center p-5 rounded-3xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30 transition-all hover:-translate-y-1">
+                            <div class="p-3 bg-white/20 rounded-2xl mr-4">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                            </div>
+                            <div class="text-left">
+                                <p class="font-black tracking-tight">New Subscriber</p>
+                                <p class="text-[10px] text-indigo-100 font-bold uppercase tracking-widest">Instant Register</p>
+                            </div>
+                        </a>
+                        
+                        @if(!auth()->user()->isKasir())
+                        <form action="{{ route('invoices.generate-automated') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="w-full flex items-center p-5 rounded-3xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all group">
+                                <div class="p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-2xl mr-4 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                </div>
+                                <div class="text-left">
+                                    <p class="font-black text-gray-900 dark:text-white tracking-tight">Generate Billing</p>
+                                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Automated Cycle</p>
+                                </div>
+                            </button>
+                        </form>
+                        @endif
+
+                        <a href="{{ route('tickets.index') }}" class="flex items-center p-5 rounded-3xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all group">
+                            <div class="p-3 bg-amber-50 dark:bg-amber-900/30 text-amber-600 rounded-2xl mr-4 group-hover:bg-amber-600 group-hover:text-white transition-all">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
+                            </div>
+                            <div class="text-left">
+                                <p class="font-black text-gray-900 dark:text-white tracking-tight">Support Desk</p>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Active Tickets</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Session Intelligence -->
+                @if(auth()->user()->isAdmin())
+                <div class="glass-card rounded-[2.5rem] p-8 bg-gradient-to-br from-indigo-600 to-purple-700 text-white">
+                    <h3 class="text-xl font-black mb-6">Network Health</h3>
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm font-bold opacity-80">Online Ratio</p>
+                            <p class="text-lg font-black">{{ number_format(($onlineNow / max($totalSubscribers, 1)) * 100, 1) }}%</p>
+                        </div>
+                        <div class="w-full bg-white/10 h-2.5 rounded-full overflow-hidden">
+                            <div class="h-full bg-white rounded-full" style="width: {{ ($onlineNow / max($totalSubscribers, 1)) * 100 }}%"></div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mt-8">
+                             <form action="{{ route('radius.clear-stale') }}" method="POST" onsubmit="return confirm('Clean idle sessions (>2h)?')">
+                                @csrf
+                                <button type="submit" class="w-full py-3 bg-white/10 hover:bg-white/20 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
+                                    Clear Stale
+                                </button>
+                             </form>
+                             <form action="{{ route('radius.disconnect-all') }}" method="POST" onsubmit="return confirm('Disconnect ALL sessions?')">
+                                @csrf
+                                <button type="submit" class="w-full py-3 bg-white/10 hover:bg-white/20 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
+                                    Flush All
+                                </button>
+                             </form>
+                        </div>
+                    </div>
                 </div>
                 @endif
             </div>
         </div>
-
-        @if(auth()->user()->isAdmin())
-        <!-- Row 3: Recent Activity Log (Separate and clean) -->
-        <div class="glass-premium bg-white/80 dark:bg-gray-800/80 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-            <div class="px-8 py-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                    <span class="w-2 h-8 bg-indigo-600 rounded-full mr-3"></span>
-                    Recent Activity Audit
-                </h3>
-                <a href="{{ route('activity-logs.index') }}" class="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest hover:underline flex items-center">
-                    View Full Logs
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </a>
-            </div>
-            <div class="divide-y divide-gray-50 dark:divide-gray-700/50">
-                @forelse($latestActivities as $activity)
-                    <div class="px-8 py-5 flex items-center justify-between hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-all">
-                        <div class="flex items-center space-x-4">
-                            <div class="p-2 rounded-xl 
-                                {{ $activity->action === 'created' ? 'bg-green-50 text-green-600' : 
-                                  ($activity->action === 'updated' ? 'bg-blue-50 text-blue-600' : 
-                                  ($activity->action === 'login' || $activity->action === 'logout' ? 'bg-indigo-50 text-indigo-600' : 'bg-red-50 text-red-600')) }} dark:bg-gray-700">
-                                @if($activity->action === 'created')
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                @elseif($activity->action === 'updated')
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                @elseif($activity->action === 'login')
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
-                                @elseif($activity->action === 'logout')
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                                @else
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                @endif
-                            </div>
-                            <div>
-                                <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $activity->description }}</p>
-                                
-                                @if($activity->action === 'updated' && isset($activity->properties['new']))
-                                    <p class="text-[9px] font-medium text-amber-600 dark:text-amber-400 uppercase tracking-tighter mb-1">
-                                        Changes: {{ implode(', ', array_keys($activity->properties['new'])) }}
-                                    </p>
-                                @endif
-
-                                <p class="text-[10px] text-gray-500 dark:text-gray-400 font-medium">By <span class="text-indigo-600">{{ $activity->user->name ?? 'System' }}</span> &bull; {{ $activity->ip_address }}</p>
-                            </div>
-                        </div>
-                        <span class="text-[10px] font-bold text-gray-400 bg-gray-50 dark:bg-gray-800 px-3 py-1 rounded-full">{{ $activity->created_at->diffForHumans() }}</span>
-                    </div>
-                @empty
-                    <div class="p-12 text-center text-gray-500">No recent activity.</div>
-                @endforelse
-            </div>
-        </div>
-        @endif
     </div>
-</x-app-layout>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('trafficChart');
-    if (!ctx) return;
+    <!-- Live Intelligence Script -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('trafficChartMain');
+            if (!ctx) return;
 
-    const isDark = document.documentElement.classList.contains('dark');
-    const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
-    const textColor = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)';
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+            const textColor = isDark ? '#9ca3af' : '#6b7280';
 
-    const uploadGradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
-    uploadGradient.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
-    uploadGradient.addColorStop(1, 'rgba(99, 102, 241, 0.01)');
+            const upGradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 350);
+            upGradient.addColorStop(0, 'rgba(79, 70, 229, 0.25)');
+            upGradient.addColorStop(1, 'rgba(79, 70, 229, 0)');
 
-    const downloadGradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
-    downloadGradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
-    downloadGradient.addColorStop(1, 'rgba(16, 185, 129, 0.01)');
+            const downGradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 350);
+            downGradient.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+            downGradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
 
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: @json($chartLabels),
-            datasets: [
-                {
-                    label: 'Upload (MB)',
-                    data: @json($chartUpload),
-                    borderColor: 'rgb(99, 102, 241)',
-                    backgroundColor: uploadGradient,
-                    borderWidth: 2.5,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 0,
-                    pointHoverRadius: 5,
-                    pointHoverBackgroundColor: 'rgb(99, 102, 241)',
-                    pointHoverBorderColor: '#fff',
-                    pointHoverBorderWidth: 2,
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: @json($chartLabels),
+                    datasets: [
+                        {
+                            label: 'Upload (MB)',
+                            data: @json($chartUpload),
+                            borderColor: '#6366f1',
+                            backgroundColor: upGradient,
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.45,
+                            pointRadius: 0,
+                            pointHoverRadius: 6,
+                            pointHoverBackgroundColor: '#6366f1',
+                            pointHoverBorderColor: '#fff',
+                            pointHoverBorderWidth: 3,
+                        },
+                        {
+                            label: 'Download (MB)',
+                            data: @json($chartDownload),
+                            borderColor: '#10b981',
+                            backgroundColor: downGradient,
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.45,
+                            pointRadius: 0,
+                            pointHoverRadius: 6,
+                            pointHoverBackgroundColor: '#10b981',
+                            pointHoverBorderColor: '#fff',
+                            pointHoverBorderWidth: 3,
+                        }
+                    ]
                 },
-                {
-                    label: 'Download (MB)',
-                    data: @json($chartDownload),
-                    borderColor: 'rgb(16, 185, 129)',
-                    backgroundColor: downloadGradient,
-                    borderWidth: 2.5,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 0,
-                    pointHoverRadius: 5,
-                    pointHoverBackgroundColor: 'rgb(16, 185, 129)',
-                    pointHoverBorderColor: '#fff',
-                    pointHoverBorderWidth: 2,
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            interaction: {
-                mode: 'index',
-                intersect: false,
-            },
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    align: 'end',
-                    labels: {
-                        boxWidth: 8,
-                        boxHeight: 8,
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        font: { size: 11, weight: '600' },
-                        color: textColor,
-                        padding: 16,
-                    }
-                },
-                tooltip: {
-                    backgroundColor: isDark ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)',
-                    titleColor: isDark ? '#e5e7eb' : '#111827',
-                    bodyColor: isDark ? '#9ca3af' : '#6b7280',
-                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                    borderWidth: 1,
-                    cornerRadius: 12,
-                    padding: 12,
-                    displayColors: true,
-                    boxWidth: 8,
-                    boxHeight: 8,
-                    usePointStyle: true,
-                    callbacks: {
-                        label: function(ctx) {
-                            return ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + ' MB';
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                color: textColor,
+                                font: { size: 11, weight: '700' },
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: isDark ? '#1f2937' : '#fff',
+                            titleColor: isDark ? '#fff' : '#111',
+                            bodyColor: isDark ? '#9ca3af' : '#6b7280',
+                            borderWidth: 1,
+                            borderColor: gridColor,
+                            padding: 15,
+                            displayColors: true,
+                            boxPadding: 6,
+                            usePointStyle: true,
+                            callbacks: {
+                                label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} MB`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: textColor, font: { size: 10, weight: '600' } }
+                        },
+                        y: {
+                            grid: { color: gridColor },
+                            ticks: { 
+                                color: textColor, 
+                                font: { size: 10, weight: '600' },
+                                callback: (val) => val + ' MB'
+                            },
+                            beginAtZero: true
                         }
                     }
                 }
-            },
-            scales: {
-                x: {
-                    grid: { color: gridColor, drawBorder: false },
-                    ticks: {
-                        color: textColor,
-                        font: { size: 10, weight: '500' },
-                        maxRotation: 0,
-                        maxTicksLimit: 12,
-                    },
-                    border: { display: false }
-                },
-                y: {
-                    grid: { color: gridColor, drawBorder: false },
-                    ticks: {
-                        color: textColor,
-                        font: { size: 10, weight: '500' },
-                        callback: function(val) { return val + ' MB'; }
-                    },
-                    border: { display: false },
-                    beginAtZero: true,
+            });
+
+            // Premium Live Clock
+            function updateClock() {
+                const clock = document.getElementById('live-clock-detailed');
+                if (clock) {
+                    const now = new Date();
+                    clock.innerText = now.toLocaleTimeString('id-ID', { hour12: false });
                 }
             }
-        }
-    });
-    
-    // Live Clock Update
-    function updateClock() {
-        const now = new Date();
-        const options = { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-        };
-        const formatter = new Intl.DateTimeFormat('id-ID', options);
-        const parts = formatter.formatToParts(now);
-        
-        let dateStr = "";
-        let timeStr = "";
-        
-        parts.forEach(part => {
-            if (part.type === 'hour' || part.type === 'minute' || part.type === 'second' || part.type === 'literal') {
-                if (part.value === ' ' && timeStr === "") return;
-                timeStr += part.value;
-            } else {
-                dateStr += part.value;
-            }
+            setInterval(updateClock, 1000);
+            updateClock();
         });
-
-        const clockElement = document.getElementById('live-clock');
-        if (clockElement) {
-            // Clean up strings
-            dateStr = dateStr.trim().replace(/,$/, '');
-            timeStr = timeStr.trim().replace(/^\./, '').replace(/^,/, '').trim();
-            
-            clockElement.innerHTML = `
-                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                ${dateStr} | ${timeStr}
-            `;
-        }
-    }
-    
-    setInterval(updateClock, 1000);
-});
-</script>
+    </script>
+</x-app-layout>

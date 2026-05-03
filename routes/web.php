@@ -55,11 +55,16 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         // Invoice stats
         $unpaidInvoices = 0;
         $revenue = 0;
+        $expense = 0;
+        $profit = 0;
         if (class_exists(\App\Models\Invoice::class)) {
             $unpaidInvoices = \App\Models\Invoice::where('status', 'unpaid')->count();
-            $revenue = \App\Models\Invoice::where('status', 'paid')
-                ->whereMonth('created_at', now()->month)
-                ->sum('amount') ?? 0;
+            $revenue = \App\Models\Invoice::where('status', 'paid')->whereMonth('paid_at', now()->month)->whereYear('paid_at', now()->year)->sum('amount');
+            $expense = \App\Models\BankTransaction::where('type', 'withdrawal')
+                ->whereMonth('transaction_date', now()->month)
+                ->whereYear('transaction_date', now()->year)
+                ->sum('amount');
+            $profit = $revenue - $expense;
         }
 
         $latestActivities = \App\Models\ActivityLog::with('user')
@@ -110,11 +115,19 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         $authAcceptToday = \App\Models\Radius\RadPostAuth::whereDate('authdate', today())->where('reply', 'Access-Accept')->count();
         $authRejectToday = \App\Models\Radius\RadPostAuth::whereDate('authdate', today())->where('reply', 'Access-Reject')->count();
 
+        // PSB Stats (New Installations based on activated_at)
+        $psbToday = \App\Models\Customer::whereDate('activated_at', today())->count();
+        $psbMonth = \App\Models\Customer::whereMonth('activated_at', now()->month)
+            ->whereYear('activated_at', now()->year)
+            ->count();
+        $psbYear = \App\Models\Customer::whereYear('activated_at', now()->year)->count();
+
         return view('dashboard', compact(
-            'totalSubscribers', 'activeUsers', 'unpaidInvoices', 'revenue', 'latestActivities',
+            'totalSubscribers', 'activeUsers', 'unpaidInvoices', 'revenue', 'expense', 'profit', 'latestActivities',
             'onlineNow', 'totalUpload', 'totalDownload', 'topUsers',
             'chartLabels', 'chartUpload', 'chartDownload', 'chartSessions',
-            'authAcceptToday', 'authRejectToday'
+            'authAcceptToday', 'authRejectToday',
+            'psbToday', 'psbMonth', 'psbYear'
         ));
     })->name('dashboard');
 

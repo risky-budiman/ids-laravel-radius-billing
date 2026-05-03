@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.6] - 2026-05-03
+- Bugfix: Paket ([HEAD])
+
+
+
 ## [1.5.5] - 2026-05-03
 - Bugfix: wirehouse ([HEAD])
 
