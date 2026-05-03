@@ -467,4 +467,54 @@ class AccountingService
             return $journal;
         });
     }
+
+    /**
+     * Get a financial snapshot for a specific month/year
+     */
+    public function getFinancialSnapshot($month, $year)
+    {
+        $startDate = \Carbon\Carbon::create($year, $month, 1)->startOfMonth()->toDateString();
+        $endDate = \Carbon\Carbon::create($year, $month, 1)->endOfMonth()->toDateString();
+
+        // 1. Calculate Net Profit for the period
+        $income = JournalItem::whereHas('journal', function($q) use ($startDate, $endDate) {
+            $q->whereBetween('date', [$startDate, $endDate]);
+        })->whereHas('account', fn($q) => $q->where('type', 'income'))->get();
+        
+        $totalIncome = $income->sum('credit') - $income->sum('debit');
+
+        $expense = JournalItem::whereHas('journal', function($q) use ($startDate, $endDate) {
+            $q->whereBetween('date', [$startDate, $endDate]);
+        })->whereHas('account', fn($q) => $q->where('type', 'expense'))->get();
+        
+        $totalExpense = $expense->sum('debit') - $expense->sum('credit');
+        $netProfit = $totalIncome - $totalExpense;
+
+        // 2. Calculate Assets, Liabilities, Equity up to the end of period
+        $accounts = ChartOfAccount::whereIn('type', ['asset', 'liability', 'equity'])->get();
+        $totalAssets = 0;
+        $totalLiabilities = 0;
+        $totalEquity = 0;
+
+        foreach ($accounts as $account) {
+            $balance = JournalItem::whereHas('journal', function($q) use ($endDate) {
+                $q->where('date', '<=', $endDate);
+            })->where('account_id', $account->id)->get();
+
+            if ($account->type === 'asset') {
+                $totalAssets += ($balance->sum('debit') - $balance->sum('credit'));
+            } elseif ($account->type === 'liability') {
+                $totalLiabilities += ($balance->sum('credit') - $balance->sum('debit'));
+            } elseif ($account->type === 'equity') {
+                $totalEquity += ($balance->sum('credit') - $balance->sum('debit'));
+            }
+        }
+
+        return [
+            'net_profit' => $netProfit,
+            'total_assets' => $totalAssets,
+            'total_liabilities' => $totalLiabilities,
+            'total_equity' => $totalEquity,
+        ];
+    }
 }

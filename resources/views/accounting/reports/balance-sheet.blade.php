@@ -5,8 +5,14 @@
                 <h2 class="font-bold text-2xl text-gray-900 dark:text-white tracking-tight">
                     Laporan Neraca (Balance Sheet)
                 </h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2">
                     Posisi Keuangan Per Tanggal: {{ \Carbon\Carbon::parse($date)->format('d F Y') }}
+                    @if($isClosed)
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
+                            CLOSED PERIOD
+                        </span>
+                    @endif
                 </p>
             </div>
             <div class="flex gap-3">

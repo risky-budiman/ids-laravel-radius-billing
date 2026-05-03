@@ -16,6 +16,12 @@ class ReportController extends Controller
         $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
 
+        // Check if this period is closed
+        $isClosed = \App\Models\AccountingPeriod::where('month', Carbon::parse($endDate)->month)
+            ->where('year', Carbon::parse($endDate)->year)
+            ->where('is_closed', true)
+            ->exists();
+
         // 1. Fetch Income Accounts
         $incomeAccounts = ChartOfAccount::where('type', 'income')
             ->where('is_active', true)
@@ -53,13 +59,19 @@ class ReportController extends Controller
         $netProfit = $totalIncome - $totalExpense;
 
         return view('accounting.reports.profit-loss', compact(
-            'incomeAccounts', 'expenseAccounts', 'totalIncome', 'totalExpense', 'netProfit', 'startDate', 'endDate'
+            'incomeAccounts', 'expenseAccounts', 'totalIncome', 'totalExpense', 'netProfit', 'startDate', 'endDate', 'isClosed'
         ));
     }
 
     public function balanceSheet(Request $request)
     {
         $date = $request->input('date', Carbon::now()->toDateString());
+
+        // Check if this date is in a closed period
+        $isClosed = \App\Models\AccountingPeriod::where('month', Carbon::parse($date)->month)
+            ->where('year', Carbon::parse($date)->year)
+            ->where('is_closed', true)
+            ->exists();
 
         // Fetch all accounts with their cumulative balance up to $date
         $accounts = ChartOfAccount::whereIn('type', ['asset', 'liability', 'equity'])
@@ -102,7 +114,7 @@ class ReportController extends Controller
         $totalEquity = $equity->sum('current_balance') + $currentEarnings;
 
         return view('accounting.reports.balance-sheet', compact(
-            'assets', 'liabilities', 'equity', 'totalAssets', 'totalLiabilities', 'totalEquity', 'currentEarnings', 'date'
+            'assets', 'liabilities', 'equity', 'totalAssets', 'totalLiabilities', 'totalEquity', 'currentEarnings', 'date', 'isClosed'
         ));
     }
 
