@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\LogsActivity;
+use App\Jobs\SendTicketToWhatsAppGroupJob;
 
 class Ticket extends Model
 {
@@ -51,7 +52,7 @@ class Ticket extends Model
         return in_array($this->status, ['open', 'in_progress']) && $this->created_at->diffInHours(now()) >= 24;
     }
 
-    // Auto-generate ticket number on creation
+    // Auto-generate ticket number and handle notifications
     protected static function boot()
     {
         parent::boot();
@@ -72,6 +73,16 @@ class Ticket extends Model
                 $prefix = get_setting($prefixKey, $fallbacks[$type] ?? 'TKT');
                 $count = static::whereDate('created_at', now()->toDateString())->count();
                 $ticket->ticket_number = $prefix . '/' . now()->format('Ymd') . '/' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+            }
+        });
+
+        static::created(function ($ticket) {
+            SendTicketToWhatsAppGroupJob::dispatch($ticket, 'created');
+        });
+
+        static::updated(function ($ticket) {
+            if ($ticket->wasChanged(['status', 'assigned_to', 'resolution_notes'])) {
+                SendTicketToWhatsAppGroupJob::dispatch($ticket, 'updated');
             }
         });
     }

@@ -78,6 +78,7 @@ Tujuan utama adalah membangun sistem manajemen ISP yang terintegrasi penuh: OLT 
 - [ ] **Claim/Assign System**: Alur penugasan tiket dari Admin ke Teknisi atau teknisi mengambil tiket dari pool antrean.
 - [ ] **Ticket Replies**: Sistem komentar/thread di dalam tiket lengkap dengan lampiran foto progres.
 - [ ] **Logika Aktivasi**: Menutup celah di mana tiket closed tanpa melalui Wizard Activation (mencegah data stok/billing tidak sinkron).
+- [x] **WhatsApp Ticket Queue**: Integrasi pengiriman notifikasi tiket baru/update secara otomatis ke Group WhatsApp menggunakan antrean (Queue/Horizon) untuk monitoring real-time.
 
 ---
 

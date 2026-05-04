@@ -177,31 +177,42 @@
                             </div>
                         </div>
 
-                        <div class="md:col-span-2 mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
+                            <div class="md:col-span-2 mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
                                 <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                                    <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-                                    Ticket Numbering Prefixes
+                                    <svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path></svg>
+                                    WhatsApp Ticket Notifications (Group IDs)
                                 </h4>
-                                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                                    <div>
-                                        <x-input-label for="ticket_prefix_gangguan" :value="__('Gangguan (TT)')" />
-                                        <x-text-input id="ticket_prefix_gangguan" name="ticket_prefix_gangguan" type="text" class="mt-1 block w-full" :value="$settings['ticket_prefix_gangguan']->value ?? 'TT'" />
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <div class="md:col-span-1 lg:col-span-1">
+                                        <x-input-label for="whatsapp_group_id" :value="__('Global Default Group ID')" />
+                                        <x-text-input id="whatsapp_group_id" name="whatsapp_group_id" type="text" class="mt-1 block w-full bg-indigo-50/30" :value="$settings['whatsapp_group_id']->value ?? ''" placeholder="12036302..." />
+                                        <p class="text-[9px] text-slate-400 mt-1">* Digunakan jika group per tipe tidak diisi</p>
                                     </div>
-                                    <div>
-                                        <x-input-label for="ticket_prefix_aktivasi" :value="__('Aktivasi (AO)')" />
-                                        <x-text-input id="ticket_prefix_aktivasi" name="ticket_prefix_aktivasi" type="text" class="mt-1 block w-full" :value="$settings['ticket_prefix_aktivasi']->value ?? 'AO'" />
+                                    <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div>
+                                            <x-input-label for="whatsapp_group_id_gangguan" :value="__('Group: Gangguan')" />
+                                            <x-text-input id="whatsapp_group_id_gangguan" name="whatsapp_group_id_gangguan" type="text" class="mt-1 block w-full text-xs" :value="$settings['whatsapp_group_id_gangguan']->value ?? ''" />
+                                        </div>
+                                        <div>
+                                            <x-input-label for="whatsapp_group_id_aktivasi" :value="__('Group: Aktivasi')" />
+                                            <x-text-input id="whatsapp_group_id_aktivasi" name="whatsapp_group_id_aktivasi" type="text" class="mt-1 block w-full text-xs" :value="$settings['whatsapp_group_id_aktivasi']->value ?? ''" />
+                                        </div>
+                                        <div>
+                                            <x-input-label for="whatsapp_group_id_dismantle" :value="__('Group: Dismantle')" />
+                                            <x-text-input id="whatsapp_group_id_dismantle" name="whatsapp_group_id_dismantle" type="text" class="mt-1 block w-full text-xs" :value="$settings['whatsapp_group_id_dismantle']->value ?? ''" />
+                                        </div>
+                                        <div>
+                                            <x-input-label for="whatsapp_group_id_relokasi" :value="__('Group: Relokasi')" />
+                                            <x-text-input id="whatsapp_group_id_relokasi" name="whatsapp_group_id_relokasi" type="text" class="mt-1 block w-full text-xs" :value="$settings['whatsapp_group_id_relokasi']->value ?? ''" />
+                                        </div>
+                                        <div>
+                                            <x-input-label for="whatsapp_group_id_maintenance" :value="__('Group: Maintenance')" />
+                                            <x-text-input id="whatsapp_group_id_maintenance" name="whatsapp_group_id_maintenance" type="text" class="mt-1 block w-full text-xs" :value="$settings['whatsapp_group_id_maintenance']->value ?? ''" />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <x-input-label for="ticket_prefix_dismantle" :value="__('Dismantle (DO)')" />
-                                        <x-text-input id="ticket_prefix_dismantle" name="ticket_prefix_dismantle" type="text" class="mt-1 block w-full" :value="$settings['ticket_prefix_dismantle']->value ?? 'DO'" />
-                                    </div>
-                                    <div>
-                                        <x-input-label for="ticket_prefix_relokasi" :value="__('Relokasi (RL)')" />
-                                        <x-text-input id="ticket_prefix_relokasi" name="ticket_prefix_relokasi" type="text" class="mt-1 block w-full" :value="$settings['ticket_prefix_relokasi']->value ?? 'RL'" />
-                                    </div>
-                                    <div>
-                                        <x-input-label for="ticket_prefix_maintenance" :value="__('Maintenance (MT)')" />
-                                        <x-text-input id="ticket_prefix_maintenance" name="ticket_prefix_maintenance" type="text" class="mt-1 block w-full" :value="$settings['ticket_prefix_maintenance']->value ?? 'MT'" />
+                                    <div class="md:col-span-2 lg:col-span-3 mt-2 flex items-center text-[10px] text-slate-500 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
+                                        <svg class="w-3 h-3 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <span><strong>Tips:</strong> Dapatkan ID Grup (format: <code>12036xxx@g.us</code>) dari Dashboard Provider (Fonnte/Wablas) atau kirim <code>/groups</code> ke nomor API Anda.</span>
                                     </div>
                                 </div>
                             </div>
