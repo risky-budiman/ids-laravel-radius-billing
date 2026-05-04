@@ -67,11 +67,21 @@
                                 <span class="text-green-600 dark:text-green-400">↓ {{ round($session->acctoutputoctets / 1048576, 2) }} MB</span> / 
                                 <span class="text-blue-600 dark:text-blue-400">↑ {{ round($session->acctinputoctets / 1048576, 2) }} MB</span>
                             </td>
-                            <td class="px-6 py-4 text-right">
-                                <form action="{{ route('online-users.kick', $session->radacctid) }}" method="POST" onsubmit="return confirm('Disconnect user {{ $session->username }}?')">
+                            <td class="px-6 py-4 text-right flex justify-end gap-2">
+                                {{-- Primary Action: Try Disconnect via CoA --}}
+                                <form action="{{ route('online-users.kick', $session->radacctid) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all">
+                                    <button type="submit" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all" title="Send CoA Disconnect Signal to Router">
                                         Disconnect
+                                    </button>
+                                </form>
+
+                                {{-- Secondary Action: Manual Force Close (Fallback) --}}
+                                <form action="{{ route('online-users.kick', $session->radacctid) }}" method="POST" onsubmit="return confirm('WARNING: Force Close will stop this session in DB WITHOUT disconnecting the user from the router. This may lead to inconsistency. Continue?')">
+                                    @csrf
+                                    <input type="hidden" name="force" value="1">
+                                    <button type="submit" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all" title="Manual Force Close in Database">
+                                        Force Close
                                     </button>
                                 </form>
                             </td>

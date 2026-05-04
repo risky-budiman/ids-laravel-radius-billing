@@ -401,7 +401,18 @@ class CustomerController extends Controller
             $customer->delete();
         });
 
-        // Trigger OLT Deprovisioning
+        // 2. Trigger RADIUS CoA Disconnect to kick active sessions
+        try {
+            $nas = Nas::first(); 
+            if ($nas) {
+                $coaService = new \App\Services\RadiusCoAService();
+                $coaService->disconnect($nas->nasipaddress, $nas->secret, $customer->username);
+            }
+        } catch (\Exception $e) {
+            \Log::warning("CoA Disconnect failed during customer deletion: " . $e->getMessage());
+        }
+
+        // 3. Trigger OLT Deprovisioning
         if ($oltId && $onuIndex) {
             \App\Jobs\DeprovisionOnuJob::dispatch($oltId, $onuIndex, $onuSn);
         }

@@ -69,6 +69,8 @@ Tujuan utama adalah membangun sistem manajemen ISP yang terintegrasi penuh: OLT 
 ## 🔄 FASE 7: Refactoring & Perbaikan Logika Sistem
 - [ ] **Perbaikan Dismantle**: Otomatisasi pembuatan tiket penarikan barang, deprovisioning OLT, dan pembersihan data RADIUS (Kick CoA).
 - [ ] **Bad Debt Management**: Penanganan invoice yang masih Unpaid saat pelanggan dicabut (Write-Off).
+- [x] **Radius Integrity Rule**: Jika CoA gagal, dilarang melakukan force-close/delete session di database jika status user masih online (mencegah data rancu).
+- [ ] **Session Lock**: User yang dilakukan force delete/kick tidak boleh masuk sesi online kembali sebelum modem di-restart (mencegah auto-reconnect tanpa power cycle).
 
 ---
 

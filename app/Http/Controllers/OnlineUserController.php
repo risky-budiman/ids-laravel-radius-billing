@@ -34,6 +34,7 @@ class OnlineUserController extends Controller
     public function kick(Request $request, $radacctid)
     {
         $session = RadAcct::findOrFail($radacctid);
+        $isForce = $request->has('force');
         
         // Find NAS for this session
         $nas = Nas::where('shortname', $session->nasipaddress)
@@ -41,20 +42,30 @@ class OnlineUserController extends Controller
                   ->first();
         
         if (!$nas) {
-            // Fallback: If NAS not in DB, just force close
+            // If NAS not in DB, we allow manual force close if requested
+            if ($isForce) {
+                $this->performForceClose($session);
+                return back()->with('success', "NAS not found. Session for {$session->username} has been manually force closed.");
+            }
+            return back()->with('error', "NAS not found. Cannot send CoA Disconnect. Use 'Force Close' if you are sure the session is stale.");
+        }
+
+        // If it's a manual force close request, skip CoA and just update DB
+        if ($isForce) {
             $this->performForceClose($session);
-            return back()->with('success', "NAS not found. Session for {$session->username} has been force closed in database.");
+            return back()->with('success', "Session for {$session->username} has been manually force closed in database.");
         }
 
         $coa = new RadiusCoAService();
         $success = $coa->disconnect($nas->nasname, $nas->secret, $session->username, $session->acctsessionid);
 
         if ($success) {
-            return back()->with('success', "Disconnect signal sent to Router for {$session->username}.");
+            return back()->with('success', "Disconnect signal (CoA) sent successfully to Router for {$session->username}.");
         } else {
-            // Fallback: If CoA fails (NAS Offline), force close in DB
-            $this->performForceClose($session);
-            return back()->with('success', "NAS Unreachable. Session for {$session->username} has been automatically force closed in database.");
+            // NEW RULE: If CoA fails, DO NOT automatically force close in DB if user is still online.
+            // This prevents "rancu" (data inconsistency) and ensures the user cannot re-session 
+            // until the modem is restarted (stale session remains in DB blocking new ones).
+            return back()->with('error', "NAS Unreachable/CoA Failed. Session for {$session->username} was NOT closed in database to maintain integrity. The user will be blocked from reconnecting until the modem is restarted or the NAS clears the stale session.");
         }
     }
 
