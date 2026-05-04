@@ -42,47 +42,67 @@ class SendTicketToWhatsAppGroupJob implements ShouldQueue
             return;
         }
 
-        // Ensure customer relation is loaded
-        $this->ticket->loadMissing('customer');
+        // Ensure customer and related data are loaded
+        $this->ticket->loadMissing(['customer.package', 'customer.sales']);
+        
         $customer = $this->ticket->customer;
         $customerName = $customer->name ?? 'Unknown';
         $customerPhone = $customer->phone ?? '-';
         $customerAddress = $customer->address ?? '-';
+        $customerEmail = $customer->email ?? '-';
         $status = strtoupper($this->ticket->status);
         $priority = strtoupper($this->ticket->priority);
         
-        $title = "🔄 *UPDATE TIKET*";
-        if ($this->action === 'created') {
-            $title = "🎫 *TIKET BARU*";
-        } elseif (in_array(strtolower($this->ticket->status), ['solved', 'closed', 'resolved'])) {
-            $title = "✅ *TIKET SELESAI / SOLVED*";
+        // Package Information
+        $package = $customer->package ?? null;
+        $packageInfo = "-";
+        if ($package) {
+            $basePrice = $package->price;
+            $finalPrice = $basePrice;
+            $taxNote = "belum termasuk PPN 11%";
+
+            if ($customer->use_tax) {
+                $finalPrice = $basePrice * 1.11; // Add 11% PPN
+                $taxNote = "sudah termasuk PPN 11%";
+            }
+
+            $formattedPrice = number_format($finalPrice, 0, ',', '.');
+            $packageInfo = "{$package->name} (Rp. {$formattedPrice}/bln, {$taxNote})";
+        }
+
+        // Sales Referral
+        $salesName = $customer->sales->name ?? '-';
+
+        $actionTitle = $this->action === 'created' ? "TIKET BARU" : "UPDATE TIKET";
+        if (in_array(strtolower($this->ticket->status), ['solved', 'closed', 'resolved'])) {
+            $actionTitle = "TIKET SELESAI / SOLVED";
         }
         
-        $message = "{$title}\n\n";
-        $message .= "*No Tiket:* {$this->ticket->ticket_number}\n";
-        $message .= "*Status:* {$status} | *Prioritas:* {$priority}\n";
-        $message .= "*Subjek:* {$this->ticket->subject}\n";
+        // New Format Implementation
+        $message = "📝 *KETERANGAN ORDER [{$actionTitle}]*\n\n";
+        $message .= "*STATUS:* {$status}\n";
+        $message .= "*AO ID/NO TIKET:* {$this->ticket->ticket_number}\n";
+        $message .= "*PRIORITAS:* {$priority}\n";
         $message .= "--------------------------------\n";
-        $message .= "*DATA PELANGGAN*\n";
-        $message .= "👤 *Nama:* {$customerName}\n";
-        $message .= "📞 *HP:* {$customerPhone}\n";
-        $message .= "📍 *Alamat:* {$customerAddress}\n";
+        $message .= "*Nama Lengkap :* {$customerName}\n";
+        $message .= "*HP :* {$customerPhone}\n";
+        $message .= "*Alamat :* {$customerAddress}\n";
+        $message .= "*Email :* {$customerEmail}\n";
+        $message .= "*Paket Layanan :* {$packageInfo}\n";
         
-        // Add Coordinates & Maps Link if available
+        // Add Coordinates if available
         if ($customer && $customer->latitude && $customer->longitude) {
-            $mapsLink = "https://www.google.com/maps/search/?api=1&query={$customer->latitude},{$customer->longitude}";
-            $message .= "🌎 *Lokasi:* {$customer->latitude},{$customer->longitude}\n";
-            $message .= "🗺️ *Navigasi:* {$mapsLink}\n";
+            $message .= "*Koordinat :* {$customer->latitude}, {$customer->longitude}\n";
         }
 
         $message .= "--------------------------------\n";
-        $message .= "*Deskripsi:*\n{$this->ticket->description}\n\n";
+        $message .= "*Deskripsi :*\n{$this->ticket->description}\n";
+        $message .= "--------------------------------\n";
+        $message .= "*Sales Referal :* {$salesName}\n";
         
         if ($this->ticket->resolution_notes) {
-            $message .= "*Catatan Resolusi:*\n{$this->ticket->resolution_notes}\n\n";
+            $message .= "*Note :* {$this->ticket->resolution_notes}\n";
         }
-
-        $message .= "--- Logged at " . now()->format('H:i:s d/m/Y') . " ---";
 
         $waService->sendMessage($groupId, $message);
     }

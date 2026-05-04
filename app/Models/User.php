@@ -22,6 +22,7 @@ class User extends Authenticatable
         'password',
         'role',
         'is_active',
+        'is_sales',
         'profile_photo',
         'commission_rate',
         'commission_type',
@@ -62,7 +63,7 @@ class User extends Authenticatable
     public function isAdmin(): bool { return in_array($this->role, [self::ROLE_ADMINISTRATOR, self::ROLE_ADMIN]); }
     public function isTeknisi(): bool { return $this->role === self::ROLE_TEKNISI; }
     public function isKasir(): bool { return $this->role === self::ROLE_KASIR; }
-    public function isSales(): bool { return $this->role === self::ROLE_SALES; }
+    public function isSales(): bool { return $this->role === self::ROLE_SALES || $this->is_sales; }
     public function isMitra(): bool { return $this->role === self::ROLE_MITRA; }
     public function isCustomer(): bool { return $this->role === self::ROLE_CUSTOMER; }
 
@@ -99,6 +100,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_sales' => 'boolean',
         ];
     }
 }

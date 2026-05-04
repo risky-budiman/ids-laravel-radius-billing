@@ -41,6 +41,7 @@ class UserController extends Controller
             'bank_name' => 'nullable|string',
             'bank_account_number' => 'nullable|string',
             'bank_account_name' => 'nullable|string',
+            'is_sales' => 'nullable',
         ]);
 
         User::create([
@@ -54,6 +55,7 @@ class UserController extends Controller
             'bank_account_number' => $request->bank_account_number,
             'bank_account_name' => $request->bank_account_name,
             'is_active' => true,
+            'is_sales' => $request->has('is_sales'),
         ]);
 
         return redirect()->route('users.index')->with('success', 'Staff account created successfully.');
@@ -84,6 +86,7 @@ class UserController extends Controller
             'bank_name' => 'nullable|string',
             'bank_account_number' => 'nullable|string',
             'bank_account_name' => 'nullable|string',
+            'is_sales' => 'nullable',
         ]);
 
         $data = [
@@ -95,6 +98,7 @@ class UserController extends Controller
             'bank_name' => $request->bank_name,
             'bank_account_number' => $request->bank_account_number,
             'bank_account_name' => $request->bank_account_name,
+            'is_sales' => $request->has('is_sales'),
         ];
 
         if ($request->filled('password')) {

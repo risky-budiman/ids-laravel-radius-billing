@@ -9,6 +9,26 @@
         <form action="{{ route('customers.store') }}" method="POST" enctype="multipart/form-data" class="p-8">
             @csrf
             
+            @if ($errors->any())
+            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl dark:bg-red-900/30">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-800 dark:text-red-300 font-bold">Terjadi kesalahan input:</p>
+                        <ul class="mt-1 list-disc list-inside text-xs text-red-700 dark:text-red-400">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            @endif
+            
             <!-- Hidden Fields from Mass Discovery -->
             <input type="hidden" name="olt_id" value="{{ request('olt_id') }}">
             <input type="hidden" name="onu_sn" value="{{ request('sn') }}">
@@ -78,26 +98,31 @@
                     <div>
                         <x-input-label for="name" :value="__('Full Name / Company Name')" />
                         <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name')" required />
+                        <x-input-error class="mt-2" :messages="$errors->get('name')" />
                     </div>
 
                     <div>
                         <x-input-label for="ktp" :value="__('Nomor KTP (NIK) / NPWP')" />
                         <x-text-input id="ktp" name="ktp" type="text" class="mt-1 block w-full" :value="old('ktp')" placeholder="16 Digit NIK" />
+                        <x-input-error class="mt-2" :messages="$errors->get('ktp')" />
                     </div>
 
                     <div>
                         <x-input-label for="phone" :value="__('Phone (WhatsApp)')" />
                         <x-text-input id="phone" name="phone" type="text" class="mt-1 block w-full" :value="old('phone')" />
+                        <x-input-error class="mt-2" :messages="$errors->get('phone')" />
                     </div>
 
                     <div class="md:col-span-2">
                         <x-input-label for="email" :value="__('Email Address')" />
                         <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email')" />
+                        <x-input-error class="mt-2" :messages="$errors->get('email')" />
                     </div>
 
                     <div class="md:col-span-2">
                         <x-input-label for="address" :value="__('Installation Address')" />
                         <textarea id="address" name="address" rows="2" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-blue-500 rounded-md shadow-sm">{{ old('address') }}</textarea>
+                        <x-input-error class="mt-2" :messages="$errors->get('address')" />
                     </div>
                 </div>
 
@@ -110,6 +135,7 @@
                                 <option value="{{ $r->code }}" data-id="{{ $r->id }}" {{ old('region_code') == $r->code ? 'selected' : '' }}>[{{ $r->code }}] {{ $r->name }}</option>
                             @endforeach
                         </select>
+                        <x-input-error class="mt-2" :messages="$errors->get('region_code')" />
                     </div>
                     <div>
                         <x-input-label for="sto_code" :value="__('STO')" />
@@ -119,6 +145,7 @@
                                 <option value="{{ $s->code }}" data-id="{{ $s->id }}" data-region-id="{{ $s->region_id }}" class="hidden" {{ old('sto_code') == $s->code ? 'selected' : '' }}>[{{ $s->code }}] {{ $s->name }}</option>
                             @endforeach
                         </select>
+                        <x-input-error class="mt-2" :messages="$errors->get('sto_code')" />
                     </div>
                     <div>
                         <x-input-label for="stb_code" :value="__('STB')" />
@@ -128,6 +155,7 @@
                                 <option value="{{ $t->code }}" data-sto-id="{{ $t->sto_id }}" class="hidden" {{ old('stb_code') == $t->code ? 'selected' : '' }}>[{{ $t->code }}] {{ $t->name }}</option>
                             @endforeach
                         </select>
+                        <x-input-error class="mt-2" :messages="$errors->get('stb_code')" />
                     </div>
                 </div>
             </div>

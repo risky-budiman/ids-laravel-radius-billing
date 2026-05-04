@@ -95,7 +95,7 @@ class CustomerController extends Controller
         $odcs = \App\Models\Odc::all();
         $odps = \App\Models\Odp::all();
         $partners = User::where('role', User::ROLE_MITRA)->get();
-        $sales = User::where('role', User::ROLE_SALES)->get();
+        $sales = User::where('role', User::ROLE_SALES)->orWhere('is_sales', true)->get();
         return view('customers.create', compact('packages', 'regions', 'stos', 'stbs', 'olts', 'odcs', 'odps', 'partners', 'sales'));
     }
 
@@ -105,9 +105,9 @@ class CustomerController extends Controller
             'username' => 'required|string|max:64|unique:customers,username|unique:radcheck,username',
             'password' => 'required|string|min:6',
             'name' => 'required|string|max:255',
-            'region_code' => 'required|string|size:3|exists:regions,code',
-            'sto_code' => 'required|string|size:3|exists:stos,code',
-            'stb_code' => 'required|string|size:3|exists:stbs,code',
+            'region_code' => 'required|string|max:10|exists:regions,code',
+            'sto_code' => 'required|string|max:10|exists:stos,code',
+            'stb_code' => 'required|string|max:10|exists:stbs,code',
             'email' => 'nullable|email|max:255',
             'ktp' => 'nullable|string|max:20|unique:customers,ktp',
             'customer_code' => 'required|string|max:20|unique:customers,customer_code',
@@ -131,6 +131,7 @@ class CustomerController extends Controller
             'sales_commission_rate' => 'nullable|numeric|min:0',
             'sales_commission_type' => 'nullable|in:percentage,fixed',
             'olt_id' => 'nullable|exists:olts,id',
+            'onu_sn' => 'nullable|string|max:64',
             'onu_index' => 'nullable|string|max:64',
             'onu_type' => 'nullable|string|max:64',
             'scheduled_activation_at' => 'nullable|date',
@@ -223,7 +224,7 @@ class CustomerController extends Controller
 
         $customer = Customer::where('username', $validated['username'])->first();
         if ($customer && $customer->olt_id && $customer->onu_index) {
-            \App\Jobs\ProvisionOnuJob::dispatch($customer);
+            \App\Jobs\ProvisionOnuJob::dispatch($customer->id);
         }
 
         return redirect()->route('customers.index')->with('success', 'Subscriber created successfully. OLT Provisioning has been queued.');
@@ -244,7 +245,7 @@ class CustomerController extends Controller
         $odcs = \App\Models\Odc::all();
         $odps = \App\Models\Odp::all();
         $partners = User::where('role', User::ROLE_MITRA)->get();
-        $sales = User::where('role', User::ROLE_SALES)->get();
+        $sales = User::where('role', User::ROLE_SALES)->orWhere('is_sales', true)->get();
 
         return view('customers.edit', compact('customer', 'packages', 'regions', 'stos', 'stbs', 'olts', 'odcs', 'odps', 'partners', 'sales'));
     }

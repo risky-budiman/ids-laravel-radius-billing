@@ -28,13 +28,25 @@
 
                         <div>
                             <x-input-label for="role" value="{{ __('Assigned Role') }}" class="font-bold text-xs uppercase tracking-widest text-gray-400 mb-2" />
-                            <select id="role" name="role" onchange="togglePartnerFields(this.value)" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-2xl focus:border-indigo-500 focus:ring-indigo-500 shadow-sm transition-all">
+                            <select id="role" name="role" onchange="toggleFields(this.value)" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-2xl focus:border-indigo-500 focus:ring-indigo-500 shadow-sm transition-all">
                                 @foreach($roles as $value => $label)
                                     <option value="{{ $value }}">{{ $label }}</option>
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('role')" class="mt-2" />
                             <p class="mt-2 text-xs text-gray-400 italic font-medium">*Each role has specific access limitations in the system.</p>
+                        </div>
+
+                        <!-- Secondary Capability: Sales -->
+                        <div id="sales_toggle_container" class="p-4 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100/50 dark:border-indigo-800/30">
+                            <label class="flex items-center cursor-pointer">
+                                <div class="relative">
+                                    <input type="checkbox" name="is_sales" value="1" class="sr-only peer" {{ old('role') == 'sales' ? 'checked' : '' }}>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                                </div>
+                                <span class="ml-3 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest">Enable Sales Functionality</span>
+                            </label>
+                            <p class="mt-2 text-[10px] text-gray-400 leading-tight">If enabled, this user can be selected as a Sales Referral for new customers and earn commissions, regardless of their primary role.</p>
                         </div>
 
                         <!-- Partner Fields (Conditional) -->
