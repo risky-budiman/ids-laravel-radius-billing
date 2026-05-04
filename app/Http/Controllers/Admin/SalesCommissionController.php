@@ -21,7 +21,7 @@ class SalesCommissionController extends Controller
 
     public function index()
     {
-        $salesStaff = User::where('role', User::ROLE_SALES)->get();
+        $salesStaff = User::where('role', User::ROLE_SALES)->orWhere('is_sales', true)->get();
         
         foreach ($salesStaff as $staff) {
             $staff->balance = $this->salesService->getSalesBalance($staff->id);
@@ -39,7 +39,7 @@ class SalesCommissionController extends Controller
 
     public function show(User $sales)
     {
-        if ($sales->role !== User::ROLE_SALES) abort(404);
+        if (!$sales->isSales()) abort(404);
 
         $commissions = SalesCommission::with(['customer', 'invoice'])
             ->where('sales_id', $sales->id)
@@ -50,9 +50,14 @@ class SalesCommissionController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10, ['*'], 'withdrawals_page');
 
+        $customers = \App\Models\Customer::with(['package'])
+            ->where('sales_id', $sales->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(20, ['*'], 'customers_page');
+
         $balance = $this->salesService->getSalesBalance($sales->id);
 
-        return view('admin.sales.show', compact('sales', 'commissions', 'withdrawals', 'balance'));
+        return view('admin.sales.show', compact('sales', 'commissions', 'withdrawals', 'customers', 'balance'));
     }
 
     public function storeWithdrawal(Request $request, User $sales)

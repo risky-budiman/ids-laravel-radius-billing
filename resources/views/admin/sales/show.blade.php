@@ -109,6 +109,54 @@
                 </div>
 
                 <div class="border-t border-gray-100 dark:border-gray-700 p-8">
+                    <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Managed Customers (Referrals)</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-[10px] text-gray-400 border-b">
+                                    <th class="pb-3 uppercase">Customer</th>
+                                    <th class="pb-3 uppercase">Package</th>
+                                    <th class="pb-3 uppercase text-center">Status</th>
+                                    <th class="pb-3 uppercase text-right">Registered</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700 text-sm">
+                                @forelse($customers as $cust)
+                                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors">
+                                    <td class="py-4">
+                                        <a href="{{ route('customers.show', $cust) }}" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                                            {{ $cust->name }}
+                                        </a>
+                                        <div class="text-[10px] text-gray-400">{{ $cust->customer_code }}</div>
+                                    </td>
+                                    <td class="py-4">
+                                        <div class="text-gray-900 dark:text-white font-medium">{{ $cust->package->name ?? '-' }}</div>
+                                    </td>
+                                    <td class="py-4 text-center">
+                                        @if($cust->is_active)
+                                            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded text-[9px] font-bold uppercase tracking-wider">ACTIVE</span>
+                                        @else
+                                            <span class="px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 rounded text-[9px] font-bold uppercase tracking-wider">OFF</span>
+                                        @endif
+                                    </td>
+                                    <td class="py-4 text-right text-gray-500">
+                                        {{ $cust->created_at->format('d/m/y') }}
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="4" class="py-8 text-center text-gray-500 italic">No customers found for this staff.</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4">
+                        {{ $customers->links() }}
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-100 dark:border-gray-700 p-8">
                     <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Withdrawals & Settlements</h4>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
