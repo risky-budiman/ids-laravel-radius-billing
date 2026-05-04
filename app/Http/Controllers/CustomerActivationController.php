@@ -156,13 +156,17 @@ class CustomerActivationController extends Controller
             $customer->syncBillingDates();
 
             // 2. Find and Close Aktivasi Ticket
-            \App\Models\Ticket::where('customer_id', $customer->id)
+            $activationTickets = \App\Models\Ticket::where('customer_id', $customer->id)
                 ->where('type', 'aktivasi')
                 ->whereIn('status', ['open', 'in_progress'])
-                ->update([
-                    'status' => 'closed',
+                ->get();
+
+            foreach ($activationTickets as $ticket) {
+                $ticket->update([
+                    'status' => 'resolved',
                     'resolution_notes' => 'Aktivasi selesai. Perangkat telah dipasang.'
                 ]);
+            }
 
             // 3. Install Modem (Serialized Item) - If selected
             if ($modem) {
@@ -252,13 +256,17 @@ class CustomerActivationController extends Controller
                 ]);
 
                 // 2. Find and Close Dismantle Ticket
-                \App\Models\Ticket::where('customer_id', $customer->id)
+                $dismantleTickets = \App\Models\Ticket::where('customer_id', $customer->id)
                     ->where('type', 'dismantle')
                     ->whereIn('status', ['open', 'in_progress'])
-                    ->update([
-                        'status' => 'closed',
+                    ->get();
+
+                foreach ($dismantleTickets as $ticket) {
+                    $ticket->update([
+                        'status' => 'resolved',
                         'resolution_notes' => 'Dismantle selesai. Perangkat telah ditarik.'
                     ]);
+                }
 
                 // 3. Process each dismantled equipment
                 foreach ($request->stock_ids as $stockId) {

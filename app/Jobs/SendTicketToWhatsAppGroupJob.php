@@ -51,7 +51,12 @@ class SendTicketToWhatsAppGroupJob implements ShouldQueue
         $status = strtoupper($this->ticket->status);
         $priority = strtoupper($this->ticket->priority);
         
-        $title = $this->action === 'created' ? "🎫 *TIKET BARU*" : "🔄 *UPDATE TIKET*";
+        $title = "🔄 *UPDATE TIKET*";
+        if ($this->action === 'created') {
+            $title = "🎫 *TIKET BARU*";
+        } elseif (in_array(strtolower($this->ticket->status), ['solved', 'closed', 'resolved'])) {
+            $title = "✅ *TIKET SELESAI / SOLVED*";
+        }
         
         $message = "{$title}\n\n";
         $message .= "*No Tiket:* {$this->ticket->ticket_number}\n";

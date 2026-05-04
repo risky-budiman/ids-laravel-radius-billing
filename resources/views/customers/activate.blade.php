@@ -316,8 +316,8 @@
                                 </select>
                             </div>
 
-                            <div x-show="payment_method === 'transfer'">
-                                <x-input-label value="Pilih Bank Penerima" />
+                            <div x-show="payment_method === 'transfer' || payment_method === 'cash'">
+                                <x-input-label value="Pilih Rekening Tujuan (Bank/Kas)" />
                                 <select name="bank_account_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
                                     <option value="">-- Pilih Rekening --</option>
                                     @foreach(\App\Models\BankAccount::where('type', '!=', 'payment_gateway')->where('is_active', true)->get() as $acc)
