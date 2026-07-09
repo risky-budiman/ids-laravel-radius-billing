@@ -45,7 +45,7 @@
                         <select id="customer_id" name="customer_id" class="select-custom w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl py-4 px-6 text-sm font-bold text-gray-900 dark:text-gray-100 focus:ring-4 focus:ring-indigo-500/10 transition-all" required>
                             <option value="">-- Choose Subscriber --</option>
                             @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}" 
+                                <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}
                                     data-price="{{ $customer->package->price ?? 0 }}"
                                     data-type="{{ $customer->billing_type }}"
                                     data-method="{{ $customer->billing_method }}"
@@ -77,18 +77,18 @@
                             </div>
                             <div>
                                 <label class="block text-[9px] font-bold text-gray-400 uppercase mb-2 px-1">Start Date</label>
-                                <input id="period_start" name="period_start" type="date" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl py-4 px-6 text-sm font-bold text-gray-900 dark:text-gray-100 focus:ring-4 focus:ring-indigo-500/10 transition-all" required />
+                                <input id="period_start" name="period_start" value="{{ old('period_start') }}" type="date" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl py-4 px-6 text-sm font-bold text-gray-900 dark:text-gray-100 focus:ring-4 focus:ring-indigo-500/10 transition-all" required />
                             </div>
                             <div>
                                 <label class="block text-[9px] font-bold text-gray-400 uppercase mb-2 px-1">End Date</label>
-                                <input id="period_end" name="period_end" type="date" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl py-4 px-6 text-sm font-bold text-gray-900 dark:text-gray-100 focus:ring-4 focus:ring-indigo-500/10 transition-all" required />
+                                <input id="period_end" name="period_end" value="{{ old('period_end') }}" type="date" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl py-4 px-6 text-sm font-bold text-gray-900 dark:text-gray-100 focus:ring-4 focus:ring-indigo-500/10 transition-all" required />
                             </div>
                         </div>
 
                         <div class="mt-8 pt-8 border-t border-gray-50 dark:border-gray-800">
                             <label class="block text-[10px] font-black text-rose-500 uppercase tracking-widest mb-4 px-2">3. Settlement Due Date</label>
                             <div class="max-w-xs">
-                                <input id="due_date" name="due_date" type="date" class="w-full bg-rose-50/30 dark:bg-rose-900/10 border-none rounded-2xl py-4 px-6 text-sm font-bold text-rose-600 dark:text-rose-400 focus:ring-4 focus:ring-rose-500/10 transition-all" required />
+                                <input id="due_date" name="due_date" value="{{ old('due_date') }}" type="date" class="w-full bg-rose-50/30 dark:bg-rose-900/10 border-none rounded-2xl py-4 px-6 text-sm font-bold text-rose-600 dark:text-rose-400 focus:ring-4 focus:ring-rose-500/10 transition-all" required />
                                 <p class="mt-3 text-[9px] text-gray-400 font-bold uppercase tracking-widest px-2 italic">Automatically synced with subscriber cycle</p>
                             </div>
                         </div>
@@ -101,7 +101,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                             <div>
                                 <label class="block text-[9px] font-bold text-gray-400 uppercase mb-2 px-1">Base Amount (Rp)</label>
-                                <input id="amount" name="amount" type="number" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl py-4 px-6 text-sm font-bold text-gray-900 dark:text-gray-100 focus:ring-4 focus:ring-indigo-500/10 transition-all" placeholder="0" required />
+                                <input id="amount" name="amount" value="{{ old('amount') }}" type="number" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl py-4 px-6 text-sm font-bold text-gray-900 dark:text-gray-100 focus:ring-4 focus:ring-indigo-500/10 transition-all" placeholder="0" required />
                             </div>
                             <div>
                                 <label class="block text-[9px] font-bold text-gray-400 uppercase mb-2 px-1">Tax Scheme</label>
@@ -115,7 +115,7 @@
                         </div>
 
                         <label class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4 px-2">5. Notes & Keterangan</label>
-                        <textarea id="notes" name="notes" rows="4" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-3xl py-4 px-6 text-sm font-bold text-gray-900 dark:text-gray-100 focus:ring-4 focus:ring-indigo-500/10 transition-all" placeholder="Enter invoice details..."></textarea>
+                        <textarea id="notes" name="notes" rows="4" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-3xl py-4 px-6 text-sm font-bold text-gray-900 dark:text-gray-100 focus:ring-4 focus:ring-indigo-500/10 transition-all" placeholder="Enter invoice details...">{{ old('notes') }}</textarea>
                     </div>
                 </div>
 

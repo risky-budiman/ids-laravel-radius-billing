@@ -123,18 +123,24 @@
             </div>
 
             @if(auth()->user()->isAdmin())
-            <!-- Stat: Monthly Revenue -->
+            <!-- Stat: MTD Cash Collected -->
             <div class="glass-card stat-card-glow p-7 rounded-[2rem] transition-all hover:-translate-y-2 group">
                 <div class="flex items-center justify-between mb-6">
                     <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/20 group-hover:rotate-6 transition-transform">
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
                     <div class="text-right">
-                        <p class="text-[10px] font-black text-purple-500 uppercase tracking-[0.2em]">MTD Revenue</p>
-                        <h2 class="text-2xl font-black text-gray-900 dark:text-white mt-1"><span class="text-sm font-bold opacity-30">Rp</span> {{ number_format($revenue, 0, ',', '.') }}</h2>
+                        <p class="text-[10px] font-black text-purple-500 uppercase tracking-[0.2em]">Kas Terkumpul</p>
+                        <h2 class="text-2xl font-black text-gray-900 dark:text-white mt-1"><span class="text-sm font-bold opacity-30">Rp</span> {{ number_format($cashRevenue, 0, ',', '.') }}</h2>
                     </div>
                 </div>
-                <div class="text-gray-400 text-[10px] font-bold uppercase">{{ now()->format('F Y') }} Collection</div>
+                <div class="flex items-center space-x-1.5">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 uppercase tracking-wider">
+                        <svg class="w-2.5 h-2.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                        Sudah Dibayar
+                    </span>
+                    <span class="text-gray-400 text-[9px] font-bold">{{ now()->translatedFormat('F Y') }}</span>
+                </div>
             </div>
 
             <!-- Stat: Critical Invoices -->
@@ -196,44 +202,91 @@
             </div>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <!-- Income This Month -->
-            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-emerald-500 transition-all hover:shadow-xl hover:scale-[1.02] group">
-                <div>
-                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Total Pendapatan</p>
-                    <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($revenue, 0, ',', '.') }}</h3>
-                    <p class="text-[10px] text-gray-400 font-bold mt-1">Berdasarkan Jurnal Pendapatan</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 mb-8">
+
+            <!-- Card 1: Kas Terkumpul (Cash Basis - invoice paid) -->
+            <div class="glass-card p-6 rounded-[2rem] border-l-4 border-emerald-500 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-2 -mr-2 w-20 h-20 bg-emerald-500/5 rounded-full blur-2xl"></div>
+                <div class="flex items-start justify-between mb-4">
+                    <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 uppercase tracking-wider">
+                        <svg class="w-2.5 h-2.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                        Sudah Diterima
+                    </span>
                 </div>
-                <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-sm">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m.599-1H11"></path></svg>
-                </div>
+                <p class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Kas Terkumpul (MTD)</p>
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($cashRevenue, 0, ',', '.') }}</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-2">Invoice lunas bulan ini</p>
             </div>
 
-            <!-- Expense This Month -->
-            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-rose-500 transition-all hover:shadow-xl hover:scale-[1.02] group">
-                <div>
-                    <p class="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">Total Pengeluaran</p>
-                    <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($expense, 0, ',', '.') }}</h3>
-                    <p class="text-[10px] text-gray-400 font-bold mt-1">Berdasarkan Jurnal Pengeluaran</p>
+            <!-- Card 2: Pendapatan Akrual (termasuk yang belum dibayar) -->
+            <div class="glass-card p-6 rounded-[2rem] border-l-4 border-amber-400 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-2 -mr-2 w-20 h-20 bg-amber-400/5 rounded-full blur-2xl"></div>
+                <div class="flex items-start justify-between mb-4">
+                    <div class="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-2xl group-hover:bg-amber-500 group-hover:text-white transition-all shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"></path></svg>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 uppercase tracking-wider">
+                        Termasuk Piutang
+                    </span>
                 </div>
-                <div class="p-4 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-2xl group-hover:bg-rose-500 group-hover:text-white transition-all shadow-sm">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
+                <p class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-1">Pendapatan Akrual</p>
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($revenue, 0, ',', '.') }}</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-2">Jurnal pendapatan (termasuk belum bayar)</p>
             </div>
 
-            <!-- Profit This Month -->
-            <div class="glass-card p-6 rounded-[2rem] flex items-center justify-between border-l-4 border-blue-500 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
+            <!-- Card 3: Total Pengeluaran -->
+            <div class="glass-card p-6 rounded-[2rem] border-l-4 border-rose-500 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-2 -mr-2 w-20 h-20 bg-rose-500/5 rounded-full blur-2xl"></div>
+                <div class="flex items-start justify-between mb-4">
+                    <div class="p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-2xl group-hover:bg-rose-500 group-hover:text-white transition-all shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 uppercase tracking-wider">
+                        Pengeluaran
+                    </span>
+                </div>
+                <p class="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">Total Pengeluaran</p>
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($expense, 0, ',', '.') }}</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-2">Berdasarkan jurnal pengeluaran</p>
+            </div>
+
+            <!-- Card 4: Laba Bersih (Kas) -->
+            <div class="glass-card p-6 rounded-[2rem] border-l-4 border-indigo-500 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-500/5 rounded-full blur-3xl"></div>
+                <div class="flex items-start justify-between mb-4 relative z-10">
+                    <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl group-hover:bg-indigo-500 group-hover:text-white transition-all shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black {{ $cashProfit >= 0 ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' }} uppercase tracking-wider">
+                        Cash
+                    </span>
+                </div>
+                <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1 relative z-10">Laba Bersih (Tunai)</p>
+                <h3 class="text-2xl font-black relative z-10 {{ $cashProfit < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-indigo-600 dark:text-indigo-400' }}">Rp {{ number_format($cashProfit, 0, ',', '.') }}</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-2 relative z-10">Kas - Pengeluaran</p>
+            </div>
+
+            <!-- Card 5: Laba Bersih (Akrual) -->
+            <div class="glass-card p-6 rounded-[2rem] border-l-4 border-blue-500 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
                 <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-500/5 rounded-full blur-3xl"></div>
-                <div class="relative z-10">
-                    <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Laba Bersih (Net)</p>
-                    <h3 class="text-2xl font-black text-gray-900 dark:text-white {{ $profit < 0 ? 'text-rose-600' : 'text-blue-600 dark:text-blue-400' }}">Rp {{ number_format($profit, 0, ',', '.') }}</h3>
-                    <p class="text-[10px] text-gray-400 font-bold mt-1">Pendapatan - Pengeluaran</p>
+                <div class="flex items-start justify-between mb-4 relative z-10">
+                    <div class="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl group-hover:bg-blue-500 group-hover:text-white transition-all shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black {{ $profit >= 0 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' }} uppercase tracking-wider">
+                        {{ $profit >= 0 ? 'Surplus' : 'Defisit' }}
+                    </span>
                 </div>
-                <div class="p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl group-hover:bg-blue-500 group-hover:text-white transition-all shadow-sm relative z-10">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                </div>
+                <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1 relative z-10">Laba Bersih (Akrual)</p>
+                <h3 class="text-2xl font-black relative z-10 {{ $profit < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-blue-600 dark:text-blue-400' }}">Rp {{ number_format($profit, 0, ',', '.') }}</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-2 relative z-10">Akrual - Pengeluaran</p>
             </div>
+
         </div>
+
         @endif
 
         <!-- Installation Insights -->

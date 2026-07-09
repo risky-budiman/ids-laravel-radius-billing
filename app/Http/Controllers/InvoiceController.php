@@ -40,6 +40,14 @@ class InvoiceController extends Controller
             $query->whereDate('period_end', '<=', $request->get('end_date'));
         }
 
+        if ($request->filled('period')) {
+            $periodParts = explode('-', $request->get('period'));
+            if (count($periodParts) == 2) {
+                $query->whereYear('created_at', $periodParts[0])
+                      ->whereMonth('created_at', $periodParts[1]);
+            }
+        }
+
         $invoices = $query->paginate(10)->withQueryString();
 
         $bankAccounts = \App\Models\BankAccount::where('is_active', true)
@@ -50,7 +58,10 @@ class InvoiceController extends Controller
             ->where('type', 'payment_gateway')
             ->get();
 
-        return view('invoices.index', compact('invoices', 'activeGateways', 'bankAccounts'));
+        $customers = \App\Models\Customer::where('is_active', true)->get();
+        $taxes = \App\Models\Tax::where('is_active', true)->get();
+
+        return view('invoices.index', compact('invoices', 'activeGateways', 'bankAccounts', 'customers', 'taxes'));
     }
 
     public function create()
@@ -110,7 +121,18 @@ class InvoiceController extends Controller
 
     public function show(Invoice $invoice)
     {
-        return view('invoices.show', compact('invoice'));
+        $invoice->loadMissing(['customer.package', 'tax']);
+
+        // Check if there are custom templates available
+        $templates = \App\Models\InvoiceTemplate::orderBy('format')->orderBy('name')->get();
+        $defaultA4 = \App\Models\InvoiceTemplate::getDefault('A4');
+        $defaultThermal = \App\Models\InvoiceTemplate::getDefault('Thermal');
+
+        // Pre-render default templates if available
+        $customA4Html = $defaultA4 ? $defaultA4->render($invoice) : null;
+        $customThermalHtml = $defaultThermal ? $defaultThermal->render($invoice) : null;
+
+        return view('invoices.show', compact('invoice', 'templates', 'customA4Html', 'customThermalHtml'));
     }
     
     public function edit(Invoice $invoice)
@@ -135,7 +157,15 @@ class InvoiceController extends Controller
                 'status' => 'unpaid',
                 'paid_at' => null,
             ]);
-            return redirect()->route('invoices.index')->with('success', 'Invoice payment cancelled (Reverted to unpaid).');
+
+            // Reverse the accounting journal for payment
+            \App\Models\Journal::where('reference', 'PAY-' . $invoice->invoice_number)->delete();
+            
+            // Reverse the bank transaction
+            $tx = \App\Models\BankTransaction::where('description', 'like', '%[Pembayaran Invoice] ' . $invoice->invoice_number . '%')->first();
+            if ($tx) $tx->delete();
+
+            return redirect()->route('invoices.index')->with('success', 'Invoice payment cancelled (Reverted to unpaid and transactions reversed).');
         }
         
         // General update
@@ -199,6 +229,85 @@ class InvoiceController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Billing Error: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Bulk delete selected invoices
+     */
+    public function bulkDelete(Request $request)
+    {
+        $request->validate(['ids' => 'required|array', 'ids.*' => 'integer']);
+
+        $count = Invoice::whereIn('id', $request->ids)->delete();
+
+        return redirect()->route('invoices.index')
+            ->with('success', "{$count} invoice berhasil dihapus.");
+    }
+
+    /**
+     * Bulk mark selected invoices as paid
+     */
+    public function bulkMarkPaid(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer',
+            'bank_account_id' => 'required|exists:bank_accounts,id',
+        ]);
+
+        $invoiceService = app(\App\Services\InvoiceService::class);
+        $invoices = Invoice::whereIn('id', $request->ids)->where('status', 'unpaid')->get();
+        $count = 0;
+
+        foreach ($invoices as $invoice) {
+            try {
+                $invoiceService->markAsPaid($invoice, $request->bank_account_id);
+                $count++;
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Bulk pay failed for {$invoice->invoice_number}: " . $e->getMessage());
+            }
+        }
+
+        return redirect()->route('invoices.index')
+            ->with('success', "{$count} invoice berhasil ditandai lunas.");
+    }
+
+    /**
+     * Bulk send WhatsApp notifications for selected invoices
+     */
+    public function bulkWhatsApp(Request $request, WhatsAppService $waService)
+    {
+        $request->validate(['ids' => 'required|array', 'ids.*' => 'integer']);
+
+        $invoices = Invoice::with('customer')->whereIn('id', $request->ids)->where('status', 'unpaid')->get();
+        $sent = 0;
+        $failed = 0;
+
+        foreach ($invoices as $invoice) {
+            $customer = $invoice->customer;
+            if (!$customer || !$customer->phone) {
+                $failed++;
+                continue;
+            }
+
+            $portalUrl = URL::signedRoute('portal.invoice', ['invoice' => $invoice->id]);
+            $message = "Halo *{$customer->name}*,\n\n" .
+                      "Tagihan internet Anda untuk nomor *{$invoice->invoice_number}* sebesar *Rp " . number_format($invoice->amount, 0, ',', '.') . "* telah terbit.\n\n" .
+                      "Silakan bayar melalui link portal resmi kami berikut ini:\n" .
+                      "{$portalUrl}\n\n" .
+                      "Terima kasih.";
+
+            if ($waService->sendMessage($customer->phone, $message)) {
+                $sent++;
+            } else {
+                $failed++;
+            }
+        }
+
+        $msg = "{$sent} notifikasi WhatsApp berhasil dikirim.";
+        if ($failed > 0) $msg .= " {$failed} gagal.";
+
+        return redirect()->route('invoices.index')->with('success', $msg);
     }
 
     public function destroy(Invoice $invoice)

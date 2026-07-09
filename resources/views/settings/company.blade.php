@@ -75,6 +75,32 @@
                     </div>
                 </div>
 
+                <!-- Section: Invoice Templates -->
+                <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Invoice Settings
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <x-input-label for="invoice_format" :value="__('Default Print Format')" />
+                            <select id="invoice_format" name="invoice_format" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm">
+                                <option value="A4" {{ get_setting('invoice_format', 'A4') == 'A4' ? 'selected' : '' }}>A4 / Letter (Standar Kantor)</option>
+                                <option value="Thermal" {{ get_setting('invoice_format') == 'Thermal' ? 'selected' : '' }}>Thermal / Struk (80mm)</option>
+                            </select>
+                            <p class="mt-1 text-[11px] text-gray-500">Pilih format cetak default yang akan digunakan saat mencetak faktur.</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <x-input-label for="invoice_footer_note" :value="__('Invoice Footer Note (Terms / Thanks)')" />
+                        <textarea id="invoice_footer_note" name="invoice_footer_note" rows="3" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" placeholder="Contoh: Terima kasih atas kepercayaan Anda. Pembayaran harap ditransfer ke rekening BCA 123456 a.n PT XYZ.">{{ old('invoice_footer_note', get_setting('invoice_footer_note')) }}</textarea>
+                        <p class="mt-1 text-[11px] text-gray-500">Pesan ini akan ditampilkan di bagian bawah setiap faktur yang dicetak.</p>
+                        <x-input-error class="mt-2" :messages="$errors->get('invoice_footer_note')" />
+                    </div>
+                </div>
+
                 <div class="flex items-center justify-end pt-4">
                     <x-primary-button>
                         {{ __('Save Changes') }}

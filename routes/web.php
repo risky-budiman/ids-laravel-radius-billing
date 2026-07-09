@@ -145,6 +145,11 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         Route::post('invoices/generate-automated', [\App\Http\Controllers\InvoiceController::class, 'generateAutomated'])->name('invoices.generate-automated');
         Route::get('invoices/{invoice}/pay', [\App\Http\Controllers\InvoiceController::class, 'pay'])->name('invoices.pay');
         Route::post('invoices/{invoice}/whatsapp', [\App\Http\Controllers\InvoiceController::class, 'sendWhatsApp'])->name('invoices.whatsapp');
+        
+        // Bulk Actions
+        Route::post('invoices/bulk-delete', [\App\Http\Controllers\InvoiceController::class, 'bulkDelete'])->name('invoices.bulk-delete');
+        Route::post('invoices/bulk-mark-paid', [\App\Http\Controllers\InvoiceController::class, 'bulkMarkPaid'])->name('invoices.bulk-mark-paid');
+        Route::post('invoices/bulk-whatsapp', [\App\Http\Controllers\InvoiceController::class, 'bulkWhatsApp'])->name('invoices.bulk-whatsapp');
     });
 
     // TECHNICAL & WAREHOUSE: Admin & Teknisi
@@ -294,6 +299,11 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         Route::resource('acs-servers', \App\Http\Controllers\AcsServerController::class);
         Route::get('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'index'])->name('settings.company');
         Route::post('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'update'])->name('settings.company.update');
+
+        // Invoice Template Builder
+        Route::resource('invoice-templates', \App\Http\Controllers\InvoiceTemplateController::class);
+        Route::post('invoice-templates/{invoiceTemplate}/set-default', [\App\Http\Controllers\InvoiceTemplateController::class, 'setDefault'])->name('invoice-templates.set-default');
+        Route::post('invoice-templates-preview', [\App\Http\Controllers\InvoiceTemplateController::class, 'preview'])->name('invoice-templates.preview');
 
         // Changelog Management
         Route::post('changelog', [\App\Http\Controllers\ChangelogController::class, 'store'])->name('changelog.store');

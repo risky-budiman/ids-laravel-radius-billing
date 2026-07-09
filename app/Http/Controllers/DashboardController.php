@@ -21,11 +21,20 @@ class DashboardController extends Controller
         
         $unpaidInvoices = 0;
         $revenue = 0;
+        $cashRevenue = 0;
         $expense = 0;
         $profit = 0;
 
         if (class_exists(Invoice::class)) {
             $unpaidInvoices = Invoice::where('status', 'unpaid')->count();
+
+            // MTD Cash Revenue: hanya invoice yang sudah benar-benar dibayar bulan ini
+            $cashRevenue = Invoice::where('status', 'paid')
+                ->whereBetween('paid_at', [
+                    Carbon::now()->startOfMonth(),
+                    Carbon::now()->endOfMonth(),
+                ])
+                ->sum('amount');
             
             // Calculate Profit & Loss from Journals (as requested)
             $startDate = Carbon::now()->startOfMonth()->toDateString();
@@ -60,6 +69,7 @@ class DashboardController extends Controller
             });
 
             $profit = $revenue - $expense;
+            $cashProfit = $cashRevenue - $expense; // Laba Tunai
         }
 
         $latestActivities = ActivityLog::with('user')
@@ -118,7 +128,7 @@ class DashboardController extends Controller
         $psbYear = Customer::whereYear('activated_at', now()->year)->count();
 
         return view('dashboard', compact(
-            'totalSubscribers', 'activeUsers', 'unpaidInvoices', 'revenue', 'expense', 'profit', 'latestActivities',
+            'totalSubscribers', 'activeUsers', 'unpaidInvoices', 'revenue', 'cashRevenue', 'expense', 'profit', 'cashProfit', 'latestActivities',
             'onlineNow', 'totalUpload', 'totalDownload', 'topUsers',
             'chartLabels', 'chartUpload', 'chartDownload', 'chartSessions',
             'authAcceptToday', 'authRejectToday',

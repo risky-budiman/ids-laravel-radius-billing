@@ -22,13 +22,17 @@ class CompanySettingsController extends Controller
             'company_address' => 'nullable|string',
             'company_phone' => 'nullable|string|max:20',
             'company_email' => 'nullable|email|max:255',
+            'invoice_format' => 'required|in:A4,Thermal',
+            'invoice_footer_note' => 'nullable|string',
         ]);
 
         $settings = $request->only([
             'company_name', 
             'company_address', 
             'company_phone', 
-            'company_email'
+            'company_email',
+            'invoice_format',
+            'invoice_footer_note'
         ]);
 
         // Handle Logo Upload

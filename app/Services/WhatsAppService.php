@@ -48,6 +48,8 @@ class WhatsAppService
                 $success = $this->sendViaStarsender($gateway, $target, $message);
             } elseif ($gateway->provider === 'mekari') {
                 $success = $this->sendViaMekari($gateway, $target, $message);
+            } elseif ($gateway->provider === 'self_hosted') {
+                $success = $this->sendViaSelfHosted($target, $message);
             }
 
             if ($success) {
@@ -124,5 +126,24 @@ class WhatsAppService
             ]);
             return $response->successful();
         } catch (\Exception $e) { return false; }
+    }
+
+    protected function sendViaSelfHosted($target, $message)
+    {
+        $url = env('WA_GATEWAY_URL', 'http://localhost:3100/api');
+        $token = env('WA_GATEWAY_KEY', 'dev-wa-gateway-key-2026');
+
+        try {
+            $response = Http::timeout(10)
+                ->withHeaders(['X-API-Key' => $token])
+                ->post($url . '/send', [
+                    'phone' => $target,
+                    'message' => $message,
+                ]);
+            return $response->successful();
+        } catch (\Exception $e) { 
+            Log::error('Self-hosted WA Gateway Error: ' . $e->getMessage());
+            return false; 
+        }
     }
 }
