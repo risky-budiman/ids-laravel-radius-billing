@@ -134,6 +134,12 @@
                                                         <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                                                         Neraca
                                                     </a>
+                                                    @if(auth()->user()->isAdministrator())
+                                                        <button onclick="confirmReopen('{{ $period->id }}', '{{ $period->period_string }}')" class="mt-2 text-rose-600 hover:text-rose-800 text-xs font-bold flex items-center gap-1 transition">
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>
+                                                            Buka Kembali
+                                                        </button>
+                                                    @endif
                                                 </div>
                                             @endif
                                         </td>
@@ -182,7 +188,7 @@
                             </label>
                         </div>
 
-                        <div class="flex gap-4">
+                         <div class="flex gap-4">
                             <button type="button" onclick="closeModal()" class="flex-1 px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 transition uppercase tracking-widest text-xs">
                                 Batal
                             </button>
@@ -196,6 +202,46 @@
         </div>
     </div>
 
+    <!-- Modal Konfirmasi Buka Kembali -->
+    @if(auth()->user()->isAdministrator())
+    <div id="reopenModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-900 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form id="reopenForm" action="" method="POST">
+                    @csrf
+                    
+                    <div class="p-8">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="p-3 bg-rose-100 text-rose-600 rounded-2xl">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Buka Kembali Periode</h3>
+                        </div>
+                        
+                        <p class="text-gray-500 dark:text-gray-400 mb-6">
+                            Apakah Anda yakin ingin membuka kembali periode <strong id="modalReopenPeriodName" class="text-gray-900 dark:text-white"></strong>? 
+                            Membuka kembali periode akan menonaktifkan proteksi penguncian transaksi untuk bulan tersebut sehingga transaksi/jurnal dapat diubah atau dihapus kembali.
+                        </p>
+
+                        <div class="flex gap-4">
+                            <button type="button" onclick="closeReopenModal()" class="flex-1 px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 transition uppercase tracking-widest text-xs">
+                                Batal
+                            </button>
+                            <button type="submit" class="flex-1 px-6 py-3 bg-rose-600 text-white font-bold rounded-2xl hover:bg-rose-700 transition uppercase tracking-widest text-xs shadow-lg shadow-rose-500/30">
+                                Ya, Buka Kembali
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
     @push('scripts')
     <script>
         function confirmClosing(id, name) {
@@ -206,6 +252,17 @@
 
         function closeModal() {
             document.getElementById('closingModal').classList.add('hidden');
+        }
+
+        function confirmReopen(id, name) {
+            const url = `{{ route('accounting.closing.reopen', ':id') }}`.replace(':id', id);
+            document.getElementById('reopenForm').action = url;
+            document.getElementById('modalReopenPeriodName').innerText = name;
+            document.getElementById('reopenModal').classList.remove('hidden');
+        }
+
+        function closeReopenModal() {
+            document.getElementById('reopenModal').classList.add('hidden');
         }
     </script>
     @endpush

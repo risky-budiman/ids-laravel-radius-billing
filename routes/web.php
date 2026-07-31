@@ -342,6 +342,7 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
 
         Route::get('closing', [\App\Http\Controllers\Accounting\ClosingController::class, 'index'])->name('closing.index');
         Route::post('closing', [\App\Http\Controllers\Accounting\ClosingController::class, 'process'])->name('closing.process');
+        Route::post('closing/{period}/reopen', [\App\Http\Controllers\Accounting\ClosingController::class, 'reopen'])->name('closing.reopen');
 
         Route::get('tax-settings', [\App\Http\Controllers\Accounting\TaxSettingController::class, 'index'])->name('tax-settings.index');
         Route::post('tax-settings', [\App\Http\Controllers\Accounting\TaxSettingController::class, 'update'])->name('tax-settings.update');

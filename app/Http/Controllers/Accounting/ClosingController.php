@@ -34,6 +34,9 @@ class ClosingController extends Controller
             $periods[] = $period;
         }
 
+        $periods = new \Illuminate\Database\Eloquent\Collection($periods);
+        $periods->load('user');
+
         $closedUntil = get_setting('accounting_closed_until');
         return view('accounting.closing.index', compact('periods', 'closedUntil'));
     }
@@ -78,5 +81,50 @@ class ClosingController extends Controller
         }
 
         return back()->with('success', "Periode {$period->period_string} berhasil ditutup. Laporan snapshot telah disimpan.");
+    }
+
+    public function reopen(AccountingPeriod $period)
+    {
+        // Only Administrator can reopen
+        if (!auth()->user()->isAdministrator()) {
+            abort(403, 'Hanya Administrator yang diperbolehkan membuka kembali periode.');
+        }
+
+        if (!$period->is_closed) {
+            return back()->with('error', 'Periode ini memang sedang terbuka.');
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($period) {
+            // 1. Reopen period
+            $period->update([
+                'is_closed' => false,
+                'closed_at' => null,
+                'closed_by' => null,
+                'net_profit' => null,
+                'total_assets' => null,
+                'total_liabilities' => null,
+                'total_equity' => null,
+            ]);
+
+            // 2. Find the latest still closed period to update setting
+            $latestClosed = AccountingPeriod::where('is_closed', true)
+                ->orderBy('year', 'desc')
+                ->orderBy('month', 'desc')
+                ->first();
+
+            if ($latestClosed) {
+                $lastDayOfMonth = Carbon::create($latestClosed->year, $latestClosed->month, 1)->endOfMonth()->toDateString();
+                Setting::updateOrCreate(
+                    ['key' => 'accounting_closed_until'],
+                    ['value' => $lastDayOfMonth, 'group' => 'accounting', 'type' => 'date']
+                );
+            } else {
+                Setting::where('key', 'accounting_closed_until')->delete();
+            }
+
+            \Illuminate\Support\Facades\Cache::forget('app_settings');
+        });
+
+        return back()->with('success', "Periode {$period->period_string} berhasil dibuka kembali.");
     }
 }
