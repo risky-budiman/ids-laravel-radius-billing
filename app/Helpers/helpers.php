@@ -9,13 +9,21 @@ if (!function_exists('is_accounting_locked')) {
      */
     function is_accounting_locked($date)
     {
-        $closedUntil = get_setting('accounting_closed_until');
-        if (!$closedUntil) return false;
+        static $cachedPeriods = [];
         
         try {
             $checkDate = \Carbon\Carbon::parse($date);
-            $lockDate = \Carbon\Carbon::parse($closedUntil);
-            return $checkDate->lte($lockDate);
+            $key = $checkDate->format('Y-m');
+            
+            if (!array_key_exists($key, $cachedPeriods)) {
+                $period = \App\Models\AccountingPeriod::where('month', $checkDate->month)
+                    ->where('year', $checkDate->year)
+                    ->first();
+                
+                $cachedPeriods[$key] = $period ? (bool)$period->is_closed : false;
+            }
+            
+            return $cachedPeriods[$key];
         } catch (\Exception $e) {
             return false;
         }
