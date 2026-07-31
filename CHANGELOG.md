@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.14] - 2026-08-01
+- Bugfix Closing Priod ([HEAD])
+
+
+
 ## [1.5.13] - 2026-08-01
 - Bugfix Closing Priod ([HEAD])
 

@@ -230,8 +230,12 @@ class ReportController extends Controller
         $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
 
-        // Get all journal items related to Cash/Bank accounts (Code 1101, 1102)
-        $cashAccounts = ChartOfAccount::whereIn('code', ['1101', '1102'])->pluck('id');
+        // Get all journal items related to Cash/Bank accounts (Code 1001 and its children like 1101, 1102)
+        $cashAccounts = ChartOfAccount::where('code', '1001')
+            ->orWhere('parent_id', function($query) {
+                $query->select('id')->from('chart_of_accounts')->where('code', '1001');
+            })
+            ->pluck('id');
         
         $cashJournals = JournalItem::whereIn('account_id', $cashAccounts)
             ->whereHas('journal', function($q) use ($startDate, $endDate) {

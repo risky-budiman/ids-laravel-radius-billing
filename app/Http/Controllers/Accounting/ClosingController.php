@@ -127,4 +127,49 @@ class ClosingController extends Controller
 
         return back()->with('success', "Periode {$period->period_string} berhasil dibuka kembali.");
     }
+
+    public function syncJournals()
+    {
+        // Only Administrator can sync
+        if (!auth()->user()->isAdministrator()) {
+            abort(403, 'Hanya Administrator yang diperbolehkan menyinkronkan jurnal.');
+        }
+
+        $lockSetting = Setting::where('key', 'accounting_closed_until')->first();
+        $originalLockValue = $lockSetting ? $lockSetting->value : null;
+
+        if ($lockSetting) {
+            $lockSetting->delete();
+            \Illuminate\Support\Facades\Cache::forget('app_settings');
+        }
+
+        $GLOBALS['bypass_accounting_lock'] = true;
+
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function() {
+                $accountingService = new \App\Services\AccountingService();
+                $transactions = \App\Models\BankTransaction::all();
+                
+                foreach ($transactions as $trx) {
+                    // Delete old auto-journal entry
+                    \App\Models\Journal::where('reference', 'TRX-' . $trx->id)->delete();
+                    
+                    // Re-create auto-journal entry
+                    $accountingService->recordBankTransaction($trx);
+                }
+            });
+        } finally {
+            $GLOBALS['bypass_accounting_lock'] = false;
+            // Restore lock date
+            if ($originalLockValue) {
+                Setting::updateOrCreate(
+                    ['key' => 'accounting_closed_until'],
+                    ['value' => $originalLockValue, 'group' => 'accounting', 'type' => 'date']
+                );
+                \Illuminate\Support\Facades\Cache::forget('app_settings');
+            }
+        }
+
+        return back()->with('success', 'Jurnal transaksi bank berhasil disinkronisasi ulang dengan COA terbaru.');
+    }
 }

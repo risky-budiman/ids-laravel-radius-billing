@@ -68,6 +68,27 @@
                                     <strong>Info:</strong> Tutup buku akan mengambil "Snapshot" nilai keuangan (Laba Rugi & Neraca) pada akhir bulan tersebut dan mengunci transaksi agar tidak bisa diubah kembali.
                                 </p>
                             </div>
+
+                            @if(auth()->user()->isAdministrator())
+                                <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+                                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Peralatan Admin</h4>
+                                    <form action="{{ route('accounting.closing.sync-journals') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menyinkronkan ulang seluruh jurnal transaksi bank? Semua jurnal transaksi bank lama akan dihapus dan ditulis ulang sesuai dengan pemetaan COA yang baru.')">
+                                        @csrf
+                                        <button type="submit" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 dark:bg-gray-900/20 dark:hover:bg-gray-900/40 rounded-2xl border border-slate-100 dark:border-gray-700/50 transition duration-150 group text-left">
+                                            <div class="flex items-center gap-3">
+                                                <div class="p-2.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl group-hover:scale-110 transition duration-150">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.22m0 0H21.21V11"></path></svg>
+                                                </div>
+                                                <div>
+                                                    <p class="text-xs font-bold text-gray-800 dark:text-gray-200">Sinkronisasi Jurnal</p>
+                                                    <p class="text-[10px] text-gray-400 mt-0.5">Posting ulang mutasi bank ke COA baru</p>
+                                                </div>
+                                            </div>
+                                            <svg class="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition duration-150" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
