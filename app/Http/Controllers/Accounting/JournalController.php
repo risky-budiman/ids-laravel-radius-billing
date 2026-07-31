@@ -11,12 +11,27 @@ use Illuminate\Support\Facades\DB;
 
 class JournalController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $journals = Journal::with(['items.account', 'creator'])
-            ->orderBy('date', 'desc')
+        $search = $request->input('search');
+        
+        $query = Journal::with(['items.account', 'creator']);
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                  ->orWhere('reference', 'like', "%{$search}%")
+                  ->orWhereHas('items.account', function($aq) use ($search) {
+                      $aq->where('code', 'like', "%{$search}%")
+                         ->orWhere('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $journals = $query->orderBy('date', 'desc')
             ->orderBy('id', 'desc')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         return view('accounting.journals.index', compact('journals'));
     }

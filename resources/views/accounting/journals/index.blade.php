@@ -20,6 +20,36 @@
 
     <div class="py-12">
         <div class="max-max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <!-- Advanced Filters -->
+            <div class="glass-card rounded-[2rem] p-6 mb-8 border border-gray-200/50 dark:border-gray-700/50 shadow-sm relative overflow-hidden">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-500/5 rounded-full blur-3xl"></div>
+                <form method="GET" action="{{ route('accounting.journals.index') }}" class="relative z-10 grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                    <div class="md:col-span-3">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Pencarian Jurnal</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </span>
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari deskripsi, referensi, kode atau nama akun..." 
+                                class="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900/50 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white/50">
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 justify-end">
+                        @if(request('search'))
+                            <a href="{{ route('accounting.journals.index') }}" 
+                                class="w-1/2 md:w-auto px-5 py-3 text-center text-sm font-bold text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center justify-center">
+                                Reset
+                            </a>
+                        @endif
+                        <button type="submit" 
+                            class="w-full md:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-2xl transition-colors shadow-lg shadow-indigo-600/20 flex items-center justify-center cursor-pointer">
+                            Cari Jurnal
+                        </button>
+                    </div>
+                </form>
+            </div>
+
             <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">

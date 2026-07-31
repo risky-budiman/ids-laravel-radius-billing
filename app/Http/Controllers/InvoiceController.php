@@ -159,7 +159,10 @@ class InvoiceController extends Controller
             ]);
 
             // Reverse the accounting journal for payment
-            \App\Models\Journal::where('reference', 'PAY-' . $invoice->invoice_number)->delete();
+            \App\Models\Journal::whereIn('reference', [
+                'PAY-' . $invoice->invoice_number,
+                'REV-' . $invoice->invoice_number
+            ])->delete();
             
             // Reverse the bank transaction
             $tx = \App\Models\BankTransaction::where('description', 'like', '%[Pembayaran Invoice] ' . $invoice->invoice_number . '%')->first();

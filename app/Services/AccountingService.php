@@ -80,59 +80,62 @@ class AccountingService
                 return null;
             }
 
-            // 2. Create Journal Header
-            $journal = Journal::create([
+            // 2. Create Journal 1: Payment Receipt (Clear Receivable: Debit Bank, Credit Piutang)
+            $journalPayment = Journal::create([
                 'date' => now(),
                 'reference' => 'PAY-' . $invoice->invoice_number,
                 'description' => 'Pembayaran Invoice ' . $invoice->invoice_number . ' - ' . $invoice->customer->name,
                 'created_by' => auth()->id() ?? 1,
             ]);
 
-            // 3. Part 1: Clear Receivable (Debit Bank, Credit Piutang)
             JournalItem::create([
-                'journal_id' => $journal->id,
+                'journal_id' => $journalPayment->id,
                 'account_id' => $bankAccountId,
                 'debit' => $invoice->amount,
                 'credit' => 0,
             ]);
 
             JournalItem::create([
-                'journal_id' => $journal->id,
+                'journal_id' => $journalPayment->id,
                 'account_id' => $piutangAccountId,
                 'debit' => 0,
                 'credit' => $invoice->amount,
             ]);
 
-            // 4. Part 2: Recognize Revenue & Tax Liability
+            // 3. Create Journal 2: Revenue Recognition (Debit Deferred Income, Credit Revenue & Tax)
+            $journalRevenue = Journal::create([
+                'date' => now(),
+                'reference' => 'REV-' . $invoice->invoice_number,
+                'description' => 'Pengakuan Pendapatan & PPN Invoice ' . $invoice->invoice_number . ' - ' . $invoice->customer->name,
+                'created_by' => auth()->id() ?? 1,
+            ]);
+
             $subtotal = $invoice->subtotal > 0 ? $invoice->subtotal : ($invoice->amount - $invoice->tax_amount);
             
-            // Debit: Pendapatan Ditangguhkan (Total Amount)
             JournalItem::create([
-                'journal_id' => $journal->id,
+                'journal_id' => $journalRevenue->id,
                 'account_id' => $deferredAccountId,
                 'debit' => $invoice->amount,
                 'credit' => 0,
             ]);
 
-            // Credit: Pendapatan Internet (Subtotal)
             JournalItem::create([
-                'journal_id' => $journal->id,
+                'journal_id' => $journalRevenue->id,
                 'account_id' => $revenueAccountId,
                 'debit' => 0,
                 'credit' => $subtotal,
             ]);
 
-            // Credit: Hutang Pajak / PPN (Tax Amount) - Recorded ONLY upon real cash payment
             if ($invoice->tax_amount > 0 && $taxAccountId) {
                 JournalItem::create([
-                    'journal_id' => $journal->id,
+                    'journal_id' => $journalRevenue->id,
                     'account_id' => $taxAccountId,
                     'debit' => 0,
                     'credit' => $invoice->tax_amount,
                 ]);
             }
 
-            return $journal;
+            return $journalPayment;
         });
     }
 

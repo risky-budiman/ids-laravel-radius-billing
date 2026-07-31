@@ -52,7 +52,10 @@ class Invoice extends Model
         static::deleted(function ($invoice) {
             // Remove associated accrual & payment journals to prevent inflated balances
             \App\Models\Journal::where('reference', 'BILL-' . $invoice->invoice_number)->delete();
-            \App\Models\Journal::where('reference', 'PAY-' . $invoice->invoice_number)->delete();
+            \App\Models\Journal::whereIn('reference', [
+                'PAY-' . $invoice->invoice_number,
+                'REV-' . $invoice->invoice_number
+            ])->delete();
             
             // Remove associated bank transaction if exists
             $tx = \App\Models\BankTransaction::where('description', 'like', '%[Pembayaran Invoice] ' . $invoice->invoice_number . '%')->first();
