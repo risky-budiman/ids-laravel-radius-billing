@@ -85,7 +85,7 @@
         </div>
 
         <!-- Stats Grid: Re-imagined -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-10">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
             <!-- Stat: Subscribers -->
             <div class="glass-card stat-card-glow p-7 rounded-[2rem] transition-all hover:-translate-y-2 group">
                 <div class="flex items-center justify-between mb-6">
