@@ -181,8 +181,6 @@
             @include('components.customer-bottom-nav')
         @endif
 
-        @stack('modals')
-
         @stack('scripts')
         
         <!-- PWA Service Worker Registration -->
@@ -199,5 +197,6 @@
                 });
             }
         </script>
+        @stack('modals')
     </body>
 </html>

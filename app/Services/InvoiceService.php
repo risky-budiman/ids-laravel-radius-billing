@@ -44,7 +44,7 @@ class InvoiceService
                 $bankAccountId = $cashAccount->id;
             }
 
-            BankTransaction::create([
+            $bankTx = new BankTransaction([
                 'bank_account_id' => $bankAccountId,
                 'type' => 'deposit',
                 'amount' => $invoice->amount,
@@ -52,6 +52,8 @@ class InvoiceService
                 'transaction_date' => now(),
                 'created_by' => auth()->id() ?? 1,
             ]);
+            $bankTx->skipAutoJournal = true;
+            $bankTx->save();
 
             // 2. Reactivate Customer
             $customer = $invoice->customer;

@@ -23,7 +23,7 @@ class ClosingController extends Controller
         // Get or generate periods for the last 12 months
         $periods = [];
         for ($i = 0; $i < 12; $i++) {
-            $date = Carbon::now()->subMonths($i);
+            $date = Carbon::now()->startOfMonth()->subMonths($i);
             $month = $date->month;
             $year = $date->year;
 

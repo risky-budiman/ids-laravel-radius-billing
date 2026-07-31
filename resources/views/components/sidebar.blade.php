@@ -263,14 +263,8 @@
                         <a href="{{ route('accounting.reports.cash-flow') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.reports.cash-flow') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
                             Cash Flow
                         </a>
-                        <a href="{{ route('accounting.reports.tax-summary') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.reports.tax-summary') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
-                            Tax Summary
-                        </a>
-                        <a href="{{ route('accounting.tax-settings.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.tax-settings*') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
-                            Tax Application Mode
-                        </a>
-                        <a href="{{ route('accounting.taxes.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.taxes.*') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
-                            Master Data Pajak
+                        <a href="{{ route('accounting.taxes.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.taxes.*') || request()->routeIs('accounting.reports.tax-summary') || request()->routeIs('accounting.tax-settings*') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 font-bold' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
+                            Pusat Pajak PPN
                         </a>
                         <a href="{{ route('accounting.closing.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('accounting.closing*') ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800' }}">
                             Closing Period

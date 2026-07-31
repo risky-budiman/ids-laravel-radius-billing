@@ -344,6 +344,8 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         Route::get('tax-settings', [\App\Http\Controllers\Accounting\TaxSettingController::class, 'index'])->name('tax-settings.index');
         Route::post('tax-settings', [\App\Http\Controllers\Accounting\TaxSettingController::class, 'update'])->name('tax-settings.update');
         
+        Route::post('taxes/pay', [\App\Http\Controllers\Accounting\TaxController::class, 'payTax'])->name('taxes.pay');
+        Route::post('taxes/input', [\App\Http\Controllers\Accounting\TaxController::class, 'recordTaxInput'])->name('taxes.input');
         Route::resource('taxes', \App\Http\Controllers\Accounting\TaxController::class);
     });
 

@@ -42,7 +42,7 @@ class GenerateCustomerInvoice implements ShouldQueue
         $nextDate = $customer->billing_next_date ?? now();
 
         if ($customer->billing_type === 'postpaid' && $customer->billing_method === 'cycle') {
-            $startDate = $nextDate->copy()->subMonth()->startOfMonth();
+            $startDate = $nextDate->copy()->startOfMonth()->subMonth();
             $endDate = $nextDate->copy()->subDay();
 
             // If activated during the billing period (first month), adjust start date and amount

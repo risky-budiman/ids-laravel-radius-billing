@@ -85,7 +85,7 @@
         </div>
 
         <!-- Stats Grid: Re-imagined -->
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-10">
             <!-- Stat: Subscribers -->
             <div class="glass-card stat-card-glow p-7 rounded-[2rem] transition-all hover:-translate-y-2 group">
                 <div class="flex items-center justify-between mb-6">
@@ -140,6 +140,44 @@
                         Sudah Dibayar
                     </span>
                     <span class="text-gray-400 text-[9px] font-bold">{{ now()->translatedFormat('F Y') }}</span>
+                </div>
+            </div>
+
+            <!-- Stat: Total Cash & Bank Balance -->
+            <div class="glass-card stat-card-glow p-7 rounded-[2rem] transition-all hover:-translate-y-2 group">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-500/20 group-hover:rotate-6 transition-transform" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">Total Saldo Kas & Bank</p>
+                        <h2 class="text-2xl font-black text-gray-900 dark:text-white mt-1"><span class="text-sm font-bold opacity-30">Rp</span> {{ number_format($totalCashBalance, 0, ',', '.') }}</h2>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 uppercase tracking-wider">
+                        Likuiditas Tunai
+                    </span>
+                    <span class="text-gray-400 text-[9px] font-bold">Realtime</span>
+                </div>
+            </div>
+
+            <!-- Stat: Total Piutang Belum Tertagih -->
+            <div class="glass-card stat-card-glow p-7 rounded-[2rem] transition-all hover:-translate-y-2 group">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-rose-500/20 group-hover:rotate-6 transition-transform" style="background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%) !important;">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em]">Total Piutang</p>
+                        <h2 class="text-2xl font-black text-gray-900 dark:text-white mt-1"><span class="text-sm font-bold opacity-30">Rp</span> {{ number_format($totalUnpaidInvoiceAmount, 0, ',', '.') }}</h2>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 uppercase tracking-wider">
+                        Belum Tertagih
+                    </span>
+                    <span class="text-gray-400 text-[9px] font-bold">Realtime</span>
                 </div>
             </div>
 
@@ -202,9 +240,8 @@
             </div>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 mb-8">
-
-            <!-- Card 1: Kas Terkumpul (Cash Basis - invoice paid) -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Card 1: Pendapatan (MTD) -->
             <div class="glass-card p-6 rounded-[2rem] border-l-4 border-emerald-500 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
                 <div class="absolute top-0 right-0 -mt-2 -mr-2 w-20 h-20 bg-emerald-500/5 rounded-full blur-2xl"></div>
                 <div class="flex items-start justify-between mb-4">
@@ -212,32 +249,15 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     </div>
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 uppercase tracking-wider">
-                        <svg class="w-2.5 h-2.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                        Sudah Diterima
+                        Kas Diterima
                     </span>
                 </div>
-                <p class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Kas Terkumpul (MTD)</p>
-                <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($cashRevenue, 0, ',', '.') }}</h3>
-                <p class="text-[10px] text-gray-400 font-bold mt-2">Invoice lunas bulan ini</p>
-            </div>
-
-            <!-- Card 2: Pendapatan Akrual (termasuk yang belum dibayar) -->
-            <div class="glass-card p-6 rounded-[2rem] border-l-4 border-amber-400 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
-                <div class="absolute top-0 right-0 -mt-2 -mr-2 w-20 h-20 bg-amber-400/5 rounded-full blur-2xl"></div>
-                <div class="flex items-start justify-between mb-4">
-                    <div class="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-2xl group-hover:bg-amber-500 group-hover:text-white transition-all shadow-sm">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"></path></svg>
-                    </div>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 uppercase tracking-wider">
-                        Termasuk Piutang
-                    </span>
-                </div>
-                <p class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-1">Pendapatan Akrual</p>
+                <p class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Pendapatan (MTD)</p>
                 <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($revenue, 0, ',', '.') }}</h3>
-                <p class="text-[10px] text-gray-400 font-bold mt-2">Jurnal pendapatan (termasuk belum bayar)</p>
+                <p class="text-[10px] text-gray-400 font-bold mt-2">Penerimaan kas & jurnal pendapatan</p>
             </div>
 
-            <!-- Card 3: Total Pengeluaran -->
+            <!-- Card 2: Total Pengeluaran (MTD) -->
             <div class="glass-card p-6 rounded-[2rem] border-l-4 border-rose-500 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
                 <div class="absolute top-0 right-0 -mt-2 -mr-2 w-20 h-20 bg-rose-500/5 rounded-full blur-2xl"></div>
                 <div class="flex items-start justify-between mb-4">
@@ -250,26 +270,10 @@
                 </div>
                 <p class="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">Total Pengeluaran</p>
                 <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($expense, 0, ',', '.') }}</h3>
-                <p class="text-[10px] text-gray-400 font-bold mt-2">Berdasarkan jurnal pengeluaran</p>
+                <p class="text-[10px] text-gray-400 font-bold mt-2">Biaya operasional bulan ini</p>
             </div>
 
-            <!-- Card 4: Laba Bersih (Kas) -->
-            <div class="glass-card p-6 rounded-[2rem] border-l-4 border-indigo-500 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
-                <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-500/5 rounded-full blur-3xl"></div>
-                <div class="flex items-start justify-between mb-4 relative z-10">
-                    <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl group-hover:bg-indigo-500 group-hover:text-white transition-all shadow-sm">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black {{ $cashProfit >= 0 ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' }} uppercase tracking-wider">
-                        Cash
-                    </span>
-                </div>
-                <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1 relative z-10">Laba Bersih (Tunai)</p>
-                <h3 class="text-2xl font-black relative z-10 {{ $cashProfit < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-indigo-600 dark:text-indigo-400' }}">Rp {{ number_format($cashProfit, 0, ',', '.') }}</h3>
-                <p class="text-[10px] text-gray-400 font-bold mt-2 relative z-10">Kas - Pengeluaran</p>
-            </div>
-
-            <!-- Card 5: Laba Bersih (Akrual) -->
+            <!-- Card 3: Laba Bersih (MTD) -->
             <div class="glass-card p-6 rounded-[2rem] border-l-4 border-blue-500 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
                 <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-500/5 rounded-full blur-3xl"></div>
                 <div class="flex items-start justify-between mb-4 relative z-10">
@@ -280,16 +284,140 @@
                         {{ $profit >= 0 ? 'Surplus' : 'Defisit' }}
                     </span>
                 </div>
-                <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1 relative z-10">Laba Bersih (Akrual)</p>
+                <p class="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1 relative z-10">Laba Bersih (MTD)</p>
                 <h3 class="text-2xl font-black relative z-10 {{ $profit < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-blue-600 dark:text-blue-400' }}">Rp {{ number_format($profit, 0, ',', '.') }}</h3>
-                <p class="text-[10px] text-gray-400 font-bold mt-2 relative z-10">Akrual - Pengeluaran</p>
+                <p class="text-[10px] text-gray-400 font-bold mt-2 relative z-10">Pendapatan - Pengeluaran</p>
+            </div>
+
+            <!-- Card 4: Invoice Unpaid -->
+            <div class="glass-card p-6 rounded-[2rem] border-l-4 border-amber-500 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-2 -mr-2 w-20 h-20 bg-amber-500/5 rounded-full blur-2xl"></div>
+                <div class="flex items-start justify-between mb-4">
+                    <div class="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-2xl group-hover:bg-amber-500 group-hover:text-white transition-all shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 uppercase tracking-wider">
+                        Unpaid Tags
+                    </span>
+                </div>
+                <p class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-1">Invoice Unpaid ({{ $unpaidInvoices }})</p>
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($totalUnpaidInvoiceAmount, 0, ',', '.') }}</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-2">Total piutang belum tertagih</p>
+            </div>
+        </div>
+
+        <!-- Tax & PPN Summary Section -->
+        <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-base font-black text-gray-900 dark:text-white flex items-center">
+                <svg class="w-5 h-5 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                Ringkasan Pajak PPN
+            </h3>
+            <a href="{{ route('accounting.taxes.index') }}" class="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline">Kelola & Setor PPN &rarr;</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Tax Card 1: Saldo Hutang PPN Sisa (Yang Harus Dibayar) -->
+            <div class="glass-card p-6 rounded-[2rem] border-l-4 border-amber-500 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-2xl group-hover:bg-amber-500 group-hover:text-white transition-all shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m.599-1H11.401M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 uppercase tracking-wider">
+                        Sisa Hutang
+                    </span>
+                </div>
+                <p class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-1">Saldo Hutang PPN (Siap Setor)</p>
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($netTaxLiability, 0, ',', '.') }}</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-2">Sisa hutang PPN yang belum disetorkan</p>
+            </div>
+
+            <!-- Tax Card 2: Pajak Masuk / PPN Terkumpul MTD -->
+            <div class="glass-card p-6 rounded-[2rem] border-l-4 border-indigo-500 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl group-hover:bg-indigo-500 group-hover:text-white transition-all shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 uppercase tracking-wider">
+                        Pajak Masuk
+                    </span>
+                </div>
+                <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1">Pajak Masuk PPN (MTD)</p>
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($mtdPaidTax, 0, ',', '.') }}</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-2">PPN diterima dari pelanggan bulan ini</p>
+            </div>
+
+            <!-- Tax Card 3: Total Pajak yang Sudah Disetorkan Ke Negara -->
+            <div class="glass-card p-6 rounded-[2rem] border-l-4 border-emerald-500 transition-all hover:shadow-xl hover:scale-[1.02] group relative overflow-hidden">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 uppercase tracking-wider">
+                        Sudah Disetorkan
+                    </span>
+                </div>
+                <p class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Pajak Disetor ke Kas Negara</p>
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($totalTaxPaidToGovt, 0, ',', '.') }}</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-2">Total PPN yang telah disetor ke negara</p>
+            </div>
+        </div>
+
+        <!-- Invoice Billing Summary (Nominal) -->
+        <div class="mb-6">
+            <h2 class="text-xl font-black text-gray-900 dark:text-white flex items-center">
+                <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Invoice Billing Summary (Nominal)
+            </h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <!-- Total Invoice Terbit (MTD) -->
+            <div class="glass-card p-6 rounded-[2rem] border-l-4 border-purple-500 transition-all hover:shadow-xl hover:scale-[1.02] group">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-2xl group-hover:bg-purple-500 group-hover:text-white transition-all shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 uppercase tracking-wider">
+                        Terbit MTD
+                    </span>
+                </div>
+                <p class="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest mb-1">Nominal Invoice Terbit</p>
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($mtdIssuedInvoiceAmount, 0, ',', '.') }}</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-2">Total nilai invoice yang terbit bulan ini</p>
+            </div>
+
+            <!-- Total Invoice Paid (MTD) -->
+            <div class="glass-card p-6 rounded-[2rem] border-l-4 border-emerald-500 transition-all hover:shadow-xl hover:scale-[1.02] group">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 uppercase tracking-wider">
+                        Lunas MTD
+                    </span>
+                </div>
+                <p class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Nominal Invoice Paid</p>
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($mtdPaidInvoiceAmount, 0, ',', '.') }}</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-2">Total invoice yang sudah dilunasi bulan ini</p>
+            </div>
+
+            <!-- Total Invoice Unpaid (Akumulasi) -->
+            <div class="glass-card p-6 rounded-[2rem] border-l-4 border-rose-500 transition-all hover:shadow-xl hover:scale-[1.02] group">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-2xl group-hover:bg-rose-500 group-hover:text-white transition-all shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 uppercase tracking-wider">
+                        Piutang Tagihan
+                    </span>
+                </div>
+                <p class="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">Nominal Invoice Unpaid</p>
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white">Rp {{ number_format($totalUnpaidInvoiceAmount, 0, ',', '.') }}</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-2">Total piutang invoice pelanggan saat ini</p>
             </div>
 
         </div>
 
         @endif
-
-        <!-- Installation Insights -->
         <div class="mb-6">
             <h2 class="text-xl font-black text-gray-900 dark:text-white flex items-center">
                 <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
@@ -444,29 +572,43 @@
                      <!-- Mini Activity Feed -->
                      <div class="glass-card rounded-[2.5rem] p-8">
                         <div class="flex items-center justify-between mb-6">
-                            <h3 class="text-xl font-black text-gray-900 dark:text-white flex items-center">
-                                <span class="w-1.5 h-6 bg-indigo-500 rounded-full mr-3"></span>
-                                Recent Pulse
-                            </h3>
-                            <a href="{{ route('activity-logs.index') }}" class="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-600 hover:text-white transition-all">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            <div>
+                                <h3 class="text-xl font-black text-gray-900 dark:text-white flex items-center">
+                                    <span class="w-1.5 h-6 bg-indigo-500 rounded-full mr-3"></span>
+                                    Recent Pulse
+                                </h3>
+                                <p class="text-[10px] text-gray-400 font-medium ml-4 mt-0.5">Aktivitas sistem & log transaksi</p>
+                            </div>
+                            <a href="{{ route('activity-logs.index') }}" class="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm flex items-center text-xs font-bold px-3 space-x-1" title="Lihat Semua Log">
+                                <span>Lihat Log</span>
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                             </a>
                         </div>
-                        <div class="space-y-6">
-                            @foreach($latestActivities->take(5) as $activity)
-                            <div class="flex space-x-4 relative">
+                        <div class="space-y-4">
+                            @forelse($latestActivities->take(5) as $activity)
+                            <div class="flex items-start space-x-3.5 relative p-2.5 rounded-2xl hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-all">
                                 @if(!$loop->last)
-                                <div class="absolute left-2.5 top-6 bottom-0 w-px bg-gray-100 dark:bg-gray-800"></div>
+                                <div class="absolute left-[17px] top-7 bottom-0 w-0.5 bg-gray-200/60 dark:bg-gray-700/60"></div>
                                 @endif
-                                <div class="w-5 h-5 rounded-full mt-1 z-10 flex items-center justify-center
-                                    {{ $activity->action === 'created' ? 'bg-green-500' : ($activity->action === 'updated' ? 'bg-blue-500' : 'bg-indigo-500') }} border-4 border-white dark:border-gray-800 shadow-sm">
+                                <div class="w-4 h-4 rounded-full mt-0.5 z-10 flex-shrink-0 flex items-center justify-center
+                                    {{ $activity->action === 'created' ? 'bg-emerald-500 ring-4 ring-emerald-100 dark:ring-emerald-950/40' : ($activity->action === 'updated' ? 'bg-blue-500 ring-4 ring-blue-100 dark:ring-blue-950/40' : ($activity->action === 'deleted' ? 'bg-rose-500 ring-4 ring-rose-100 dark:ring-rose-950/40' : 'bg-indigo-500 ring-4 ring-indigo-100 dark:ring-indigo-950/40')) }}">
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-xs font-bold text-gray-900 dark:text-white truncate">{{ $activity->description }}</p>
-                                    <p class="text-[10px] text-gray-400 font-medium mt-0.5">{{ $activity->created_at->diffForHumans() }} &bull; {{ $activity->user->name ?? 'System' }}</p>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">{{ $activity->description }}</p>
+                                        <span class="text-[9px] font-bold text-gray-400 dark:text-gray-500 flex-shrink-0 font-mono">{{ $activity->created_at->diffForHumans() }}</span>
+                                    </div>
+                                    <div class="flex items-center space-x-2 mt-1">
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider {{ $activity->action === 'created' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : ($activity->action === 'updated' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400') }}">
+                                            {{ $activity->action }}
+                                        </span>
+                                        <span class="text-[10px] text-gray-400 font-medium truncate">&bull; {{ $activity->user->name ?? 'System' }}</span>
+                                    </div>
                                 </div>
                             </div>
-                            @endforeach
+                            @empty
+                            <div class="py-8 text-center text-gray-400 text-xs italic">Belum ada log aktivitas terbaru.</div>
+                            @endforelse
                         </div>
                      </div>
                 </div>

@@ -24,17 +24,44 @@ class DashboardController extends Controller
         $cashRevenue = 0;
         $expense = 0;
         $profit = 0;
+        $cashProfit = 0;
 
         if (class_exists(Invoice::class)) {
             $unpaidInvoices = Invoice::where('status', 'unpaid')->count();
 
-            // MTD Cash Revenue: hanya invoice yang sudah benar-benar dibayar bulan ini
-            $cashRevenue = Invoice::where('status', 'paid')
-                ->whereBetween('paid_at', [
-                    Carbon::now()->startOfMonth(),
-                    Carbon::now()->endOfMonth(),
-                ])
+            $startOfMonth = Carbon::now()->startOfMonth();
+            $endOfMonth = Carbon::now()->endOfMonth();
+
+            // Invoice Summary Nominal MTD
+            $mtdIssuedInvoiceAmount = Invoice::whereBetween('created_at', [$startOfMonth, $endOfMonth])->sum('amount');
+            $mtdPaidInvoiceAmount = Invoice::where('status', 'paid')
+                ->whereBetween('paid_at', [$startOfMonth, $endOfMonth])
                 ->sum('amount');
+            $totalUnpaidInvoiceAmount = Invoice::where('status', 'unpaid')->sum('amount');
+
+            // Tax Metrics Calculation
+            // 1. Pajak Masuk (PPN Terkumpul MTD dari Invoice Lunas Bulan Ini)
+            $mtdPaidTax = Invoice::where('status', 'paid')
+                ->whereBetween('paid_at', [$startOfMonth, $endOfMonth])
+                ->sum('tax_amount');
+
+            // 2. Total Pajak yang Sudah Disetorkan ke Negara (Dari Bank Transaction Setor Pajak)
+            $totalTaxPaidToGovt = \App\Models\BankTransaction::where('description', 'like', '[Setor Pajak Negara]%')
+                ->sum('amount');
+
+            // 3. Hutang Pajak PPN Bersih Sisa yang Wajib Disetorkan (Saldo Akun 2103)
+            $taxAccount = ChartOfAccount::where('code', '2103')->first();
+            $netTaxLiability = 0;
+            if ($taxAccount) {
+                $items = \App\Models\JournalItem::where('account_id', $taxAccount->id)->get();
+                $netTaxLiability = max(0, $items->sum('credit') - $items->sum('debit'));
+            }
+
+            // MTD Cash Revenue: hanya invoice yang sudah benar-benar dibayar bulan ini
+            $cashRevenue = $mtdPaidInvoiceAmount;
+
+            // Total Overall Cash & Bank Balance
+            $totalCashBalance = \App\Models\BankAccount::where('is_active', true)->sum('balance');
             
             // Calculate Profit & Loss from Journals (as requested)
             $startDate = Carbon::now()->startOfMonth()->toDateString();
@@ -43,6 +70,7 @@ class DashboardController extends Controller
             // 1. Fetch Income Accounts
             $incomeAccounts = ChartOfAccount::where('type', 'income')
                 ->where('is_active', true)
+                ->whereDoesntHave('children')
                 ->with(['journalItems' => function($q) use ($startDate, $endDate) {
                     $q->whereHas('journal', function($jq) use ($startDate, $endDate) {
                         $jq->whereBetween('date', [$startDate, $endDate]);
@@ -57,6 +85,7 @@ class DashboardController extends Controller
             // 2. Fetch Expense Accounts
             $expenseAccounts = ChartOfAccount::where('type', 'expense')
                 ->where('is_active', true)
+                ->whereDoesntHave('children')
                 ->with(['journalItems' => function($q) use ($startDate, $endDate) {
                     $q->whereHas('journal', function($jq) use ($startDate, $endDate) {
                         $jq->whereBetween('date', [$startDate, $endDate]);
@@ -128,7 +157,8 @@ class DashboardController extends Controller
         $psbYear = Customer::whereYear('activated_at', now()->year)->count();
 
         return view('dashboard', compact(
-            'totalSubscribers', 'activeUsers', 'unpaidInvoices', 'revenue', 'cashRevenue', 'expense', 'profit', 'cashProfit', 'latestActivities',
+            'totalSubscribers', 'activeUsers', 'unpaidInvoices', 'revenue', 'cashRevenue', 'totalCashBalance', 'expense', 'profit', 'cashProfit', 'latestActivities',
+            'mtdIssuedInvoiceAmount', 'mtdPaidInvoiceAmount', 'totalUnpaidInvoiceAmount', 'mtdPaidTax', 'netTaxLiability', 'totalTaxPaidToGovt',
             'onlineNow', 'totalUpload', 'totalDownload', 'topUsers',
             'chartLabels', 'chartUpload', 'chartDownload', 'chartSessions',
             'authAcceptToday', 'authRejectToday',

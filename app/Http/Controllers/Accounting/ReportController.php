@@ -134,8 +134,8 @@ class ReportController extends Controller
             $totalTaxOutput = $taxOutputItems->sum('credit') - $taxOutputItems->sum('debit');
         }
 
-        // 2. Tax Input (PPN Masukan - Code 1105)
-        $taxInputAccount = ChartOfAccount::where('code', '1105')->first();
+        // 2. Tax Input (PPN Masukan - Code 1106)
+        $taxInputAccount = ChartOfAccount::where('code', '1106')->first() ?? ChartOfAccount::where('name', 'like', '%PPN Masukan%')->first();
         $totalTaxInput = 0;
         if ($taxInputAccount) {
             $taxInputItems = JournalItem::where('account_id', $taxInputAccount->id)

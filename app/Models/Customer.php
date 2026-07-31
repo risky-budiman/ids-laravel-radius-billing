@@ -141,7 +141,7 @@ class Customer extends Authenticatable
         if ($this->billing_type === 'postpaid') {
             if ($this->billing_method === 'cycle') {
                 // Next invoice is 1st of next month, due 20th
-                $this->billing_next_date = $now->copy()->addMonth()->startOfMonth();
+                $this->billing_next_date = $now->copy()->startOfMonth()->addMonth();
                 $this->billing_due_date = $this->billing_next_date->copy()->day($this->billing_due_day ?? 20);
             } elseif ($this->billing_method === 'fixed') {
                 // Anniversary logic
@@ -149,10 +149,12 @@ class Customer extends Authenticatable
                 
                 // If we don't have a due date yet, set it to next month anniversary
                 if (!$this->billing_due_date) {
-                    $this->billing_due_date = $now->copy()->addMonth()->day($anniversary);
+                    $nextMonth = $now->copy()->startOfMonth()->addMonth();
+                    $this->billing_due_date = $nextMonth->day(min($anniversary, $nextMonth->daysInMonth));
                 } else {
                     // Advance to next month
-                    $this->billing_due_date = $this->billing_due_date->addMonth();
+                    $nextMonth = $this->billing_due_date->copy()->startOfMonth()->addMonth();
+                    $this->billing_due_date = $nextMonth->day(min($anniversary, $nextMonth->daysInMonth));
                 }
                 
                 // Invoice generated -7 days before due date
@@ -163,9 +165,11 @@ class Customer extends Authenticatable
                 $anniversary = $this->activated_at ? $this->activated_at->day : $now->day;
                 
                 if (!$this->billing_due_date) {
-                    $this->billing_due_date = $now->copy()->addMonth()->day($anniversary);
+                    $nextMonth = $now->copy()->startOfMonth()->addMonth();
+                    $this->billing_due_date = $nextMonth->day(min($anniversary, $nextMonth->daysInMonth));
                 } else {
-                    $this->billing_due_date = $this->billing_due_date->addMonth();
+                    $nextMonth = $this->billing_due_date->copy()->startOfMonth()->addMonth();
+                    $this->billing_due_date = $nextMonth->day(min($anniversary, $nextMonth->daysInMonth));
                 }
                 
                 $this->billing_next_date = $this->billing_due_date->copy()->subDays(7);

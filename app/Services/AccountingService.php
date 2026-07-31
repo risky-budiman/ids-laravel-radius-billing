@@ -10,15 +10,15 @@ use Illuminate\Support\Facades\DB;
 class AccountingService
 {
     /**
-     * Record a journal entry for an invoice generation (Accrual)
-     * Debit: Piutang Pelanggan (1103)
-     * Credit: Pendapatan Internet (4101)
+     * Record a journal entry for an invoice generation (Cash Basis)
+     * Debit: Piutang Pelanggan (1104)
+     * Credit: Pendapatan Ditangguhkan (2102) — Revenue NOT yet recognized
      */
     public function recordInvoiceGenerated($invoice)
     {
         return DB::transaction(function () use ($invoice) {
-            $debitAccountId = ChartOfAccount::where('code', '1104')->first()->id; // Piutang Pelanggan (New Code)
-            $creditAccountId = ChartOfAccount::where('code', '4101')->first()->id; // Pendapatan Internet
+            $debitAccountId = ChartOfAccount::where('code', '1104')->first()->id; // Piutang Pelanggan
+            $creditAccountId = ChartOfAccount::where('code', '2102')->first()->id; // Pendapatan Ditangguhkan (bukan Pendapatan)
             $taxAccountId = $invoice->tax?->chart_of_account_id ?? ChartOfAccount::where('code', '2103')->first()?->id;
 
             $date = $invoice->created_at ?? now();
@@ -42,43 +42,37 @@ class AccountingService
                 'credit' => 0,
             ]);
 
-            // Credit: Pendapatan Internet (Subtotal / Amount before tax)
-            $subtotal = $invoice->subtotal > 0 ? $invoice->subtotal : ($invoice->amount - $invoice->tax_amount);
+            // Credit: Pendapatan Ditangguhkan (Total Amount including uncollected Tax)
             JournalItem::create([
                 'journal_id' => $journal->id,
                 'account_id' => $creditAccountId,
                 'debit' => 0,
-                'credit' => $subtotal,
+                'credit' => $invoice->amount,
             ]);
-
-            // Credit: Hutang Pajak (Tax Amount)
-            if ($invoice->tax_amount > 0 && $taxAccountId) {
-                JournalItem::create([
-                    'journal_id' => $journal->id,
-                    'account_id' => $taxAccountId,
-                    'debit' => 0,
-                    'credit' => $invoice->tax_amount,
-                ]);
-            }
 
             return $journal;
         });
     }
 
     /**
-     * Record a journal entry for an invoice payment
-     * Debit: Bank (1102) / Linked Account
-     * Credit: Piutang Pelanggan (1103)
+     * Record a journal entry for an invoice payment (Cash Basis Revenue & Tax Recognition)
+     * Part 1 — Clear receivable:
+     *   Debit: Bank (1102) / Linked Account
+     *   Credit: Piutang Pelanggan (1104)
+     * Part 2 — Recognize revenue & Tax Liability:
+     *   Debit: Pendapatan Ditangguhkan (2102)
+     *   Credit: Pendapatan Internet (4101) -> Subtotal
+     *   Credit: Hutang Pajak / PPN (2103) -> Tax Amount
      */
     public function recordInvoicePayment($invoice, $bankAccount)
     {
         return DB::transaction(function () use ($invoice, $bankAccount) {
             // 1. Determine Accounts
-            // Debit: The Bank Account's CoA
-            $debitAccountId = $bankAccount->chart_of_account_id ?? ChartOfAccount::where('code', '1102')->first()->id;
-
-            // Credit: Piutang Pelanggan (1104)
-            $creditAccountId = ChartOfAccount::where('code', '1104')->first()->id;
+            $bankAccountId = $bankAccount->chart_of_account_id ?? ChartOfAccount::where('code', '1102')->first()->id;
+            $piutangAccountId = ChartOfAccount::where('code', '1104')->first()->id;
+            $deferredAccountId = ChartOfAccount::where('code', '2102')->first()->id; // Pendapatan Ditangguhkan
+            $revenueAccountId = ChartOfAccount::where('code', '4101')->first()->id;  // Pendapatan Internet
+            $taxAccountId = $invoice->tax?->chart_of_account_id ?? ChartOfAccount::where('code', '2103')->first()?->id;
 
             $date = now();
             if (is_accounting_locked($date)) {
@@ -94,20 +88,49 @@ class AccountingService
                 'created_by' => auth()->id() ?? 1,
             ]);
 
-            // 3. Create Journal Items
+            // 3. Part 1: Clear Receivable (Debit Bank, Credit Piutang)
             JournalItem::create([
                 'journal_id' => $journal->id,
-                'account_id' => $debitAccountId,
+                'account_id' => $bankAccountId,
                 'debit' => $invoice->amount,
                 'credit' => 0,
             ]);
 
             JournalItem::create([
                 'journal_id' => $journal->id,
-                'account_id' => $creditAccountId,
+                'account_id' => $piutangAccountId,
                 'debit' => 0,
                 'credit' => $invoice->amount,
             ]);
+
+            // 4. Part 2: Recognize Revenue & Tax Liability
+            $subtotal = $invoice->subtotal > 0 ? $invoice->subtotal : ($invoice->amount - $invoice->tax_amount);
+            
+            // Debit: Pendapatan Ditangguhkan (Total Amount)
+            JournalItem::create([
+                'journal_id' => $journal->id,
+                'account_id' => $deferredAccountId,
+                'debit' => $invoice->amount,
+                'credit' => 0,
+            ]);
+
+            // Credit: Pendapatan Internet (Subtotal)
+            JournalItem::create([
+                'journal_id' => $journal->id,
+                'account_id' => $revenueAccountId,
+                'debit' => 0,
+                'credit' => $subtotal,
+            ]);
+
+            // Credit: Hutang Pajak / PPN (Tax Amount) - Recorded ONLY upon real cash payment
+            if ($invoice->tax_amount > 0 && $taxAccountId) {
+                JournalItem::create([
+                    'journal_id' => $journal->id,
+                    'account_id' => $taxAccountId,
+                    'debit' => 0,
+                    'credit' => $invoice->tax_amount,
+                ]);
+            }
 
             return $journal;
         });
