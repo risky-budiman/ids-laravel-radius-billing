@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.10] - 2026-07-31
+- Update PPN and Perbaikan Closed Priode, Dashboard, bugfix invoice and update ([HEAD])
+
+
+
 ## [1.5.8] - 2026-05-04
 - Bugfix CoA ([HEAD])
 
