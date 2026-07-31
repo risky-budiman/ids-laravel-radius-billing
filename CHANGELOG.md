@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.12] - 2026-08-01
+- Bugfix Closing Priod ([HEAD])
+
+
+
 ## [1.5.11] - 2026-07-31
 - Bugfix Dashboard ([HEAD])
 

@@ -100,10 +100,10 @@ class ClosingController extends Controller
                 'is_closed' => false,
                 'closed_at' => null,
                 'closed_by' => null,
-                'net_profit' => null,
-                'total_assets' => null,
-                'total_liabilities' => null,
-                'total_equity' => null,
+                'net_profit' => 0,
+                'total_assets' => 0,
+                'total_liabilities' => 0,
+                'total_equity' => 0,
             ]);
 
             // 2. Find the latest still closed period to update setting
