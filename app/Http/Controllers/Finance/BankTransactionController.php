@@ -213,6 +213,68 @@ class BankTransactionController extends Controller
         return redirect()->route('bank-accounts.index')->with('success', 'Pemasukan berhasil dicatat.');
     }
 
+    public function edit(BankTransaction $bankTransaction)
+    {
+        // Strict Authorization: Only Administrator
+        if (!auth()->user()->isAdministrator()) {
+            abort(403, 'Hanya Administrator yang diperbolehkan mengedit transaksi.');
+        }
+
+        $accounts = BankAccount::where('is_active', true)->orderBy('bank_name')->get();
+        $categories = ChartOfAccount::where('is_active', true)
+            ->orderBy('code')
+            ->get();
+
+        return view('finance.bank-transactions.edit', compact('bankTransaction', 'accounts', 'categories'));
+    }
+
+    public function update(Request $request, BankTransaction $bankTransaction)
+    {
+        // Strict Authorization: Only Administrator
+        if (!auth()->user()->isAdministrator()) {
+            abort(403, 'Hanya Administrator yang diperbolehkan mengedit transaksi.');
+        }
+
+        $request->validate([
+            'description' => 'required|string|max:255',
+            'amount' => 'required|numeric|min:0.01',
+            'transaction_date' => 'required|date',
+            'reference_number' => 'nullable|string|max:255',
+            'chart_of_account_id' => 'nullable|exists:chart_of_accounts,id',
+        ]);
+
+        DB::transaction(function () use ($request, $bankTransaction) {
+            // 1. Reverse old balance
+            $bankTransaction->updateBalance(true);
+
+            // 2. Delete old journal
+            \App\Models\Journal::where('reference', 'TRX-' . $bankTransaction->id)->delete();
+
+            // 3. Update the transaction
+            $bankTransaction->update([
+                'description' => $request->description,
+                'amount' => $request->amount,
+                'transaction_date' => $request->transaction_date,
+                'reference_number' => $request->reference_number,
+                'chart_of_account_id' => $request->chart_of_account_id,
+            ]);
+
+            // 4. Re-apply new balance
+            $bankTransaction->refresh();
+            $bankTransaction->updateBalance();
+
+            // 5. Re-create journal
+            try {
+                (new \App\Services\AccountingService())->recordBankTransaction($bankTransaction);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Re-journal failed for TRX-{$bankTransaction->id}: " . $e->getMessage());
+            }
+        });
+
+        return redirect()->route('bank-accounts.show', $bankTransaction->bank_account_id)
+            ->with('success', 'Transaksi berhasil diperbarui dan saldo telah dikoreksi.');
+    }
+
     public function destroy(BankTransaction $bankTransaction)
     {
         // Strict Authorization: Only Administrator

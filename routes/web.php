@@ -222,6 +222,8 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
             Route::get('income', [\App\Http\Controllers\Finance\BankTransactionController::class, 'income'])->name('bank-transactions.income');
             Route::post('income', [\App\Http\Controllers\Finance\BankTransactionController::class, 'processIncome'])->name('bank-transactions.process-income');
             
+            Route::get('transactions/{bankTransaction}/edit', [\App\Http\Controllers\Finance\BankTransactionController::class, 'edit'])->name('bank-transactions.edit');
+            Route::put('transactions/{bankTransaction}', [\App\Http\Controllers\Finance\BankTransactionController::class, 'update'])->name('bank-transactions.update');
             Route::delete('transactions/{bankTransaction}', [\App\Http\Controllers\Finance\BankTransactionController::class, 'destroy'])->name('bank-transactions.destroy');
         });
 
