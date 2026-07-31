@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.15] - 2026-08-01
+- Bugfix Akutansi ([HEAD])
+
+
+
 ## [1.5.14] - 2026-08-01
 - Bugfix Closing Priod ([HEAD])
 

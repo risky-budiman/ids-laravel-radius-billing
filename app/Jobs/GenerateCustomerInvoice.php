@@ -35,15 +35,15 @@ class GenerateCustomerInvoice implements ShouldQueue
         $customer = $this->customer;
         
         // Double check condition in case things changed while in queue
-        if (!$customer->is_active || !$customer->billing_next_date || $customer->billing_next_date > now()->toDateString()) {
+        if (!$customer->is_active || !$customer->billing_next_date || $customer->billing_next_date->toDateString() > now()->toDateString()) {
             return;
         }
 
         $nextDate = $customer->billing_next_date ?? now();
 
         if ($customer->billing_type === 'postpaid' && $customer->billing_method === 'cycle') {
-            $startDate = $nextDate->copy()->startOfMonth()->subMonth();
-            $endDate = $nextDate->copy()->subDay();
+            $startDate = $nextDate->copy()->startOfMonth()->subMonth()->startOfDay();
+            $endDate = $nextDate->copy()->subDay()->endOfDay();
 
             // If activated during the billing period (first month), adjust start date and amount
             if ($customer->activated_at && $customer->activated_at->isBetween($startDate, $endDate)) {

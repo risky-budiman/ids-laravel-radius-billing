@@ -141,7 +141,8 @@ class Customer extends Authenticatable
         if ($this->billing_type === 'postpaid') {
             if ($this->billing_method === 'cycle') {
                 // Next invoice is 1st of next month, due 20th
-                $this->billing_next_date = $now->copy()->startOfMonth()->addMonth();
+                $base = $this->billing_next_date ?? $now;
+                $this->billing_next_date = $base->copy()->startOfMonth()->addMonth();
                 $this->billing_due_date = $this->billing_next_date->copy()->day($this->billing_due_day ?? 20);
             } elseif ($this->billing_method === 'fixed') {
                 // Anniversary logic

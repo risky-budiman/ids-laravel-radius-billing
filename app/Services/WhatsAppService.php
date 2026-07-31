@@ -13,6 +13,11 @@ class WhatsAppService
      */
     public function sendMessage($target, $message, $logId = null): bool
     {
+        if (empty($target)) {
+            Log::warning("WhatsApp Notification: target phone number is empty. Message was: " . substr($message, 0, 100) . "...");
+            return false;
+        }
+
         $log = null;
         if ($logId) {
             $log = \App\Models\WhatsappLog::find($logId);
