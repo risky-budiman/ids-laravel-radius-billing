@@ -55,6 +55,8 @@ class WhatsAppService
                 $success = $this->sendViaMekari($gateway, $target, $message);
             } elseif ($gateway->provider === 'self_hosted') {
                 $success = $this->sendViaSelfHosted($target, $message);
+            } elseif ($gateway->provider === 'meta') {
+                $success = $this->sendViaMeta($gateway, $target, $message);
             }
 
             if ($success) {
@@ -149,6 +151,82 @@ class WhatsAppService
         } catch (\Exception $e) { 
             Log::error('Self-hosted WA Gateway Error: ' . $e->getMessage());
             return false; 
+        }
+    }
+
+    protected function sendViaMeta($gateway, $target, $message)
+    {
+        $phoneNumberId = $gateway->credentials['phone_number_id'] ?? null;
+        $token = $gateway->credentials['token'] ?? null;
+        $templateName = $gateway->credentials['template_name'] ?? null;
+
+        if (!$phoneNumberId || !$token) {
+            Log::error('Meta Cloud API: Phone Number ID or Access Token is missing.');
+            return false;
+        }
+
+        // Sanitize phone number (Meta requires digits only, matching country code format without leading + or 0)
+        $cleanTarget = preg_replace('/[^0-9]/', '', $target);
+        if (str_starts_with($cleanTarget, '0')) {
+            $cleanTarget = '62' . substr($cleanTarget, 1);
+        }
+
+        $url = "https://graph.facebook.com/v20.0/{$phoneNumberId}/messages";
+
+        try {
+            if ($templateName) {
+                // Template Message (Single dynamic placeholder body)
+                $payload = [
+                    'messaging_product' => 'whatsapp',
+                    'recipient_type' => 'individual',
+                    'to' => $cleanTarget,
+                    'type' => 'template',
+                    'template' => [
+                        'name' => $templateName,
+                        'language' => [
+                            'code' => 'id'
+                        ],
+                        'components' => [
+                            [
+                                'type' => 'body',
+                                'parameters' => [
+                                    [
+                                        'type' => 'text',
+                                        'text' => $message
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ];
+            } else {
+                // Free-form text message (requires 24h interaction window)
+                $payload = [
+                    'messaging_product' => 'whatsapp',
+                    'recipient_type' => 'individual',
+                    'to' => $cleanTarget,
+                    'type' => 'text',
+                    'text' => [
+                        'body' => $message
+                    ]
+                ];
+            }
+
+            $response = Http::timeout(10)
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type' => 'application/json'
+                ])
+                ->post($url, $payload);
+
+            if (!$response->successful()) {
+                Log::error('Meta Cloud API Send Failed: ' . $response->body());
+            }
+
+            return $response->successful();
+        } catch (\Exception $e) {
+            Log::error('Meta Cloud API Exception: ' . $e->getMessage());
+            return false;
         }
     }
 }

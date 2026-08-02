@@ -158,6 +158,56 @@
                     </form>
                 </div>
 
+                <!-- Meta WhatsApp Cloud API -->
+                @php $meta = $gateways->get('meta'); @endphp
+                <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                    <div class="bg-rose-50/50 dark:bg-rose-900/20 px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <svg class="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2h1.5A2.5 2.5 0 0019 9.5V8a2 2 0 00-2-2h-3a2 2 0 01-2-2V3.055M11 20.055V18a2 2 0 00-2-2h-1a2 2 0 01-2-2v-1a2 2 0 00-2-2H2.055M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <h3 class="font-bold text-gray-900 dark:text-gray-100">WhatsApp Official Meta (Cloud API)</h3>
+                        </div>
+                        <span class="px-2 py-1 rounded text-xs font-bold {{ ($meta->is_active ?? false) ? 'bg-rose-100 text-rose-700' : 'bg-gray-200 text-gray-600' }}">
+                            {{ ($meta->is_active ?? false) ? 'ACTIVE' : 'INACTIVE' }}
+                        </span>
+                    </div>
+                    <form action="{{ route('integrations.update') }}" method="POST" class="p-6 space-y-4">
+                        @csrf
+                        <input type="hidden" name="provider" value="meta">
+                        <input type="hidden" name="type" value="whatsapp">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <x-input-label value="Phone Number ID" />
+                                <x-text-input name="credentials[phone_number_id]" value="{{ $meta->credentials['phone_number_id'] ?? '' }}" class="mt-1 w-full" placeholder="e.g. 109283746561728" />
+                                <p class="text-xs text-gray-500 mt-1">Dapat ditemukan di Facebook Developer Console.</p>
+                            </div>
+                            <div>
+                                <x-input-label value="WABA ID (WhatsApp Business Account ID)" />
+                                <x-text-input name="credentials[waba_id]" value="{{ $meta->credentials['waba_id'] ?? '' }}" class="mt-1 w-full" placeholder="e.g. 987654321098765" />
+                                <p class="text-xs text-gray-500 mt-1">ID Akun WhatsApp Business Anda.</p>
+                            </div>
+                            <div class="md:col-span-2">
+                                <x-input-label value="Permanent Access Token" />
+                                <x-text-input name="credentials[token]" value="{{ $meta->credentials['token'] ?? '' }}" class="mt-1 w-full" type="password" placeholder="EAAG..." />
+                                <p class="text-xs text-gray-500 mt-1">Token akses permanen dari Meta Business Suite.</p>
+                            </div>
+                            <div class="md:col-span-2">
+                                <x-input-label value="Default Template Name (Opsional)" />
+                                <x-text-input name="credentials[template_name]" value="{{ $meta->credentials['template_name'] ?? '' }}" class="mt-1 w-full" placeholder="e.g. notification_alert" />
+                                <p class="text-xs text-gray-500 mt-1">Nama template yang sudah disetujui di Meta. Jika diisi, semua pesan akan dikirim sebagai pesan template dengan menempatkan teks pesan ke parameter body <code>{{1}}</code>.</p>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
+                            <label class="flex items-center text-sm">
+                                <input type="checkbox" name="is_active" value="1" {{ ($meta->is_active ?? false) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                                <span class="ml-2 text-gray-600 dark:text-gray-400">Set as Active WhatsApp Gateway</span>
+                            </label>
+                            <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Save Settings</button>
+                        </div>
+                    </form>
+                </div>
+
                 <div class="mt-8 bg-indigo-50 dark:bg-indigo-900/20 rounded-3xl p-8 border border-indigo-100 dark:border-indigo-800/50">
                     <h4 class="font-bold text-indigo-900 dark:text-indigo-300 mb-4 flex items-center">
                         <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
