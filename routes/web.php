@@ -65,6 +65,7 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
     Route::middleware('role:administrator,admin,teknisi,sales')->group(function () {
         Route::get('customers/map', [\App\Http\Controllers\CustomerController::class, 'map'])->name('customers.map');
         Route::get('customers', [\App\Http\Controllers\CustomerController::class, 'index'])->name('customers.index');
+        Route::post('customers/bulk-action', [\App\Http\Controllers\CustomerController::class, 'bulkAction'])->name('customers.bulk-action');
         Route::get('customers/create', [\App\Http\Controllers\CustomerController::class, 'create'])->name('customers.create');
         Route::post('customers', [\App\Http\Controllers\CustomerController::class, 'store'])->name('customers.store');
         Route::get('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'show'])->name('customers.show');

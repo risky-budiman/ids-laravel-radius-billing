@@ -136,6 +136,7 @@ class BillingTest extends TestCase
                 'billing_due_day' => 20,
                 'activated_at' => Carbon::parse($test['activated_at']),
                 'is_active' => true,
+                'status' => Customer::STATUS_ACTIVE,
                 'use_tax' => false,
             ]);
 

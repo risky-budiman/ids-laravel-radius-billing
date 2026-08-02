@@ -16,12 +16,130 @@
         </div>
     @endif
 
-    <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left whitespace-nowrap">
-                <thead>
-                    <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
+    @if(session('error'))
+        <div class="mb-4 px-4 py-3 bg-rose-100/80 border border-rose-200 text-rose-700 rounded-xl dark:bg-rose-900/30 dark:border-rose-800 dark:text-rose-400">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <!-- Card 1: Total -->
+        <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex items-center justify-between">
+            <div>
+                <span class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Subscribers</span>
+                <span class="block text-3xl font-black text-slate-800 dark:text-slate-100 mt-2">{{ number_format($stats['total'] ?? 0) }}</span>
+            </div>
+            <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            </div>
+        </div>
+
+        <!-- Card 2: Active -->
+        <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex items-center justify-between">
+            <div>
+                <span class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Active</span>
+                <span class="block text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-2">{{ number_format($stats['active'] ?? 0) }}</span>
+            </div>
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+        </div>
+
+        <!-- Card 3: Waiting Activation -->
+        <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex items-center justify-between">
+            <div>
+                <span class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Waiting Activation</span>
+                <span class="block text-3xl font-black text-amber-600 dark:text-amber-400 mt-2">{{ number_format($stats['waiting_activation'] ?? 0) }}</span>
+            </div>
+            <div class="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+        </div>
+
+        <!-- Card 4: Suspended -->
+        <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex items-center justify-between">
+            <div>
+                <span class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Suspended</span>
+                <span class="block text-3xl font-black text-rose-600 dark:text-rose-400 mt-2">{{ number_format($stats['suspended'] ?? 0) }}</span>
+            </div>
+            <div class="p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+            </div>
+        </div>
+    </div>
+
+    <form action="{{ route('customers.bulk-action') }}" method="POST" id="bulk-action-form">
+        @csrf
+        <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <!-- Control Bar -->
+            <div class="p-6 border-b border-gray-100 dark:border-gray-700/50 flex flex-col lg:flex-row justify-between items-center gap-4">
+                <div class="w-full lg:w-auto flex flex-col md:flex-row items-center gap-3">
+                    <div class="relative flex items-center w-full md:w-80">
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari pelanggan (Nama, ID, Username...)" class="w-full pl-10 pr-10 py-2 bg-gray-50/50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-slate-800 dark:text-slate-100" />
+                        <div class="absolute left-3.5 text-gray-400 dark:text-gray-500 pointer-events-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        @if(request('search'))
+                            <a href="{{ route('customers.index', request()->except('search')) }}" class="absolute right-3.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </a>
+                        @endif
+                    </div>
+
+                    <select name="status" onchange="filterCustomers()" class="w-full md:w-auto pl-3 pr-8 py-2 bg-gray-50/50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-700 dark:text-slate-300">
+                        <option value="">Semua Status</option>
+                        <option value="new" {{ request('status') == 'new' ? 'selected' : '' }}>New</option>
+                        <option value="waiting_activation" {{ request('status') == 'waiting_activation' ? 'selected' : '' }}>Waiting Activation</option>
+                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="suspended" {{ request('status') == 'suspended' ? 'selected' : '' }}>Suspended</option>
+                        <option value="waiting_dismantle" {{ request('status') == 'waiting_dismantle' ? 'selected' : '' }}>Waiting Dismantle</option>
+                        <option value="dismantled" {{ request('status') == 'dismantled' ? 'selected' : '' }}>Dismantled</option>
+                        <option value="canceled" {{ request('status') == 'canceled' ? 'selected' : '' }}>Canceled</option>
+                    </select>
+
+                    <select name="package_id" onchange="filterCustomers()" class="w-full md:w-auto pl-3 pr-8 py-2 bg-gray-50/50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-700 dark:text-slate-300">
+                        <option value="">Semua Paket</option>
+                        @foreach($packages as $package)
+                            <option value="{{ $package->id }}" {{ request('package_id') == $package->id ? 'selected' : '' }}>{{ $package->name }}</option>
+                        @endforeach
+                    </select>
+                    
+                    @if(request('status') || request('package_id') || request('search'))
+                        <a href="{{ route('customers.index') }}" class="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline">Clear Filters</a>
+                    @endif
+                </div>
+                
+                <div class="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">
+                    Total: {{ $customers->total() }} Subscribers
+                </div>
+            </div>
+
+            <!-- Bulk Action Bar -->
+            <div class="px-6 py-3 bg-slate-50 dark:bg-slate-900/30 border-b border-gray-100 dark:border-gray-700/50 flex flex-col md:flex-row items-center gap-3">
+                <span class="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">Aksi Massal:</span>
+                <div class="flex items-center gap-2">
+                    <select name="action" class="pl-3 pr-8 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs text-slate-700 dark:text-slate-300 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">Pilih Aksi...</option>
+                        <option value="activate">Aktifkan Pelanggan</option>
+                        <option value="suspend">Suspend Pelanggan</option>
+                        <option value="dismantle">Ajukan Dismantle</option>
+                        @if(auth()->user()->isAdmin())
+                            <option value="delete">Hapus Permanen</option>
+                        @endif
+                    </select>
+                    <button type="submit" onclick="return confirm('Apakah Anda yakin ingin menerapkan aksi massal ini?')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm hover:shadow-indigo-500/20">Terapkan</button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left whitespace-nowrap">
+                    <thead>
+                        <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-8">
+                                <input type="checkbox" id="select-all" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                            </th>
+                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer ID</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Username</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Password</th>
@@ -34,6 +152,9 @@
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($customers as $customer)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-6 py-4 w-8">
+                                <input type="checkbox" name="ids[]" value="{{ $customer->id }}" class="customer-checkbox rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                            </td>
                             <td class="px-6 py-4 text-gray-400 dark:text-gray-500 text-sm font-medium">
                                 {{ $customers->firstItem() + $loop->index }}
                             </td>
@@ -123,7 +244,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                            <td colspan="9" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                                 <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                 </svg>
@@ -135,7 +256,31 @@
             </table>
         </div>
         <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 pb-4">
-            {{ $customers->links() }}
+            {{ $customers->appends(request()->query())->links() }}
         </div>
     </div>
+    </form>
+
+    <script>
+        document.getElementById('select-all')?.addEventListener('change', function(e) {
+            const checked = e.target.checked;
+            document.querySelectorAll('.customer-checkbox').forEach(cb => {
+                cb.checked = checked;
+            });
+        });
+
+        function filterCustomers() {
+            const search = document.querySelector('input[name="search"]').value;
+            const status = document.querySelector('select[name="status"]').value;
+            const package_id = document.querySelector('select[name="package_id"]').value;
+            
+            let url = '{{ route("customers.index") }}?';
+            const params = [];
+            if (search) params.push('search=' + encodeURIComponent(search));
+            if (status) params.push('status=' + encodeURIComponent(status));
+            if (package_id) params.push('package_id=' + encodeURIComponent(package_id));
+            
+            window.location.href = url + params.join('&');
+        }
+    </script>
 </x-app-layout>

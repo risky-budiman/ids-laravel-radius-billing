@@ -16,13 +16,52 @@ use Illuminate\Support\Facades\Http;
 
 class CustomerController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        // 1. Base query for stats counts (subject only to Mitra visibility restriction)
+        $countQuery = Customer::query();
+        if (auth()->user()->isMitra()) {
+            $countQuery->where('partner_id', auth()->id());
+        }
+
+        $stats = [
+            'total' => $countQuery->clone()->count(),
+            'active' => $countQuery->clone()->where('status', Customer::STATUS_ACTIVE)->count(),
+            'waiting_activation' => $countQuery->clone()->where('status', Customer::STATUS_WAITING_ACTIVATION)->count(),
+            'suspended' => $countQuery->clone()->where('status', Customer::STATUS_SUSPENDED)->count(),
+        ];
+
+        // 2. Query for customers list with eager loading
         $query = Customer::with('package');
         
         if (auth()->user()->isMitra()) {
             $query->where('partner_id', auth()->id());
         }
+
+        // Apply Search Filter
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%")
+                  ->orWhere('customer_code', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply Status Filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        // Apply Package Filter
+        if ($request->filled('package_id')) {
+            $query->where('package_id', $request->input('package_id'));
+        }
+
+        // Order by latest created date first
+        $query->orderBy('created_at', 'desc');
 
         $customers = $query->paginate(10);
         
@@ -37,7 +76,98 @@ class CustomerController extends Controller
             $customer->cleartext_password = $passwords[$customer->username] ?? $customer->password ?? '-';
         }
 
-        return view('customers.index', compact('customers'));
+        $packages = Package::where('is_active', true)->get();
+
+        return view('customers.index', compact('customers', 'stats', 'packages'));
+    }
+
+    /**
+     * Handle bulk actions for selected customers
+     */
+    public function bulkAction(Request $request)
+    {
+        $action = $request->input('action');
+        $ids = $request->input('ids', []);
+
+        if (empty($ids) || empty($action)) {
+            return redirect()->back()->with('error', 'Silakan pilih pelanggan dan aksi yang ingin dilakukan.');
+        }
+
+        $customers = Customer::whereIn('id', $ids)->get();
+        $count = 0;
+
+        switch ($action) {
+            case 'activate':
+                abort_if(auth()->user()->isSales(), 403, 'Unauthorized');
+                foreach ($customers as $customer) {
+                    if (in_array($customer->status, [Customer::STATUS_NEW, Customer::STATUS_WAITING_ACTIVATION])) {
+                        $customer->update([
+                            'is_active' => true,
+                            'status' => Customer::STATUS_ACTIVE,
+                            'activated_at' => now(),
+                        ]);
+                        $customer->syncBillingDates();
+                        
+                        // Sync status in radius if needed
+                        $nas = \App\Models\Radius\Nas::first();
+                        if ($nas) {
+                            app(\App\Services\RadiusCoAService::class)->disconnect($nas->nasname, $nas->secret, $customer->username);
+                        }
+
+                        $count++;
+                    }
+                }
+                $message = "$count pelanggan berhasil diaktifkan secara massal.";
+                break;
+
+            case 'suspend':
+                abort_if(auth()->user()->isSales(), 403, 'Unauthorized');
+                foreach ($customers as $customer) {
+                    if ($customer->is_active) {
+                        $customer->update([
+                            'is_active' => false,
+                            'status' => Customer::STATUS_SUSPENDED,
+                        ]);
+                        
+                        // CoA Disconnect
+                        $nas = \App\Models\Radius\Nas::first();
+                        if ($nas) {
+                            app(\App\Services\RadiusCoAService::class)->disconnect($nas->nasname, $nas->secret, $customer->username);
+                        }
+
+                        $count++;
+                    }
+                }
+                $message = "$count pelanggan berhasil di-suspend secara massal.";
+                break;
+
+            case 'dismantle':
+                abort_if(auth()->user()->isSales(), 403, 'Unauthorized');
+                foreach ($customers as $customer) {
+                    if ($customer->status !== Customer::STATUS_WAITING_DISMANTLE && $customer->status !== Customer::STATUS_DISMANTLED) {
+                        $customer->update([
+                            'status' => Customer::STATUS_WAITING_DISMANTLE,
+                        ]);
+                        $count++;
+                    }
+                }
+                $message = "$count pelanggan berhasil diajukan dismantle secara massal.";
+                break;
+
+            case 'delete':
+                abort_if(!auth()->user()->isAdmin(), 403, 'Unauthorized');
+                foreach ($customers as $customer) {
+                    $customer->delete();
+                    $count++;
+                }
+                $message = "$count pelanggan berhasil dihapus secara massal.";
+                break;
+
+            default:
+                return redirect()->back()->with('error', 'Aksi tidak dikenal.');
+        }
+
+        return redirect()->back()->with('success', $message);
     }
 
     public function map()
@@ -135,6 +265,15 @@ class CustomerController extends Controller
             'onu_index' => 'nullable|string|max:64',
             'onu_type' => 'nullable|string|max:64',
             'scheduled_activation_at' => 'nullable|date',
+            'odc_id' => 'nullable|string|exists:odcs,id',
+            'odp_id' => 'nullable|string|exists:odps,id',
+            'odp_port' => 'nullable|integer',
+            'cable_length' => 'nullable|integer',
+            'vlan_id' => 'nullable|integer',
+            'static_ip' => 'nullable|string',
+            'cpe_brand' => 'nullable|string',
+            'cpe_model' => 'nullable|string',
+            'cpe_mac' => 'nullable|string',
         ]);
 
         $package = Package::find($validated['package_id']);
@@ -288,6 +427,19 @@ class CustomerController extends Controller
             'sales_id' => 'nullable|exists:users,id',
             'sales_commission_rate' => 'nullable|numeric|min:0',
             'sales_commission_type' => 'nullable|in:percentage,fixed',
+            'olt_id' => 'nullable|exists:olts,id',
+            'onu_sn' => 'nullable|string|max:64',
+            'onu_index' => 'nullable|string|max:64',
+            'onu_type' => 'nullable|string|max:64',
+            'odc_id' => 'nullable|string|exists:odcs,id',
+            'odp_id' => 'nullable|string|exists:odps,id',
+            'odp_port' => 'nullable|integer',
+            'cable_length' => 'nullable|integer',
+            'vlan_id' => 'nullable|integer',
+            'static_ip' => 'nullable|string',
+            'cpe_brand' => 'nullable|string',
+            'cpe_model' => 'nullable|string',
+            'cpe_mac' => 'nullable|string',
         ]);
 
         $latitude = $validated['latitude'] ?? null;
