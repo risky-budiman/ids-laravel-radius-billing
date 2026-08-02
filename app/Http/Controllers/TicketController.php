@@ -18,7 +18,44 @@ class TicketController extends Controller
         $types = ['aktivasi', 'gangguan', 'dismantle'];
         $currentType = $request->type ?? 'all';
 
-        return view('tickets.index', compact('tickets', 'types', 'currentType'));
+        // Calculate recap statistics for team performance
+        $ticketStats = \App\Models\Ticket::select('type', 'status', \DB::raw('count(*) as count'))
+            ->groupBy('type', 'status')
+            ->get();
+
+        $recap = [
+            'aktivasi' => ['open' => 0, 'in_progress' => 0, 'resolved' => 0, 'closed' => 0, 'canceled' => 0, 'total' => 0, 'percentage' => 0],
+            'gangguan' => ['open' => 0, 'in_progress' => 0, 'resolved' => 0, 'closed' => 0, 'canceled' => 0, 'total' => 0, 'percentage' => 0],
+            'dismantle' => ['open' => 0, 'in_progress' => 0, 'resolved' => 0, 'closed' => 0, 'canceled' => 0, 'total' => 0, 'percentage' => 0],
+            'overall' => ['open' => 0, 'in_progress' => 0, 'resolved' => 0, 'closed' => 0, 'canceled' => 0, 'total' => 0, 'percentage' => 0],
+        ];
+
+        foreach ($ticketStats as $stat) {
+            $type = $stat->type;
+            if (!in_array($type, ['aktivasi', 'gangguan', 'dismantle'])) {
+                continue;
+            }
+            $status = $stat->status;
+            $count = $stat->count;
+
+            if (array_key_exists($status, $recap[$type])) {
+                $recap[$type][$status] += $count;
+                $recap['overall'][$status] += $count;
+            }
+
+            $recap[$type]['total'] += $count;
+            $recap['overall']['total'] += $count;
+        }
+
+        // Calculate percentages based on resolved + closed (done) tickets
+        foreach ($recap as $key => $data) {
+            if ($data['total'] > 0) {
+                $done = $data['resolved'] + $data['closed'];
+                $recap[$key]['percentage'] = round(($done / $data['total']) * 100);
+            }
+        }
+
+        return view('tickets.index', compact('tickets', 'types', 'currentType', 'recap'));
     }
 
     public function create(Request $request)
