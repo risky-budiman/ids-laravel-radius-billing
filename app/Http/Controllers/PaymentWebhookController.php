@@ -20,11 +20,17 @@ class PaymentWebhookController extends Controller
         $payload = $request->all();
         Log::info('Midtrans Webhook Received: ', $payload);
 
-        $orderId = $payload['order_id'];
-        $statusCode = $payload['status_code'];
-        $grossAmount = $payload['gross_amount'];
-        $transactionStatus = $payload['transaction_status'];
-        $signatureKey = $payload['signature_key'];
+        $orderId = $payload['order_id'] ?? '';
+        $statusCode = $payload['status_code'] ?? '';
+        $grossAmount = $payload['gross_amount'] ?? '';
+        $transactionStatus = $payload['transaction_status'] ?? '';
+        $signatureKey = $payload['signature_key'] ?? '';
+
+        // Handle Midtrans Test Webhook / Notification Simulation
+        if (str_starts_with($orderId, 'payment_notif_test_')) {
+            Log::info('Midtrans Test Webhook notification received and skipped from processing: ' . $orderId);
+            return response()->json(['message' => 'Test notification successful']);
+        }
 
         // Extract Invoice Number from Order ID (handling the timestamp suffix if exists)
         $lastHyphenPos = strrpos($orderId, '-');

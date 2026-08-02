@@ -153,4 +153,18 @@ class MidtransWebhookTest extends TestCase
         $invoice->refresh();
         $this->assertEquals('unpaid', $invoice->status);
     }
+
+    public function test_midtrans_webhook_handles_test_notification_simulation()
+    {
+        $response = $this->postJson(route('webhooks.midtrans'), [
+            'order_id' => 'payment_notif_test_G652527386_d24b656a-d938-4334-a819-2237d5d6a4a9',
+            'status_code' => '200',
+            'gross_amount' => '105000.00',
+            'transaction_status' => 'settlement',
+            'signature_key' => 'dummy_signature',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['message' => 'Test notification successful']);
+    }
 }
