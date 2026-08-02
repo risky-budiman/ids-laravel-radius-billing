@@ -38,8 +38,9 @@ class PaymentGatewayService
             case 'midtrans':
                 return $this->handleMidtrans($invoice, $gateway->credentials);
             case 'xendit':
-                // Placeholder for Xendit
-                throw new \Exception('Xendit is not fully integrated yet (PoC phase). Please use Midtrans.');
+                return $this->handleXendit($invoice, $gateway->credentials);
+            case 'duitku':
+                return $this->handleDuitku($invoice, $gateway->credentials);
             default:
                 throw new \Exception('Unsupported payment provider: ' . $gateway->provider);
         }
@@ -96,6 +97,106 @@ class PaymentGatewayService
 
         // If something goes wrong, log it and throw an exception
         Log::error('Midtrans API Error: ' . $response->body());
+        throw new \Exception('Failed to generate payment link: ' . $response->body());
+    }
+
+    /**
+     * Handle Xendit HTTP Request
+     */
+    protected function handleXendit(Invoice $invoice, array $credentials): ?string
+    {
+        $secretKey = $credentials['secret_key'] ?? null;
+
+        if (!$secretKey) {
+            throw new \Exception('Xendit Secret Key is missing in Integration settings.');
+        }
+
+        $response = Http::withHeaders([
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Basic ' . base64_encode($secretKey . ':')
+        ])->post('https://api.xendit.co/v2/invoices', [
+            'external_id' => $invoice->invoice_number . '-' . time(),
+            'amount' => (int) $invoice->amount,
+            'description' => 'Pembayaran Invoice ' . $invoice->invoice_number,
+            'payer_email' => $invoice->customer->email ?? 'customer@example.com',
+            'customer' => [
+                'given_names' => $invoice->customer->name,
+                'mobile_number' => $invoice->customer->phone ?? '08123456789',
+            ],
+            'success_redirect_url' => route('customer.invoices'),
+            'failure_redirect_url' => route('customer.invoices'),
+        ]);
+
+        if ($response->successful()) {
+            $data = $response->json();
+            
+            $invoice->update([
+                'payment_url' => $data['invoice_url'],
+                'payment_token' => $data['id'],
+                'payment_method' => 'xendit'
+            ]);
+
+            return $data['invoice_url'];
+        }
+
+        Log::error('Xendit API Error: ' . $response->body());
+        throw new \Exception('Failed to generate payment link: ' . $response->body());
+    }
+
+    /**
+     * Handle Duitku HTTP Request
+     */
+    protected function handleDuitku(Invoice $invoice, array $credentials): ?string
+    {
+        $merchantCode = $credentials['merchant_code'] ?? null;
+        $apiKey = $credentials['api_key'] ?? null;
+        $environment = $credentials['environment'] ?? 'sandbox';
+        $isProduction = ($environment === 'production');
+
+        if (!$merchantCode || !$apiKey) {
+            throw new \Exception('Duitku Merchant Code or API Key is missing in Integration settings.');
+        }
+
+        $baseUrl = $isProduction 
+            ? 'https://passport.duitku.com/webapi/api/merchant/v2/invoices' 
+            : 'https://sandbox.duitku.com/webapi/api/merchant/v2/invoices';
+
+        $merchantOrderId = $invoice->invoice_number . '-' . time();
+        $amount = (int) $invoice->amount;
+        $signature = hash('sha256', $merchantCode . $merchantOrderId . $amount . $apiKey);
+
+        $response = Http::post($baseUrl, [
+            'merchantCode' => $merchantCode,
+            'paymentAmount' => $amount,
+            'merchantOrderId' => $merchantOrderId,
+            'productDetails' => 'Tagihan Internet ' . $invoice->invoice_number,
+            'email' => $invoice->customer->email ?? 'customer@example.com',
+            'paymentMethod' => '',
+            'returnUrl' => route('customer.invoices'),
+            'callbackUrl' => route('webhooks.duitku'),
+            'signature' => $signature,
+            'expiryPeriod' => 1440,
+        ]);
+
+        if ($response->successful()) {
+            $data = $response->json();
+            
+            // Check for success code
+            if (isset($data['statusCode']) && $data['statusCode'] === '00') {
+                $invoice->update([
+                    'payment_url' => $data['paymentUrl'],
+                    'payment_token' => $data['reference'] ?? $merchantOrderId,
+                    'payment_method' => 'duitku'
+                ]);
+
+                return $data['paymentUrl'];
+            }
+            
+            throw new \Exception('Duitku API response status error: ' . ($data['statusMessage'] ?? 'Unknown Error'));
+        }
+
+        Log::error('Duitku API Error: ' . $response->body());
         throw new \Exception('Failed to generate payment link: ' . $response->body());
     }
 }

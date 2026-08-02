@@ -41,6 +41,9 @@ Route::get('/portal/invoice/{invoice}', [\App\Http\Controllers\PortalController:
     ->middleware('signed');
 
 Route::post('/webhooks/midtrans', [\App\Http\Controllers\PaymentWebhookController::class, 'midtrans'])->name('webhooks.midtrans');
+Route::post('/webhooks/xendit', [\App\Http\Controllers\PaymentWebhookController::class, 'xendit'])->name('webhooks.xendit');
+Route::post('/webhooks/duitku', [\App\Http\Controllers\PaymentWebhookController::class, 'duitku'])->name('webhooks.duitku');
+Route::post('/webhooks/moota', [\App\Http\Controllers\PaymentWebhookController::class, 'moota'])->name('webhooks.moota');
 
 
 
