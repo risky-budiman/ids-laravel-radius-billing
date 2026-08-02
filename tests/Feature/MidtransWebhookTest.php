@@ -165,6 +165,19 @@ class MidtransWebhookTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        $response->assertJson(['message' => 'Test notification successful']);
+        $response->assertJson(['message' => 'Notification processed successfully']);
+    }
+
+    public function test_midtrans_webhook_handles_empty_order_id()
+    {
+        $response = $this->postJson(route('webhooks.midtrans'), [
+            'status_code' => '200',
+            'status_message' => 'Success account association',
+            'payment_type' => 'gopay',
+            'account_id' => '97e6822c-a0bb-4b68-b7eb-116d41a54b42',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['message' => 'Notification processed successfully']);
     }
 }
