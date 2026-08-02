@@ -10,7 +10,11 @@ class NasController extends Controller
     public function index()
     {
         $routers = Nas::paginate(10);
-        return view('nas.index', compact('routers'));
+        $serverIp = request()->server('SERVER_ADDR');
+        if (!$serverIp || $serverIp === '127.0.0.1' || $serverIp === '::1') {
+            $serverIp = gethostbyname(gethostname()) ?: '192.168.1.100';
+        }
+        return view('nas.index', compact('routers', 'serverIp'));
     }
 
     public function create()
@@ -37,7 +41,11 @@ class NasController extends Controller
 
     public function edit(Nas $na) // Laravel translates NAS to Na but we can just use $router
     {
-        return view('nas.edit', ['router' => $na]);
+        $serverIp = request()->server('SERVER_ADDR');
+        if (!$serverIp || $serverIp === '127.0.0.1' || $serverIp === '::1') {
+            $serverIp = gethostbyname(gethostname()) ?: '192.168.1.100';
+        }
+        return view('nas.edit', ['router' => $na, 'serverIp' => $serverIp]);
     }
 
     public function update(Request $request, Nas $na)
