@@ -84,6 +84,15 @@ class Ticket extends Model
             if ($ticket->wasChanged(['status', 'assigned_to', 'resolution_notes'])) {
                 SendTicketToWhatsAppGroupJob::dispatch($ticket, 'updated');
             }
+
+            if ($ticket->wasChanged('status')) {
+                $customer = $ticket->customer;
+                if ($customer && $customer->phone) {
+                    $status = strtoupper($ticket->status);
+                    $cleanMsg = "Halo *{$customer->name}*,\n\nStatus tiket gangguan Anda *#{$ticket->ticket_number}* telah diperbarui menjadi *[{$status}]*.\n\nSilakan cek aplikasi mobile untuk informasi lebih lanjut.";
+                    \App\Jobs\SendCustomWhatsappMessageJob::dispatch($customer->phone, $cleanMsg);
+                }
+            }
         });
     }
 }
