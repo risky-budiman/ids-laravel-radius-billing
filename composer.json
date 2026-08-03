@@ -10,6 +10,7 @@
         "freedsx/snmp": "^0.5.1",
         "laravel/framework": "^13.0",
         "laravel/horizon": "^5.46",
+        "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0",
         "phpseclib/phpseclib": "^3.0"
     },

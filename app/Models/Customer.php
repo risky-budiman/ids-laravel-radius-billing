@@ -8,9 +8,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 
+use Laravel\Sanctum\HasApiTokens;
+
 class Customer extends Authenticatable
 {
-    use HasFactory, Notifiable, LogsActivity;
+    use HasApiTokens, HasFactory, Notifiable, LogsActivity;
 
     const STATUS_NEW = 'new';
     const STATUS_WAITING_ACTIVATION = 'waiting_activation';
