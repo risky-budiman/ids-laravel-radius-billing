@@ -15,9 +15,18 @@ class PaymentGatewayService
      */
     public function createTransaction(Invoice $invoice, $provider = null): ?string
     {
-        // 1. If we already have a generated URL for THIS specific provider, return it
+        // 1. If we already have a generated URL for THIS specific provider, check if it's expired (24 hours)
         if ($invoice->payment_url && $invoice->payment_method === $provider) {
-            return $invoice->payment_url;
+            if ($invoice->updated_at && $invoice->updated_at->diffInHours(now()) < 24) {
+                return $invoice->payment_url;
+            }
+            
+            // If expired, clear the cached URL so we can generate a new one
+            $invoice->update([
+                'payment_url' => null,
+                'payment_token' => null,
+                'payment_method' => null,
+            ]);
         }
 
         // 2. Locate the requested gateway OR the first active one if null
