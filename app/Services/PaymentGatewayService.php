@@ -74,11 +74,15 @@ class PaymentGatewayService
             : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
 
         // Set up the robust HTTP call
-        $response = Http::withHeaders([
-            'Accept' => 'application/json',
-            'Content-Type' => 'application/json',
-            'Authorization' => 'Basic ' . base64_encode($serverKey . ':') // Midtrans uses basic auth with empty password
-        ])->post($baseUrl, [
+        $response = Http::timeout(15)
+            ->when(app()->environment('local', 'testing'), function ($http) {
+                return $http->withoutVerifying();
+            })
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Basic ' . base64_encode($serverKey . ':') // Midtrans uses basic auth with empty password
+            ])->post($baseUrl, [
             'transaction_details' => [
                 'order_id' => $invoice->invoice_number . '-' . time(),
                 'gross_amount' => (int) $invoice->amount,
@@ -120,11 +124,15 @@ class PaymentGatewayService
             throw new \Exception('Xendit Secret Key is missing in Integration settings.');
         }
 
-        $response = Http::withHeaders([
-            'Accept' => 'application/json',
-            'Content-Type' => 'application/json',
-            'Authorization' => 'Basic ' . base64_encode($secretKey . ':')
-        ])->post('https://api.xendit.co/v2/invoices', [
+        $response = Http::timeout(15)
+            ->when(app()->environment('local', 'testing'), function ($http) {
+                return $http->withoutVerifying();
+            })
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Basic ' . base64_encode($secretKey . ':')
+            ])->post('https://api.xendit.co/v2/invoices', [
             'external_id' => $invoice->invoice_number . '-' . time(),
             'amount' => (int) $invoice->amount,
             'description' => 'Pembayaran Invoice ' . $invoice->invoice_number,
@@ -175,7 +183,11 @@ class PaymentGatewayService
         $amount = (int) $invoice->amount;
         $signature = hash('sha256', $merchantCode . $merchantOrderId . $amount . $apiKey);
 
-        $response = Http::post($baseUrl, [
+        $response = Http::timeout(15)
+            ->when(app()->environment('local', 'testing'), function ($http) {
+                return $http->withoutVerifying();
+            })
+            ->post($baseUrl, [
             'merchantCode' => $merchantCode,
             'paymentAmount' => $amount,
             'merchantOrderId' => $merchantOrderId,
