@@ -73,7 +73,7 @@ class AuthController extends Controller
                 'type' => $customer->type,
                 'package_name' => $customer->package ? $customer->package->name : null,
                 'package_price' => $customer->package ? $customer->package->price : null,
-                'package_speed' => $customer->package ? $customer->package->speed : null,
+                'package_speed' => $customer->package ? $customer->package->download_speed : null,
             ]
         ]);
     }
