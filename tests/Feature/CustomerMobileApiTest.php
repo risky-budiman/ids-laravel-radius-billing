@@ -44,8 +44,8 @@ class CustomerMobileApiTest extends TestCase
     public function test_customer_can_login_via_api()
     {
         $response = $this->postJson('/api/v1/customer/login', [
-            'username' => 'apicustomer',
-            'password' => 'secret123',
+            'customer_code' => 'CUST_API_001',
+            'phone' => '0899999999',
         ]);
 
         $response->assertStatus(200);
@@ -62,8 +62,8 @@ class CustomerMobileApiTest extends TestCase
     public function test_customer_cannot_login_with_invalid_credentials()
     {
         $response = $this->postJson('/api/v1/customer/login', [
-            'username' => 'apicustomer',
-            'password' => 'wrong_password',
+            'customer_code' => 'CUST_API_001',
+            'phone' => '0812345678',
         ]);
 
         $response->assertStatus(422); // Validation error

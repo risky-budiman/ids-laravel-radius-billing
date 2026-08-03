@@ -13,30 +13,17 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string',
+            'customer_code' => 'required|string',
+            'phone' => 'required|string',
         ]);
 
-        $customer = Customer::where('username', $request->username)->first();
+        $customer = Customer::where('customer_code', $request->customer_code)
+            ->where('phone', $request->phone)
+            ->first();
 
-        $isPasswordCorrect = false;
-        if ($customer) {
-            try {
-                if (Hash::check($request->password, $customer->password)) {
-                    $isPasswordCorrect = true;
-                }
-            } catch (\Throwable $e) {
-                // Ignore exception if password is not a valid hash, and proceed to plaintext check
-            }
-
-            if (!$isPasswordCorrect && $request->password === $customer->password) {
-                $isPasswordCorrect = true;
-            }
-        }
-
-        if (!$customer || !$isPasswordCorrect) {
+        if (!$customer) {
             throw ValidationException::withMessages([
-                'username' => ['Kredensial yang diberikan salah.'],
+                'customer_code' => ['ID Pelanggan atau Nomor HP terdaftar salah.'],
             ]);
         }
 
