@@ -158,7 +158,7 @@
                         
                         <div class="flex flex-col gap-3">
                             @forelse($activeGateways as $gw)
-                                <a href="{{ route('invoices.pay', ['invoice' => $invoice, 'gateway' => $gw->provider]) }}" 
+                                <a href="{{ route('portal.invoice.pay', ['invoice' => $invoice, 'gateway' => $gw->provider]) }}" 
                                    class="group flex items-center justify-between p-5 bg-white border border-slate-200 rounded-2xl hover:border-indigo-600 transition-all hover:shadow-lg active:scale-95">
                                     <div class="flex items-center space-x-4">
                                         <div class="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center font-black text-indigo-600 text-[10px] border border-slate-100 group-hover:bg-indigo-600 group-hover:text-white transition-colors">

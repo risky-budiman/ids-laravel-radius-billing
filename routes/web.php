@@ -40,6 +40,9 @@ Route::get('/portal/invoice/{invoice}', [\App\Http\Controllers\PortalController:
     ->name('portal.invoice')
     ->middleware('signed');
 
+Route::get('/portal/invoice/{invoice}/pay', [\App\Http\Controllers\InvoiceController::class, 'pay'])
+    ->name('portal.invoice.pay');
+
 Route::post('/webhooks/midtrans', [\App\Http\Controllers\PaymentWebhookController::class, 'midtrans'])->name('webhooks.midtrans');
 Route::post('/webhooks/xendit', [\App\Http\Controllers\PaymentWebhookController::class, 'xendit'])->name('webhooks.xendit');
 Route::post('/webhooks/duitku', [\App\Http\Controllers\PaymentWebhookController::class, 'duitku'])->name('webhooks.duitku');
