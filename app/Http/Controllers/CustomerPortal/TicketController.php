@@ -66,9 +66,13 @@ class TicketController extends Controller
         ]);
 
         // Send notification to admins/technicians
-        $staff = \App\Models\User::whereIn('role', ['administrator', 'admin', 'teknisi'])->get();
-        foreach ($staff as $admin) {
-            $admin->notify(new TicketCreatedNotification($ticket));
+        try {
+            $staff = \App\Models\User::whereIn('role', ['administrator', 'admin', 'teknisi'])->get();
+            foreach ($staff as $admin) {
+                $admin->notify(new TicketCreatedNotification($ticket));
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send TicketCreatedNotification (Web CustomerPortal) for ticket #' . $ticket->id . ': ' . $e->getMessage());
         }
 
         return redirect()->route('customer.tickets.index')->with('success', 'Tiket gangguan berhasil dikirim. Tim kami akan segera menindaklanjutinya.');
@@ -97,6 +101,10 @@ class TicketController extends Controller
         // Ensure customer can only reply to their own ticket
         if ($ticket->customer_id !== Auth::id()) {
             abort(403, 'Anda tidak memiliki akses ke tiket ini.');
+        }
+
+        if ($ticket->status === 'closed') {
+            return redirect()->back()->with('error', 'Tiket sudah ditutup. Anda tidak dapat mengirim balasan lagi.');
         }
 
         $request->validate([

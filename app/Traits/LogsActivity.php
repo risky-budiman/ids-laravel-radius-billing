@@ -64,8 +64,13 @@ trait LogsActivity
             $properties['new'] = array_diff_key($properties['new'], array_flip($sensitiveFields));
         }
 
+        $userId = null;
+        if (Auth::check() && Auth::user() instanceof \App\Models\User) {
+            $userId = Auth::id();
+        }
+
         ActivityLog::create([
-            'user_id' => Auth::id(), // Will be null for background jobs
+            'user_id' => $userId,
             'action' => $action,
             'description' => $description,
             'subject_type' => get_class($this),

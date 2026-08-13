@@ -60,9 +60,18 @@ class SyncUsage extends Command
         $limitGb = $package->fup_limit_gb;
         $fupSpeed = $package->fup_speed_limit;
 
-        // Jika pemakaian melebihi limit
-        if ($usageGb >= $limitGb) {
-            $this->warn("⚠️ Customer {$customer->username} reached FUP limit ({$usageGb}GB / {$limitGb}GB)");
+        // Calculate additional FUP quota from paid boosters this month
+        $boosterQuotaGb = \App\Models\CustomerBooster::where('customer_id', $customer->id)
+            ->where('payment_status', 'paid')
+            ->where('paid_at', '>=', now()->startOfMonth())
+            ->join('boosters', 'customer_boosters.booster_id', '=', 'boosters.id')
+            ->sum('boosters.quota_gb') ?: 0;
+
+        $effectiveLimitGb = $limitGb + $boosterQuotaGb;
+
+        // Jika pemakaian melebihi limit efektif (limit utama + booster)
+        if ($usageGb >= $effectiveLimitGb) {
+            $this->warn("⚠️ Customer {$customer->username} reached FUP limit ({$usageGb}GB / {$effectiveLimitGb}GB)");
             
             // Cek apakah kecepatan di radreply sudah di-FUP atau belum
             $currentReply = RadReply::where('username', $customer->username)

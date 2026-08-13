@@ -48,9 +48,13 @@ class TicketController extends Controller
         ]);
 
         // Send notification to admins/technicians
-        $staff = \App\Models\User::whereIn('role', ['administrator', 'admin', 'teknisi'])->get();
-        foreach ($staff as $admin) {
-            $admin->notify(new TicketCreatedNotification($ticket));
+        try {
+            $staff = \App\Models\User::whereIn('role', ['administrator', 'admin', 'teknisi'])->get();
+            foreach ($staff as $admin) {
+                $admin->notify(new TicketCreatedNotification($ticket));
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send TicketCreatedNotification for ticket #' . $ticket->id . ': ' . $e->getMessage());
         }
 
         return response()->json([
@@ -75,6 +79,12 @@ class TicketController extends Controller
     {
         $customer = $request->user();
         $ticket = Ticket::where('customer_id', $customer->id)->findOrFail($id);
+
+        if ($ticket->status === 'closed') {
+            return response()->json([
+                'message' => 'Tiket sudah ditutup. Anda tidak dapat mengirim balasan lagi.'
+            ], 400);
+        }
 
         $request->validate([
             'message' => 'required|string',
@@ -101,6 +111,40 @@ class TicketController extends Controller
         return response()->json([
             'message' => 'Balasan berhasil dikirim',
             'reply' => $reply
+        ]);
+    }
+
+    public function close(Request $request, $id)
+    {
+        $customer = $request->user();
+        $ticket = Ticket::where('customer_id', $customer->id)->findOrFail($id);
+
+        if ($ticket->status === 'closed') {
+            return response()->json([
+                'message' => 'Tiket sudah ditutup.'
+            ], 400);
+        }
+
+        $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
+        $ticket->update([
+            'status' => 'closed'
+        ]);
+
+        $msg = "⚙️ Tiket ditutup oleh pelanggan. Alasan: \"{$request->reason}\"";
+        
+        TicketReply::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => null,
+            'is_system' => true,
+            'message' => $msg,
+        ]);
+
+        return response()->json([
+            'message' => 'Tiket berhasil ditutup',
+            'ticket' => $ticket
         ]);
     }
 }

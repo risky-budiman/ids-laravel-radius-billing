@@ -9,28 +9,39 @@ class NotificationController extends Controller
 {
     public function index()
     {
-        $notifications = Auth::user()->unreadNotifications;
+        $user = Auth::user();
+        
+        // Fetch latest 10 unread and 10 read notifications
+        $unread = $user->unreadNotifications()->latest()->take(10)->get();
+        $read = $user->notifications()->whereNotNull('read_at')->latest()->take(10)->get();
         
         // Filter for Kasir: Only Billing/Invoice notifications
-        if (Auth::user()->isKasir()) {
-            $notifications = $notifications->filter(function($notif) {
+        if ($user->isKasir()) {
+            $unread = $unread->filter(function($notif) {
+                return str_contains($notif->type, 'Invoice');
+            });
+            $read = $read->filter(function($notif) {
                 return str_contains($notif->type, 'Invoice');
             });
         }
 
-        // Group by type (shortened name of notification class)
-        $grouped = $notifications->groupBy(function($notif) {
-            $class = explode('\\', $notif->type);
-            $className = end($class);
-            
-            if (str_contains($className, 'Ticket')) return 'Tickets';
-            if (str_contains($className, 'Invoice')) return 'Billing';
-            if (str_contains($className, 'Inventory')) return 'Inventory';
-            
-            return 'General';
+        // Merge and sort by created_at desc within their respective scopes, then group
+        $all = $unread->concat($read);
+
+        $grouped = $all->groupBy(function($notif) {
+            return $notif->read_at === null ? 'Belum Dibaca' : 'Sudah Dibaca';
         });
 
-        return response()->json($grouped);
+        // Ensure keys order: 'Belum Dibaca' first, then 'Sudah Dibaca'
+        $orderedGrouped = collect([]);
+        if ($grouped->has('Belum Dibaca')) {
+            $orderedGrouped->put('Belum Dibaca', $grouped->get('Belum Dibaca'));
+        }
+        if ($grouped->has('Sudah Dibaca')) {
+            $orderedGrouped->put('Sudah Dibaca', $grouped->get('Sudah Dibaca'));
+        }
+
+        return response()->json($orderedGrouped);
     }
 
     public function markAsRead(Request $request)

@@ -35,6 +35,38 @@ class InvoiceService
                 'paid_at' => now(),
             ]);
 
+            // Handle Booster Activation on payment
+            if (str_starts_with($invoice->invoice_number, 'INV-BOOST-')) {
+                try {
+                    $purchaseId = (int) str_replace('INV-BOOST-', '', $invoice->invoice_number);
+                    $purchase = \App\Models\CustomerBooster::find($purchaseId);
+                    if ($purchase && $purchase->payment_status !== 'paid') {
+                        $purchase->update([
+                            'payment_status' => 'paid',
+                            'paid_at' => now(),
+                        ]);
+
+                        // Reset RADIUS usage for active sessions
+                        \App\Models\Radius\RadAcct::where('username', $invoice->customer->username)
+                            ->whereNull('acctstoptime')
+                            ->update([
+                                'acctinputoctets' => 0,
+                                'acctoutputoctets' => 0
+                            ]);
+
+                        // Send CoA Disconnect
+                        $nas = \App\Models\Radius\Nas::first();
+                        if ($nas) {
+                            $coa = new \App\Services\RadiusCoAService();
+                            $coa->disconnect($nas->nasname, $nas->secret, $invoice->customer->username);
+                        }
+                        Log::info("Booster purchase {$purchaseId} activated via payment webhook for {$invoice->customer->username}");
+                    }
+                } catch (\Throwable $e) {
+                    Log::error("Failed to activate booster for invoice {$invoice->invoice_number}: " . $e->getMessage());
+                }
+            }
+
             // 1. Record to Treasury
             if (!$bankAccountId) {
                 $cashAccount = BankAccount::firstOrCreate(

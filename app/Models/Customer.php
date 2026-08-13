@@ -52,6 +52,7 @@ class Customer extends Authenticatable
         'name',
         'email',
         'phone',
+        'expo_push_token',
         'address',
         'latitude',
         'longitude',

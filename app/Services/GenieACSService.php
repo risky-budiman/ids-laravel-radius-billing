@@ -125,16 +125,36 @@ class GenieACSService
 
     /**
      * Generic method to push a task to a device.
+     * 
+     * @param string $deviceId  The device ID
+     * @param array  $task      The task payload (e.g. ['name' => 'setParameterValues', ...])
+     * @param int    $phpTimeout  PHP HTTP client timeout in seconds
+     * @param bool   $connectionRequest  Whether to also send a connection request to wake the device
+     * @param int    $genieTimeoutMs  How long GenieACS should wait for device response (in milliseconds). 0 = don't wait.
      */
-    public function pushTask(string $deviceId, array $task)
+    public function pushTask(string $deviceId, array $task, int $phpTimeout = 30, bool $connectionRequest = true, int $genieTimeoutMs = 5000)
     {
-        return $this->request('POST', "devices/" . urlencode($deviceId) . "/tasks", $task);
+        $endpoint = "devices/" . urlencode($deviceId) . "/tasks";
+        
+        // Build GenieACS query parameters
+        $queryParts = [];
+        if ($genieTimeoutMs > 0) {
+            $queryParts[] = "timeout=" . $genieTimeoutMs;
+        }
+        if ($connectionRequest) {
+            $queryParts[] = "connection_request";
+        }
+        if (!empty($queryParts)) {
+            $endpoint .= '?' . implode('&', $queryParts);
+        }
+        
+        return $this->request('POST', $endpoint, $task, $phpTimeout);
     }
 
     /**
      * Helper to perform HTTP requests.
      */
-    protected function request(string $method, string $endpoint, array $data = [])
+    protected function request(string $method, string $endpoint, array $data = [], int $timeout = 60)
     {
         if (!$this->baseUrl) {
             throw new Exception("ACS Server URL not set.");
@@ -143,7 +163,7 @@ class GenieACSService
         $url = rtrim($this->baseUrl, '/') . '/' . ltrim($endpoint, '/');
 
         try {
-            $pending = Http::timeout(60)->connectTimeout(30);
+            $pending = Http::timeout($timeout)->connectTimeout(min(10, $timeout));
             
             if ($method === 'GET') {
                 $response = $pending->acceptJson()->get($url);
@@ -157,7 +177,8 @@ class GenieACSService
                 $response = $pending->asJson()->acceptJson()->send($method, $url, ['json' => $data]);
             }
 
-            if ($response->successful()) {
+            // For task pushes, both 200 (executed) and 202 (queued/pending) are valid
+            if ($response->successful() || $response->status() === 202) {
                 $total = $response->header('total-count') ?? $response->header('X-Total-Count');
                 return [
                     'data' => $response->json(),

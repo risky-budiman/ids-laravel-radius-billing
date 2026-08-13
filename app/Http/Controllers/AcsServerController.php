@@ -67,7 +67,7 @@ class AcsServerController extends Controller
         $servers = \App\Models\AcsServer::where('is_active', true)->get();
         $serverId = $request->get('server_id');
         $search = $request->get('q');
-        $perPage = 25;
+        $perPage = in_array((int)$request->get('limit'), [10, 25, 50, 100]) ? (int)$request->get('limit') : 25;
         $page = $request->get('page', 1);
         $skip = ($page - 1) * $perPage;
 
@@ -82,11 +82,14 @@ class AcsServerController extends Controller
                 
                 $query = [];
                 if ($search) {
-                    // Search by _id or Serial Number using regex
+                    // Search by _id, Serial Number, or PPPoE Username using regex
                     $query['$or'] = [
                         ['_id' => '/' . $search . '/i'],
                         ['Device.DeviceInfo.SerialNumber' => '/' . $search . '/i'],
-                        ['InternetGatewayDevice.DeviceInfo.SerialNumber' => '/' . $search . '/i']
+                        ['InternetGatewayDevice.DeviceInfo.SerialNumber' => '/' . $search . '/i'],
+                        ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username' => '/' . $search . '/i'],
+                        ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.Username' => '/' . $search . '/i'],
+                        ['Device.PPP.Interface.1.Username' => '/' . $search . '/i'],
                     ];
                 }
 
@@ -99,74 +102,55 @@ class AcsServerController extends Controller
                     '_deviceId._SerialNumber',
                     '_deviceId._ProductClass',
                     '_deviceId._Manufacturer',
+                    // Serial Number
                     'Device.DeviceInfo.SerialNumber',
                     'InternetGatewayDevice.DeviceInfo.SerialNumber',
-                    'VirtualParameters.ProductClass', 
+                    // Product Class / Model
                     'Device.DeviceInfo.ProductClass',
                     'InternetGatewayDevice.DeviceInfo.ProductClass',
                     'Device.DeviceInfo.ModelName',
                     'InternetGatewayDevice.DeviceInfo.ModelName',
-                    'InternetGatewayDevice.DeviceInfo.HardwareVersion',
-                    'Device.DeviceInfo.HardwareVersion',
-                    'InternetGatewayDevice.DeviceInfo.SoftwareVersion',
-                    'Device.DeviceInfo.SoftwareVersion',
-                    'VirtualParameters.IP',
-                    'VirtualParameters.wanip',
-                    'VirtualParameters.pppUsername',
-                    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.SSID',
-                    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.Enable',
-                    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.Channel',
-                    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.BeaconType',
-                    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.KeyPassphrase',
-                    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.PreSharedKey.1.PreSharedKey',
-                    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.2.SSID',
-                    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.2.Enable',
-                    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.2.Channel',
-                    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.2.BeaconType',
-                    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.2.KeyPassphrase',
-                    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.5.SSID',
-                    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.5.Enable',
-                    'Device.WiFi.SSID.1.SSID',
-                    'Device.WiFi.Radio.1.Enable',
-                    'Device.WiFi.Radio.1.Channel',
-                    'Device.WiFi.Radio.1.OperatingFrequencyBand',
-                    'Device.WiFi.AccessPoint.1.Security.KeyPassphrase',
-                    'Device.WiFi.SSID.2.SSID',
-                    'Device.WiFi.Radio.2.Enable',
-                    'Device.WiFi.Radio.2.Channel',
-                    'Device.WiFi.Radio.2.OperatingFrequencyBand',
-                    'Device.WiFi.AccessPoint.2.Security.KeyPassphrase',
-                    'InternetGatewayDevice.LANDevice.1.Hosts.HostNumberOfEntries',
-                    'Device.Hosts.HostNumberOfEntries',
-                    'InternetGatewayDevice.LANDevice.1.Hosts.Host.1.HostName',
-                    'InternetGatewayDevice.LANDevice.1.Hosts.Host.1.IPAddress',
-                    'InternetGatewayDevice.LANDevice.1.Hosts.Host.1.MACAddress',
-                    'InternetGatewayDevice.LANDevice.1.Hosts.Host.2.HostName',
-                    'InternetGatewayDevice.LANDevice.1.Hosts.Host.2.IPAddress',
-                    'InternetGatewayDevice.LANDevice.1.Hosts.Host.2.MACAddress',
-                    'InternetGatewayDevice.LANDevice.1.Hosts.Host.3.HostName',
-                    'InternetGatewayDevice.LANDevice.1.Hosts.Host.3.IPAddress',
-                    'InternetGatewayDevice.LANDevice.1.Hosts.Host.3.MACAddress',
-                    'Device.Hosts.Host.1.HostName',
-                    'Device.Hosts.Host.1.IPAddress',
-                    'Device.Hosts.Host.1.MACAddress',
-                    'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.X_HW_VLAN',
+                    // WAN IP - Standard TR-069 paths
                     'Device.IP.Interface.1.IPv4Address.1.IPAddress',
+                    'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress',
+                    'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.ExternalIPAddress',
+                    'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.ExternalIPAddress',
                     'Device.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress',
                     'Device.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.ExternalIPAddress',
-                    'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress',
-                    'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.ExternalIPAddress'
+                    // PPPoE Username - Standard TR-069 paths
+                    'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username',
+                    'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.Username',
+                    'Device.PPP.Interface.1.Username',
+                    // Rx Power / Optical Signal - Vendor-specific standard paths
+                    'InternetGatewayDevice.WANDevice.1.X_GponInterafceConfig.RXPower',
+                    'InternetGatewayDevice.WANDevice.1.X_HW_OpticalInfo.RxPower',
+                    'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_ZTE-COM_WANPONInterfaceConfig.RXPower',
+                    'InternetGatewayDevice.WANDevice.1.X_ZTE-COM_Optical.RxPower',
+                    'InternetGatewayDevice.X_ALU_OntOpticalParam.RXPower',
+                    'Device.Optical.Interface.1.OpticalSignalLevel',
+                    'Device.Optical.Interface.1.OpticalPowerRx',
+                    // VirtualParameters fallback (backward compatible if configured)
+                    'VirtualParameters.ProductClass', 
+                    'VirtualParameters.IP',
+                    'VirtualParameters.wanip',
+                    'VirtualParameters.getponrx',
+                    'VirtualParameters.pppUsername',
                 ];
                 
                 $response = $service->getDevices($query, $projection, $skip, $perPage);
                 $devices = $response['data'];
                 $apiTotal = $response['total'];
                 
-                // If API total is missing or 0 but we have devices, use devices count as fallback
-                if (($apiTotal === null || $apiTotal == 0) && count($devices) > 0) {
-                    $total = count($devices) < $perPage ? count($devices) : $skip + count($devices) + 1;
+                if ($apiTotal === null || $apiTotal == 0) {
+                    try {
+                        // Perform a lightweight projection query for IDs to determine exact count
+                        $countResponse = $service->getDevices($query, ['_id'], 0, 10000);
+                        $total = count($countResponse['data'] ?? []);
+                    } catch (\Exception $e) {
+                        $total = count($devices);
+                    }
                 } else {
-                    $total = $apiTotal ?? 0;
+                    $total = $apiTotal;
                 }
             } catch (\Exception $e) {
                 $error = "Failed to fetch devices from {$selectedServer->name}: " . $e->getMessage();
@@ -257,37 +241,68 @@ class AcsServerController extends Controller
         $server = \App\Models\AcsServer::findOrFail($serverId);
         $service = \App\Services\GenieACSService::forServer($server);
 
+        // Fetch device details to inspect schema and manufacturer
+        $isTr181 = false;
+        $isHuawei = false;
+        try {
+            $deviceResponse = $service->getDevice($deviceId);
+            $deviceData = $deviceResponse['data'] ?? null;
+            if ($deviceData) {
+                // Detect TR-181 schema
+                if (isset($deviceData['Device'])) {
+                    $isTr181 = true;
+                }
+                
+                // Detect manufacturer (e.g. Huawei, ZTE)
+                $manufacturer = $deviceData['_deviceId']['_Manufacturer']
+                    ?? $deviceData['DeviceID']['Manufacturer']['_value']
+                    ?? $deviceData['Device']['DeviceInfo']['Manufacturer']['_value']
+                    ?? '';
+                if (stripos($manufacturer, 'Huawei') !== false) {
+                    $isHuawei = true;
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning("Could not pre-fetch device schema for {$deviceId}: " . $e->getMessage());
+        }
+
         $params = [];
-        
-        // PPPoE Settings (Instance doesn't usually apply here)
-        if ($request->filled('ppp_username')) {
-            $params['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username'] = $request->ppp_username;
-            $params['Device.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username'] = $request->ppp_username;
-        }
 
-        if ($request->filled('ppp_password')) {
-            $params['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Password'] = $request->ppp_password;
-            $params['Device.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Password'] = $request->ppp_password;
-        }
-
-        if ($request->filled('vlan_id')) {
-            $params['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.X_HW_VLAN'] = $request->vlan_id;
-        }
-
-        // WLAN Settings (Using instance)
-        if ($request->filled('wifi_ssid')) {
-            $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.SSID"] = $request->wifi_ssid;
-            $params["Device.WiFi.SSID.{$instance}.SSID"] = $request->wifi_ssid;
-            // Force enable when updating
-            $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.Enable"] = "1";
-            $params["Device.WiFi.Radio.{$instance}.Enable"] = "1";
-        }
-
-        if ($request->filled('wifi_password')) {
-            $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.PreSharedKey.1.PreSharedKey"] = $request->wifi_password;
-            $params["Device.WiFi.AccessPoint.{$instance}.Security.KeyPassphrase"] = $request->wifi_password;
-            $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.KeyPassphrase"] = $request->wifi_password;
-            $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.X_ZTE-COM_KeyPassphrase"] = $request->wifi_password;
+        if ($isTr181) {
+            // TR-181 Schema Parameters
+            if ($request->filled('ppp_username')) {
+                $params['Device.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username'] = $request->ppp_username;
+            }
+            if ($request->filled('ppp_password')) {
+                $params['Device.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Password'] = $request->ppp_password;
+            }
+            if ($request->filled('wifi_ssid')) {
+                $params["Device.WiFi.SSID.{$instance}.SSID"] = $request->wifi_ssid;
+                $params["Device.WiFi.Radio.{$instance}.Enable"] = "1";
+            }
+            if ($request->filled('wifi_password')) {
+                $params["Device.WiFi.AccessPoint.{$instance}.Security.KeyPassphrase"] = $request->wifi_password;
+            }
+        } else {
+            // TR-069 Schema Parameters
+            if ($request->filled('ppp_username')) {
+                $params['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username'] = $request->ppp_username;
+            }
+            if ($request->filled('ppp_password')) {
+                $params['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Password'] = $request->ppp_password;
+            }
+            if ($request->filled('vlan_id')) {
+                $params['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.X_HW_VLAN'] = $request->vlan_id;
+            }
+            if ($request->filled('wifi_ssid')) {
+                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.SSID"] = $request->wifi_ssid;
+                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.Enable"] = "1";
+            }
+            if ($request->filled('wifi_password')) {
+                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.PreSharedKey.1.PreSharedKey"] = $request->wifi_password;
+                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.KeyPassphrase"] = $request->wifi_password;
+                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.X_ZTE-COM_KeyPassphrase"] = $request->wifi_password;
+            }
         }
 
         if (empty($params)) {
@@ -295,22 +310,50 @@ class AcsServerController extends Controller
         }
 
         try {
-            // Huawei specific save config (important for HG8546M)
-            $params["InternetGatewayDevice.Services.X_Huawei_SelfDefined.SaveConfig"] = "1";
+            // Appended only for Huawei devices to avoid fault 9005 on ZTE/Fiberhome
+            if ($isHuawei) {
+                $params["InternetGatewayDevice.Services.X_Huawei_SelfDefined.SaveConfig"] = "1";
+            }
 
-            // Push set parameters task
-            $service->setParameters($deviceId, $params);
-            
-            // Try to nudge the device to inform immediately
+            // Push set parameters task (includes ?timeout=5000&connection_request automatically)
             try {
-                $service->pushTask($deviceId, ['name' => 'connectionRequest']);
+                $service->setParameters($deviceId, $params);
             } catch (\Exception $e) {
-                // Ignore connection request failures
+                // Task may still be queued in GenieACS even if we get a timeout/empty reply
+                \Illuminate\Support\Facades\Log::warning("setParameters response issue (task likely queued): " . $e->getMessage());
+            }
+
+            // Queue a getParameterValues task for only the parent objects of updated parameters to refresh/summon them safely
+            try {
+                $refreshPaths = [];
+                foreach ($params as $path => $value) {
+                    if (stripos($path, 'SaveConfig') !== false) {
+                        continue;
+                    }
+                    
+                    // Split path and reconstruct parent path with trailing dot
+                    $parts = explode('.', $path);
+                    if (count($parts) > 1) {
+                        array_pop($parts); // Remove leaf parameter name
+                        $parentPath = implode('.', $parts) . '.';
+                        $refreshPaths[$parentPath] = true;
+                    }
+                }
+                
+                if (!empty($refreshPaths)) {
+                    $service->pushTask($deviceId, [
+                        'name' => 'getParameterValues',
+                        'parameterNames' => array_keys($refreshPaths)
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Task may still be queued even on timeout
+                \Illuminate\Support\Facades\Log::warning("getParameterValues response issue (task likely queued): " . $e->getMessage());
             }
             
             return back()->with('success', "Configuration task pushed. Check 'Pending Tasks' below. The ONT will apply changes when it connects.");
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("SSID Update Error for {$deviceId}: " . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error("SSID/Config Update Error for {$deviceId}: " . $e->getMessage());
             return back()->with('error', "Failed to push configuration: " . $e->getMessage());
         }
     }
@@ -342,13 +385,24 @@ class AcsServerController extends Controller
         $service = \App\Services\GenieACSService::forServer($server);
 
         try {
-            // refreshObject with empty name refreshes EVERYTHING
+            // refreshObject with empty name refreshes EVERYTHING (includes ?timeout=5000&connection_request)
             $service->pushTask($deviceId, ['name' => 'refreshObject', 'objectName' => '']);
-            // Also push a connection request
-            $service->pushTask($deviceId, ['name' => 'connectionRequest']);
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Sync task pushed in background. Device is refreshing.'
+                ]);
+            }
             
             return back()->with('success', "Sync task pushed. Please wait a few seconds and refresh the page.");
         } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Failed to sync: " . $e->getMessage()
+                ], 500);
+            }
             return back()->with('error', "Failed to sync: " . $e->getMessage());
         }
     }

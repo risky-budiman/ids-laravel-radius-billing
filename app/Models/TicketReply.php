@@ -10,8 +10,15 @@ class TicketReply extends Model
         'ticket_id',
         'user_id',
         'message',
-        'attachment'
+        'attachment',
+        'is_system'
     ];
+
+    protected $casts = [
+        'is_system' => 'boolean'
+    ];
+
+    protected $touches = ['ticket'];
 
     protected static function boot()
     {
@@ -20,6 +27,10 @@ class TicketReply extends Model
         static::created(function ($reply) {
             $ticket = $reply->ticket;
             if (!$ticket) return;
+
+            if ($reply->is_system) {
+                return;
+            }
 
             $customer = $ticket->customer;
             if (!$customer) return;
@@ -32,6 +43,14 @@ class TicketReply extends Model
                     $cleanMsg = "Halo *{$customer->name}*,\n\nAda balasan baru dari CS/Teknisi IDS untuk tiket *#{$ticket->ticket_number}*:\n\n\"{$reply->message}\"\n\nSilakan cek aplikasi mobile untuk membaca dan membalas pesan.";
                     \App\Jobs\SendCustomWhatsappMessageJob::dispatch($customer->phone, $cleanMsg);
                 }
+                if ($customer->expo_push_token) {
+                    \App\Models\Ticket::sendExpoPushNotification(
+                        $customer->expo_push_token,
+                        "Balasan Tiket #" . $ticket->ticket_number,
+                        $reply->message,
+                        ['ticket_id' => $ticket->id]
+                    );
+                }
             } else {
                 // Notify Staff/Technician Group
                 $settingKey = "whatsapp_group_id_{$ticket->type}";
@@ -41,9 +60,22 @@ class TicketReply extends Model
                     \App\Jobs\SendCustomWhatsappMessageJob::dispatch($groupId, $cleanMsg);
                 }
 
-                // Also notify assigned technician via database notification if assigned
+                // Also notify assigned technician via database notification if assigned, otherwise notify all staff
                 if ($ticket->assigned_to && $ticket->assignee) {
-                    $ticket->assignee->notify(new \App\Notifications\TicketCreatedNotification($ticket));
+                    try {
+                        $ticket->assignee->notify(new \App\Notifications\TicketCreatedNotification($ticket));
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::error('Failed to notify assignee for ticket #' . $ticket->id . ': ' . $e->getMessage());
+                    }
+                } else {
+                    try {
+                        $staff = \App\Models\User::whereIn('role', ['administrator', 'admin', 'teknisi'])->get();
+                        foreach ($staff as $admin) {
+                            $admin->notify(new \App\Notifications\TicketCreatedNotification($ticket));
+                        }
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::error('Failed to send TicketCreatedNotification (reply) to staff for ticket #' . $ticket->id . ': ' . $e->getMessage());
+                    }
                 }
             }
         });

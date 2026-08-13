@@ -128,15 +128,54 @@
                 unreadCount: 0,
                 isOpen: false,
                 fetchNotifications() {
-                    fetch('/api/notifications')
+                    fetch('{{ route('api.notifications') }}', {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    })
                         .then(res => res.json())
                         .then(data => {
+                            const prevUnread = this.unreadCount;
                             this.notifications = data;
-                            this.unreadCount = Object.values(data).reduce((acc, current) => acc + current.length, 0);
+                            this.unreadCount = data['Belum Dibaca'] ? data['Belum Dibaca'].length : 0;
+                            if (this.unreadCount > prevUnread) {
+                                this.playNotificationSound();
+                            }
                         });
                 },
+                playNotificationSound() {
+                    try {
+                        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                        if (!AudioContextClass) return;
+                        const audioCtx = new AudioContextClass();
+                        
+                        const playTone = (freq, start, duration, type = 'sine', volume = 0.25) => {
+                            const osc = audioCtx.createOscillator();
+                            const gainNode = audioCtx.createGain();
+                            osc.connect(gainNode);
+                            gainNode.connect(audioCtx.destination);
+                            
+                            osc.type = type;
+                            osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
+                            
+                            gainNode.gain.setValueAtTime(volume, audioCtx.currentTime + start);
+                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + start + duration);
+                            
+                            osc.start(audioCtx.currentTime + start);
+                            osc.stop(audioCtx.currentTime + start + duration);
+                        };
+                        
+                        // Play a loud C-major arpeggio chime (melodic & easily heard)
+                        playTone(523.25, 0.0, 0.4, 'sine', 0.25);      // C5 (Base soft tone)
+                        playTone(659.25, 0.08, 0.4, 'sine', 0.25);     // E5 (Middle soft tone)
+                        playTone(783.99, 0.16, 0.4, 'sine', 0.25);     // G5 (High soft tone)
+                        playTone(1046.50, 0.24, 0.6, 'triangle', 0.18); // C6 (Brighter chime tone for sharpness)
+                    } catch (e) {
+                        console.error('Synthetic sound generation failed:', e);
+                    }
+                },
                 markAllRead() {
-                    fetch('/api/notifications/read', {
+                    fetch('{{ route('api.notifications.read') }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -149,7 +188,7 @@
                     });
                 },
                 markAsRead(id) {
-                    fetch('/api/notifications/read', {
+                    fetch('{{ route('api.notifications.read') }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -160,7 +199,7 @@
                         this.fetchNotifications();
                     });
                 }
-            }" x-init="fetchNotifications(); setInterval(() => fetchNotifications(), 30000)">
+            }" x-init="fetchNotifications(); setInterval(() => fetchNotifications(), 5000)">
                 <button @click="isOpen = !isOpen" class="p-2 text-gray-500 rounded-full hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors relative focus:outline-none">
                     <span x-show="unreadCount > 0" class="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full ring-2 ring-white dark:ring-gray-900 flex items-center justify-center" x-text="unreadCount"></span>
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
@@ -193,14 +232,24 @@
                                 <div class="bg-gray-50 dark:bg-gray-900/50 px-4 py-1.5 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest border-y border-gray-100 dark:border-gray-700" x-text="group"></div>
                                 <template x-for="notif in items" :key="notif.id">
                                     <div @click="if(notif.data.url) { markAsRead(notif.id); window.location.href = notif.data.url; }" 
-                                         class="flex items-start px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors border-b last:border-0 border-gray-100 dark:border-gray-700 relative group/item cursor-pointer">
+                                         class="flex items-start px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors border-b last:border-0 border-gray-100 dark:border-gray-700 relative group/item cursor-pointer"
+                                         :class="notif.read_at ? 'opacity-60 bg-gray-50/30' : ''">
                                         <div class="flex-1">
-                                            <p class="text-xs text-gray-900 dark:text-gray-100 font-medium" x-text="notif.data.message"></p>
+                                            <p class="text-xs text-gray-900 dark:text-gray-100 font-medium" :class="notif.read_at ? 'text-gray-400' : 'text-gray-900 dark:text-gray-100'" x-text="notif.data.message"></p>
                                             <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1" x-text="new Date(notif.created_at).toLocaleString()"></p>
                                         </div>
-                                        <button @click.stop="markAsRead(notif.id)" class="ml-2 p-1 text-gray-400 dark:text-gray-500 hover:text-indigo-600 transition-colors">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        </button>
+                                        <div class="ml-2 flex items-center">
+                                            <template x-if="!notif.read_at">
+                                                <button @click.stop="markAsRead(notif.id)" class="p-1 text-gray-400 dark:text-gray-500 hover:text-indigo-600 transition-colors" title="Tandai sudah dibaca">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                </button>
+                                            </template>
+                                            <template x-if="notif.read_at">
+                                                <span class="p-1 text-indigo-600 dark:text-indigo-400" title="Sudah dibaca">
+                                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 13l4 4L18 3" /><path d="M8 17l4 4L22 7" /></svg>
+                                                </span>
+                                            </template>
+                                        </div>
                                     </div>
                                 </template>
                             </div>

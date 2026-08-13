@@ -52,6 +52,26 @@ class Ticket extends Model
         return in_array($this->status, ['open', 'in_progress']) && $this->created_at->diffInHours(now()) >= 24;
     }
 
+    /**
+     * Send push notification via Expo Push API
+     */
+    public static function sendExpoPushNotification($toToken, $title, $body, $data = [])
+    {
+        if (!$toToken) return;
+
+        try {
+            \Illuminate\Support\Facades\Http::timeout(10)->post('https://exp.host/--/api/v2/push/send', [
+                'to' => $toToken,
+                'title' => $title,
+                'body' => $body,
+                'sound' => 'default',
+                'data' => $data,
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Expo Push Notification Failed: ' . $e->getMessage());
+        }
+    }
+
     // Auto-generate ticket number and handle notifications
     protected static function boot()
     {
@@ -86,12 +106,57 @@ class Ticket extends Model
             }
 
             if ($ticket->wasChanged('status')) {
+                $oldStatus = $ticket->getOriginal('status');
+                $newStatus = $ticket->status;
+                
+                $ticket->replies()->create([
+                    'message' => "⚙️ Status tiket diperbarui dari '" . strtoupper($oldStatus) . "' menjadi '" . strtoupper($newStatus) . "'.",
+                    'is_system' => true,
+                ]);
+
                 $customer = $ticket->customer;
-                if ($customer && $customer->phone) {
-                    $status = strtoupper($ticket->status);
-                    $cleanMsg = "Halo *{$customer->name}*,\n\nStatus tiket gangguan Anda *#{$ticket->ticket_number}* telah diperbarui menjadi *[{$status}]*.\n\nSilakan cek aplikasi mobile untuk informasi lebih lanjut.";
-                    \App\Jobs\SendCustomWhatsappMessageJob::dispatch($customer->phone, $cleanMsg);
+                if ($customer) {
+                    if ($customer->phone) {
+                        $status = strtoupper($ticket->status);
+                        $cleanMsg = "Halo *{$customer->name}*,\n\nStatus tiket gangguan Anda *#{$ticket->ticket_number}* telah diperbarui menjadi *[{$status}]*.\n\nSilakan cek aplikasi mobile untuk informasi lebih lanjut.";
+                        \App\Jobs\SendCustomWhatsappMessageJob::dispatch($customer->phone, $cleanMsg);
+                    }
+                    if ($customer->expo_push_token) {
+                        self::sendExpoPushNotification(
+                            $customer->expo_push_token,
+                            "Status Tiket Diperbarui",
+                            "Status tiket #" . $ticket->ticket_number . " Anda diubah menjadi [" . strtoupper($ticket->status) . "].",
+                            ['ticket_id' => $ticket->id]
+                        );
+                    }
                 }
+            }
+
+            if ($ticket->wasChanged('assigned_to')) {
+                $newAssignee = $ticket->assignee;
+                $assigneeName = $newAssignee ? $newAssignee->name : 'Belum Ditugaskan / Dilepas';
+                
+                $ticket->replies()->create([
+                    'message' => "👤 Tiket ditugaskan kepada: " . $assigneeName,
+                    'is_system' => true,
+                ]);
+
+                $customer = $ticket->customer;
+                if ($customer && $customer->expo_push_token) {
+                    self::sendExpoPushNotification(
+                        $customer->expo_push_token,
+                        "Petugas Ditugaskan",
+                        "Tiket #" . $ticket->ticket_number . " Anda sekarang ditangani oleh: " . ($newAssignee ? $newAssignee->name : 'staf pendukung') . ".",
+                        ['ticket_id' => $ticket->id]
+                    );
+                }
+            }
+
+            if ($ticket->wasChanged('resolution_notes') && $ticket->resolution_notes) {
+                $ticket->replies()->create([
+                    'message' => "🔧 Catatan Solusi: " . $ticket->resolution_notes,
+                    'is_system' => true,
+                ]);
             }
         });
     }
