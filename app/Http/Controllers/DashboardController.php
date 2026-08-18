@@ -22,9 +22,16 @@ class DashboardController extends Controller
         $unpaidInvoices = 0;
         $revenue = 0;
         $cashRevenue = 0;
+        $totalCashBalance = 0;
         $expense = 0;
         $profit = 0;
         $cashProfit = 0;
+        $mtdIssuedInvoiceAmount = 0;
+        $mtdPaidInvoiceAmount = 0;
+        $totalUnpaidInvoiceAmount = 0;
+        $mtdPaidTax = 0;
+        $netTaxLiability = 0;
+        $totalTaxPaidToGovt = 0;
 
         if (class_exists(Invoice::class)) {
             $unpaidInvoices = Invoice::where('status', 'unpaid')->count();
