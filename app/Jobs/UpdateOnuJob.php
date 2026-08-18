@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Olt;
-use App\Services\Network\ZteOltProvisioningService;
+use App\Services\Network\OltGateway;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -39,28 +39,28 @@ class UpdateOnuJob implements ShouldQueue
         $olt = Olt::find($this->oltId);
         if (!$olt) return;
 
-        $provisioning = new ZteOltProvisioningService($olt);
+        $gateway = new OltGateway($olt);
 
         $parts = explode('.', ltrim($this->onuIndex, '.'));
         if (count($parts) < 4) return;
 
-        $shelf = $parts[0];
-        $slot = $parts[1];
-        $port = $parts[2];
-        $onuId = $parts[3];
+        $shelf = (int)$parts[0];
+        $slot = (int)$parts[1];
+        $port = (int)$parts[2];
+        $onuId = (int)$parts[3];
 
         Log::info("Executing OLT {$this->action} for ONU index: {$this->onuIndex}");
 
         switch ($this->action) {
             case 'suspend':
-                $provisioning->suspendOnu($shelf, $slot, $port, $onuId);
+                $gateway->suspendOnu($shelf, $slot, $port, $onuId);
                 break;
             case 'resume':
-                $provisioning->resumeOnu($shelf, $slot, $port, $onuId);
+                $gateway->resumeOnu($shelf, $slot, $port, $onuId);
                 break;
             case 'update_speed':
                 if ($this->package) {
-                    $provisioning->updateOnuProfile($shelf, $slot, $port, $onuId, $this->package);
+                    $gateway->updateOnuProfile($shelf, $slot, $port, $onuId, $this->package);
                 }
                 break;
         }

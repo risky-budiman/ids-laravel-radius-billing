@@ -5,7 +5,7 @@ namespace App\Jobs;
 use App\Events\OltPortDataFetched;
 use App\Models\Olt;
 use App\Models\OltPonPort;
-use App\Services\Network\ZteOltProvisioningService;
+use App\Services\Network\OltGateway;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -39,10 +39,10 @@ class FetchOltPortDataJob implements ShouldQueue
             $slot = $this->port->slot;
             $pon_port = $this->port->pon_port;
 
-            Log::info("Starting background fetch for OLT: {$this->olt->name}, Port: {$shelf}/{$slot}/{$pon_port}");
+            Log::info("Starting SNMP fetch for OLT: {$this->olt->name}, Port: {$shelf}/{$slot}/{$pon_port}");
             
-            $service = new ZteOltProvisioningService($this->olt);
-            $onus = $service->getOnusOnPortViaCli($shelf, $slot, $pon_port);
+            $gateway = new OltGateway($this->olt);
+            $onus = $gateway->getOnusOnPort($shelf, $slot, $pon_port);
             
             // Store result in cache for polling (expires in 10 minutes)
             \Illuminate\Support\Facades\Cache::put("olt_port_data_{$this->port->id}", $onus, now()->addMinutes(10));
@@ -83,7 +83,7 @@ class FetchOltPortDataJob implements ShouldQueue
             // Broadcast the result
             broadcast(new OltPortDataFetched($this->olt->id, $this->port->id, $onus));
             
-            Log::info("Successfully fetched and broadcasted data for Port: {$this->port->id}. New Status: {$newStatus} (Synced " . count($onus) . " ONUs to NOC)");
+            Log::info("Successfully fetched data via SNMP for Port: {$this->port->id}. Status: {$newStatus} (Synced " . count($onus) . " ONUs)");
         } catch (\Exception $e) {
             Log::error("Error in FetchOltPortDataJob: " . $e->getMessage());
         }

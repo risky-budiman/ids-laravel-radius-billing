@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Olt;
 use App\Models\OltPonPort;
-use App\Services\Network\SnmpService;
-use App\Services\Network\OltDiscoveryService;
+use App\Services\Network\OltGateway;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -123,36 +122,24 @@ class OltController extends Controller
     }
 
     /**
-     * Test SNMP Connection.
+     * Test SNMP & Telnet Connection.
      */
     public function testConnection(Olt $olt)
     {
+        $gateway = new OltGateway($olt);
         $results = [];
 
         // 1. Test SNMP
-        try {
-            $snmp = new SnmpService($olt->ip_address, $olt->snmp_read_community, $olt->snmp_port, $olt->snmp_version ?? 2);
-            $snmpResult = $snmp->testConnection();
-            $results['snmp'] = [
-                'success' => $snmpResult['status'],
-                'message' => $snmpResult['message'],
-                'device_name' => $snmpResult['device_name'] ?? 'Unknown'
-            ];
-        } catch (\Exception $e) {
-            $results['snmp'] = ['success' => false, 'message' => $e->getMessage()];
-        }
+        $snmpResult = $gateway->testSnmpConnection();
+        $results['snmp'] = [
+            'success' => $snmpResult['status'],
+            'message' => $snmpResult['message'],
+            'device_name' => $snmpResult['device_name'] ?? 'Unknown'
+        ];
 
         // 2. Test Telnet
-        try {
-            $provisioning = new \App\Services\Network\ZteOltProvisioningService($olt);
-            $telnetResult = $provisioning->testConnection();
-            $results['telnet'] = [
-                'success' => true,
-                'message' => 'Connection Successful'
-            ];
-        } catch (\Exception $e) {
-            $results['telnet'] = ['success' => false, 'message' => $e->getMessage()];
-        }
+        $telnetResult = $gateway->testTelnetConnection();
+        $results['telnet'] = $telnetResult;
 
         return response()->json([
             'success' => $results['snmp']['success'] && $results['telnet']['success'],
@@ -195,31 +182,11 @@ class OltController extends Controller
     public function autoDiscoverPorts(Olt $olt)
     {
         try {
-            $ports = [];
-
-            // 1. Try SNMP first
-            try {
-                $snmp = new SnmpService($olt->ip_address, $olt->snmp_read_community, $olt->snmp_port, $olt->snmp_version ?? 2);
-                $discovery = new OltDiscoveryService($snmp);
-                $ports = $discovery->discoverPonPorts();
-            } catch (\Exception $e) {
-                \Log::warning("SNMP Discovery failed for OLT {$olt->ip_address}, trying CLI fallback...");
-            }
-
-            // 2. Fallback to CLI (Telnet) if SNMP failed or returned nothing
-            if (empty($ports)) {
-                $provisioning = new \App\Services\Network\ZteOltProvisioningService($olt);
-                $ports = $provisioning->discoverPortsViaCli();
-                
-                // For each port found via CLI, try to see if it has ONUs to set status
-                foreach ($ports as &$p) {
-                    $onus = $provisioning->getOnusOnPortViaCli($p['shelf'], $p['slot'], $p['port']);
-                    $p['status'] = count($onus) > 0 ? 'active' : 'inactive';
-                }
-            }
+            $gateway = new OltGateway($olt);
+            $ports = $gateway->discoverPonPorts();
 
             if (empty($ports)) {
-                return back()->with('error', 'No PON ports discovered via SNMP or CLI. Please check your credentials and ensure OLT is supported.');
+                return back()->with('error', 'No PON ports discovered via SNMP. Please check SNMP credentials and ensure OLT is reachable.');
             }
 
             // Reset all ports to inactive first to ensure accuracy
@@ -241,7 +208,7 @@ class OltController extends Controller
             }
             DB::commit();
 
-            return back()->with('success', 'Successfully discovered and created ' . count($ports) . ' PON ports.');
+            return back()->with('success', 'Successfully discovered and created ' . count($ports) . ' PON ports via SNMP.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Discovery failed: ' . $e->getMessage());

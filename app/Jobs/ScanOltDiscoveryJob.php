@@ -3,9 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Olt;
-use App\Services\Network\SnmpService;
-use App\Services\Network\OltDiscoveryService;
-use App\Services\Network\ZteOltProvisioningService;
+use App\Services\Network\OltGateway;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -22,7 +20,7 @@ class ScanOltDiscoveryJob implements ShouldQueue
 
     public function handle()
     {
-        Log::info("Background Discovery Job Started");
+        Log::info("Background Discovery Job Started (Pure SNMP)");
         
         try {
             $activeOlts = Olt::where('is_active', true)->get();
@@ -30,26 +28,18 @@ class ScanOltDiscoveryJob implements ShouldQueue
 
             foreach ($activeOlts as $olt) {
                 try {
-                    Log::info("Background Scanning OLT: {$olt->name}");
+                    Log::info("SNMP Scanning OLT: {$olt->name}");
                     
-                    $snmp = new SnmpService($olt->ip_address, $olt->snmp_read_community, $olt->snmp_port);
+                    $gateway = new OltGateway($olt);
                     
                     // Test connection first
-                    $test = $snmp->testConnection();
+                    $test = $gateway->testSnmpConnection();
                     if (!$test['status']) {
-                        Log::warning("SNMP not responding for {$olt->name}, skipping SNMP discovery.");
-                        $onus = [];
-                    } else {
-                        $discovery = new OltDiscoveryService($snmp);
-                        $onus = $discovery->scanUnconfiguredOnus();
+                        Log::warning("SNMP not responding for {$olt->name}, skipping.");
+                        continue;
                     }
-                    
-                    // Fallback to Telnet if SNMP found nothing or failed
-                    if (empty($onus)) {
-                        Log::info("SNMP found no ONUs, trying Telnet fallback for {$olt->name}");
-                        $provisioningService = new ZteOltProvisioningService($olt);
-                        $onus = $provisioningService->getUnconfiguredOnus();
-                    }
+
+                    $onus = $gateway->scanUnconfiguredOnus();
 
                     foreach ($onus as $onu) {
                         $onu['olt_name'] = $olt->name;
@@ -63,9 +53,9 @@ class ScanOltDiscoveryJob implements ShouldQueue
 
             // Store results in cache
             Cache::put('noc_discovered_onus', $discoveredOnus, 3600);
-            Cache::put('noc_discovery_last_run', now()->toDateTimeString(), 3600); // Store as string to avoid serialization issues
+            Cache::put('noc_discovery_last_run', now()->toDateTimeString(), 3600);
             
-            Log::info("Background Discovery Job Finished. Found " . count($discoveredOnus) . " ONUs.");
+            Log::info("Background Discovery Job Finished. Found " . count($discoveredOnus) . " ONUs via SNMP.");
         } finally {
             Cache::forget('noc_discovery_running');
         }

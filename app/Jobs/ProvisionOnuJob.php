@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Customer;
-use App\Services\Network\ZteOltProvisioningService;
+use App\Services\Network\OltGateway;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -32,7 +32,7 @@ class ProvisionOnuJob implements ShouldQueue
 
         Log::info("Starting background provisioning for customer: {$customer->name}");
 
-        $service = new ZteOltProvisioningService($customer->olt);
+        $gateway = new OltGateway($customer->olt);
         
         // Parse shelf/slot/port from onu_index (.1.1.7.1)
         $pos = $customer->onu_index; 
@@ -50,7 +50,7 @@ class ProvisionOnuJob implements ShouldQueue
         // Default VLAN 100
         $vlan = 100;
         
-        $result = $service->provisionOnu(
+        $result = $gateway->provisionOnu(
             $shelf, 
             $slot, 
             $port, 

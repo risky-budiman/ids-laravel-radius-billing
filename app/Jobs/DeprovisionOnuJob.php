@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Olt;
-use App\Services\Network\ZteOltProvisioningService;
+use App\Services\Network\OltGateway;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -40,8 +40,6 @@ class DeprovisionOnuJob implements ShouldQueue
             return;
         }
 
-        $provisioning = new ZteOltProvisioningService($olt);
-
         // Parse index .shelf.slot.port.onu_id
         $parts = explode('.', ltrim($this->onuIndex, '.'));
         if (count($parts) < 4) {
@@ -49,14 +47,15 @@ class DeprovisionOnuJob implements ShouldQueue
             return;
         }
 
-        $shelf = $parts[0];
-        $slot = $parts[1];
-        $port = $parts[2];
-        $onuId = $parts[3];
+        $shelf = (int)$parts[0];
+        $slot = (int)$parts[1];
+        $port = (int)$parts[2];
+        $onuId = (int)$parts[3];
 
         Log::info("Starting OLT Deprovisioning for SN: {$this->sn}");
 
-        $success = $provisioning->deleteOnu($shelf, $slot, $port, $onuId);
+        $gateway = new OltGateway($olt);
+        $success = $gateway->deprovisionOnu($shelf, $slot, $port, $onuId);
 
         if ($success) {
             Log::info("Deprovisioning successful for SN: {$this->sn}");

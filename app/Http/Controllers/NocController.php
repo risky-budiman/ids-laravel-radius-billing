@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Network\OltGateway;
 use Illuminate\Http\Request;
 
 class NocController extends Controller
@@ -20,29 +21,27 @@ class NocController extends Controller
         $activeCustomers = \App\Models\Customer::where('status', 'active')->count();
         $offlineCount = max(0, $activeCustomers - $onlineCount);
 
-        // Get OLT Hardware Stats (Cached for 5 minutes)
+        // Get OLT Hardware Stats via SNMP (Cached for 5 minutes)
         $olts = \App\Models\Olt::where('is_active', true)->get();
         $oltStats = \Illuminate\Support\Facades\Cache::remember('noc_olt_stats', 300, function() use ($olts) {
             $data = [];
             foreach ($olts as $olt) {
                 try {
-                    $service = new \App\Services\Network\ZteOltProvisioningService($olt);
-                    $stats = $service->getOltStats();
-                    $data[$olt->id] = $stats;
+                    $gateway = new OltGateway($olt);
+                    $data[$olt->id] = $gateway->getOltStatus();
                 } catch (\Exception $e) {
-                    $data[$olt->id] = ['status' => 'offline', 'cpu' => 0, 'uptime' => 'N/A'];
+                    $data[$olt->id] = ['status' => 'offline', 'cpu' => 0, 'uptime' => 'N/A', 'temp' => 0];
                 }
             }
             return $data;
         });
 
-        // Get Stats from Cache for Dashboard Boxes
+        // Get Unconfigured ONU Count via SNMP
         $unconfiguredCount = 0;
         foreach ($olts as $olt) {
             try {
-                $snmp = new \App\Services\Network\SnmpService($olt->ip_address, $olt->snmp_read_community, $olt->snmp_port);
-                $discovery = new \App\Services\Network\OltDiscoveryService($snmp);
-                $unconfiguredCount += count($discovery->scanUnconfiguredOnus());
+                $gateway = new OltGateway($olt);
+                $unconfiguredCount += count($gateway->scanUnconfiguredOnus());
             } catch (\Exception $e) { }
         }
         

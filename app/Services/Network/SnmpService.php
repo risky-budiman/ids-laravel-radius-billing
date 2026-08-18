@@ -2,6 +2,7 @@
 
 namespace App\Services\Network;
 
+use App\Models\Olt;
 use FreeDSx\Snmp\SnmpClient;
 use FreeDSx\Snmp\Exception\SnmpRequestException;
 use Exception;
@@ -32,6 +33,19 @@ class SnmpService
             'timeout' => 10,
             'retries' => 3,
         ]);
+    }
+
+    /**
+     * Create SnmpService from an Olt model instance.
+     */
+    public static function fromOlt(Olt $olt): self
+    {
+        return new self(
+            $olt->ip_address,
+            $olt->snmp_read_community,
+            $olt->snmp_port ?? 161,
+            $olt->snmp_version ?? 2
+        );
     }
 
     /**
@@ -145,6 +159,30 @@ class SnmpService
                 'status' => false,
                 'message' => "SNMP Query Failed: " . $e->getMessage() . ". Check IP and Community String."
             ];
+        }
+    }
+
+    /**
+     * Safe GET — returns null on failure instead of throwing.
+     */
+    public function getSafe(string $oid)
+    {
+        try {
+            return $this->get($oid);
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Safe WALK — returns empty array on failure instead of throwing.
+     */
+    public function walkSafe(string $oid): array
+    {
+        try {
+            return $this->walk($oid);
+        } catch (Exception $e) {
+            return [];
         }
     }
 
