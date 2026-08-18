@@ -4,7 +4,6 @@ namespace App\Services\Network;
 
 use App\Models\Olt;
 use FreeDSx\Snmp\SnmpClient;
-use FreeDSx\Snmp\Exception\SnmpRequestException;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -21,17 +20,15 @@ class SnmpService
         $this->host = $host;
         $this->port = $port ?: 161;
         $this->community = $community ?: 'public';
-        $this->version = $version;
-
-        Log::debug("Initializing SNMP Client: {$this->host}:{$this->port} (v{$this->version}c, community: {$this->community})");
+        $this->version = $version ?: 2;
 
         $this->client = new SnmpClient([
             'host' => $this->host,
             'port' => $this->port,
             'community' => $this->community,
             'version' => $this->version,
-            'timeout' => 10,
-            'retries' => 3,
+            'timeout' => 5,
+            'retries' => 2,
         ]);
     }
 
@@ -42,9 +39,9 @@ class SnmpService
     {
         return new self(
             $olt->ip_address,
-            $olt->snmp_read_community,
-            $olt->snmp_port ?? 161,
-            $olt->snmp_version ?? 2
+            $olt->snmp_read_community ?: 'public',
+            (int)($olt->snmp_port ?: 161),
+            (int)($olt->snmp_version ?: 2)
         );
     }
 
@@ -53,37 +50,36 @@ class SnmpService
      */
     public function get(string $oid)
     {
-        // Normalize OID (remove leading dot for library)
         $cleanOid = ltrim($oid, '.');
 
         try {
             $response = $this->client->getValue($cleanOid);
             return $response;
         } catch (Exception $e) {
-            // Fallback for Ubuntu/Linux: Try system snmpget
+            // Fallback for Linux environments if FreeDSx has socket issue
             if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
                 try {
-                    $cmd = "snmpget -On -v{$this->version}c -c {$this->community} -t 2 -r 1 {$this->host} {$oid} 2>&1";
+                    $cmd = "snmpget -On -v{$this->version}c -c " . escapeshellarg($this->community) . " -t 3 -r 1 {$this->host}:{$this->port} {$oid} 2>&1";
                     $output = shell_exec($cmd);
-                    if ($output && preg_match('/= (\w+): (.*)/i', $output, $matches)) {
+                    if ($output && preg_match('/=\s*(\w+):\s*(.*)/i', $output, $matches)) {
                         return trim($matches[2], '" ');
                     }
                 } catch (\Exception $systemEx) {
-                    Log::debug("System snmpget also failed: " . $systemEx->getMessage());
+                    Log::debug("System snmpget failed: " . $systemEx->getMessage());
                 }
             }
 
-            Log::error("SNMP GET Error for {$this->host} OID {$oid}: " . $e->getMessage());
+            Log::warning("SNMP GET Failed for {$this->host}:{$this->port} (v{$this->version}c, {$this->community}) OID {$oid}: " . $e->getMessage());
             throw $e;
         }
     }
 
     /**
      * Perform an SNMP WALK request.
+     * Always returns associative array with OIDs starting with a leading dot '.1.3.6...'
      */
-    public function walk(string $oid)
+    public function walk(string $oid): array
     {
-        // Normalize OID (remove leading dot for library)
         $cleanOid = ltrim($oid, '.');
 
         try {
@@ -91,20 +87,20 @@ class SnmpService
             $results = [];
             
             foreach ($walk as $item) {
-                $results[$item->getOid()->toString()] = $item->getValue()->getValue();
+                $oidStr = '.' . ltrim($item->getOid()->toString(), '.');
+                $val = $item->getValue();
+                $results[$oidStr] = is_object($val) && method_exists($val, 'getValue') ? $val->getValue() : $val;
             }
             
             return $results;
         } catch (Exception $e) {
-            // Fallback for Ubuntu/Linux: Try system snmpwalk
+            // Fallback for Linux environments
             if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
                 try {
-                    $cmd = "snmpwalk -On -v{$this->version}c -c {$this->community} -t 5 -r 1 {$this->host} {$oid} 2>&1";
+                    $cmd = "snmpwalk -On -v{$this->version}c -c " . escapeshellarg($this->community) . " -t 5 -r 1 {$this->host}:{$this->port} {$oid} 2>&1";
                     $output = shell_exec($cmd);
-                    if ($output && !str_contains($output, 'No response')) {
+                    if ($output && !str_contains($output, 'No response') && !str_contains($output, 'Timeout')) {
                         $results = [];
-                        // Parse format: .1.3.6... = STRING: "VALUE" or INTEGER: 25
-                        // Also support outputs that don't start with a dot
                         if (preg_match_all('/\.?(\d+(?:\.\d+)*)\s+=\s+(\w+):\s+(.*)/i', $output, $matches, PREG_SET_ORDER)) {
                             foreach ($matches as $m) {
                                 $results['.' . $m[1]] = trim($m[3], '" ');
@@ -113,11 +109,11 @@ class SnmpService
                         if (!empty($results)) return $results;
                     }
                 } catch (\Exception $systemEx) {
-                    Log::debug("System snmpwalk also failed: " . $systemEx->getMessage());
+                    Log::debug("System snmpwalk failed: " . $systemEx->getMessage());
                 }
             }
 
-            Log::error("SNMP WALK Error for {$this->host} OID {$oid}: " . $e->getMessage());
+            Log::warning("SNMP WALK Failed for {$this->host}:{$this->port} OID {$oid}: " . $e->getMessage());
             throw $e;
         }
     }
@@ -128,9 +124,8 @@ class SnmpService
     public function set(string $oid, $value, string $type = 'string')
     {
         try {
-            // FreeDSx/SNMP handles types automatically in most cases, 
-            // but we might need to be specific if needed.
-            $this->client->set($oid, $value);
+            $cleanOid = ltrim($oid, '.');
+            $this->client->set($cleanOid, $value);
             return true;
         } catch (Exception $e) {
             Log::error("SNMP SET Error for {$this->host}: " . $e->getMessage());
@@ -141,23 +136,40 @@ class SnmpService
     /**
      * Test connection to the device.
      */
-    public function testConnection()
+    public function testConnection(): array
     {
         try {
-            // Try to get sysName (1.3.6.1.2.1.1.5.0)
-            $name = $this->get('.1.3.6.1.2.1.1.5.0');
-            $descr = $this->get('.1.3.6.1.2.1.1.1.0');
+            $name = $this->getSafe('.1.3.6.1.2.1.1.5.0');
+            $descr = $this->getSafe('.1.3.6.1.2.1.1.1.0');
             
+            if ($name !== null || $descr !== null) {
+                return [
+                    'status' => true,
+                    'message' => 'Connected successfully via SNMP',
+                    'device_name' => (string)($name ?: 'ZTE OLT'),
+                    'description' => (string)($descr ?: '')
+                ];
+            }
+
+            // If sysName failed, try sysUpTime
+            $uptime = $this->getSafe('.1.3.6.1.2.1.1.3.0');
+            if ($uptime !== null) {
+                return [
+                    'status' => true,
+                    'message' => 'Connected successfully via SNMP (sysUpTime responsive)',
+                    'device_name' => 'ZTE OLT',
+                    'description' => 'Up: ' . $uptime
+                ];
+            }
+
             return [
-                'status' => true,
-                'message' => 'Connected successfully',
-                'device_name' => (string)$name,
-                'description' => (string)$descr
+                'status' => false,
+                'message' => "No SNMP response from {$this->host}:{$this->port}. Please verify IP, SNMP Port, Community string, and firewall/ACL."
             ];
         } catch (Exception $e) {
             return [
                 'status' => false,
-                'message' => "SNMP Query Failed: " . $e->getMessage() . ". Check IP and Community String."
+                'message' => "SNMP Query Failed: " . $e->getMessage()
             ];
         }
     }

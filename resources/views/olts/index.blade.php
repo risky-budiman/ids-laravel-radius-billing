@@ -112,11 +112,10 @@
             .then(response => response.json())
             .then(data => {
                 let message = "";
-                if (data.results) {
-                    message += "SNMP: " + (data.results.snmp.success ? "✅ Connected (" + data.results.snmp.device_name + ")" : "❌ " + data.results.snmp.message) + "\n";
-                    message += "Telnet: " + (data.results.telnet.success ? "✅ Connected" : "❌ " + data.results.telnet.message);
+                if (data.results && data.results.snmp) {
+                    message = "SNMP Status: " + (data.results.snmp.success ? "✅ Connected (" + (data.results.snmp.device_name || 'OK') + ")" : "❌ " + data.results.snmp.message);
                 } else {
-                    message = data.message || "Unknown response from server";
+                    message = data.message || "Response: " + JSON.stringify(data);
                 }
                 alert(message);
             })

@@ -87,8 +87,7 @@
                                             <span class="font-mono font-bold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-lg" x-text="onu.sn"></span>
                                         </td>
                                         <td class="px-8 py-5">
-                                            <span x-show="onu.method == 'telnet'" class="px-2 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-[10px] font-bold rounded uppercase">Telnet CLI</span>
-                                            <span x-show="onu.method != 'telnet'" class="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded uppercase">SNMP Walk</span>
+                                            <span class="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded uppercase">SNMP Auto-Scan</span>
                                         </td>
                                         <td class="px-8 py-5 text-right">
                                             <a :href="'{{ route('customers.create') }}?sn=' + onu.sn + '&olt_id=' + onu.olt_id + '&pos=' + onu.full_index + '&onu_type=' + (onu.type || 'ALL')" class="inline-flex items-center px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-500/20">

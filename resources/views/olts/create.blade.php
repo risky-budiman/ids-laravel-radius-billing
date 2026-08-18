@@ -80,19 +80,19 @@
                     </div>
 
                     <div class="space-y-2">
-                        <label for="snmp_write_community" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Write Community</label>
-                        <input type="text" name="snmp_write_community" id="snmp_write_community" value="{{ old('snmp_write_community', 'private') }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" required>
+                        <label for="snmp_write_community" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Write Community (RW)</label>
+                        <input type="text" name="snmp_write_community" id="snmp_write_community" value="{{ old('snmp_write_community', 'private') }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
                         @error('snmp_write_community') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
-                    <!-- CLI / Telnet Fallback Section -->
+                    <!-- CLI / Telnet Section (Optional) -->
                     <div class="md:col-span-2 mt-4">
-                        <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">CLI / Telnet Configuration (Fallback)</h3>
+                        <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">CLI / Telnet Configuration (Optional - For Provisioning only)</h3>
                     </div>
 
                     <div class="space-y-2">
-                        <label for="telnet_port" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Telnet/SSH Port</label>
-                        <input type="number" name="telnet_port" id="telnet_port" value="{{ old('telnet_port', 23) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" required>
+                        <label for="telnet_port" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Telnet Port (Optional)</label>
+                        <input type="number" name="telnet_port" id="telnet_port" value="{{ old('telnet_port', 23) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
                         @error('telnet_port') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 

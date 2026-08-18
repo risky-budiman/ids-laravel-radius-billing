@@ -38,8 +38,8 @@ class OltController extends Controller
             'snmp_port' => 'required|integer',
             'snmp_version' => 'required|integer|in:1,2',
             'snmp_read_community' => 'required|string',
-            'snmp_write_community' => 'required|string',
-            'telnet_port' => 'required|integer',
+            'snmp_write_community' => 'nullable|string',
+            'telnet_port' => 'nullable|integer',
             'username' => 'nullable|string',
             'password' => 'nullable|string',
             'enable_password' => 'nullable|string',
@@ -50,6 +50,8 @@ class OltController extends Controller
             'longitude' => 'nullable|string',
         ]);
 
+        $validated['snmp_write_community'] = $validated['snmp_write_community'] ?? 'private';
+        $validated['telnet_port'] = $validated['telnet_port'] ?? 23;
         $validated['is_active'] = $request->has('is_active');
         $olt = Olt::create($validated);
 
@@ -84,8 +86,8 @@ class OltController extends Controller
             'snmp_port' => 'required|integer',
             'snmp_version' => 'required|integer|in:1,2',
             'snmp_read_community' => 'required|string',
-            'snmp_write_community' => 'required|string',
-            'telnet_port' => 'required|integer',
+            'snmp_write_community' => 'nullable|string',
+            'telnet_port' => 'nullable|integer',
             'username' => 'nullable|string',
             'password' => 'nullable|string',
             'enable_password' => 'nullable|string',
@@ -96,6 +98,8 @@ class OltController extends Controller
             'longitude' => 'nullable|string',
         ]);
 
+        $validated['snmp_write_community'] = $validated['snmp_write_community'] ?? 'private';
+        $validated['telnet_port'] = $validated['telnet_port'] ?? 23;
         $validated['is_active'] = $request->has('is_active');
         
         // Only update passwords if filled
@@ -122,28 +126,23 @@ class OltController extends Controller
     }
 
     /**
-     * Test SNMP & Telnet Connection.
+     * Test SNMP Connection.
      */
     public function testConnection(Olt $olt)
     {
         $gateway = new OltGateway($olt);
-        $results = [];
-
-        // 1. Test SNMP
         $snmpResult = $gateway->testSnmpConnection();
-        $results['snmp'] = [
-            'success' => $snmpResult['status'],
-            'message' => $snmpResult['message'],
-            'device_name' => $snmpResult['device_name'] ?? 'Unknown'
-        ];
-
-        // 2. Test Telnet
-        $telnetResult = $gateway->testTelnetConnection();
-        $results['telnet'] = $telnetResult;
 
         return response()->json([
-            'success' => $results['snmp']['success'] && $results['telnet']['success'],
-            'results' => $results
+            'success' => $snmpResult['status'],
+            'message' => $snmpResult['message'],
+            'results' => [
+                'snmp' => [
+                    'success' => $snmpResult['status'],
+                    'message' => $snmpResult['message'],
+                    'device_name' => $snmpResult['device_name'] ?? 'Unknown'
+                ]
+            ]
         ]);
     }
 
