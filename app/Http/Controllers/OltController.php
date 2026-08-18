@@ -63,6 +63,29 @@ class OltController extends Controller
      */
     public function show(Olt $olt)
     {
+        // Auto-discover and create ports on first view if none exist
+        if ($olt->ponPorts()->count() === 0) {
+            try {
+                $gateway = new OltGateway($olt);
+                $ports = $gateway->discoverPonPorts();
+                foreach ($ports as $port) {
+                    OltPonPort::updateOrCreate(
+                        [
+                            'olt_id' => $olt->id, 
+                            'slot' => $port['slot'], 
+                            'pon_port' => $port['port']
+                        ],
+                        [
+                            'status' => $port['status'] ?? 'inactive', 
+                            'description' => $port['description'] ?? "Port {$port['slot']}/{$port['port']}"
+                        ]
+                    );
+                }
+            } catch (\Exception $e) {
+                \Log::warning("Auto discover on page load failed for OLT {$olt->id}: " . $e->getMessage());
+            }
+        }
+
         $olt->load('ponPorts');
         return view('olts.show', compact('olt'));
     }
@@ -231,21 +254,60 @@ class OltController extends Controller
         return back()->with('success', "Deprovisioning job for ONU {$index} has been queued.");
     }
     /**
-     * Show details for a specific PON port (Scan ONUs)
+     * Show details for a specific PON port (Scan ONUs via SNMP immediately)
      */
     public function showPort(Olt $olt, OltPonPort $port)
     {
-        // Clear old cached data to force a fresh "loading" state in the UI
-        \Illuminate\Support\Facades\Cache::forget("olt_port_data_{$port->id}");
+        $shelf = $port->shelf ?: 1;
+        $slot = $port->slot;
+        $pon_port = $port->pon_port;
 
-        // Dispatch job to fetch data in background
-        \App\Jobs\FetchOltPortDataJob::dispatch($olt, $port);
-        
+        $onus = [];
+        try {
+            $gateway = new OltGateway($olt);
+            $onus = $gateway->getOnusOnPort($shelf, $slot, $pon_port);
+
+            // Store result in cache (expires in 10 minutes)
+            \Illuminate\Support\Facades\Cache::put("olt_port_data_{$port->id}", $onus, now()->addMinutes(10));
+            
+            // Sync Port Status to Database
+            $newStatus = count($onus) > 0 ? 'active' : 'inactive';
+            $port->update(['status' => $newStatus]);
+
+            // UPDATE NOC DATA (CustomerSignalCache)
+            foreach ($onus as $onuData) {
+                if (!empty($onuData['sn'])) {
+                    $customer = \App\Models\Customer::where('olt_id', $olt->id)
+                        ->where('onu_sn', $onuData['sn'])
+                        ->first();
+
+                    if ($customer) {
+                        \App\Models\CustomerSignalCache::updateOrCreate(
+                            ['customer_id' => $customer->id],
+                            [
+                                'onu_index' => $onuData['index'],
+                                'rx_power' => is_numeric($onuData['signal']) ? $onuData['signal'] : null,
+                                'status' => $onuData['status'],
+                                'last_polled_at' => now(),
+                            ]
+                        );
+
+                        if ($onuData['status'] === 'online' && $customer->onu_index !== $onuData['index']) {
+                            $customer->update(['onu_index' => $onuData['index']]);
+                        }
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Error loading port data: " . $e->getMessage());
+            $onus = \Illuminate\Support\Facades\Cache::get("olt_port_data_{$port->id}", []);
+        }
+
         return view('olts.show_port', [
             'olt' => $olt,
             'port' => $port,
-            'onus' => [],
-            'isLoading' => true
+            'onus' => $onus,
+            'isLoading' => false
         ]);
     }
 
