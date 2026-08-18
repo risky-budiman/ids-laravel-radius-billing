@@ -118,13 +118,19 @@ class CustomTelnetClient
                 }
 
                 if ($regex) {
-                    // Normalize regex to handle trailing spaces in prompt
-                    if (str_contains($regex, 'ZXAN')) {
-                        if (preg_match('/ZXAN[>#]\s*$/m', $buffer)) break;
-                    }
                     if (is_array($regex)) {
-                        foreach ($regex as $r) { if (preg_match($r, $buffer)) break 2; }
+                        foreach ($regex as $r) {
+                            if (is_string($r) && str_contains($r, 'ZXAN') && preg_match('/ZXAN[>#]\s*$/m', $buffer)) {
+                                break 2;
+                            }
+                            if (preg_match($r, $buffer)) {
+                                break 2;
+                            }
+                        }
                     } else {
+                        if (is_string($regex) && str_contains($regex, 'ZXAN')) {
+                            if (preg_match('/ZXAN[>#]\s*$/m', $buffer)) break;
+                        }
                         if (preg_match($regex, $buffer)) break;
                     }
                 }
