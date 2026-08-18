@@ -13,9 +13,9 @@
                 </div>
             </div>
             <div class="flex space-x-2">
-                <button onclick="window.location.reload()" class="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30 flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    Sync OLT Data
+                <button @click="syncLiveSnmp()" :disabled="loading" class="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30 flex items-center disabled:opacity-50">
+                    <svg class="w-4 h-4 mr-2" :class="{'animate-spin': loading}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <span x-text="loading ? 'Polling SNMP...' : 'Sync SNMP Data'">Sync SNMP Data</span>
                 </button>
             </div>
         </div>
@@ -25,39 +25,18 @@
         showDetail: false, 
         selectedOnu: null,
         onus: @json($onus ?? []),
-        loading: @json($isLoading ?? false),
-        init() {
-            if (this.loading) {
-                // 1. Listen for WebSocket events
-                if (window.Echo) {
-                    window.Echo.channel('olt-port.{{ $port->id }}')
-                        .listen('.data.fetched', (e) => {
-                            console.log('Echo received data:', e);
-                            this.onus = e.onus;
-                            this.loading = false;
-                        });
-                }
-
-                // 2. Polling Fallback (Check every 3 seconds)
-                const pollInterval = setInterval(() => {
-                    if (!this.loading) {
-                        clearInterval(pollInterval);
-                        return;
-                    }
-
-                    fetch('{{ route('olts.get-port-data', [$olt->id, $port->id]) }}')
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.status === 'ready') {
-                                console.log('Polling received data:', data);
-                                this.onus = data.onus;
-                                this.loading = false;
-                                clearInterval(pollInterval);
-                            }
-                        })
-                        .catch(err => console.error('Polling error:', err));
-                }, 3000);
-            }
+        loading: false,
+        syncLiveSnmp() {
+            this.loading = true;
+            fetch('{{ route('olts.get-port-data', [$olt->id, $port->id]) }}?fresh=1')
+                .then(res => res.json())
+                .then(data => {
+                    this.onus = data.onus || [];
+                })
+                .catch(err => console.error('SNMP fetch error:', err))
+                .finally(() => {
+                    this.loading = false;
+                });
         },
         openDetail(onu) {
             this.selectedOnu = onu;

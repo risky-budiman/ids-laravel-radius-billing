@@ -327,13 +327,30 @@ class OltController extends Controller
         return back()->with('success', "Syncing status for " . count($ports) . " ports in background. This may take a few minutes.");
     }
 
-    public function getPortData(Olt $olt, \App\Models\OltPonPort $port)
+    public function getPortData(Request $request, Olt $olt, \App\Models\OltPonPort $port)
     {
-        $onus = \Illuminate\Support\Facades\Cache::get("olt_port_data_{$port->id}");
+        $shelf = $port->shelf ?: 1;
+        $slot = $port->slot;
+        $pon_port = $port->pon_port;
+
+        if ($request->has('fresh')) {
+            \Illuminate\Support\Facades\Cache::forget("olt_port_data_{$port->id}");
+        }
+
+        $onus = \Illuminate\Support\Facades\Cache::remember("olt_port_data_{$port->id}", now()->addMinutes(5), function() use ($olt, $shelf, $slot, $pon_port, $port) {
+            try {
+                $gateway = new OltGateway($olt);
+                $data = $gateway->getOnusOnPort($shelf, $slot, $pon_port);
+                $port->update(['status' => count($data) > 0 ? 'active' : 'inactive']);
+                return $data;
+            } catch (\Exception $e) {
+                return [];
+            }
+        });
         
         return response()->json([
             'onus' => $onus ?: [],
-            'status' => $onus !== null ? 'ready' : 'pending'
+            'status' => 'ready'
         ]);
     }
 }
