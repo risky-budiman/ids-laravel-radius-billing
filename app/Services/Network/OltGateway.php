@@ -366,25 +366,39 @@ class OltGateway
         foreach (ZteOids::UNCFG_ONU_TABLES as $tableOid) {
             $data = $this->snmp()->walkSafe($tableOid);
             if (!empty($data)) {
-                $results = array_merge($results, $data);
+                $results = $data;
+                Log::debug("SNMP: Unconfigured ONU scan succeeded on table {$tableOid} (" . count($data) . " items)");
+                break;
             }
         }
 
         $onus = [];
         foreach ($results as $oid => $sn) {
-            $parts = explode('.', ltrim($oid, '.'));
-            $unconfigId = array_pop($parts);
-            $index = array_pop($parts);
+            $decoded = ZteOids::parseOidIndex($oid);
+            $unconfigId = 1;
+            if ($decoded) {
+                $shelf = $decoded['shelf'] ?: 1;
+                $slot = $decoded['slot'] ?: 1;
+                $port = $decoded['port'] ?: 1;
+                $unconfigId = $decoded['onu_id'] ?: 1;
+            } else {
+                $parts = explode('.', ltrim($oid, '.'));
+                $unconfigId = array_pop($parts) ?: 1;
+                $index = (int)(array_pop($parts) ?: 0);
 
-            $shelf = ($index >> 24) & 0xFF;
-            $slot = ($index >> 16) & 0xFF;
-            $port = ($index >> 8) & 0xFF;
+                $shelf = ($index >> 24) & 0xFF;
+                $slot = ($index >> 16) & 0xFF;
+                $port = ($index >> 8) & 0xFF;
+            }
+
+            $parsedSn = ZteOids::parseSn($sn);
+            if (empty($parsedSn) || strlen($parsedSn) < 6) continue;
 
             $onus[] = [
-                'sn'         => ZteOids::parseSn($sn),
+                'sn'         => $parsedSn,
                 'shelf'      => $shelf ?: 1,
-                'slot'       => $slot,
-                'port'       => $port,
+                'slot'       => $slot ?: 1,
+                'port'       => $port ?: 1,
                 'full_index' => "." . ($shelf ?: 1) . ".{$slot}.{$port}.{$unconfigId}",
                 'oid'        => $oid,
                 'type'       => 'ZTE-ONU',
