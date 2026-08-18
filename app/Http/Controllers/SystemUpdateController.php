@@ -14,20 +14,37 @@ class SystemUpdateController extends Controller
     public function check()
     {
         $currentVersion = app_version();
-        $currentCommit = $this->runCommand('git rev-parse --short HEAD') ?: 'unknown';
-        $branch = $this->runCommand('git rev-parse --abbrev-ref HEAD') ?: 'main';
+        
+        // 1. Get current local commit hash
+        $currentCommitLong = $this->runCommand('git -c safe.directory=* rev-parse HEAD');
+        $currentCommit = $currentCommitLong ? substr(trim($currentCommitLong), 0, 7) : 'unknown';
+        $branch = $this->runCommand('git -c safe.directory=* rev-parse --abbrev-ref HEAD') ?: 'main';
 
-        // Fetch remote updates
-        $fetchOutput = $this->runCommand("git fetch origin {$branch} 2>&1");
-        $remoteCommit = $this->runCommand("git rev-parse --short origin/{$branch}") ?: $currentCommit;
+        // 2. Query remote commit using ls-remote (fast, doesn't need file locks or write permissions)
+        $remoteOutput = $this->runCommand("git -c safe.directory=* ls-remote origin refs/heads/{$branch}");
+        $remoteCommitLong = null;
+        if ($remoteOutput && preg_match('/^([a-f0-9]{40})/i', trim($remoteOutput), $m)) {
+            $remoteCommitLong = $m[1];
+        }
 
-        // Check if there are new commits
-        $isUpdateAvailable = ($currentCommit !== $remoteCommit) && ($remoteCommit !== 'unknown');
+        // Fallback: try git fetch and rev-parse if ls-remote didn't return
+        if (!$remoteCommitLong) {
+            $this->runCommand("git -c safe.directory=* fetch origin {$branch} 2>&1");
+            $remoteCommitLong = $this->runCommand("git -c safe.directory=* rev-parse origin/{$branch}");
+        }
 
-        // Get list of new commits if available
+        $remoteCommit = $remoteCommitLong ? substr(trim($remoteCommitLong), 0, 7) : $currentCommit;
+
+        // 3. Compare commits
+        $isUpdateAvailable = ($currentCommit !== 'unknown') 
+            && ($remoteCommitLong !== null) 
+            && (trim($currentCommitLong) !== trim($remoteCommitLong));
+
+        // 4. Fetch list of new commits if update is available
         $newCommits = [];
         if ($isUpdateAvailable) {
-            $logOutput = $this->runCommand("git log HEAD..origin/{$branch} --oneline -n 10");
+            $this->runCommand("git -c safe.directory=* fetch origin {$branch} 2>&1");
+            $logOutput = $this->runCommand("git -c safe.directory=* log HEAD..origin/{$branch} --oneline -n 10");
             if ($logOutput) {
                 $lines = explode("\n", trim($logOutput));
                 foreach ($lines as $line) {
@@ -37,8 +54,8 @@ class SystemUpdateController extends Controller
                 }
             }
         } else {
-            // Show last 3 recent commits as current changelog
-            $logOutput = $this->runCommand("git log -n 3 --oneline");
+            // Show last 5 recent commits as current changelog
+            $logOutput = $this->runCommand("git -c safe.directory=* log -n 5 --oneline");
             if ($logOutput) {
                 $lines = explode("\n", trim($logOutput));
                 foreach ($lines as $line) {
@@ -58,8 +75,8 @@ class SystemUpdateController extends Controller
             'is_update_available'  => $isUpdateAvailable,
             'new_commits'          => $newCommits,
             'status_message'       => $isUpdateAvailable 
-                ? "New version available (commit {$remoteCommit})!" 
-                : "System is running the latest version.",
+                ? "New update available! (Remote commit: {$remoteCommit})" 
+                : "System is up to date (commit {$currentCommit}).",
             'checked_at'           => now()->format('H:i:s'),
         ]);
     }
@@ -71,44 +88,43 @@ class SystemUpdateController extends Controller
     {
         $startTime = microtime(true);
         $logs = [];
-        $branch = $this->runCommand('git rev-parse --abbrev-ref HEAD') ?: 'main';
+        $branch = $this->runCommand('git -c safe.directory=* rev-parse --abbrev-ref HEAD') ?: 'main';
 
-        $logs[] = "🚀 [1/6] Initiating System Update on branch '{$branch}'...";
+        $logs[] = "🚀 [1/5] Initiating System Update on branch '{$branch}'...";
 
-        // Step 1: Git Fetch & Reset
-        $logs[] = "📥 [2/6] Pulling latest code from repository...";
-        $gitReset = $this->runCommand("git fetch origin {$branch} 2>&1 && git reset --hard origin/{$branch} 2>&1");
+        // Step 1: Git Fetch & Reset with safe.directory
+        $logs[] = "📥 [2/5] Fetching and resetting to latest code from GitHub...";
+        $gitReset = $this->runCommand("git -c safe.directory=* fetch origin {$branch} 2>&1 && git -c safe.directory=* reset --hard origin/{$branch} 2>&1");
         $logs[] = $gitReset ?: "Git repository updated.";
 
         // Step 2: Database Migration
-        $logs[] = "🗄️ [3/6] Running database migrations...";
+        $logs[] = "🗄️ [3/5] Running database migrations...";
         try {
             Artisan::call('migrate', ['--force' => true]);
-            $logs[] = trim(Artisan::output()) ?: "Migrations are up to date.";
+            $logs[] = trim(Artisan::output()) ?: "Database schema is up to date.";
         } catch (\Throwable $e) {
             $logs[] = "Migration note: " . $e->getMessage();
         }
 
         // Step 3: Refresh Changelog
-        $logs[] = "📝 [4/6] Updating version & changelog...";
         try {
             if (Artisan::has('app:generate-changelog')) {
                 Artisan::call('app:generate-changelog');
-                $logs[] = "Changelog refreshed.";
+                $logs[] = "Changelog generated.";
             }
         } catch (\Throwable $e) {}
 
         // Step 4: Clear & Rebuild Cache
-        $logs[] = "⚡ [5/6] Optimizing configuration and application cache...";
+        $logs[] = "⚡ [4/5] Clearing and optimizing application caches...";
         try {
             Artisan::call('optimize:clear');
-            $logs[] = "Cache optimized.";
+            $logs[] = "Application caches refreshed.";
         } catch (\Throwable $e) {
-            $logs[] = "Cache clear note: " . $e->getMessage();
+            $logs[] = "Cache note: " . $e->getMessage();
         }
 
         // Step 5: Reload Horizon & PHP-FPM
-        $logs[] = "🌅 [6/6] Reloading Horizon workers & PHP-FPM...";
+        $logs[] = "🌅 [5/5] Reloading workers & PHP-FPM...";
         try {
             if (Artisan::has('horizon:terminate')) {
                 Artisan::call('horizon:terminate');
@@ -122,7 +138,8 @@ class SystemUpdateController extends Controller
 
         $duration = round(microtime(true) - $startTime, 2);
         $newVersion = app_version();
-        $newCommit = $this->runCommand('git rev-parse --short HEAD') ?: 'unknown';
+        $newCommitLong = $this->runCommand('git -c safe.directory=* rev-parse HEAD');
+        $newCommit = $newCommitLong ? substr(trim($newCommitLong), 0, 7) : 'unknown';
 
         $logs[] = "--------------------------------------------------------";
         $logs[] = "✅ SYSTEM UPDATE COMPLETED in {$duration}s!";
