@@ -254,6 +254,10 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
         Route::get('server-logs', [\App\Http\Controllers\ServerLogController::class, 'index'])->name('server-logs.index');
         Route::delete('server-logs/clear', [\App\Http\Controllers\ServerLogController::class, 'clear'])->name('server-logs.clear');
+        
+        // System Auto-Update (MikroTik Style)
+        Route::get('system/update/check', [\App\Http\Controllers\SystemUpdateController::class, 'check'])->name('system.update.check');
+        Route::post('system/update/run', [\App\Http\Controllers\SystemUpdateController::class, 'run'])->name('system.update.run');
 
         // WhatsApp Templates
         Route::get('whatsapp-templates', [\App\Http\Controllers\WhatsappTemplateController::class, 'index'])->name('whatsapp-templates.index');

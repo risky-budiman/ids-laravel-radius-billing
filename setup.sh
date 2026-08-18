@@ -8,14 +8,14 @@ sudo apt update && sudo apt upgrade -y
 
 # 1. Install Essential Tools
 echo "🛠️ Installing Essential Tools..."
-sudo apt install -y software-properties-common curl git unzip zip ufw supervisor cron
+sudo apt install -y software-properties-common curl git unzip zip ufw supervisor cron snmp
 
 # 2. Install PHP 8.3 & Extensions (ISP Optimized)
 echo "🐘 Installing PHP 8.3 & Extensions..."
 sudo add-apt-repository ppa:ondrej/php -y
 sudo apt update
 sudo apt install -y php8.3-fpm php8.3-mysql php8.3-common php8.3-xml php8.3-bcmath \
-php8.3-curl php8.3-mbstring php8.3-zip php8.3-intl php8.3-gd php8.3-sqlite3 php8.3-cli php8.3-redis
+php8.3-curl php8.3-mbstring php8.3-zip php8.3-intl php8.3-gd php8.3-sqlite3 php8.3-cli php8.3-redis php8.3-snmp
 
 # Install Redis Server (Required for Horizon)
 echo "🔴 Installing Redis Server..."
