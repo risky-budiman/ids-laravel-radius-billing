@@ -450,4 +450,46 @@ class AcsServerController extends Controller
             return back()->with('error', "Failed to sync: " . $e->getMessage());
         }
     }
+
+    /**
+     * Update/edit tags for a device in GenieACS.
+     */
+    public function updateDeviceTags(Request $request, string $deviceId)
+    {
+        $serverId = $request->input('server_id');
+        $server = \App\Models\AcsServer::findOrFail($serverId);
+
+        $tagsInput = $request->input('tags', '');
+        $newTags = is_array($tagsInput) 
+            ? $tagsInput 
+            : array_filter(array_map('trim', explode(',', $tagsInput)));
+
+        $currentTagsInput = $request->input('current_tags', '');
+        $currentTags = is_array($currentTagsInput) 
+            ? $currentTagsInput 
+            : array_filter(array_map('trim', explode(',', $currentTagsInput)));
+
+        try {
+            $service = \App\Services\GenieACSService::forServer($server);
+            $service->syncTags($deviceId, $newTags, $currentTags);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Tags updated successfully.',
+                    'tags'    => array_values($newTags)
+                ]);
+            }
+
+            return back()->with('success', 'Tags updated successfully.');
+        } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update tags: ' . $e->getMessage()
+                ], 500);
+            }
+            return back()->with('error', 'Failed to update tags: ' . $e->getMessage());
+        }
+    }
 }

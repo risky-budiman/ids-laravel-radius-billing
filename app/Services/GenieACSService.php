@@ -124,6 +124,54 @@ class GenieACSService
     }
 
     /**
+     * Add a tag to a device in GenieACS.
+     */
+    public function addTag(string $deviceId, string $tag)
+    {
+        $endpoint = "devices/" . urlencode($deviceId) . "/tags/" . urlencode(trim($tag));
+        return $this->request('POST', $endpoint);
+    }
+
+    /**
+     * Remove a tag from a device in GenieACS.
+     */
+    public function deleteTag(string $deviceId, string $tag)
+    {
+        $endpoint = "devices/" . urlencode($deviceId) . "/tags/" . urlencode(trim($tag));
+        return $this->request('DELETE', $endpoint);
+    }
+
+    /**
+     * Sync/update all tags for a device in GenieACS.
+     */
+    public function syncTags(string $deviceId, array $newTags, array $currentTags = [])
+    {
+        $newTags = array_unique(array_filter(array_map('trim', $newTags)));
+        $currentTags = array_unique(array_filter(array_map('trim', $currentTags)));
+
+        $toAdd = array_diff($newTags, $currentTags);
+        $toRemove = array_diff($currentTags, $newTags);
+
+        foreach ($toRemove as $tag) {
+            try {
+                $this->deleteTag($deviceId, $tag);
+            } catch (\Exception $e) {
+                Log::warning("Failed to delete tag '{$tag}' from {$deviceId}: " . $e->getMessage());
+            }
+        }
+
+        foreach ($toAdd as $tag) {
+            try {
+                $this->addTag($deviceId, $tag);
+            } catch (\Exception $e) {
+                Log::warning("Failed to add tag '{$tag}' to {$deviceId}: " . $e->getMessage());
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Generic method to push a task to a device.
      * 
      * @param string $deviceId  The device ID

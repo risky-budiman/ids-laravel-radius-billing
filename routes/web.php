@@ -308,6 +308,7 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         Route::post('acs-devices/{deviceId}/update-config', [\App\Http\Controllers\AcsServerController::class, 'updateConfig'])->name('acs-servers.update-config')->where('deviceId', '[a-zA-Z0-9\-\.]+');
         Route::post('acs-devices/{deviceId}/reboot', [\App\Http\Controllers\AcsServerController::class, 'reboot'])->name('acs-servers.reboot')->where('deviceId', '[a-zA-Z0-9\-\.]+');
         Route::post('acs-devices/{deviceId}/refresh', [\App\Http\Controllers\AcsServerController::class, 'refreshDevice'])->name('acs-servers.refresh-device')->where('deviceId', '[a-zA-Z0-9\-\.]+');
+        Route::post('acs-devices/{deviceId}/update-tags', [\App\Http\Controllers\AcsServerController::class, 'updateDeviceTags'])->name('acs-servers.update-tags')->where('deviceId', '[a-zA-Z0-9\-\.]+');
         Route::get('acs-devices', [\App\Http\Controllers\AcsServerController::class, 'devices'])->name('acs-servers.devices');
         Route::resource('acs-servers', \App\Http\Controllers\AcsServerController::class);
         Route::get('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'index'])->name('settings.company');
