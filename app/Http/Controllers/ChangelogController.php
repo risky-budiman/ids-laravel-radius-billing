@@ -12,6 +12,20 @@ class ChangelogController extends Controller
      */
     public function index()
     {
+        $currentVersion = app_version();
+        $formattedVersion = str_starts_with($currentVersion, 'v') ? $currentVersion : "v{$currentVersion}";
+        
+        // Auto-sync current version into database if not yet present
+        $exists = Changelog::where('version', $formattedVersion)
+            ->orWhere('version', $currentVersion)
+            ->exists();
+            
+        if (!$exists) {
+            try {
+                \Illuminate\Support\Facades\Artisan::call('app:generate-changelog');
+            } catch (\Throwable $e) {}
+        }
+
         $changelogs = Changelog::latest('id')->get();
         return view('changelog.index', compact('changelogs'));
     }
