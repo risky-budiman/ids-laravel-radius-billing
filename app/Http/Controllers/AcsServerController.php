@@ -67,6 +67,7 @@ class AcsServerController extends Controller
         $servers = \App\Models\AcsServer::where('is_active', true)->get();
         $serverId = $request->get('server_id');
         $search = $request->get('q');
+        $tagFilter = $request->get('tag');
         $perPage = in_array((int)$request->get('limit'), [10, 25, 50, 100]) ? (int)$request->get('limit') : 25;
         $page = $request->get('page', 1);
         $skip = ($page - 1) * $perPage;
@@ -81,15 +82,27 @@ class AcsServerController extends Controller
                 $service = \App\Services\GenieACSService::forServer($selectedServer);
                 
                 $query = [];
+                
+                // 1. Tag specific filter if provided
+                if ($tagFilter) {
+                    $cleanTag = trim($tagFilter);
+                    $query['_tags'] = '/' . $cleanTag . '/i';
+                }
+
+                // 2. Global search bar (Tags, IDPEL, Serial, IP)
                 if ($search) {
                     $cleanSearch = trim($search);
                     $cleanIdpel = explode('@', $cleanSearch)[0];
                     
                     // Search by _id, Tags, Serial Number, IP, or PPPoE Username (clean IDPEL)
-                    $query['$or'] = [
+                    $orConditions = [
                         ['_id' => '/' . $cleanSearch . '/i'],
+                        ['_tags' => $cleanSearch],
                         ['_tags' => '/' . $cleanSearch . '/i'],
                         ['_tags' => '/' . $cleanIdpel . '/i'],
+                        ['Tags' => '/' . $cleanSearch . '/i'],
+                        ['VirtualParameters.tag' => '/' . $cleanSearch . '/i'],
+                        ['VirtualParameters.tags' => '/' . $cleanSearch . '/i'],
                         ['_deviceId._SerialNumber' => '/' . $cleanSearch . '/i'],
                         ['DeviceID.SerialNumber' => '/' . $cleanSearch . '/i'],
                         ['Device.DeviceInfo.SerialNumber' => '/' . $cleanSearch . '/i'],
@@ -106,6 +119,18 @@ class AcsServerController extends Controller
                         ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.ExternalIPAddress' => '/' . $cleanSearch . '/i'],
                         ['Device.IP.Interface.1.IPv4Address.1.IPAddress' => '/' . $cleanSearch . '/i'],
                     ];
+
+                    if (isset($query['_tags'])) {
+                        // Both tag filter and search active
+                        $query = [
+                            '$and' => [
+                                ['_tags' => $query['_tags']],
+                                ['$or' => $orConditions]
+                            ]
+                        ];
+                    } else {
+                        $query['$or'] = $orConditions;
+                    }
                 }
 
                 $projection = [
@@ -184,7 +209,7 @@ class AcsServerController extends Controller
             ]
         );
 
-        return view('acs-servers.devices', compact('servers', 'selectedServer', 'paginatedDevices', 'error', 'search'));
+        return view('acs-servers.devices', compact('servers', 'selectedServer', 'paginatedDevices', 'error', 'search', 'tagFilter'));
     }
 
     /**

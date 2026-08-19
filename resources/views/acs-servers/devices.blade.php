@@ -24,9 +24,29 @@
     </x-slot>
 
     <div class="max-w-7xl mx-auto space-y-6">
+        <!-- Active Tag Banner if filtered -->
+        @if(!empty($tagFilter))
+            <div class="p-3.5 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-2xl flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">Filtered by Tag:</span>
+                    <span class="inline-flex items-center px-3 py-1 bg-indigo-600 text-white rounded-xl text-xs font-black font-mono shadow-sm">
+                        {{ $tagFilter }}
+                    </span>
+                </div>
+                <a href="{{ route('acs-servers.devices', ['server_id' => request('server_id'), 'q' => request('q'), 'limit' => request('limit')]) }}" class="inline-flex items-center px-3 py-1 bg-white dark:bg-gray-800 hover:bg-rose-50 dark:hover:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold transition-all border border-rose-200 dark:border-rose-800">
+                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    Clear Tag Filter
+                </a>
+            </div>
+        @endif
+
         <!-- Search & Server Select Filter Card -->
         <div class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none p-4">
             <form action="{{ route('acs-servers.devices') }}" method="GET" class="flex flex-col md:flex-row gap-4 items-center">
+                @if(!empty($tagFilter))
+                    <input type="hidden" name="tag" value="{{ $tagFilter }}">
+                @endif
+
                 <!-- Search Input with Modern Icon -->
                 <div class="relative w-full md:flex-grow">
                     <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
@@ -37,7 +57,7 @@
                         class="w-full pl-12 pr-10 py-3.5 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl text-sm dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none" autocomplete="off">
                     
                     @if($search)
-                        <a href="{{ route('acs-servers.devices', ['server_id' => request('server_id')]) }}" class="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-rose-500 transition-colors" title="Clear Search">
+                        <a href="{{ route('acs-servers.devices', ['server_id' => request('server_id'), 'tag' => request('tag'), 'limit' => request('limit')]) }}" class="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-rose-500 transition-colors" title="Clear Search">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </a>
                     @endif
@@ -200,9 +220,9 @@
                                     @if(!empty($tags))
                                         <div class="flex flex-wrap gap-1 max-w-[180px]">
                                             @foreach($tags as $tag)
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-tight bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60 font-mono">
+                                                <a href="{{ route('acs-servers.devices', ['server_id' => $selectedServer->id, 'tag' => trim($tag)]) }}" class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-tight bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:bg-indigo-900/40 dark:hover:bg-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60 font-mono transition-all duration-150" title="Click to filter by tag '{{ trim($tag) }}'">
                                                     {{ trim($tag) }}
-                                                </span>
+                                                </a>
                                             @endforeach
                                         </div>
                                     @else
