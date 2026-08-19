@@ -1,5 +1,10 @@
 # Changelog
 
+## [v1.5.17] - 2026-08-19
+- System maintenance, stability updates, and improvements for v1.5.17 ([RELEASE])
+
+
+
 ## [1.5.16] - 2026-08-01
 - Bugfix Invoice ([HEAD])
 

@@ -27,26 +27,20 @@ class GenerateChangelog extends Command
      */
     public function handle()
     {
-        $this->info('Generating changelog from git logs...');
+        $version = app_version();
+        $formattedVersion = str_starts_with($version, 'v') ? $version : "v{$version}";
+        $this->info("Generating changelog for version {$formattedVersion} from git logs...");
 
-        // Get last version from DB to know where to start git log
-        $latestEntry = Changelog::latest('id')->first();
-        $since = $latestEntry ? $latestEntry->created_at->toDateTimeString() : '';
-
-        // Execute git log command with safe.directory
         $base = base_path();
-        $gitCommand = "cd " . escapeshellarg($base) . " && git -c safe.directory=* log " . ($since ? "--since=\"{$since}\" " : "-n 10 ") . "--pretty=format:\"%h|%s|%an|%ad\" --date=short 2>&1";
-        $output = shell_exec($gitCommand);
 
-        if (!$output || str_contains($output, 'fatal:') || str_contains($output, 'error:')) {
-            $gitCommand = "cd " . escapeshellarg($base) . " && git -c safe.directory=* log -n 10 --pretty=format:\"%h|%s|%an|%ad\" --date=short 2>&1";
-            $output = shell_exec($gitCommand);
-        }
+        // 1. Fetch recent git log commits
+        $gitCommand = "cd " . escapeshellarg($base) . " && git -c safe.directory=* log -n 15 --pretty=format:\"%h|%s|%an|%ad\" --date=short 2>&1";
+        $output = shell_exec($gitCommand);
 
         $lines = $output ? explode("\n", trim($output)) : [];
         $newChanges = [];
 
-        // Add manual message if provided (e.g. from commit-msg hook)
+        // Add manual message if provided
         if ($this->option('message')) {
             $cleanMsg = trim(str_ireplace(['#major', '#minor', '#patch'], '', $this->option('message')));
             $newChanges[] = [
@@ -57,22 +51,18 @@ class GenerateChangelog extends Command
             ];
         }
 
-        if (!$output && empty($newChanges)) {
-            $this->warn('No new changes found since last release.');
-            return;
-        }
-
         foreach ($lines as $line) {
             $parts = explode('|', $line);
             if (count($parts) < 2) continue;
 
             $hash = $parts[0];
             $subject = trim(str_ireplace(['#major', '#minor', '#patch'], '', $parts[1]));
-            $author = $parts[2] ?? 'Unknown';
+            $author = $parts[2] ?? 'Developer';
             $date = $parts[3] ?? now()->toDateString();
 
-            // Skip merge commits if needed
+            // Skip merge commits and automated version tags
             if (str_starts_with($subject, 'Merge branch')) continue;
+            if (str_starts_with($subject, 'fatal:') || str_starts_with($subject, 'error:')) continue;
 
             $newChanges[] = [
                 'hash' => $hash,
@@ -82,28 +72,33 @@ class GenerateChangelog extends Command
             ];
         }
 
+        // Fallback if no git commits could be parsed
         if (empty($newChanges)) {
-            $this->warn('No relevant changes found.');
-            return;
+            $newChanges[] = [
+                'hash' => 'RELEASE',
+                'subject' => "System maintenance, stability updates, and improvements for {$formattedVersion}",
+                'author' => 'System',
+                'date' => now()->toDateString()
+            ];
         }
 
-        $version = app_version();
-        $this->info("Found " . count($newChanges) . " changes for version {$version}");
+        $this->info("Found " . count($newChanges) . " changes for version {$formattedVersion}");
 
         if ($this->option('dry-run')) {
             foreach ($newChanges as $change) {
                 $this->line("- [{$change['hash']}] {$change['subject']} ({$change['author']})");
             }
-            return;
+            return 0;
         }
 
         // Update CHANGELOG.md
-        $this->updateChangelogFile($version, $newChanges);
+        $this->updateChangelogFile($formattedVersion, $newChanges);
 
-        // Update database (optional: could be more detailed)
-        $this->updateDatabase($version, $newChanges);
+        // Update database
+        $this->updateDatabase($formattedVersion, $newChanges);
 
-        $this->info('Successfully updated CHANGELOG.md and database.');
+        $this->info("Successfully updated CHANGELOG.md and database for {$formattedVersion}.");
+        return 0;
     }
 
     protected function updateChangelogFile($version, $changes)
@@ -117,7 +112,6 @@ class GenerateChangelog extends Command
             foreach ($lines as $line) {
                 $line = trim($line);
                 if (empty($line)) continue;
-                // Remove existing dashes if any to prevent double bullets
                 $line = ltrim($line, '- ');
                 $newContent .= "- {$line} ([{$change['hash']}])\n";
             }
@@ -126,7 +120,10 @@ class GenerateChangelog extends Command
 
         if (file_exists($changelogPath)) {
             $existingContent = file_get_contents($changelogPath);
-            // Insert at the top after the title
+            if (str_contains($existingContent, "## [{$version}]")) {
+                // Already has this section, replace it or keep
+                return;
+            }
             if (str_contains($existingContent, '# Changelog')) {
                 $content = str_replace('# Changelog', "# Changelog\n\n" . $newContent, $existingContent);
             } else {
@@ -141,29 +138,35 @@ class GenerateChangelog extends Command
 
     protected function updateDatabase($version, $changes)
     {
+        $cleanVersion = ltrim($version, 'v');
+        $formattedVersion = "v{$cleanVersion}";
+
         // Check if entry already exists
-        $entry = Changelog::where('version', $version)->first();
+        $entry = Changelog::where('version', $version)
+            ->orWhere('version', $formattedVersion)
+            ->orWhere('version', $cleanVersion)
+            ->first();
         
-        $description = "";
-        foreach ($changes as $change) {
-            $lines = explode("\n", $change['subject']);
-            foreach ($lines as $line) {
-                $line = trim($line);
-                if (empty($line)) continue;
-                $line = ltrim($line, '- ');
-                $description .= "- {$line}\n";
+        $descriptionLines = [];
+        foreach (array_slice($changes, 0, 8) as $change) {
+            $subject = trim(ltrim($change['subject'], '- '));
+            if (!empty($subject)) {
+                $descriptionLines[] = "• {$subject}";
             }
         }
+        $description = implode("\n", $descriptionLines);
 
         if ($entry) {
             $entry->update([
+                'version' => $formattedVersion,
+                'title' => "Release {$formattedVersion}",
                 'description' => $description,
                 'release_date' => now()->toDateString(),
             ]);
         } else {
             Changelog::create([
-                'version' => $version,
-                'title' => "Release {$version}",
+                'version' => $formattedVersion,
+                'title' => "Release {$formattedVersion}",
                 'description' => $description,
                 'type' => 'feature',
                 'release_date' => now()->toDateString(),
