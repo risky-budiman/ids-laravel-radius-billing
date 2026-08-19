@@ -33,9 +33,15 @@ class GenerateChangelog extends Command
         $latestEntry = Changelog::latest('id')->first();
         $since = $latestEntry ? $latestEntry->created_at->toDateTimeString() : '';
 
-        // Execute git log command
-        $gitCommand = "git log " . ($since ? "--since=\"{$since}\" " : "") . "--pretty=format:\"%h|%s|%an|%ad\" --date=short";
+        // Execute git log command with safe.directory
+        $base = base_path();
+        $gitCommand = "cd " . escapeshellarg($base) . " && git -c safe.directory=* log " . ($since ? "--since=\"{$since}\" " : "-n 10 ") . "--pretty=format:\"%h|%s|%an|%ad\" --date=short 2>&1";
         $output = shell_exec($gitCommand);
+
+        if (!$output || str_contains($output, 'fatal:') || str_contains($output, 'error:')) {
+            $gitCommand = "cd " . escapeshellarg($base) . " && git -c safe.directory=* log -n 10 --pretty=format:\"%h|%s|%an|%ad\" --date=short 2>&1";
+            $output = shell_exec($gitCommand);
+        }
 
         $lines = $output ? explode("\n", trim($output)) : [];
         $newChanges = [];

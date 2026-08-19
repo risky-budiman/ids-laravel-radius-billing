@@ -110,9 +110,12 @@ class SystemUpdateController extends Controller
         try {
             if (Artisan::has('app:generate-changelog')) {
                 Artisan::call('app:generate-changelog');
-                $logs[] = "Changelog generated.";
+                $changelogOutput = trim(Artisan::output());
+                $logs[] = $changelogOutput ?: "Changelog generated.";
             }
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+            $logs[] = "Changelog note: " . $e->getMessage();
+        }
 
         // Step 4: Clear & Rebuild Cache
         $logs[] = "⚡ [4/5] Clearing and optimizing application caches...";
