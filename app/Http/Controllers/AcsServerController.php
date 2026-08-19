@@ -82,19 +82,36 @@ class AcsServerController extends Controller
                 
                 $query = [];
                 if ($search) {
-                    // Search by _id, Serial Number, or PPPoE Username using regex
+                    $cleanSearch = trim($search);
+                    $cleanIdpel = explode('@', $cleanSearch)[0];
+                    
+                    // Search by _id, Tags, Serial Number, IP, or PPPoE Username (clean IDPEL)
                     $query['$or'] = [
-                        ['_id' => '/' . $search . '/i'],
-                        ['Device.DeviceInfo.SerialNumber' => '/' . $search . '/i'],
-                        ['InternetGatewayDevice.DeviceInfo.SerialNumber' => '/' . $search . '/i'],
-                        ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username' => '/' . $search . '/i'],
-                        ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.Username' => '/' . $search . '/i'],
-                        ['Device.PPP.Interface.1.Username' => '/' . $search . '/i'],
+                        ['_id' => '/' . $cleanSearch . '/i'],
+                        ['_tags' => '/' . $cleanSearch . '/i'],
+                        ['_tags' => '/' . $cleanIdpel . '/i'],
+                        ['_deviceId._SerialNumber' => '/' . $cleanSearch . '/i'],
+                        ['DeviceID.SerialNumber' => '/' . $cleanSearch . '/i'],
+                        ['Device.DeviceInfo.SerialNumber' => '/' . $cleanSearch . '/i'],
+                        ['InternetGatewayDevice.DeviceInfo.SerialNumber' => '/' . $cleanSearch . '/i'],
+                        ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username' => '/' . $cleanIdpel . '/i'],
+                        ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.Username' => '/' . $cleanIdpel . '/i'],
+                        ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.Username' => '/' . $cleanIdpel . '/i'],
+                        ['Device.PPP.Interface.1.Username' => '/' . $cleanIdpel . '/i'],
+                        ['Device.PPP.Interface.2.Username' => '/' . $cleanIdpel . '/i'],
+                        ['VirtualParameters.pppUsername' => '/' . $cleanIdpel . '/i'],
+                        ['VirtualParameters.IP' => '/' . $cleanSearch . '/i'],
+                        ['VirtualParameters.wanip' => '/' . $cleanSearch . '/i'],
+                        ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress' => '/' . $cleanSearch . '/i'],
+                        ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.ExternalIPAddress' => '/' . $cleanSearch . '/i'],
+                        ['Device.IP.Interface.1.IPv4Address.1.IPAddress' => '/' . $cleanSearch . '/i'],
                     ];
                 }
 
                 $projection = [
                     '_id', 
+                    '_tags',
+                    'Tags',
                     '_lastInform', 
                     'DeviceID.SerialNumber',
                     'DeviceID.ProductClass',
@@ -120,7 +137,9 @@ class AcsServerController extends Controller
                     // PPPoE Username - Standard TR-069 paths
                     'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username',
                     'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.Username',
+                    'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.Username',
                     'Device.PPP.Interface.1.Username',
+                    'Device.PPP.Interface.2.Username',
                     // Rx Power / Optical Signal - Vendor-specific standard paths
                     'InternetGatewayDevice.WANDevice.1.X_GponInterafceConfig.RXPower',
                     'InternetGatewayDevice.WANDevice.1.X_HW_OpticalInfo.RxPower',

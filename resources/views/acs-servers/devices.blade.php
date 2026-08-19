@@ -33,7 +33,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
                     <input type="text" name="q" value="{{ $search }}" 
-                        placeholder="Search Serial Number, ID, or IP address..." 
+                        placeholder="Search by ID Pelanggan (Username), Tag, Serial Number, or IP..." 
                         class="w-full pl-12 pr-10 py-3.5 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl text-sm dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none" autocomplete="off">
                     
                     @if($search)
@@ -98,6 +98,7 @@
                     <thead>
                         <tr class="bg-gray-50/50 dark:bg-gray-900/30 border-b border-gray-100 dark:border-gray-700/50">
                             <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">IDPEL</th>
+                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tags</th>
                             <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Device ID / Serial</th>
                             <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Product Class</th>
                             <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">IP Address</th>
@@ -111,6 +112,10 @@
                             @php
                                 $id = $device['_id'] ?? 'Unknown';
                                 
+                                // Tags extraction
+                                $rawTags = $device['_tags'] ?? $device['Tags'] ?? [];
+                                $tags = is_array($rawTags) ? $rawTags : (is_string($rawTags) ? array_filter(explode(',', $rawTags)) : []);
+
                                 // Serial Number Fallbacks
                                 $serial = $device['_deviceId']['_SerialNumber']
                                     ?? $device['DeviceID']['SerialNumber']['_value'] 
@@ -148,7 +153,9 @@
                                 // PPPoE Username / IDPEL Fallbacks (standard first, VP fallback)
                                 $idpel = $device['InternetGatewayDevice']['WANDevice'][1]['WANConnectionDevice'][1]['WANPPPConnection'][1]['Username']['_value']
                                     ?? $device['InternetGatewayDevice']['WANDevice'][1]['WANConnectionDevice'][2]['WANPPPConnection'][1]['Username']['_value']
+                                    ?? $device['InternetGatewayDevice']['WANDevice'][1]['WANConnectionDevice'][1]['WANPPPConnection'][2]['Username']['_value']
                                     ?? $device['Device']['PPP']['Interface'][1]['Username']['_value']
+                                    ?? $device['Device']['PPP']['Interface'][2]['Username']['_value']
                                     ?? $device['VirtualParameters']['pppUsername']['_value']
                                     ?? 'N/A';
 
@@ -188,6 +195,19 @@
                                     <span class="text-sm font-bold text-gray-800 dark:text-gray-200 font-mono">
                                         {{ explode('@', $idpel)[0] }}
                                     </span>
+                                </td>
+                                <td class="px-6 py-4.5">
+                                    @if(!empty($tags))
+                                        <div class="flex flex-wrap gap-1 max-w-[180px]">
+                                            @foreach($tags as $tag)
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-tight bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60 font-mono">
+                                                    {{ trim($tag) }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-gray-400 dark:text-gray-600 font-mono italic">-</span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4.5">
                                     <div class="flex flex-col">
