@@ -51,7 +51,7 @@ Route::post('/webhooks/moota', [\App\Http\Controllers\PaymentWebhookController::
 
 
 
-Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,admin,teknisi,kasir,sales'])->group(function () {
+Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknisi,kasir,sales'])->group(function () {
     Route::get('/', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     // RADIUS Session Management
@@ -250,7 +250,6 @@ Route::prefix('admin')->middleware(['auth:web', 'verified', 'role:administrator,
         Route::post('users/{user}/toggle-status', [\App\Http\Controllers\UserController::class, 'toggleStatus'])->name('users.toggle-status');
         Route::post('users/{user}/reset-sessions', [\App\Http\Controllers\UserController::class, 'resetSessions'])->name('users.reset-sessions');
         
-        Route::resource('packages', \App\Http\Controllers\PackageController::class);
         Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
         Route::get('server-logs', [\App\Http\Controllers\ServerLogController::class, 'index'])->name('server-logs.index');
         Route::delete('server-logs/clear', [\App\Http\Controllers\ServerLogController::class, 'clear'])->name('server-logs.clear');

@@ -31,6 +31,18 @@ class Package extends Model
         'fup_speed_limit',
     ];
 
+    protected $casts = [
+        'is_active' => 'boolean',
+        'enable_fup' => 'boolean',
+        'price' => 'double',
+        'fup_limit_gb' => 'double',
+    ];
+
+    public function customers()
+    {
+        return $this->hasMany(Customer::class);
+    }
+
     public function getMikrotikRateLimitAttribute()
     {
         // RX/TX [BurstRX/BurstTX [ThresholdRX/ThresholdTX [TimeRX/TimeTX [Priority [LimitAtRX/LimitAtTX]]]]]
