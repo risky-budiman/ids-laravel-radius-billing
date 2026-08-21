@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\v1\Admin\InventoryController as AdminInventoryContr
 use App\Http\Controllers\Api\v1\Admin\FinanceController as AdminFinanceController;
 use App\Http\Controllers\Api\v1\Admin\AccountingController as AdminAccountingController;
 use App\Http\Controllers\Api\v1\Admin\SystemAdminController as AdminSystemAdminController;
+use App\Http\Controllers\Api\v1\Admin\GenieAcsController as AdminGenieAcsController;
 
 // Customer Mobile API Routes
 Route::prefix('v1/customer')->group(function () {
@@ -132,5 +133,18 @@ Route::prefix('v1/admin')->name('api.admin.')->group(function () {
         Route::get('/admin/settings', [AdminSystemAdminController::class, 'settings']);
         Route::post('/admin/settings', [AdminSystemAdminController::class, 'updateSettings']);
         Route::get('/admin/locations', [AdminSystemAdminController::class, 'networkLocations']);
+
+        // GenieACS (TR-069 & CPE Management - Fase 13)
+        Route::get('/genieacs/servers', [AdminGenieAcsController::class, 'servers']);
+        Route::post('/genieacs/servers', [AdminGenieAcsController::class, 'storeServer']);
+        Route::put('/genieacs/servers/{id}', [AdminGenieAcsController::class, 'updateServer']);
+        Route::delete('/genieacs/servers/{id}', [AdminGenieAcsController::class, 'destroyServer']);
+        Route::get('/genieacs/devices', [AdminGenieAcsController::class, 'devices']);
+        Route::get('/genieacs/devices/{deviceId}', [AdminGenieAcsController::class, 'showDevice']);
+        Route::post('/genieacs/devices/{deviceId}/reboot', [AdminGenieAcsController::class, 'rebootDevice']);
+        Route::post('/genieacs/devices/{deviceId}/refresh', [AdminGenieAcsController::class, 'refreshDevice']);
+        Route::post('/genieacs/devices/{deviceId}/factory-reset', [AdminGenieAcsController::class, 'factoryResetDevice']);
+        Route::post('/genieacs/devices/{deviceId}/config', [AdminGenieAcsController::class, 'updateConfig']);
+        Route::post('/genieacs/devices/{deviceId}/tags', [AdminGenieAcsController::class, 'updateTags']);
     });
 });

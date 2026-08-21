@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.5.21] - 2026-08-21
+- Update Fitur API admin portal ([ec25389])
+- Add interactive device tag editor and management in GenieACS ([ccb38b7])
+- Add interactive tag search and clickable tag filters in GenieACS ([8f218a7])
+- Bump version to 1.5.18 with auto-syncing changelog ([dbad885])
+- Fix changelog generation for v1.5.17 ([e0bee2c])
+- Fix changelog git permissions and log output in updater ([2b4bee8])
+- Display device tags and enable search by clean IDPEL username and tags in GenieACS ([87dc9b3])
+- Bump version to 1.5.17 and add app:bump-version command ([fb5c9dd])
+- Fix Git safe directory and accurate ls-remote detection ([9ee0ed7])
+- Replace port polling with direct instant SNMP sync button ([07293a0])
+- Add MikroTik-style web auto-updater in server-logs ([a6c4ce2])
+- Add MikroTik-style web auto-updater in server-logs ([754b52c])
+- Optimize SNMP discovery speed and fast multi-table scan ([4d7e458])
+- Optimize SNMP discovery speed and fast multi-table scan ([c0fb86a])
+- Auto discover ports on view and instant live SNMP query ([eae9da3])
+
+
+
 ## [v1.5.20] - 2026-08-21
 - Add interactive device tag editor and management in GenieACS ([ccb38b7])
 - Add interactive tag search and clickable tag filters in GenieACS ([8f218a7])
