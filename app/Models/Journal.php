@@ -8,6 +8,10 @@ class Journal extends Model
 {
     protected $fillable = ['date', 'reference', 'description', 'created_by'];
 
+    protected $casts = [
+        'date' => 'date',
+    ];
+
     public function items()
     {
         return $this->hasMany(JournalItem::class);

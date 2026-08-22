@@ -386,7 +386,7 @@ class AccountingController extends Controller
 
             if ($items->count() > 0 || $openingBalance != 0 || ($accountId && $accountId == $account->id)) {
                 $lineItems = $items->map(fn($item) => [
-                    'date' => $item->journal?->date ? $item->journal->date->format('Y-m-d') : null,
+                    'date' => $item->journal?->date ? Carbon::parse($item->journal->date)->format('Y-m-d') : null,
                     'reference' => $item->journal?->reference ?? '-',
                     'description' => $item->memo ?: ($item->journal?->description ?? '-'),
                     'debit' => (float) $item->debit,
