@@ -45,47 +45,55 @@ class DashboardController extends Controller
         $closedTicketsThisMonth = Ticket::where('status', 'closed')
             ->where('updated_at', '>=', $currentMonth)->count();
 
-        // Online users
-        $onlineUsers = RadAcct::whereNull('acctstoptime')->count();
+        // Online users (FreeRADIUS fallback)
+        try {
+            $onlineUsers = RadAcct::whereNull('acctstoptime')->count();
+        } catch (\Exception $e) {
+            $onlineUsers = 0;
+        }
 
-        // Recent activity logs
-        $recentActivities = ActivityLog::with('user')
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get()
-            ->map(function ($log) {
-                return [
-                    'id' => $log->id,
-                    'action' => $log->action,
-                    'description' => $log->description,
-                    'user_name' => $log->user ? $log->user->name : 'System',
-                    'created_at' => $log->created_at->toIso8601String(),
-                ];
-            });
+        // Recent activity logs fallback
+        try {
+            $recentActivities = ActivityLog::with('user')
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get()
+                ->map(function ($log) {
+                    return [
+                        'id' => $log->id,
+                        'action' => $log->action ?? 'info',
+                        'description' => $log->description ?? '-',
+                        'user_name' => $log->user ? $log->user->name : 'System',
+                        'created_at' => $log->created_at ? $log->created_at->toIso8601String() : now()->toIso8601String(),
+                    ];
+                });
+        } catch (\Exception $e) {
+            $recentActivities = [];
+        }
 
         return response()->json([
             'customers' => [
-                'total' => $totalCustomers,
-                'active' => $activeCustomers,
-                'suspended' => $suspendedCustomers,
-                'new' => $newCustomers,
-                'waiting_activation' => $waitingActivation,
+                'total' => (int) $totalCustomers,
+                'active' => (int) $activeCustomers,
+                'suspended' => (int) $suspendedCustomers,
+                'new' => (int) $newCustomers,
+                'waiting_activation' => (int) $waitingActivation,
             ],
             'invoices' => [
-                'total_this_month' => $totalInvoices,
-                'paid' => $paidInvoices,
-                'unpaid' => $unpaidInvoices,
-                'overdue' => $overdueInvoices,
+                'total_this_month' => (int) $totalInvoices,
+                'paid' => (int) $paidInvoices,
+                'unpaid' => (int) $unpaidInvoices,
+                'overdue' => (int) $overdueInvoices,
             ],
             'revenue' => [
                 'this_month' => (float) $monthlyRevenue,
             ],
             'tickets' => [
-                'open' => $openTickets,
-                'in_progress' => $inProgressTickets,
-                'closed_this_month' => $closedTicketsThisMonth,
+                'open' => (int) $openTickets,
+                'in_progress' => (int) $inProgressTickets,
+                'closed_this_month' => (int) $closedTicketsThisMonth,
             ],
-            'online_users' => $onlineUsers,
+            'online_users' => (int) $onlineUsers,
             'recent_activities' => $recentActivities,
         ]);
     }

@@ -374,63 +374,54 @@ class AccountingController extends Controller
      */
     public function ledger(Request $request)
     {
+        $accounts = ChartOfAccount::orderBy('code')->get();
         $accountId = $request->input('account_id');
         $allTime = $request->boolean('all_time', true);
 
         $startDate = $allTime ? '2000-01-01' : $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
         $endDate = $allTime ? Carbon::now()->toDateString() : $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
 
-        $accounts = ChartOfAccount::orderBy('code')->get()->keyBy('id');
-        $targetAccounts = $accountId ? $accounts->only([$accountId]) : $accounts;
+        $queryAccounts = $accountId ? ChartOfAccount::where('id', $accountId)->get() : $accounts;
+        $resultGroups = [];
 
-        // 1. Fetch opening balances if not allTime (single query)
-        $openingSums = [];
-        if (!$allTime) {
-            $prevRows = JournalItem::join('journals', 'journal_items.journal_id', '=', 'journals.id')
-                ->where('journals.date', '<', $startDate)
-                ->select('journal_items.account_id', DB::raw('SUM(journal_items.debit) as total_debit'), DB::raw('SUM(journal_items.credit) as total_credit'))
-                ->groupBy('journal_items.account_id')
-                ->get();
-
-            foreach ($prevRows as $row) {
-                $acc = $accounts->get($row->account_id);
-                if ($acc) {
-                    $openingSums[$row->account_id] = in_array($acc->type, ['asset', 'expense', 'cost_of_sales'])
-                        ? (float) ($row->total_debit - $row->total_credit)
-                        : (float) ($row->total_credit - $row->total_debit);
+        // Preload journal items with journal relationship
+        $itemsQuery = JournalItem::with(['journal'])
+            ->whereHas('journal', function($q) use ($allTime, $startDate, $endDate) {
+                if (!$allTime) {
+                    $q->whereBetween('date', [$startDate, $endDate]);
                 }
+            });
+
+        if ($accountId) {
+            $itemsQuery->where('account_id', $accountId);
+        }
+
+        $allJournalItems = $itemsQuery->get()->groupBy('account_id');
+
+        // Opening balances if not all-time
+        $openingBalances = [];
+        if (!$allTime) {
+            $prevItems = JournalItem::whereHas('journal', function($q) use ($startDate) {
+                $q->where('date', '<', $startDate);
+            });
+            if ($accountId) {
+                $prevItems->where('account_id', $accountId);
+            }
+            $groupedPrev = $prevItems->get()->groupBy('account_id');
+            foreach ($accounts as $acc) {
+                $pItems = $groupedPrev->get($acc->id, collect());
+                $openingBalances[$acc->id] = in_array($acc->type, ['asset', 'expense', 'cost_of_sales'])
+                    ? (float) ($pItems->sum('debit') - $pItems->sum('credit'))
+                    : (float) ($pItems->sum('credit') - $pItems->sum('debit'));
             }
         }
 
-        // 2. Fetch journal items in period (single fast query joined with journals)
-        $itemsQuery = JournalItem::join('journals', 'journal_items.journal_id', '=', 'journals.id')
-            ->select(
-                'journal_items.id',
-                'journal_items.account_id',
-                'journal_items.debit',
-                'journal_items.credit',
-                'journal_items.memo',
-                'journals.date as journal_date',
-                'journals.reference as journal_reference',
-                'journals.description as journal_description'
-            );
-
-        if ($accountId) {
-            $itemsQuery->where('journal_items.account_id', $accountId);
-        }
-
-        if (!$allTime) {
-            $itemsQuery->whereBetween('journals.date', [$startDate, $endDate]);
-        }
-
-        $itemsQuery->orderBy('journals.date', 'asc')->orderBy('journal_items.id', 'asc');
-        $allJournalItems = $itemsQuery->get()->groupBy('account_id');
-
-        $resultGroups = [];
-
-        foreach ($targetAccounts as $account) {
-            $openingBalance = $openingSums[$account->id] ?? 0.0;
-            $items = $allJournalItems->get($account->id, collect());
+        foreach ($queryAccounts as $account) {
+            $openingBalance = $openingBalances[$account->id] ?? 0.0;
+            $items = $allJournalItems->get($account->id, collect())->sortBy(function($i) {
+                $dateStr = $i->journal && $i->journal->date ? (is_string($i->journal->date) ? $i->journal->date : Carbon::parse($i->journal->date)->format('Y-m-d')) : '1970-01-01';
+                return $dateStr . '-' . str_pad($i->id, 10, '0', STR_PAD_LEFT);
+            });
 
             $debit = (float) $items->sum('debit');
             $credit = (float) $items->sum('credit');
@@ -441,20 +432,29 @@ class AccountingController extends Controller
                 $endingBalance += ($credit - $debit);
             }
 
-            if ($items->count() > 0 || $openingBalance != 0 || ($accountId && $accountId == $account->id)) {
-                $lineItems = $items->map(fn($item) => [
-                    'date' => $item->journal_date ? Carbon::parse($item->journal_date)->format('Y-m-d') : null,
-                    'reference' => $item->journal_reference ?? '-',
-                    'description' => $item->memo ?: ($item->journal_description ?? '-'),
-                    'debit' => (float) $item->debit,
-                    'credit' => (float) $item->credit,
-                    'balance' => 0.0,
-                ])->values()->all();
+            // Include account if it has items, has opening/ending balance, or is specifically requested
+            if ($items->count() > 0 || $openingBalance != 0 || $endingBalance != 0 || ($accountId && $accountId == $account->id)) {
+                $lineItems = $items->map(function ($item) {
+                    $dateStr = null;
+                    if ($item->journal && $item->journal->date) {
+                        $dateStr = is_string($item->journal->date) 
+                            ? $item->journal->date 
+                            : Carbon::parse($item->journal->date)->format('Y-m-d');
+                    }
+                    return [
+                        'date' => $dateStr,
+                        'reference' => $item->journal?->reference ?? '-',
+                        'description' => $item->memo ?: ($item->journal?->description ?? '-'),
+                        'debit' => (float) $item->debit,
+                        'credit' => (float) $item->credit,
+                        'balance' => 0.0,
+                    ];
+                })->values()->all();
 
                 $resultGroups[] = [
-                    'account_id' => $account->id,
-                    'account_code' => $account->code,
-                    'account_name' => $account->name,
+                    'account_id' => (int) $account->id,
+                    'account_code' => (string) $account->code,
+                    'account_name' => (string) $account->name,
                     'opening_balance' => (float) $openingBalance,
                     'closing_balance' => (float) $endingBalance,
                     'items' => $lineItems,

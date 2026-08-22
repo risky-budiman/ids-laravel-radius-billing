@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.5.29] - 2026-08-23
+- Update API endpoint ([6deb691])
+- Update API endpoint ([8ce1648])
+- Update API endpoint ([6e6d7e1])
+- Closing Priod API ([a3f1795])
+- Closing Priod API ([57d67d8])
+- Update API Finance ([2166c5b])
+- Update API Finance ([a5c7bb6])
+- Update endpoint GenieACS Portal Admin ([0f67c0d])
+- Update Fitur API admin portal ([ec25389])
+- Add interactive device tag editor and management in GenieACS ([ccb38b7])
+- Add interactive tag search and clickable tag filters in GenieACS ([8f218a7])
+- Bump version to 1.5.18 with auto-syncing changelog ([dbad885])
+- Fix changelog generation for v1.5.17 ([e0bee2c])
+- Fix changelog git permissions and log output in updater ([2b4bee8])
+- Display device tags and enable search by clean IDPEL username and tags in GenieACS ([87dc9b3])
+
+
+
 ## [v1.5.28] - 2026-08-23
 - Update API endpoint ([8ce1648])
 - Update API endpoint ([6e6d7e1])
