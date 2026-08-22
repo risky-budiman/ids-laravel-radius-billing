@@ -41,15 +41,21 @@ class AccountingController extends Controller
      */
     public function journals(Request $request)
     {
-        $query = Journal::with(['items.account', 'creator'])->latest('date');
+        $query = Journal::with(['items.account', 'creator'])->orderBy('date', 'desc')->orderBy('id', 'desc');
 
         if ($request->filled('search')) {
             $s = $request->input('search');
-            $query->where('description', 'like', "%{$s}%")
-                  ->orWhere('reference', 'like', "%{$s}%");
+            $query->where(function($q) use ($s) {
+                $q->where('description', 'like', "%{$s}%")
+                  ->orWhere('reference', 'like', "%{$s}%")
+                  ->orWhereHas('items.account', function($aq) use ($s) {
+                      $aq->where('code', 'like', "%{$s}%")
+                         ->orWhere('name', 'like', "%{$s}%");
+                  });
+            });
         }
 
-        $paginator = $query->paginate(15);
+        $paginator = $query->paginate(20);
 
         $data = $paginator->getCollection()->map(function ($j) {
             $items = $j->items->map(function ($i) {
@@ -65,9 +71,9 @@ class AccountingController extends Controller
 
             return [
                 'id' => $j->id,
-                'date' => $j->date ? $j->date->format('Y-m-d') : null,
+                'date' => $j->date ? Carbon::parse($j->date)->format('Y-m-d') : null,
                 'reference' => $j->reference,
-                'description' => $j->description,
+                'description' => $j->description ?? '-',
                 'creator_name' => $j->creator ? $j->creator->name : 'System',
                 'total_debit' => (float) $j->items->sum('debit'),
                 'total_credit' => (float) $j->items->sum('credit'),
@@ -263,6 +269,14 @@ class AccountingController extends Controller
         $netFinancing = (float) ($financingIn);
         $netCashFlow = (float) ($netOperating + $netInvesting + $netFinancing);
 
+        // Opening Cash Balance
+        $prevCashItems = JournalItem::whereIn('account_id', $cashAccounts)
+            ->whereHas('journal', function($q) use ($startDate) {
+                $q->where('date', '<', $startDate);
+            })->get();
+        $openingCash = (float) ($prevCashItems->sum('debit') - $prevCashItems->sum('credit'));
+        $closingCash = (float) ($openingCash + $netCashFlow);
+
         return response()->json([
             'operating_in' => (float) $operatingIn,
             'operating_out' => (float) $operatingOut,
@@ -274,6 +288,8 @@ class AccountingController extends Controller
             'financing_out' => 0.0,
             'net_financing' => $netFinancing,
             'net_cash_flow' => $netCashFlow,
+            'opening_cash' => $openingCash,
+            'closing_cash' => $closingCash,
             'start_date' => $startDate,
             'end_date' => $endDate,
         ]);
@@ -554,5 +570,48 @@ class AccountingController extends Controller
         return response()->json([
             'message' => "Periode {$period->period_string} berhasil dibuka kembali.",
         ]);
+    }
+
+    /**
+     * Sync/Re-post bank transactions to journals based on COA mapping.
+     */
+    public function syncJournals()
+    {
+        if (!auth()->user()->isAdministrator()) {
+            return response()->json(['message' => 'Hanya Administrator yang diperbolehkan.'], 403);
+        }
+
+        $lockSetting = Setting::where('key', 'accounting_closed_until')->first();
+        $originalLockValue = $lockSetting ? $lockSetting->value : null;
+
+        if ($lockSetting) {
+            $lockSetting->delete();
+            \Illuminate\Support\Facades\Cache::forget('app_settings');
+        }
+
+        $GLOBALS['bypass_accounting_lock'] = true;
+
+        try {
+            DB::transaction(function() {
+                $accountingService = new AccountingService();
+                $transactions = \App\Models\BankTransaction::all();
+                
+                foreach ($transactions as $trx) {
+                    Journal::where('reference', 'TRX-' . $trx->id)->delete();
+                    $accountingService->recordBankTransaction($trx);
+                }
+            });
+        } finally {
+            $GLOBALS['bypass_accounting_lock'] = false;
+            if ($originalLockValue) {
+                Setting::updateOrCreate(
+                    ['key' => 'accounting_closed_until'],
+                    ['value' => $originalLockValue, 'group' => 'accounting', 'type' => 'date']
+                );
+                \Illuminate\Support\Facades\Cache::forget('app_settings');
+            }
+        }
+
+        return response()->json(['message' => 'Jurnal transaksi bank berhasil disinkronkan ulang dengan COA terbaru.']);
     }
 }

@@ -133,6 +133,7 @@ Route::prefix('v1/admin')->name('api.admin.')->group(function () {
         Route::get('/accounting/closing-periods', [AdminAccountingController::class, 'closingPeriods']);
         Route::post('/accounting/closing/process', [AdminAccountingController::class, 'processClosing']);
         Route::post('/accounting/closing/reopen', [AdminAccountingController::class, 'reopenClosing']);
+        Route::post('/accounting/sync-journals', [AdminAccountingController::class, 'syncJournals']);
 
         // System Admin (Fase 12)
         Route::get('/admin/users', [AdminSystemAdminController::class, 'users']);
