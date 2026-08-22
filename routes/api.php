@@ -116,6 +116,8 @@ Route::prefix('v1/admin')->name('api.admin.')->group(function () {
         // Finance (Fase 10)
         Route::get('/finance/accounts', [AdminFinanceController::class, 'accounts']);
         Route::post('/finance/accounts', [AdminFinanceController::class, 'storeAccount']);
+        Route::put('/finance/accounts/{id}', [AdminFinanceController::class, 'updateAccount']);
+        Route::delete('/finance/accounts/{id}', [AdminFinanceController::class, 'deleteAccount']);
         Route::get('/finance/transactions', [AdminFinanceController::class, 'transactions']);
         Route::post('/finance/transaction', [AdminFinanceController::class, 'recordTransaction']);
         Route::post('/finance/transfer', [AdminFinanceController::class, 'transfer']);
