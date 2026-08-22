@@ -3,10 +3,15 @@
 namespace App\Http\Controllers\Api\v1\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AccountingPeriod;
 use App\Models\ChartOfAccount;
 use App\Models\Journal;
 use App\Models\JournalItem;
+use App\Models\Setting;
+use App\Services\AccountingService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AccountingController extends Controller
 {
@@ -75,55 +80,275 @@ class AccountingController extends Controller
             'pagination' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
                 'total' => $paginator->total(),
             ]
         ]);
     }
 
     /**
-     * Profit & Loss report summary.
+     * Profit & Loss report summary (matches web ReportController@profitLoss).
      */
-    public function profitLoss()
+    public function profitLoss(Request $request)
     {
-        $revenueAccounts = ChartOfAccount::where('type', 'revenue')->get();
-        $expenseAccounts = ChartOfAccount::where('type', 'expense')->get();
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
 
-        $totalRevenue = $revenueAccounts->sum('balance');
-        $totalExpense = $expenseAccounts->sum('balance');
-        $netProfit = $totalRevenue - $totalExpense;
+        // Income Accounts
+        $incomeAccounts = ChartOfAccount::whereIn('type', ['income', 'revenue'])
+            ->where('is_active', true)
+            ->with(['journalItems' => function($q) use ($startDate, $endDate) {
+                $q->whereHas('journal', function($jq) use ($startDate, $endDate) {
+                    $jq->whereBetween('date', [$startDate, $endDate]);
+                });
+            }])
+            ->get()
+            ->map(function($account) {
+                $account->period_balance = (float)($account->journalItems->sum('credit') - $account->journalItems->sum('debit'));
+                return $account;
+            });
+
+        // Expense Accounts
+        $expenseAccounts = ChartOfAccount::whereIn('type', ['expense', 'cost_of_sales'])
+            ->where('is_active', true)
+            ->with(['journalItems' => function($q) use ($startDate, $endDate) {
+                $q->whereHas('journal', function($jq) use ($startDate, $endDate) {
+                    $jq->whereBetween('date', [$startDate, $endDate]);
+                });
+            }])
+            ->get()
+            ->map(function($account) {
+                $account->period_balance = (float)($account->journalItems->sum('debit') - $account->journalItems->sum('credit'));
+                return $account;
+            });
+
+        $totalIncome = (float) $incomeAccounts->sum('period_balance');
+        $totalExpense = (float) $expenseAccounts->sum('period_balance');
+        $netProfit = $totalIncome - $totalExpense;
 
         return response()->json([
-            'total_revenue' => (float) $totalRevenue,
-            'total_expense' => (float) $totalExpense,
-            'net_profit' => (float) $netProfit,
+            'total_revenue' => $totalIncome,
+            'total_expense' => $totalExpense,
+            'net_profit' => $netProfit,
             'is_profit' => $netProfit >= 0,
-            'revenue_breakdown' => $revenueAccounts->map(fn ($a) => [
+            'revenue_breakdown' => $incomeAccounts->filter(fn($a) => $a->period_balance != 0)->values()->map(fn ($a) => [
                 'name' => $a->name,
                 'code' => $a->code,
-                'amount' => (float) $a->balance,
+                'amount' => (float) $a->period_balance,
             ]),
-            'expense_breakdown' => $expenseAccounts->map(fn ($a) => [
+            'expense_breakdown' => $expenseAccounts->filter(fn($a) => $a->period_balance != 0)->values()->map(fn ($a) => [
                 'name' => $a->name,
                 'code' => $a->code,
-                'amount' => (float) $a->balance,
+                'amount' => (float) $a->period_balance,
             ]),
         ]);
     }
 
     /**
-     * Balance Sheet report summary.
+     * Balance Sheet report summary (matches web ReportController@balanceSheet).
+     * Calculates cumulative Asset (Debit - Credit), Liability & Equity (Credit - Debit),
+     * and adds Current Earnings (Net Profit from beginning to date).
      */
-    public function balanceSheet()
+    public function balanceSheet(Request $request)
     {
-        $assets = ChartOfAccount::where('type', 'asset')->whereNull('parent_id')->get()->sum('balance');
-        $liabilities = ChartOfAccount::where('type', 'liability')->whereNull('parent_id')->get()->sum('balance');
-        $equity = ChartOfAccount::where('type', 'equity')->whereNull('parent_id')->get()->sum('balance');
+        $date = $request->input('date', Carbon::now()->toDateString());
+
+        // Fetch all accounts with cumulative balance up to $date from journals
+        $accounts = ChartOfAccount::whereIn('type', ['asset', 'liability', 'equity'])
+            ->where('is_active', true)
+            ->get()
+            ->map(function($account) use ($date) {
+                $items = JournalItem::whereHas('journal', function($q) use ($date) {
+                    $q->where('date', '<=', $date);
+                })->where('account_id', $account->id)->get();
+
+                if ($account->type === 'asset') {
+                    $account->current_balance = (float)($items->sum('debit') - $items->sum('credit'));
+                } else {
+                    $account->current_balance = (float)($items->sum('credit') - $items->sum('debit'));
+                }
+                return $account;
+            });
+
+        // Add Current Earnings (Net Profit from beginning until $date)
+        $incomeItems = JournalItem::whereHas('journal', function($q) use ($date) {
+            $q->where('date', '<=', $date);
+        })->whereHas('account', fn($q) => $q->whereIn('type', ['income', 'revenue']))->get();
+
+        $expenseItems = JournalItem::whereHas('journal', function($q) use ($date) {
+            $q->where('date', '<=', $date);
+        })->whereHas('account', fn($q) => $q->whereIn('type', ['expense', 'cost_of_sales']))->get();
+
+        $currentEarnings = (float)(
+            ($incomeItems->sum('credit') - $incomeItems->sum('debit')) -
+            ($expenseItems->sum('debit') - $expenseItems->sum('credit'))
+        );
+
+        $assets = $accounts->where('type', 'asset')->filter(fn($a) => $a->current_balance != 0)->values();
+        $liabilities = $accounts->where('type', 'liability')->filter(fn($a) => $a->current_balance != 0)->values();
+        $equity = $accounts->where('type', 'equity')->filter(fn($a) => $a->current_balance != 0)->values();
+
+        $totalAssets = (float) $assets->sum('current_balance');
+        $totalLiabilities = (float) $liabilities->sum('current_balance');
+        $totalEquity = (float) ($equity->sum('current_balance') + $currentEarnings);
+
+        $isBalanced = abs($totalAssets - ($totalLiabilities + $totalEquity)) < 1.0;
 
         return response()->json([
-            'total_assets' => (float) $assets,
-            'total_liabilities' => (float) $liabilities,
-            'total_equity' => (float) $equity,
-            'is_balanced' => abs($assets - ($liabilities + $equity)) < 0.01,
+            'total_assets' => $totalAssets,
+            'total_liabilities' => $totalLiabilities,
+            'total_equity' => $totalEquity,
+            'current_earnings' => $currentEarnings,
+            'is_balanced' => $isBalanced,
+            'assets_breakdown' => $assets->map(fn($a) => ['name' => $a->name, 'code' => $a->code, 'amount' => (float)$a->current_balance]),
+            'liabilities_breakdown' => $liabilities->map(fn($a) => ['name' => $a->name, 'code' => $a->code, 'amount' => (float)$a->current_balance]),
+            'equity_breakdown' => $equity->map(fn($a) => ['name' => $a->name, 'code' => $a->code, 'amount' => (float)$a->current_balance]),
+        ]);
+    }
+
+    /**
+     * Get Accounting Closing Periods (Tutup Buku).
+     */
+    public function closingPeriods()
+    {
+        // Get or generate periods for the last 12 months
+        $periods = [];
+        for ($i = 0; $i < 12; $i++) {
+            $date = Carbon::now()->startOfMonth()->subMonths($i);
+            $month = $date->month;
+            $year = $date->year;
+
+            $period = AccountingPeriod::firstOrCreate(
+                ['month' => $month, 'year' => $year],
+                ['is_closed' => false]
+            );
+            $periods[] = $period;
+        }
+
+        $periodsCollection = new \Illuminate\Database\Eloquent\Collection($periods);
+        $periodsCollection->load('user');
+
+        $data = $periodsCollection->map(function ($p) {
+            return [
+                'id' => $p->id,
+                'month' => $p->month,
+                'year' => $p->year,
+                'period_string' => $p->period_string,
+                'is_closed' => (bool) $p->is_closed,
+                'closed_at' => $p->closed_at ? $p->closed_at->format('Y-m-d H:i') : null,
+                'closed_by_name' => $p->user ? $p->user->name : null,
+                'net_profit' => (float) ($p->net_profit ?? 0),
+                'total_assets' => (float) ($p->total_assets ?? 0),
+                'total_liabilities' => (float) ($p->total_liabilities ?? 0),
+                'total_equity' => (float) ($p->total_equity ?? 0),
+            ];
+        });
+
+        $closedUntil = get_setting('accounting_closed_until');
+
+        return response()->json([
+            'periods' => $data,
+            'closed_until' => $closedUntil,
+        ]);
+    }
+
+    /**
+     * Process Period Closing (Tutup Buku).
+     */
+    public function processClosing(Request $request, AccountingService $accountingService)
+    {
+        $request->validate([
+            'period_id' => 'required|exists:accounting_periods,id',
+        ]);
+
+        $period = AccountingPeriod::findOrFail($request->period_id);
+
+        if ($period->is_closed) {
+            return response()->json(['message' => 'Periode ini sudah ditutup sebelumnya.'], 422);
+        }
+
+        // 1. Calculate Snapshot
+        $snapshot = $accountingService->getFinancialSnapshot($period->month, $period->year);
+
+        // 2. Update Period
+        $period->update([
+            'is_closed' => true,
+            'closed_at' => now(),
+            'closed_by' => auth()->id(),
+            'net_profit' => $snapshot['net_profit'],
+            'total_assets' => $snapshot['total_assets'],
+            'total_liabilities' => $snapshot['total_liabilities'],
+            'total_equity' => $snapshot['total_equity'],
+        ]);
+
+        // 3. Update global lock setting
+        $lastDayOfMonth = Carbon::create($period->year, $period->month, 1)->endOfMonth()->toDateString();
+        $currentLock = get_setting('accounting_closed_until');
+        if (!$currentLock || Carbon::parse($lastDayOfMonth)->gt(Carbon::parse($currentLock))) {
+            Setting::updateOrCreate(
+                ['key' => 'accounting_closed_until'],
+                ['value' => $lastDayOfMonth, 'group' => 'accounting', 'type' => 'date']
+            );
+            \Illuminate\Support\Facades\Cache::forget('app_settings');
+        }
+
+        return response()->json([
+            'message' => "Periode {$period->period_string} berhasil ditutup. Snapshot keuangan telah tersimpan.",
+            'period' => $period,
+        ]);
+    }
+
+    /**
+     * Reopen Period Closing (Buka Kembali Tutup Buku).
+     */
+    public function reopenClosing(Request $request)
+    {
+        if (!auth()->user()->isAdministrator()) {
+            return response()->json(['message' => 'Hanya Administrator yang diperbolehkan membuka kembali periode.'], 403);
+        }
+
+        $request->validate([
+            'period_id' => 'required|exists:accounting_periods,id',
+        ]);
+
+        $period = AccountingPeriod::findOrFail($request->period_id);
+
+        if (!$period->is_closed) {
+            return response()->json(['message' => 'Periode ini memang sedang terbuka.'], 422);
+        }
+
+        DB::transaction(function () use ($period) {
+            $period->update([
+                'is_closed' => false,
+                'closed_at' => null,
+                'closed_by' => null,
+                'net_profit' => null,
+                'total_assets' => null,
+                'total_liabilities' => null,
+                'total_equity' => null,
+            ]);
+
+            // Re-evaluate global lock
+            $latestClosed = AccountingPeriod::where('is_closed', true)
+                ->orderBy('year', 'desc')
+                ->orderBy('month', 'desc')
+                ->first();
+
+            if ($latestClosed) {
+                $lockDate = Carbon::create($latestClosed->year, $latestClosed->month, 1)->endOfMonth()->toDateString();
+                Setting::updateOrCreate(
+                    ['key' => 'accounting_closed_until'],
+                    ['value' => $lockDate, 'group' => 'accounting', 'type' => 'date']
+                );
+            } else {
+                Setting::where('key', 'accounting_closed_until')->delete();
+            }
+
+            \Illuminate\Support\Facades\Cache::forget('app_settings');
+        });
+
+        return response()->json([
+            'message' => "Periode {$period->period_string} berhasil dibuka kembali.",
         ]);
     }
 }
