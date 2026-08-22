@@ -87,7 +87,7 @@ class AccountingController extends Controller
     }
 
     /**
-     * Profit & Loss report summary (matches web ReportController@profitLoss).
+     * Profit & Loss report summary.
      */
     public function profitLoss(Request $request)
     {
@@ -145,9 +145,7 @@ class AccountingController extends Controller
     }
 
     /**
-     * Balance Sheet report summary (matches web ReportController@balanceSheet).
-     * Calculates cumulative Asset (Debit - Credit), Liability & Equity (Credit - Debit),
-     * and adds Current Earnings (Net Profit from beginning to date).
+     * Balance Sheet report summary.
      */
     public function balanceSheet(Request $request)
     {
@@ -207,9 +205,201 @@ class AccountingController extends Controller
     }
 
     /**
+     * Cash Flow report summary.
+     */
+    public function cashFlow(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
+
+        // Get all journal items related to Cash/Bank accounts (Code 1001 and its children like 1101, 1102)
+        $cashAccounts = ChartOfAccount::where('code', '1001')
+            ->orWhere('parent_id', function($query) {
+                $query->select('id')->from('chart_of_accounts')->where('code', '1001');
+            })
+            ->pluck('id');
+
+        $cashJournals = JournalItem::whereIn('account_id', $cashAccounts)
+            ->whereHas('journal', function($q) use ($startDate, $endDate) {
+                $q->whereBetween('date', [$startDate, $endDate]);
+            })
+            ->with(['journal.items.account'])
+            ->get();
+
+        $operatingIn = 0;
+        $operatingOut = 0;
+        $investingOut = 0;
+        $financingIn = 0;
+
+        foreach ($cashJournals as $cashItem) {
+            $isDebit = $cashItem->debit > 0;
+            $amount = $isDebit ? $cashItem->debit : $cashItem->credit;
+
+            $offsetItems = $cashItem->journal->items->where('account_id', '!=', $cashItem->account_id);
+
+            foreach ($offsetItems as $offset) {
+                if (!$offset->account) continue;
+                $type = $offset->account->type;
+                $code = $offset->account->code;
+
+                if ($isDebit) {
+                    if (in_array($type, ['income', 'revenue']) || $code === '1103') {
+                        $operatingIn += $amount;
+                    } elseif ($type === 'equity' || $type === 'liability') {
+                        $financingIn += $amount;
+                    }
+                } else {
+                    if (in_array($type, ['expense', 'cost_of_sales']) || in_array($code, ['2101', '2103'])) {
+                        $operatingOut += $amount;
+                    } elseif (in_array($code, ['1104', '1105', '1201', '1202'])) {
+                        $investingOut += $amount;
+                    }
+                }
+            }
+        }
+
+        $netOperating = (float) ($operatingIn - $operatingOut);
+        $netInvesting = (float) (-$investingOut);
+        $netFinancing = (float) ($financingIn);
+        $netCashFlow = (float) ($netOperating + $netInvesting + $netFinancing);
+
+        return response()->json([
+            'operating_in' => (float) $operatingIn,
+            'operating_out' => (float) $operatingOut,
+            'net_operating' => $netOperating,
+            'investing_in' => 0.0,
+            'investing_out' => (float) $investingOut,
+            'net_investing' => $netInvesting,
+            'financing_in' => (float) $financingIn,
+            'financing_out' => 0.0,
+            'net_financing' => $netFinancing,
+            'net_cash_flow' => $netCashFlow,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+    }
+
+    /**
+     * Tax Summary (PPN) report.
+     */
+    public function taxSummary(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
+
+        // 1. Tax Output (PPN Keluaran - Code 2103)
+        $taxOutputAccount = ChartOfAccount::where('code', '2103')->first();
+        $totalTaxOutput = 0;
+        if ($taxOutputAccount) {
+            $taxOutputItems = JournalItem::where('account_id', $taxOutputAccount->id)
+                ->whereHas('journal', function($q) use ($startDate, $endDate) {
+                    $q->whereBetween('date', [$startDate, $endDate]);
+                })->get();
+            $totalTaxOutput = (float) ($taxOutputItems->sum('credit') - $taxOutputItems->sum('debit'));
+        }
+
+        // 2. Tax Input (PPN Masukan - Code 1106)
+        $taxInputAccount = ChartOfAccount::where('code', '1106')->first() ?? ChartOfAccount::where('name', 'like', '%PPN Masukan%')->first();
+        $totalTaxInput = 0;
+        if ($taxInputAccount) {
+            $taxInputItems = JournalItem::where('account_id', $taxInputAccount->id)
+                ->whereHas('journal', function($q) use ($startDate, $endDate) {
+                    $q->whereBetween('date', [$startDate, $endDate]);
+                })->get();
+            $totalTaxInput = (float) ($taxInputItems->sum('debit') - $taxInputItems->sum('credit'));
+        }
+
+        $netTaxPayable = (float) ($totalTaxOutput - $totalTaxInput);
+
+        return response()->json([
+            'total_tax_output' => (float) $totalTaxOutput,
+            'total_tax_input' => (float) $totalTaxInput,
+            'net_tax_payable' => $netTaxPayable,
+            'output_items' => [],
+            'input_items' => [],
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+    }
+
+    /**
+     * Ledger (Buku Besar) report.
+     */
+    public function ledger(Request $request)
+    {
+        $accounts = ChartOfAccount::orderBy('code')->get();
+        $accountId = $request->input('account_id');
+        $allTime = $request->boolean('all_time', true);
+
+        $startDate = $allTime ? '2000-01-01' : $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
+        $endDate = $allTime ? Carbon::now()->toDateString() : $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
+
+        $queryAccounts = $accountId ? ChartOfAccount::where('id', $accountId)->get() : $accounts;
+        $resultGroups = [];
+
+        foreach ($queryAccounts as $account) {
+            $openingBalance = 0;
+            if (!$allTime) {
+                $prevItems = JournalItem::where('account_id', $account->id)
+                    ->whereHas('journal', function($q) use ($startDate) {
+                        $q->where('date', '<', $startDate);
+                    })->get();
+
+                $openingBalance = in_array($account->type, ['asset', 'expense', 'cost_of_sales'])
+                    ? (float) ($prevItems->sum('debit') - $prevItems->sum('credit'))
+                    : (float) ($prevItems->sum('credit') - $prevItems->sum('debit'));
+            }
+
+            $itemsQuery = JournalItem::with('journal')->where('account_id', $account->id);
+            if (!$allTime) {
+                $itemsQuery->whereHas('journal', function($q) use ($startDate, $endDate) {
+                    $q->whereBetween('date', [$startDate, $endDate]);
+                });
+            }
+
+            $items = $itemsQuery->get()->sortBy(fn($i) => $i->journal ? ($i->journal->date . '-' . $i->id) : $i->id);
+
+            $debit = (float) $items->sum('debit');
+            $credit = (float) $items->sum('credit');
+            $endingBalance = $openingBalance;
+            if (in_array($account->type, ['asset', 'expense', 'cost_of_sales'])) {
+                $endingBalance += ($debit - $credit);
+            } else {
+                $endingBalance += ($credit - $debit);
+            }
+
+            if ($items->count() > 0 || $openingBalance != 0 || ($accountId && $accountId == $account->id)) {
+                $lineItems = $items->map(fn($item) => [
+                    'date' => $item->journal?->date ? $item->journal->date->format('Y-m-d') : null,
+                    'reference' => $item->journal?->reference ?? '-',
+                    'description' => $item->memo ?: ($item->journal?->description ?? '-'),
+                    'debit' => (float) $item->debit,
+                    'credit' => (float) $item->credit,
+                    'balance' => 0.0,
+                ])->values()->all();
+
+                $resultGroups[] = [
+                    'account_id' => $account->id,
+                    'account_code' => $account->code,
+                    'account_name' => $account->name,
+                    'opening_balance' => (float) $openingBalance,
+                    'closing_balance' => (float) $endingBalance,
+                    'items' => $lineItems,
+                ];
+            }
+        }
+
+        return response()->json([
+            'accounts' => $resultGroups,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+    }
+
+    /**
      * Get Accounting Closing Periods (Tutup Buku).
      */
-    public function closingPeriods()
+    public function closingPeriods(AccountingService $accountingService)
     {
         // Get or generate periods for the last 12 months
         $periods = [];
@@ -228,7 +418,21 @@ class AccountingController extends Controller
         $periodsCollection = new \Illuminate\Database\Eloquent\Collection($periods);
         $periodsCollection->load('user');
 
-        $data = $periodsCollection->map(function ($p) {
+        $data = $periodsCollection->map(function ($p) use ($accountingService) {
+            // If the period is closed and snapshot exists, use it. If not closed or snapshot is 0, compute live snapshot!
+            if ($p->is_closed && ($p->total_assets != 0 || $p->total_equity != 0)) {
+                $netProfit = (float) ($p->net_profit ?? 0);
+                $totalAssets = (float) ($p->total_assets ?? 0);
+                $totalLiabilities = (float) ($p->total_liabilities ?? 0);
+                $totalEquity = (float) ($p->total_equity ?? 0);
+            } else {
+                $snapshot = $accountingService->getFinancialSnapshot($p->month, $p->year);
+                $netProfit = (float) $snapshot['net_profit'];
+                $totalAssets = (float) $snapshot['total_assets'];
+                $totalLiabilities = (float) $snapshot['total_liabilities'];
+                $totalEquity = (float) $snapshot['total_equity'];
+            }
+
             return [
                 'id' => $p->id,
                 'month' => $p->month,
@@ -237,10 +441,10 @@ class AccountingController extends Controller
                 'is_closed' => (bool) $p->is_closed,
                 'closed_at' => $p->closed_at ? $p->closed_at->format('Y-m-d H:i') : null,
                 'closed_by_name' => $p->user ? $p->user->name : null,
-                'net_profit' => (float) ($p->net_profit ?? 0),
-                'total_assets' => (float) ($p->total_assets ?? 0),
-                'total_liabilities' => (float) ($p->total_liabilities ?? 0),
-                'total_equity' => (float) ($p->total_equity ?? 0),
+                'net_profit' => $netProfit,
+                'total_assets' => $totalAssets,
+                'total_liabilities' => $totalLiabilities,
+                'total_equity' => $totalEquity,
             ];
         });
 

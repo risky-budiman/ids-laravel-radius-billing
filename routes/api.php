@@ -127,6 +127,9 @@ Route::prefix('v1/admin')->name('api.admin.')->group(function () {
         Route::get('/accounting/journals', [AdminAccountingController::class, 'journals']);
         Route::get('/accounting/profit-loss', [AdminAccountingController::class, 'profitLoss']);
         Route::get('/accounting/balance-sheet', [AdminAccountingController::class, 'balanceSheet']);
+        Route::get('/accounting/cash-flow', [AdminAccountingController::class, 'cashFlow']);
+        Route::get('/accounting/tax-summary', [AdminAccountingController::class, 'taxSummary']);
+        Route::get('/accounting/ledger', [AdminAccountingController::class, 'ledger']);
         Route::get('/accounting/closing-periods', [AdminAccountingController::class, 'closingPeriods']);
         Route::post('/accounting/closing/process', [AdminAccountingController::class, 'processClosing']);
         Route::post('/accounting/closing/reopen', [AdminAccountingController::class, 'reopenClosing']);

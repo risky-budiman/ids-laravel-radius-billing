@@ -509,13 +509,13 @@ class AccountingService
         // 1. Calculate Net Profit for the period
         $income = JournalItem::whereHas('journal', function($q) use ($startDate, $endDate) {
             $q->whereBetween('date', [$startDate, $endDate]);
-        })->whereHas('account', fn($q) => $q->where('type', 'income'))->get();
+        })->whereHas('account', fn($q) => $q->whereIn('type', ['income', 'revenue']))->get();
         
         $totalIncome = $income->sum('credit') - $income->sum('debit');
 
         $expense = JournalItem::whereHas('journal', function($q) use ($startDate, $endDate) {
             $q->whereBetween('date', [$startDate, $endDate]);
-        })->whereHas('account', fn($q) => $q->where('type', 'expense'))->get();
+        })->whereHas('account', fn($q) => $q->whereIn('type', ['expense', 'cost_of_sales']))->get();
         
         $totalExpense = $expense->sum('debit') - $expense->sum('credit');
         $netProfit = $totalIncome - $totalExpense;
@@ -540,11 +540,25 @@ class AccountingService
             }
         }
 
+        // Add cumulative retained/current earnings up to $endDate to Total Equity
+        $cumIncome = JournalItem::whereHas('journal', function($q) use ($endDate) {
+            $q->where('date', '<=', $endDate);
+        })->whereHas('account', fn($q) => $q->whereIn('type', ['income', 'revenue']))->get();
+
+        $cumExpense = JournalItem::whereHas('journal', function($q) use ($endDate) {
+            $q->where('date', '<=', $endDate);
+        })->whereHas('account', fn($q) => $q->whereIn('type', ['expense', 'cost_of_sales']))->get();
+
+        $cumEarnings = ($cumIncome->sum('credit') - $cumIncome->sum('debit')) -
+                       ($cumExpense->sum('debit') - $cumExpense->sum('credit'));
+
+        $totalEquity += $cumEarnings;
+
         return [
-            'net_profit' => $netProfit,
-            'total_assets' => $totalAssets,
-            'total_liabilities' => $totalLiabilities,
-            'total_equity' => $totalEquity,
+            'net_profit' => (float) $netProfit,
+            'total_assets' => (float) $totalAssets,
+            'total_liabilities' => (float) $totalLiabilities,
+            'total_equity' => (float) $totalEquity,
         ];
     }
 
