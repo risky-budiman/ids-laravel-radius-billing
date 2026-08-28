@@ -631,6 +631,11 @@ class GenieAcsController extends Controller
             'VirtualParameters.getponrx',
         ]);
 
+        $rxNum = $rxPower !== null ? (float) $rxPower : null;
+        if ($rxNum !== null && abs($rxNum) > 100) {
+            $rxNum = round($rxNum / 100, 2);
+        }
+
         return [
             'id' => $id,
             'serial_number' => $serialNumber,
@@ -638,7 +643,7 @@ class GenieAcsController extends Controller
             'product_class' => $productClass,
             'ip' => $ip,
             'ppp_username' => $pppUsername,
-            'rx_power' => $rxPower ? (float) $rxPower : null,
+            'rx_power' => $rxNum,
             'is_online' => $isOnline,
             'last_inform' => $lastInform,
             'tags' => array_values($tags),
@@ -722,6 +727,15 @@ class GenieAcsController extends Controller
 
         $opticalHealth = 'unknown';
         $rxNum = $rxPower !== null ? (float) $rxPower : null;
+        if ($rxNum !== null && abs($rxNum) > 100) {
+            $rxNum = round($rxNum / 100, 2);
+        }
+
+        $txNum = $txPower !== null ? (float) $txPower : null;
+        if ($txNum !== null && abs($txNum) > 100) {
+            $txNum = round($txNum / 100, 2);
+        }
+
         if ($rxNum !== null) {
             if ($rxNum >= -24.0) {
                 $opticalHealth = 'good';
@@ -813,7 +827,7 @@ class GenieAcsController extends Controller
             ],
             'optical' => [
                 'rx_power' => $rxNum,
-                'tx_power' => $txPower !== null ? (float) $txPower : null,
+                'tx_power' => $txNum,
                 'health' => $opticalHealth,
             ],
             'wan' => [

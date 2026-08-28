@@ -100,33 +100,96 @@ class InventoryController extends Controller
             'quantity' => 'required|integer|min:1',
             'notes' => 'nullable|string',
             'serial_number' => 'nullable|string',
+            'serials' => 'nullable|array',
+            'serials.*' => 'string',
         ]);
+
+        // Parse serial numbers if provided via serial_number string or serials array
+        $serials = [];
+        if (!empty($validated['serial_number'])) {
+            $parsed = preg_split('/[\r\n,]+/', $validated['serial_number']);
+            foreach ($parsed as $s) {
+                $trimmed = trim($s);
+                if (!empty($trimmed) && !in_array($trimmed, $serials)) {
+                    $serials[] = $trimmed;
+                }
+            }
+        }
+        if (!empty($validated['serials']) && is_array($validated['serials'])) {
+            foreach ($validated['serials'] as $s) {
+                $trimmed = trim($s);
+                if (!empty($trimmed) && !in_array($trimmed, $serials)) {
+                    $serials[] = $trimmed;
+                }
+            }
+        }
+
+        $quantity = count($serials) > 0 ? max($validated['quantity'], count($serials)) : $validated['quantity'];
+
+        // Validation for stock out
+        if ($validated['type'] === 'out') {
+            if ($item->stock_count < $quantity) {
+                return response()->json([
+                    'message' => "Stok {$item->name} tidak mencukupi untuk pengeluaran ({$quantity} {$item->unit}). Stok saat ini: {$item->stock_count} {$item->unit}.",
+                ], 422);
+            }
+
+            // Verify all serial numbers exist and are ready if provided
+            if ($item->track_serial && count($serials) > 0) {
+                foreach ($serials as $sn) {
+                    $stock = $item->stocks()->where('serial_number', $sn)->whereIn('status', ['ready', 'returned'])->first();
+                    if (!$stock) {
+                        return response()->json([
+                            'message' => "Serial Number '{$sn}' tidak ditemukan atau tidak tersedia (ready) di gudang.",
+                        ], 422);
+                    }
+                }
+            }
+        }
+
+        // Validation for stock in (duplicate check)
+        if ($validated['type'] === 'in' && $item->track_serial && count($serials) > 0) {
+            foreach ($serials as $sn) {
+                $existing = InventoryStock::where('serial_number', $sn)->first();
+                if ($existing) {
+                    return response()->json([
+                        'message' => "Serial Number '{$sn}' sudah terdaftar di sistem dengan status '{$existing->status}'.",
+                    ], 422);
+                }
+            }
+        }
 
         $movement = $item->movements()->create([
             'user_id' => $request->user()->id,
             'type' => $validated['type'],
-            'quantity' => $validated['quantity'],
+            'quantity' => $quantity,
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        if ($item->track_serial && !empty($validated['serial_number'])) {
+        if ($item->track_serial && count($serials) > 0) {
             if ($validated['type'] === 'in') {
-                $item->stocks()->create([
-                    'serial_number' => $validated['serial_number'],
-                    'status' => 'ready',
-                ]);
+                foreach ($serials as $sn) {
+                    $item->stocks()->create([
+                        'serial_number' => $sn,
+                        'status' => 'ready',
+                        'condition' => 'new',
+                    ]);
+                }
             } else {
-                $stock = $item->stocks()->where('serial_number', $validated['serial_number'])->first();
-                if ($stock) {
-                    $stock->update(['status' => 'deployed']);
+                foreach ($serials as $sn) {
+                    $stock = $item->stocks()->where('serial_number', $sn)->first();
+                    if ($stock) {
+                        $stock->update(['status' => 'deployed']);
+                    }
                 }
             }
         }
 
         $typeLabel = $validated['type'] === 'in' ? 'Masuk' : 'Keluar';
+        $snCountMsg = count($serials) > 0 ? " (" . count($serials) . " Serial Number dicatat)" : "";
 
         return response()->json([
-            'message' => "Stok {$typeLabel} ({$validated['quantity']} {$item->unit}) berhasil dicatat.",
+            'message' => "Stok {$typeLabel} ({$quantity} {$item->unit}) berhasil dicatat.{$snCountMsg}",
             'current_stock' => $item->stock_count,
         ]);
     }
@@ -175,6 +238,31 @@ class InventoryController extends Controller
 
         return response()->json([
             'suppliers' => $suppliers,
+        ]);
+    }
+
+    /**
+     * Get serial numbers (stocks) for an inventory item.
+     */
+    public function serials($id)
+    {
+        $item = InventoryItem::findOrFail($id);
+        $stocks = $item->stocks()->with('customer')->latest()->get()->map(function ($s) {
+            return [
+                'id' => $s->id,
+                'serial_number' => $s->serial_number,
+                'status' => $s->status,
+                'condition' => $s->condition,
+                'customer_name' => $s->customer ? $s->customer->name : null,
+                'created_at' => $s->created_at ? $s->created_at->format('Y-m-d H:i') : null,
+            ];
+        });
+
+        return response()->json([
+            'item_name' => $item->name,
+            'sku' => $item->sku,
+            'total_serials' => $stocks->count(),
+            'serials' => $stocks,
         ]);
     }
 }

@@ -35,18 +35,20 @@ class OnlineUserController extends Controller
 
             $data = $paginator->getCollection()->map(function ($c) {
                 return [
-                    'id' => $c->id,
-                    'username' => $c->username,
-                    'customer_name' => $c->name,
-                    'customer_code' => $c->customer_code,
+                    'session_id' => null,
+                    'username' => $c->username ?: ($c->customer_code ?: "user-{$c->id}"),
+                    'customer_id' => (int) $c->id,
+                    'customer_name' => $c->name ?: '-',
+                    'customer_code' => $c->customer_code ?: '-',
                     'package_name' => $c->package ? $c->package->name : '-',
                     'is_online' => false,
-                    'ip_address' => null,
+                    'ip_address' => $c->pppoe_ip ?: null,
                     'mac_address' => null,
                     'nas_ip' => null,
                     'uptime_formatted' => 'Offline',
-                    'upload_mb' => 0,
-                    'download_mb' => 0,
+                    'duration_seconds' => 0,
+                    'upload_mb' => 0.0,
+                    'download_mb' => 0.0,
                     'start_time' => null,
                 ];
             });
@@ -97,9 +99,9 @@ class OnlineUserController extends Controller
             $minutes = floor(($durationSec % 3600) / 60);
 
             return [
-                'session_id' => $s->radacctid,
+                'session_id' => (int) $s->radacctid,
                 'username' => $s->username,
-                'customer_id' => $c ? $c->id : null,
+                'customer_id' => $c ? (int) $c->id : null,
                 'customer_name' => $c ? $c->name : $s->username,
                 'customer_code' => $c ? $c->customer_code : '-',
                 'package_name' => $c && $c->package ? $c->package->name : '-',

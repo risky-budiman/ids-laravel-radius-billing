@@ -39,11 +39,12 @@ class GenieACSService
      */
     public function getDevices(array $query = [], array $projection = [], int $skip = 0, int $limit = 25)
     {
+        $encodedQuery = json_encode(empty($query) ? (object)[] : $query);
         $params = [
-            'query' => json_encode($query),
+            'query' => $encodedQuery,
             'skip' => $skip,
             'limit' => $limit,
-            'total' => 'true' // Add total=true here specifically for collection
+            'total' => 'true'
         ];
         
         if (!empty($projection)) {
@@ -227,10 +228,17 @@ class GenieACSService
 
             // For task pushes, both 200 (executed) and 202 (queued/pending) are valid
             if ($response->successful() || $response->status() === 202) {
-                $total = $response->header('total-count') ?? $response->header('X-Total-Count');
+                $totalHeader = $response->header('total')
+                    ?? $response->header('total-count')
+                    ?? $response->header('X-Total-Count')
+                    ?? $response->header('x-total-count');
+
+                $jsonData = $response->json();
+                $totalVal = $totalHeader !== null ? (int) $totalHeader : (is_array($jsonData) ? count($jsonData) : null);
+
                 return [
-                    'data' => $response->json(),
-                    'total' => $total !== null ? (int) $total : null
+                    'data' => $jsonData,
+                    'total' => $totalVal
                 ];
             }
 

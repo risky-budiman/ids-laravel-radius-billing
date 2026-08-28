@@ -109,6 +109,7 @@ Route::prefix('v1/admin')->name('api.admin.')->group(function () {
         // Inventory & Fixed Assets (Fase 9)
         Route::get('/inventory', [AdminInventoryController::class, 'index']);
         Route::post('/inventory', [AdminInventoryController::class, 'store']);
+        Route::get('/inventory/{id}/serials', [AdminInventoryController::class, 'serials']);
         Route::post('/inventory/{id}/movement', [AdminInventoryController::class, 'recordMovement']);
         Route::get('/inventory/fixed-assets', [AdminInventoryController::class, 'fixedAssets']);
         Route::get('/inventory/suppliers', [AdminInventoryController::class, 'suppliers']);

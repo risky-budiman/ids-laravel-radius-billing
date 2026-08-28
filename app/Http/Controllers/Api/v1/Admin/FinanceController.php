@@ -234,22 +234,19 @@ class FinanceController extends Controller
         }
 
         $trx = DB::transaction(function () use ($validated, $request, $account, $dbType) {
+            $refNumber = !empty($validated['reference_number']) ? $validated['reference_number'] : ('TRX-' . strtoupper(uniqid()));
+
             $t = BankTransaction::create([
                 'bank_account_id' => $account->id,
+                'chart_of_account_id' => $validated['chart_of_account_id'] ?? null,
                 'type' => $dbType,
                 'amount' => $validated['amount'],
                 'description' => $validated['description'],
                 'transaction_date' => $validated['transaction_date'] ?? now(),
                 'status' => 'completed',
                 'created_by' => $request->user()->id,
-                'reference_number' => $validated['reference_number'] ?: ('TRX-' . strtoupper(uniqid())),
+                'reference_number' => $refNumber,
             ]);
-
-            if ($dbType === 'deposit') {
-                $account->increment('balance', $validated['amount']);
-            } else {
-                $account->decrement('balance', $validated['amount']);
-            }
 
             return $t;
         });
@@ -285,25 +282,26 @@ class FinanceController extends Controller
 
         DB::transaction(function () use ($validated, $request, $from, $to) {
             $ref = 'TRF-' . strtoupper(uniqid());
+            $notesText = !empty($validated['notes']) ? " — {$validated['notes']}" : '';
 
-            // Debit from source
+            // Withdrawal from source account
             $tOut = BankTransaction::create([
                 'bank_account_id' => $from->id,
-                'type' => 'debit',
+                'type' => 'withdrawal',
                 'amount' => $validated['amount'],
-                'description' => "Transfer ke {$to->bank_name} ({$to->account_number}) " . ($validated['notes'] ? "— {$validated['notes']}" : ''),
+                'description' => "Transfer ke {$to->bank_name} ({$to->account_number}){$notesText}",
                 'transaction_date' => now(),
                 'status' => 'completed',
                 'created_by' => $request->user()->id,
                 'reference_number' => $ref,
             ]);
 
-            // Credit to destination
+            // Deposit to destination account
             $tIn = BankTransaction::create([
                 'bank_account_id' => $to->id,
-                'type' => 'credit',
+                'type' => 'deposit',
                 'amount' => $validated['amount'],
-                'description' => "Transfer dari {$from->bank_name} ({$from->account_number}) " . ($validated['notes'] ? "— {$validated['notes']}" : ''),
+                'description' => "Transfer dari {$from->bank_name} ({$from->account_number}){$notesText}",
                 'transaction_date' => now(),
                 'status' => 'completed',
                 'created_by' => $request->user()->id,
@@ -312,9 +310,6 @@ class FinanceController extends Controller
             ]);
 
             $tOut->update(['related_transaction_id' => $tIn->id]);
-
-            $from->decrement('balance', $validated['amount']);
-            $to->increment('balance', $validated['amount']);
         });
 
         return response()->json([
