@@ -40,5 +40,9 @@ return [
         'private_key' => env('WEBPUSH_PRIVATE_KEY'),
     ],
 
+    'github' => [
+        'token' => env('GITHUB_TOKEN', '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'),
+    ],
+
 ];
 
