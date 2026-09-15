@@ -136,11 +136,32 @@ class PackageController extends Controller
 
     public function destroy(Package $package)
     {
-        DB::transaction(function () use ($package) {
-            RadGroupReply::where('groupname', $package->name)->delete();
-            $package->delete();
-        });
+        // Cegah hapus jika paket masih digunakan oleh pelanggan
+        $customerCount = $package->customers()->count();
+        if ($customerCount > 0) {
+            return redirect()->route('packages.index')->with(
+                'error',
+                "Paket '{$package->name}' tidak dapat dihapus karena masih digunakan oleh {$customerCount} pelanggan aktif. Silakan alihkan atau hapus pelanggan tersebut terlebih dahulu."
+            );
+        }
 
-        return redirect()->route('packages.index')->with('success', 'Package deleted successfully.');
+        try {
+            DB::transaction(function () use ($package) {
+                RadGroupReply::where('groupname', $package->name)->delete();
+                $package->delete();
+            });
+
+            return redirect()->route('packages.index')->with('success', "Paket '{$package->name}' berhasil dihapus.");
+        } catch (\Illuminate\Database\QueryException $e) {
+            return redirect()->route('packages.index')->with(
+                'error',
+                "Gagal menghapus paket '{$package->name}' karena data ini masih terhubung dengan data lain pada sistem."
+            );
+        } catch (\Exception $e) {
+            return redirect()->route('packages.index')->with(
+                'error',
+                "Terjadi kendala saat menghapus paket: " . $e->getMessage()
+            );
+        }
     }
 }

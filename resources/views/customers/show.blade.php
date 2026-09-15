@@ -74,6 +74,14 @@
                         <span class="text-gray-500">Package:</span>
                         <span class="font-bold text-gray-900 dark:text-white">{{ $customer->package ? $customer->package->name : '-' }}</span>
                     </div>
+                    @if(!empty($customer->discount_value) && $customer->discount_value > 0)
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-500">Diskon Pelanggan:</span>
+                        <span class="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-bold text-xs rounded-lg">
+                            {{ $customer->discount_type === 'percentage' ? rtrim(rtrim(number_format($customer->discount_value, 2), '0'), '.') . '%' : 'Rp ' . number_format($customer->discount_value, 0, ',', '.') }}
+                        </span>
+                    </div>
+                    @endif
                     <div class="flex justify-between items-center text-sm pt-4 border-t border-gray-100 dark:border-gray-700">
                         <span class="text-gray-500">Password:</span>
                         @php 

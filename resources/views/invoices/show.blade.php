@@ -406,6 +406,12 @@
                         <span>Subtotal</span>
                         <span>{{ number_format($invoice->subtotal, 0, ',', '.') }}</span>
                     </div>
+                    @if($invoice->discount_amount > 0)
+                    <div class="inv-total-row" style="color:#059669;">
+                        <span>Diskon ({{ $invoice->discount_type === 'percentage' ? rtrim(rtrim(number_format($invoice->discount_value, 2), '0'), '.') . '%' : 'Khusus' }})</span>
+                        <span style="color:#059669;">- Rp {{ number_format($invoice->discount_amount, 0, ',', '.') }}</span>
+                    </div>
+                    @endif
                     @if($invoice->tax_id)
                     <div class="inv-total-row">
                         <span>Tax ({{ $invoice->tax->name ?? 'PPN' }} {{ $invoice->tax->rate ?? 0 }}%)</span>

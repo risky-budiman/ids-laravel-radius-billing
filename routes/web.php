@@ -66,6 +66,12 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
 
     // CUSTOMERS: All Operational Roles (View, Create, Edit)
     Route::middleware('role:administrator,admin,teknisi,sales')->group(function () {
+        // Import Customers (Excel / CSV)
+        Route::get('customers/import', [\App\Http\Controllers\CustomerImportController::class, 'index'])->name('customers.import.index');
+        Route::get('customers/import/template', [\App\Http\Controllers\CustomerImportController::class, 'downloadTemplate'])->name('customers.import.template');
+        Route::get('customers/export', [\App\Http\Controllers\CustomerImportController::class, 'export'])->name('customers.export');
+        Route::post('customers/import', [\App\Http\Controllers\CustomerImportController::class, 'store'])->name('customers.import.store');
+
         Route::get('customers/map', [\App\Http\Controllers\CustomerController::class, 'map'])->name('customers.map');
         Route::get('customers', [\App\Http\Controllers\CustomerController::class, 'index'])->name('customers.index');
         Route::post('customers/bulk-action', [\App\Http\Controllers\CustomerController::class, 'bulkAction'])->name('customers.bulk-action');
@@ -366,6 +372,16 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
 
     // Documentation System
     Route::get('/docs/{page?}', [\App\Http\Controllers\DocsController::class, 'index'])->name('docs.index');
+
+    // System Backup & Restore (Administrator Only)
+    Route::middleware('role:administrator')->prefix('backup')->name('backup.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\BackupController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\BackupController::class, 'store'])->name('store');
+        Route::get('/download/{filename}', [\App\Http\Controllers\BackupController::class, 'download'])->name('download');
+        Route::delete('/{filename}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('destroy');
+        Route::post('/inspect', [\App\Http\Controllers\BackupController::class, 'inspect'])->name('inspect');
+        Route::post('/restore', [\App\Http\Controllers\BackupController::class, 'restore'])->name('restore');
+    });
 });
 
 // Admin Auth Routes

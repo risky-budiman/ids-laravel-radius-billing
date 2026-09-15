@@ -271,6 +271,8 @@ class CustomerController extends Controller
             'cable_length' => 'nullable|integer',
             'vlan_id' => 'nullable|integer',
             'static_ip' => 'nullable|string',
+            'discount_type' => 'nullable|in:fixed,percentage',
+            'discount_value' => 'nullable|numeric|min:0',
             'cpe_brand' => 'nullable|string',
             'cpe_model' => 'nullable|string',
             'cpe_mac' => 'nullable|string',
@@ -303,6 +305,8 @@ class CustomerController extends Controller
                 'phone' => $validated['phone'] ?? null,
                 'address' => $validated['address'] ?? null,
                 'package_id' => $validated['package_id'],
+                'discount_type' => $validated['discount_type'] ?? null,
+                'discount_value' => $validated['discount_value'] ?? 0,
                 'is_active' => $isActive,
                 'status' => $isActive ? Customer::STATUS_ACTIVE : Customer::STATUS_NEW,
                 'billing_type' => $validated['billing_type'],
@@ -437,6 +441,8 @@ class CustomerController extends Controller
             'cable_length' => 'nullable|integer',
             'vlan_id' => 'nullable|integer',
             'static_ip' => 'nullable|string',
+            'discount_type' => 'nullable|in:fixed,percentage',
+            'discount_value' => 'nullable|numeric|min:0',
             'cpe_brand' => 'nullable|string',
             'cpe_model' => 'nullable|string',
             'cpe_mac' => 'nullable|string',
@@ -465,6 +471,8 @@ class CustomerController extends Controller
             $updateData['sales_id'] = $validated['sales_id'] ?? null;
             $updateData['sales_commission_rate'] = $validated['sales_commission_rate'] ?? null;
             $updateData['sales_commission_type'] = $validated['sales_commission_type'] ?? null;
+            $updateData['discount_type'] = $validated['discount_type'] ?? null;
+            $updateData['discount_value'] = $validated['discount_value'] ?? 0;
             $updateData['use_tax'] = $request->has('use_tax');
 
             // Handle File Uploads

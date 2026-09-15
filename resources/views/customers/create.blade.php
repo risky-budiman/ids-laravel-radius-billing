@@ -352,6 +352,29 @@
                 <p class="mt-2 text-[10px] text-gray-500 italic text-center">Klik pada peta untuk menentukan lokasi instalasi.</p>
             </div>
 
+            <!-- Section: Discount Settings -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Diskon Khusus Pelanggan</h3>
+                <div class="bg-emerald-50/40 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-2xl p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <x-input-label for="discount_type" :value="__('Tipe Diskon')" />
+                            <select id="discount_type" name="discount_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-emerald-500 rounded-md shadow-sm">
+                                <option value="">-- Tanpa Diskon --</option>
+                                <option value="fixed" {{ old('discount_type') == 'fixed' ? 'selected' : '' }}>Nominal Tetap (Rp)</option>
+                                <option value="percentage" {{ old('discount_type') == 'percentage' ? 'selected' : '' }}>Persentase (%)</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Pilih apakah diskon dipotong berupa nominal rupiah tetap atau persen.</p>
+                        </div>
+                        <div>
+                            <x-input-label for="discount_value" :value="__('Nilai Diskon')" />
+                            <x-text-input id="discount_value" name="discount_value" type="number" step="0.01" min="0" class="mt-1 block w-full font-semibold" :value="old('discount_value', 0)" placeholder="Contoh: 25000 atau 10" />
+                            <p class="text-xs text-gray-500 mt-1">Jika tipe fixed isi misal 25000 (Rp 25.000). Jika persentase isi misal 10 (10%).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Section: Taxation Settings -->
             <div class="mb-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Taxation Settings</h3>

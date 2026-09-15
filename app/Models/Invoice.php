@@ -16,6 +16,9 @@ class Invoice extends Model
         'period_end',
         'amount',
         'subtotal',
+        'discount_type',
+        'discount_value',
+        'discount_amount',
         'tax_id',
         'tax_amount',
         'status',
@@ -34,6 +37,8 @@ class Invoice extends Model
         'period_end' => 'date',
         'amount' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'discount_value' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'tax_amount' => 'decimal:2',
     ];
 

@@ -504,6 +504,18 @@
                     App Changelog
                 </a>
             </li>
+
+            @if(auth()->user()->isAdministrator())
+            <li>
+                <a href="{{ route('backup.index') }}" class="flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('backup.*') ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }} group">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-3 group-hover:text-emerald-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                        <span>Backup & Restore</span>
+                    </div>
+                    <span class="px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 rounded-md">.bak</span>
+                </a>
+            </li>
+            @endif
             @endif
             @endif
         </ul>

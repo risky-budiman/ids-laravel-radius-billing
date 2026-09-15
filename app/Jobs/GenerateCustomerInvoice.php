@@ -65,18 +65,34 @@ class GenerateCustomerInvoice implements ShouldQueue
             $notes = 'Tagihan otomatis skema ' . ucfirst($customer->billing_method);
         }
 
-        // Tax Calculation based on the final subtotal
+        // Customer Discount Calculation
+        $discountType = $customer->discount_type;
+        $discountValue = (float) ($customer->discount_value ?? 0);
+        $discountAmount = 0;
+
+        if ($discountValue > 0) {
+            if ($discountType === 'percentage') {
+                $discountAmount = ($subtotal * $discountValue) / 100;
+            } elseif ($discountType === 'fixed') {
+                $discountAmount = min($discountValue, $subtotal);
+            }
+        }
+
+        // Subtotal after discount for tax calculation
+        $subtotalAfterDiscount = max(0, $subtotal - $discountAmount);
+
+        // Tax Calculation based on the subtotal after discount
         $tax = \App\Models\Tax::where('is_active', true)->first();
         $taxMode = \App\Models\Setting::where('key', 'tax_mode')->first()?->value ?? 'individual';
         $applyTax = ($taxMode === 'all') || ($taxMode === 'individual' && $customer->use_tax);
 
         $taxAmount = 0;
         if ($tax && $applyTax) {
-            $taxAmount = ($subtotal * $tax->rate) / 100;
+            $taxAmount = ($subtotalAfterDiscount * $tax->rate) / 100;
         } else {
             $tax = null;
         }
-        $totalAmount = $subtotal + $taxAmount;
+        $totalAmount = $subtotalAfterDiscount + $taxAmount;
 
         $invoice = Invoice::create([
             'invoice_number' => 'INV-' . strtoupper(uniqid()),
@@ -86,6 +102,9 @@ class GenerateCustomerInvoice implements ShouldQueue
             'period_end' => $endDate,
             'amount' => $totalAmount,
             'subtotal' => $subtotal,
+            'discount_type' => $discountType,
+            'discount_value' => $discountValue,
+            'discount_amount' => $discountAmount,
             'tax_id' => $tax?->id,
             'tax_amount' => $taxAmount,
             'status' => 'unpaid',

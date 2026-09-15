@@ -57,6 +57,8 @@ class Customer extends Authenticatable
         'latitude',
         'longitude',
         'package_id',
+        'discount_type',
+        'discount_value',
         'is_active',
         'status',
         'billing_type',
