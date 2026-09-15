@@ -215,11 +215,6 @@ class GenieAcsController extends Controller
                 'InternetGatewayDevice.WANDevice.1.X_ZTE-COM_Optical.RxPower',
                 'InternetGatewayDevice.X_ALU_OntOpticalParam.RXPower',
                 'Device.Optical.Interface.1.OpticalPowerRx',
-                'VirtualParameters.ProductClass',
-                'VirtualParameters.IP',
-                'VirtualParameters.wanip',
-                'VirtualParameters.getponrx',
-                'VirtualParameters.pppUsername',
             ];
 
             $response = $service->getDevices($query, $projection, $skip, $perPage);
@@ -349,8 +344,15 @@ class GenieAcsController extends Controller
         }
 
         try {
-            $service = GenieACSService::forServer($server);
-            $service->pushTask($deviceId, ['name' => 'refreshObject', 'objectName' => '']);
+            $rootObject = 'InternetGatewayDevice.';
+            try {
+                $devRes = $service->getDevice($deviceId);
+                if (isset($devRes['data']['Device']) && !isset($devRes['data']['InternetGatewayDevice'])) {
+                    $rootObject = 'Device.';
+                }
+            } catch (\Throwable $e) {}
+
+            $service->pushTask($deviceId, ['name' => 'refreshObject', 'objectName' => $rootObject]);
 
             return response()->json([
                 'success' => true,
@@ -405,73 +407,75 @@ class GenieAcsController extends Controller
         }
 
         $validated = $request->validate([
+            'is_enabled' => 'nullable',
             'wifi_ssid' => 'nullable|string|max:64',
             'wifi_password' => 'nullable|string|min:8|max:64',
             'ppp_username' => 'nullable|string|max:64',
             'ppp_password' => 'nullable|string|max:64',
             'vlan_id' => 'nullable|string|max:10',
+            'wan_path' => 'nullable|string|max:255',
+            'connection_trigger' => 'nullable|string|in:AlwaysOn,OnDemand,Manual',
+            'nat_enabled' => 'nullable|boolean',
+            'mru' => 'nullable|integer|min:576|max:1500',
+            'service_list' => 'nullable|string|max:64',
             'instance' => 'nullable|integer|min:1|max:8',
+            'lan_bind' => 'nullable|array',
+            'ssid_bind' => 'nullable|array',
         ]);
 
         $instance = $validated['instance'] ?? 1;
         $service = GenieACSService::forServer($server);
 
-        // Detect schema & vendor
-        $isTr181 = false;
-        $isHuawei = false;
         try {
             $devRes = $service->getDevice($deviceId);
-            $devData = $devRes['data'] ?? null;
-            if ($devData) {
-                if (isset($devData['Device'])) {
-                    $isTr181 = true;
-                }
-                $manufacturer = $devData['_deviceId']['_Manufacturer']
-                    ?? $devData['DeviceID']['Manufacturer']['_value']
-                    ?? $devData['Device']['DeviceInfo']['Manufacturer']['_value']
-                    ?? '';
-                if (stripos($manufacturer, 'Huawei') !== false) {
-                    $isHuawei = true;
-                }
-            }
+            $devData = $devRes['data'] ?? [];
         } catch (\Exception $e) {
+            $devData = [];
             Log::warning("Could not prefetch device schema: " . $e->getMessage());
         }
 
         $params = [];
-        if ($isTr181) {
-            if (!empty($validated['ppp_username'])) {
-                $params['Device.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username'] = $validated['ppp_username'];
-            }
-            if (!empty($validated['ppp_password'])) {
-                $params['Device.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Password'] = $validated['ppp_password'];
-            }
-            if (!empty($validated['wifi_ssid'])) {
-                $params["Device.WiFi.SSID.{$instance}.SSID"] = $validated['wifi_ssid'];
-                $params["Device.WiFi.Radio.{$instance}.Enable"] = "1";
-            }
-            if (!empty($validated['wifi_password'])) {
-                $params["Device.WiFi.AccessPoint.{$instance}.Security.KeyPassphrase"] = $validated['wifi_password'];
-            }
-        } else {
-            if (!empty($validated['ppp_username'])) {
-                $params['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username'] = $validated['ppp_username'];
-            }
-            if (!empty($validated['ppp_password'])) {
-                $params['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Password'] = $validated['ppp_password'];
-            }
-            if (!empty($validated['vlan_id'])) {
-                $params['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.X_HW_VLAN'] = $validated['vlan_id'];
-            }
-            if (!empty($validated['wifi_ssid'])) {
-                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.SSID"] = $validated['wifi_ssid'];
-                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.Enable"] = "1";
-            }
-            if (!empty($validated['wifi_password'])) {
-                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.PreSharedKey.1.PreSharedKey"] = $validated['wifi_password'];
-                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.KeyPassphrase"] = $validated['wifi_password'];
-                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.X_ZTE-COM_KeyPassphrase"] = $validated['wifi_password'];
-            }
+        $targetWanPath = null;
+
+        // 1. Process PPPoE / WAN parameters
+        $hasWanInput = !empty($validated['wan_path'])
+            || isset($validated['is_enabled'])
+            || !empty($validated['ppp_username']) 
+            || !empty($validated['ppp_password']) 
+            || !empty($validated['vlan_id']) 
+            || !empty($validated['connection_trigger']) 
+            || isset($validated['nat_enabled']) 
+            || !empty($validated['mru']) 
+            || !empty($validated['service_list'])
+            || !empty($validated['lan_bind'])
+            || !empty($validated['ssid_bind']);
+
+        if ($hasWanInput) {
+            $wanResult = $service->buildPppoeParameters($devData, [
+                'is_enabled' => $validated['is_enabled'] ?? null,
+                'ppp_username' => $validated['ppp_username'] ?? null,
+                'ppp_password' => $validated['ppp_password'] ?? null,
+                'vlan_id' => $validated['vlan_id'] ?? null,
+                'connection_trigger' => $validated['connection_trigger'] ?? null,
+                'nat_enabled' => $validated['nat_enabled'] ?? null,
+                'mru' => $validated['mru'] ?? null,
+                'service_list' => $validated['service_list'] ?? null,
+                'lan_bind' => $validated['lan_bind'] ?? [],
+                'ssid_bind' => $validated['ssid_bind'] ?? [],
+            ], $validated['wan_path'] ?? null);
+
+            $params = array_merge($params, $wanResult['params']);
+            $targetWanPath = $wanResult['target_path'] ?? null;
+        }
+
+        // 2. Process Wi-Fi parameters
+        if (!empty($validated['wifi_ssid']) || !empty($validated['wifi_password'])) {
+            $wifiParams = $service->buildWifiParameters($devData, [
+                'wifi_ssid' => $validated['wifi_ssid'] ?? null,
+                'wifi_password' => $validated['wifi_password'] ?? null,
+            ], (int) $instance);
+
+            $params = array_merge($params, $wifiParams);
         }
 
         if (empty($params)) {
@@ -479,43 +483,17 @@ class GenieAcsController extends Controller
         }
 
         try {
-            if ($isHuawei) {
-                $params["InternetGatewayDevice.Services.X_Huawei_SelfDefined.SaveConfig"] = "1";
-            }
-
+            // GenieACS will apply the parameters on the ONT and persist them in MongoDB upon completion
             try {
                 $service->setParameters($deviceId, $params);
             } catch (\Exception $e) {
                 Log::warning("setParameters response note (task likely queued): " . $e->getMessage());
             }
 
-            // Also queue getParameterValues to refresh updated parameters
-            try {
-                $refreshPaths = [];
-                foreach ($params as $path => $value) {
-                    if (stripos($path, 'SaveConfig') !== false) {
-                        continue;
-                    }
-                    $parts = explode('.', $path);
-                    if (count($parts) > 1) {
-                        array_pop($parts);
-                        $parentPath = implode('.', $parts) . '.';
-                        $refreshPaths[$parentPath] = true;
-                    }
-                }
-                if (!empty($refreshPaths)) {
-                    $service->pushTask($deviceId, [
-                        'name' => 'getParameterValues',
-                        'parameterNames' => array_keys($refreshPaths)
-                    ]);
-                }
-            } catch (\Exception $e) {
-                Log::warning("getParameterValues task notice: " . $e->getMessage());
-            }
-
             return response()->json([
                 'success' => true,
-                'message' => 'Konfigurasi berhasil didorong. ONT akan menerapkan perubahan saat terkoneksi ke ACS.',
+                'message' => 'Konfigurasi PPPoE/WiFi berhasil dikirim. Task telah masuk antrean GenieACS dan Connection Request telah dikirim.',
+                'applied_parameters' => array_keys($params),
             ]);
         } catch (Exception $e) {
             return response()->json([
@@ -746,29 +724,44 @@ class GenieAcsController extends Controller
             }
         }
 
-        // WAN Info
-        $pppUsername = $this->extractParamValue($device, [
+        // WAN Info (Dynamic resolution across all WAN connection devices)
+        $acsService = new GenieACSService();
+        $wanConnections = $acsService->extractWanConnections($device);
+        $activeWan = null;
+        foreach ($wanConnections as $wc) {
+            if ($wc['is_active_ppp']) {
+                $activeWan = $wc;
+                break;
+            }
+        }
+        if (!$activeWan && !empty($wanConnections)) {
+            $activeWan = $wanConnections[0];
+        }
+
+        $pppUsername = $activeWan['username'] ?? $this->extractParamValue($device, [
             'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username',
             'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.Username',
             'Device.PPP.Interface.1.Username',
             'VirtualParameters.pppUsername',
         ]) ?: '-';
 
-        $wanIp = $this->extractParamValue($device, [
+        $wanIp = (!empty($activeWan['ip'])) ? $activeWan['ip'] : ($this->extractParamValue($device, [
             'Device.IP.Interface.1.IPv4Address.1.IPAddress',
             'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress',
             'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.ExternalIPAddress',
             'VirtualParameters.IP',
             'VirtualParameters.wanip',
-        ]) ?: '-';
+        ]) ?: '-');
 
-        $wanStatus = $this->extractParamValue($device, [
-            'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ConnectionStatus',
-            'Device.PPP.Interface.1.ConnectionStatus',
-        ]) ?: ($isOnline ? 'Connected' : 'Disconnected');
+        $wanStatus = (!empty($activeWan['status']) && $activeWan['status'] !== 'Unknown') 
+            ? $activeWan['status'] 
+            : ($isOnline ? 'Connected' : 'Disconnected');
+
+        $wanVlan = $activeWan['vlan_id'] ?? $this->extractParamValue($device, ['VirtualParameters.getvlanppp']) ?: '-';
 
         $macAddress = $this->extractParamValue($device, [
             'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.MACAddress',
+            'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.MACAddress',
             'Device.PPP.Interface.1.MACAddress',
             'InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.MACAddress',
         ]) ?: '-';
@@ -834,8 +827,11 @@ class GenieAcsController extends Controller
                 'ppp_username' => $pppUsername,
                 'ip_address' => $wanIp,
                 'status' => $wanStatus,
+                'vlan_id' => $wanVlan,
                 'mac_address' => $macAddress,
+                'target_path' => $activeWan['path'] ?? null,
             ],
+            'wan_connections' => $wanConnections,
             'wifi' => [
                 'ssid' => $wifiSsid,
                 'is_enabled' => $wifiEnabled,

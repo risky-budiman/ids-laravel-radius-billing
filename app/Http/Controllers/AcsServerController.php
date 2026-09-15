@@ -173,12 +173,6 @@ class AcsServerController extends Controller
                     'InternetGatewayDevice.X_ALU_OntOpticalParam.RXPower',
                     'Device.Optical.Interface.1.OpticalSignalLevel',
                     'Device.Optical.Interface.1.OpticalPowerRx',
-                    // VirtualParameters fallback (backward compatible if configured)
-                    'VirtualParameters.ProductClass', 
-                    'VirtualParameters.IP',
-                    'VirtualParameters.wanip',
-                    'VirtualParameters.getponrx',
-                    'VirtualParameters.pppUsername',
                 ];
                 
                 $response = $service->getDevices($query, $projection, $skip, $perPage);
@@ -263,13 +257,17 @@ class AcsServerController extends Controller
                 \Illuminate\Support\Facades\Log::warning("Could not fetch tasks for {$deviceId}: " . $e->getMessage());
             }
             
-            return view('acs-servers.device-details', compact('device', 'server', 'deviceId', 'service', 'tasks'));
+            $wanConnections = $service->extractWanConnections($device ?? []);
+
+            return view('acs-servers.device-details', compact('device', 'server', 'deviceId', 'service', 'tasks', 'wanConnections'));
         } catch (\Exception $e) {
             return view('acs-servers.device-details', [
                 'device' => null,
                 'server' => $server,
                 'deviceId' => $deviceId,
                 'service' => isset($service) ? $service : null,
+                'tasks' => [],
+                'wanConnections' => [],
                 'error' => "ACS Connection Error: " . $e->getMessage()
             ]);
         }
@@ -285,120 +283,89 @@ class AcsServerController extends Controller
         $server = \App\Models\AcsServer::findOrFail($serverId);
         $service = \App\Services\GenieACSService::forServer($server);
 
-        // Fetch device details to inspect schema and manufacturer
-        $isTr181 = false;
-        $isHuawei = false;
         try {
             $deviceResponse = $service->getDevice($deviceId);
-            $deviceData = $deviceResponse['data'] ?? null;
-            if ($deviceData) {
-                // Detect TR-181 schema
-                if (isset($deviceData['Device'])) {
-                    $isTr181 = true;
-                }
-                
-                // Detect manufacturer (e.g. Huawei, ZTE)
-                $manufacturer = $deviceData['_deviceId']['_Manufacturer']
-                    ?? $deviceData['DeviceID']['Manufacturer']['_value']
-                    ?? $deviceData['Device']['DeviceInfo']['Manufacturer']['_value']
-                    ?? '';
-                if (stripos($manufacturer, 'Huawei') !== false) {
-                    $isHuawei = true;
-                }
-            }
+            $deviceData = $deviceResponse['data'] ?? [];
         } catch (\Exception $e) {
+            $deviceData = [];
             \Illuminate\Support\Facades\Log::warning("Could not pre-fetch device schema for {$deviceId}: " . $e->getMessage());
         }
 
         $params = [];
 
-        if ($isTr181) {
-            // TR-181 Schema Parameters
-            if ($request->filled('ppp_username')) {
-                $params['Device.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username'] = $request->ppp_username;
-            }
-            if ($request->filled('ppp_password')) {
-                $params['Device.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Password'] = $request->ppp_password;
-            }
-            if ($request->filled('wifi_ssid')) {
-                $params["Device.WiFi.SSID.{$instance}.SSID"] = $request->wifi_ssid;
-                $params["Device.WiFi.Radio.{$instance}.Enable"] = "1";
-            }
-            if ($request->filled('wifi_password')) {
-                $params["Device.WiFi.AccessPoint.{$instance}.Security.KeyPassphrase"] = $request->wifi_password;
-            }
-        } else {
-            // TR-069 Schema Parameters
-            if ($request->filled('ppp_username')) {
-                $params['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username'] = $request->ppp_username;
-            }
-            if ($request->filled('ppp_password')) {
-                $params['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Password'] = $request->ppp_password;
-            }
-            if ($request->filled('vlan_id')) {
-                $params['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.X_HW_VLAN'] = $request->vlan_id;
-            }
-            if ($request->filled('wifi_ssid')) {
-                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.SSID"] = $request->wifi_ssid;
-                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.Enable"] = "1";
-            }
-            if ($request->filled('wifi_password')) {
-                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.PreSharedKey.1.PreSharedKey"] = $request->wifi_password;
-                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.KeyPassphrase"] = $request->wifi_password;
-                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.X_ZTE-COM_KeyPassphrase"] = $request->wifi_password;
-            }
+        // 1. Process PPPoE / WAN parameters if present
+        $hasWanInput = $request->filled('wan_path')
+            || $request->has('is_enabled')
+            || $request->filled('ppp_username') 
+            || $request->filled('ppp_password') 
+            || $request->filled('vlan_id') 
+            || $request->filled('connection_trigger') 
+            || $request->has('nat_enabled') 
+            || $request->filled('mru') 
+            || $request->filled('service_list')
+            || $request->has('lan_bind')
+            || $request->has('ssid_bind');
+
+        $targetWanPath = null;
+        if ($hasWanInput) {
+            $wanResult = $service->buildPppoeParameters($deviceData, [
+                'is_enabled' => $request->has('is_enabled') ? $request->input('is_enabled') : null,
+                'ppp_username' => $request->ppp_username,
+                'ppp_password' => $request->ppp_password,
+                'vlan_id' => $request->vlan_id,
+                'connection_trigger' => $request->connection_trigger,
+                'nat_enabled' => $request->has('nat_enabled') ? $request->boolean('nat_enabled') : null,
+                'mru' => $request->mru,
+                'service_list' => $request->service_list,
+                'lan_bind' => $request->input('lan_bind', []),
+                'ssid_bind' => $request->input('ssid_bind', []),
+            ], $request->wan_path);
+
+            $params = array_merge($params, $wanResult['params']);
+            $targetWanPath = $wanResult['target_path'] ?? null;
+        }
+
+        // 2. Process Wi-Fi parameters if present
+        if ($request->filled('wifi_ssid') || $request->filled('wifi_password')) {
+            $wifiParams = $service->buildWifiParameters($deviceData, [
+                'wifi_ssid' => $request->wifi_ssid,
+                'wifi_password' => $request->wifi_password,
+            ], (int) $instance);
+
+            $params = array_merge($params, $wifiParams);
         }
 
         if (empty($params)) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => "Tidak ada perubahan konfigurasi yang dikirim."], 422);
+            }
             return back()->with('error', "No changes to push.");
         }
 
         try {
-            // Appended only for Huawei devices to avoid fault 9005 on ZTE/Fiberhome
-            if ($isHuawei) {
-                $params["InternetGatewayDevice.Services.X_Huawei_SelfDefined.SaveConfig"] = "1";
-            }
-
             // Push set parameters task (includes ?timeout=5000&connection_request automatically)
+            // GenieACS will apply the parameters on the ONT and persist them in MongoDB upon completion
             try {
                 $service->setParameters($deviceId, $params);
             } catch (\Exception $e) {
-                // Task may still be queued in GenieACS even if we get a timeout/empty reply
                 \Illuminate\Support\Facades\Log::warning("setParameters response issue (task likely queued): " . $e->getMessage());
             }
 
-            // Queue a getParameterValues task for only the parent objects of updated parameters to refresh/summon them safely
-            try {
-                $refreshPaths = [];
-                foreach ($params as $path => $value) {
-                    if (stripos($path, 'SaveConfig') !== false) {
-                        continue;
-                    }
-                    
-                    // Split path and reconstruct parent path with trailing dot
-                    $parts = explode('.', $path);
-                    if (count($parts) > 1) {
-                        array_pop($parts); // Remove leaf parameter name
-                        $parentPath = implode('.', $parts) . '.';
-                        $refreshPaths[$parentPath] = true;
-                    }
-                }
-                
-                if (!empty($refreshPaths)) {
-                    $service->pushTask($deviceId, [
-                        'name' => 'getParameterValues',
-                        'parameterNames' => array_keys($refreshPaths)
-                    ]);
-                }
-            } catch (\Exception $e) {
-                // Task may still be queued even on timeout
-                \Illuminate\Support\Facades\Log::warning("getParameterValues response issue (task likely queued): " . $e->getMessage());
+            $successMsg = "Konfigurasi PPPoE/Jaringan berhasil dikirim ke perangkat. Task telah masuk antrean GenieACS dan Connection Request telah dikirim.";
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $successMsg
+                ]);
             }
-            
-            return back()->with('success', "Configuration task pushed. Check 'Pending Tasks' below. The ONT will apply changes when it connects.");
+
+            return back()->with('success', $successMsg);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("SSID/Config Update Error for {$deviceId}: " . $e->getMessage());
-            return back()->with('error', "Failed to push configuration: " . $e->getMessage());
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => "Gagal mengirim konfigurasi: " . $e->getMessage()], 500);
+            }
+            return back()->with('error', "Gagal mengirim konfigurasi: " . $e->getMessage());
         }
     }
 
@@ -429,8 +396,16 @@ class AcsServerController extends Controller
         $service = \App\Services\GenieACSService::forServer($server);
 
         try {
-            // refreshObject with empty name refreshes EVERYTHING (includes ?timeout=5000&connection_request)
-            $service->pushTask($deviceId, ['name' => 'refreshObject', 'objectName' => '']);
+            // Determine valid root object path (TR-069 object paths must end with a dot)
+            $rootObject = 'InternetGatewayDevice.';
+            try {
+                $devRes = $service->getDevice($deviceId);
+                if (isset($devRes['data']['Device']) && !isset($devRes['data']['InternetGatewayDevice'])) {
+                    $rootObject = 'Device.';
+                }
+            } catch (\Throwable $e) {}
+
+            $service->pushTask($deviceId, ['name' => 'refreshObject', 'objectName' => $rootObject]);
             
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([

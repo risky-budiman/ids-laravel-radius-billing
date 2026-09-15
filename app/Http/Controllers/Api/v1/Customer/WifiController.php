@@ -176,25 +176,6 @@ class WifiController extends Controller
                 Log::warning("setParameters response issue (task likely queued): " . $e->getMessage());
             }
 
-            // Queue a getParameterValues task to summon/refresh the Wi-Fi parameters from device
-            try {
-                $refreshPaths = [];
-                if ($isTr181) {
-                    $refreshPaths[] = "Device.WiFi.SSID.{$instance}.";
-                    $refreshPaths[] = "Device.WiFi.AccessPoint.{$instance}.";
-                } else {
-                    $refreshPaths[] = "InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.";
-                }
-                
-                $service->pushTask($deviceId, [
-                    'name' => 'getParameterValues',
-                    'parameterNames' => $refreshPaths
-                ]);
-            } catch (\Exception $e) {
-                // Task may still be queued even on timeout
-                Log::warning("getParameterValues response issue (task likely queued): " . $e->getMessage());
-            }
-
             return response()->json([
                 'success' => true,
                 'message' => 'Perubahan Wi-Fi berhasil dikirim ke antrean. Modem akan menerapkan perubahan dalam beberapa detik.'
