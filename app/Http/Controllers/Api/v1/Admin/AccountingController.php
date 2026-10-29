@@ -85,6 +85,33 @@ class AccountingController extends Controller
             });
         }
 
+        if ($request->filled('billing_code')) {
+            $code = $request->input('billing_code');
+            $query->where(function($q) use ($code) {
+                $q->where('reference', 'like', "%{$code}%")
+                  ->orWhere('description', 'like', "%{$code}%");
+            });
+        }
+
+        if ($request->filled('billing_name')) {
+            $name = $request->input('billing_name');
+            $query->where('description', 'like', "%{$name}%");
+        }
+
+        if ($request->filled('type') && $request->input('type') !== 'all') {
+            $type = $request->input('type');
+            if ($type === 'orphaned') {
+                $query->where('reference', 'like', 'BILL-%')
+                      ->whereNotExists(function ($sub) {
+                          $sub->select(DB::raw(1))
+                              ->from('invoices')
+                              ->whereRaw("journals.reference = CONCAT('BILL-', invoices.invoice_number)");
+                      });
+            } else {
+                $query->where('reference', 'like', $type . '-%');
+            }
+        }
+
         $perPage = (int) $request->input('per_page', 50);
         $paginator = $query->paginate($perPage);
 
@@ -680,5 +707,78 @@ class AccountingController extends Controller
         }
 
         return response()->json(['message' => 'Jurnal transaksi bank berhasil disinkronkan ulang dengan COA terbaru.']);
+    }
+
+    /**
+     * Delete a journal entry via API.
+     */
+    public function destroyJournal($id)
+    {
+        $journal = Journal::findOrFail($id);
+
+        if (is_accounting_locked($journal->date)) {
+            return response()->json(['message' => 'Gagal: Transaksi pada periode yang sudah dikunci tidak dapat dihapus.'], 422);
+        }
+
+        DB::transaction(function () use ($journal) {
+            if (strpos($journal->reference, 'JV-') !== 0) {
+                if (preg_match('/^TRX-(\d+)$/', $journal->reference, $matches)) {
+                    $trxId = $matches[1];
+                    \App\Models\BankTransaction::where('id', $trxId)->get()->each->delete();
+                }
+            }
+
+            \App\Models\BankTransaction::where('reference_number', $journal->reference)->get()->each->delete();
+
+            $journal->items()->delete();
+            $journal->delete();
+        });
+
+        return response()->json(['message' => 'Jurnal berhasil dihapus.']);
+    }
+
+    /**
+     * Bulk delete journals via API.
+     */
+    public function bulkDestroyJournals(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:journals,id',
+        ]);
+
+        $ids = $request->input('ids');
+        $journals = Journal::whereIn('id', $ids)->get();
+
+        $deletedCount = 0;
+        $lockedCount = 0;
+
+        DB::transaction(function () use ($journals, &$deletedCount, &$lockedCount) {
+            foreach ($journals as $journal) {
+                if (is_accounting_locked($journal->date)) {
+                    $lockedCount++;
+                    continue;
+                }
+
+                if (strpos($journal->reference, 'JV-') !== 0) {
+                    if (preg_match('/^TRX-(\d+)$/', $journal->reference, $matches)) {
+                        $trxId = $matches[1];
+                        \App\Models\BankTransaction::where('id', $trxId)->get()->each->delete();
+                    }
+                }
+
+                \App\Models\BankTransaction::where('reference_number', $journal->reference)->get()->each->delete();
+
+                $journal->items()->delete();
+                $journal->delete();
+                $deletedCount++;
+            }
+        });
+
+        return response()->json([
+            'message' => "{$deletedCount} jurnal berhasil dihapus." . ($lockedCount > 0 ? " ({$lockedCount} dilewati karena periode terkunci)." : ""),
+            'deleted_count' => $deletedCount,
+            'locked_count' => $lockedCount,
+        ]);
     }
 }

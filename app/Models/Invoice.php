@@ -63,8 +63,7 @@ class Invoice extends Model
             ])->delete();
             
             // Remove associated bank transaction if exists
-            $tx = \App\Models\BankTransaction::where('description', 'like', '%[Pembayaran Invoice] ' . $invoice->invoice_number . '%')->first();
-            if ($tx) $tx->delete();
+            \App\Models\BankTransaction::where('description', 'like', '%[Pembayaran Invoice] ' . $invoice->invoice_number . '%')->get()->each->delete();
         });
     }
 }

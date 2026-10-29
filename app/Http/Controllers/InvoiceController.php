@@ -241,10 +241,28 @@ class InvoiceController extends Controller
     {
         $request->validate(['ids' => 'required|array', 'ids.*' => 'integer']);
 
-        $count = Invoice::whereIn('id', $request->ids)->delete();
+        $invoices = Invoice::whereIn('id', $request->ids)->get();
+        $count = 0;
+
+        DB::transaction(function () use ($invoices, &$count) {
+            foreach ($invoices as $invoice) {
+                // Ensure linked journals are cleaned up
+                \App\Models\Journal::where('reference', 'BILL-' . $invoice->invoice_number)->delete();
+                \App\Models\Journal::whereIn('reference', [
+                    'PAY-' . $invoice->invoice_number,
+                    'REV-' . $invoice->invoice_number
+                ])->delete();
+
+                // Ensure linked bank transactions are deleted and balance is corrected
+                \App\Models\BankTransaction::where('description', 'like', '%[Pembayaran Invoice] ' . $invoice->invoice_number . '%')->get()->each->delete();
+
+                $invoice->delete();
+                $count++;
+            }
+        });
 
         return redirect()->route('invoices.index')
-            ->with('success', "{$count} invoice berhasil dihapus.");
+            ->with('success', "{$count} invoice dan jurnal piutang terkait berhasil dihapus.");
     }
 
     /**

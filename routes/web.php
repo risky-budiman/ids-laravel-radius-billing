@@ -345,6 +345,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::get('journals', [\App\Http\Controllers\Accounting\JournalController::class, 'index'])->name('journals.index');
         Route::get('journals/create', [\App\Http\Controllers\Accounting\JournalController::class, 'create'])->name('journals.create');
         Route::post('journals', [\App\Http\Controllers\Accounting\JournalController::class, 'store'])->name('journals.store');
+        Route::post('journals/bulk-delete', [\App\Http\Controllers\Accounting\JournalController::class, 'bulkDestroy'])->name('journals.bulk-destroy');
         Route::get('journals/{journal}', [\App\Http\Controllers\Accounting\JournalController::class, 'show'])->name('journals.show');
         Route::delete('journals/{journal}', [\App\Http\Controllers\Accounting\JournalController::class, 'destroy'])->name('journals.destroy');
         

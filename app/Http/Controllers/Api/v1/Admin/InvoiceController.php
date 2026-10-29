@@ -338,10 +338,24 @@ class InvoiceController extends Controller
         ]);
 
         $ids = $request->input('ids');
-        Invoice::whereIn('id', $ids)->delete();
+        $invoices = Invoice::whereIn('id', $ids)->get();
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($invoices) {
+            foreach ($invoices as $invoice) {
+                \App\Models\Journal::where('reference', 'BILL-' . $invoice->invoice_number)->delete();
+                \App\Models\Journal::whereIn('reference', [
+                    'PAY-' . $invoice->invoice_number,
+                    'REV-' . $invoice->invoice_number
+                ])->delete();
+
+                \App\Models\BankTransaction::where('description', 'like', '%[Pembayaran Invoice] ' . $invoice->invoice_number . '%')->get()->each->delete();
+
+                $invoice->delete();
+            }
+        });
 
         return response()->json([
-            'message' => count($ids) . ' tagihan berhasil dihapus.',
+            'message' => count($ids) . ' tagihan dan jurnal piutang terkait berhasil dihapus.',
         ]);
     }
 

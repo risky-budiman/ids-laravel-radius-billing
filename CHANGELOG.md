@@ -1,5 +1,29 @@
 # Changelog
 
+## [v1.5.36] - 2026-10-30
+- Update ACS WAN Config ([432118d])
+- Update Syetem Update ([6b99a74])
+- Add Fitur Backup & Retore, Add Fitur Import & Export data pelanggan ([d4f551c])
+- Update API Endpoint ([997ac06])
+- Update API endpoint ([f963520])
+- Update API endpoint ([56bbda3])
+- Update API endpoint ([6deb691])
+- Update API endpoint ([8ce1648])
+- Update API endpoint ([6e6d7e1])
+- Closing Priod API ([a3f1795])
+- Closing Priod API ([57d67d8])
+- Update API Finance ([2166c5b])
+- Update API Finance ([a5c7bb6])
+- Update endpoint GenieACS Portal Admin ([0f67c0d])
+- Update Fitur API admin portal ([ec25389])
+
+
+
+## [v1.5.35] - 2026-10-30
+- Fix bulk delete invoice to automatically clean up associated customer receivable journals & bank transactions
+- Add advanced filtering (billing code, billing name, journal type, orphaned) and multi-selection bulk delete to General Ledger
+- Update composer platform PHP to 8.3.26
+
 ## [v1.5.34] - 2026-09-16
 - Update Syetem Update ([6b99a74])
 - Add Fitur Backup & Retore, Add Fitur Import & Export data pelanggan ([d4f551c])

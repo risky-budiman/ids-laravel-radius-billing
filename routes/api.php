@@ -135,6 +135,8 @@ Route::prefix('v1/admin')->name('api.admin.')->group(function () {
         Route::post('/accounting/closing/process', [AdminAccountingController::class, 'processClosing']);
         Route::post('/accounting/closing/reopen', [AdminAccountingController::class, 'reopenClosing']);
         Route::post('/accounting/sync-journals', [AdminAccountingController::class, 'syncJournals']);
+        Route::delete('/accounting/journals/bulk', [AdminAccountingController::class, 'bulkDestroyJournals']);
+        Route::delete('/accounting/journals/{id}', [AdminAccountingController::class, 'destroyJournal']);
 
         // System Admin (Fase 12)
         Route::get('/admin/users', [AdminSystemAdminController::class, 'users']);

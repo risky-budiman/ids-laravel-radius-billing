@@ -14,7 +14,17 @@ class JournalController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
-        
+        $billingCode = $request->input('billing_code');
+        $billingName = $request->input('billing_name');
+        $type = $request->input('type');
+        $accountId = $request->input('account_id');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $perPage = (int) $request->input('per_page', 25);
+        if (!in_array($perPage, [10, 20, 25, 50, 100, 250])) {
+            $perPage = 25;
+        }
+
         $query = Journal::with(['items.account', 'creator']);
 
         if ($search) {
@@ -28,12 +38,77 @@ class JournalController extends Controller
             });
         }
 
+        // Filter: Kode Billing / Nomor Invoice / Nomor Referensi
+        if ($billingCode) {
+            $query->where(function($q) use ($billingCode) {
+                $q->where('reference', 'like', "%{$billingCode}%")
+                  ->orWhere('description', 'like', "%{$billingCode}%");
+            });
+        }
+
+        // Filter: Nama Billing / Pelanggan
+        if ($billingName) {
+            $query->where('description', 'like', "%{$billingName}%");
+        }
+
+        // Filter: Tipe Jurnal
+        if ($type && $type !== 'all') {
+            if ($type === 'orphaned') {
+                // Jurnal penagihan (BILL-) yang invoice-nya sudah dihapus dari sistem
+                $query->where('reference', 'like', 'BILL-%')
+                      ->whereNotExists(function ($sub) {
+                          $sub->select(DB::raw(1))
+                              ->from('invoices')
+                              ->whereRaw("journals.reference = CONCAT('BILL-', invoices.invoice_number)");
+                      });
+            } else {
+                $query->where('reference', 'like', $type . '-%');
+            }
+        }
+
+        // Filter: Akun Spesifik
+        if ($accountId) {
+            $query->whereHas('items', function($iq) use ($accountId) {
+                $iq->where('account_id', $accountId);
+            });
+        }
+
+        // Filter: Rentang Tanggal
+        if ($dateFrom) {
+            $query->whereDate('date', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('date', '<=', $dateTo);
+        }
+
+        // Hitung jurnal piutang yang invoice-nya sudah terhapus
+        $orphanedCount = Journal::where('reference', 'like', 'BILL-%')
+            ->whereNotExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('invoices')
+                    ->whereRaw("journals.reference = CONCAT('BILL-', invoices.invoice_number)");
+            })->count();
+
         $journals = $query->orderBy('date', 'desc')
             ->orderBy('id', 'desc')
-            ->paginate(20)
+            ->paginate($perPage)
             ->withQueryString();
 
-        return view('accounting.journals.index', compact('journals'));
+        $accounts = ChartOfAccount::where('is_active', true)->orderBy('code')->get();
+
+        return view('accounting.journals.index', compact(
+            'journals',
+            'accounts',
+            'orphanedCount',
+            'search',
+            'billingCode',
+            'billingName',
+            'type',
+            'accountId',
+            'dateFrom',
+            'dateTo',
+            'perPage'
+        ));
     }
 
     public function create()
@@ -124,30 +199,81 @@ class JournalController extends Controller
 
     public function destroy(Journal $journal)
     {
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'Akses tidak diizinkan. Hanya Administrator yang dapat menghapus jurnal.');
+        }
+
         if (is_accounting_locked($journal->date)) {
             return back()->with('error', 'Gagal: Transaksi pada periode yang sudah dikunci (Tutup Buku) tidak dapat dihapus.');
         }
 
         DB::transaction(function () use ($journal) {
-            // If this journal is linked to a bank transaction, delete that too
-            // Note: We use reference to find linked TRX
+            // If this journal is linked to a bank transaction, delete that too (and recalculate balance)
             if (strpos($journal->reference, 'JV-') !== 0) {
-                // If it's not a Manual Journal (JV), it might be an auto-journal from TRX or BILL
-                // We check if it matches TRX-ID
                 if (preg_match('/^TRX-(\d+)$/', $journal->reference, $matches)) {
                     $trxId = $matches[1];
-                    \App\Models\BankTransaction::where('id', $trxId)->delete();
+                    \App\Models\BankTransaction::where('id', $trxId)->get()->each->delete();
                 }
             }
 
-            // Also check if any manual journal items hit bank accounts
-            // If so, deleting the journal should ideally delete the BankTransaction we created in store()
-            \App\Models\BankTransaction::where('reference_number', $journal->reference)->delete();
+            // Also check manual journal bank transactions
+            \App\Models\BankTransaction::where('reference_number', $journal->reference)->get()->each->delete();
 
+            $journal->items()->delete();
             $journal->delete();
         });
 
         return redirect()->route('accounting.journals.index')->with('success', 'Jurnal berhasil dihapus.');
+    }
+
+    /**
+     * Bulk delete selected journals
+     */
+    public function bulkDestroy(Request $request)
+    {
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'Akses tidak diizinkan. Hanya Administrator yang dapat menghapus jurnal.');
+        }
+
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:journals,id',
+        ]);
+
+        $ids = $request->input('ids');
+        $journals = Journal::whereIn('id', $ids)->get();
+
+        $deletedCount = 0;
+        $lockedCount = 0;
+
+        DB::transaction(function () use ($journals, &$deletedCount, &$lockedCount) {
+            foreach ($journals as $journal) {
+                if (is_accounting_locked($journal->date)) {
+                    $lockedCount++;
+                    continue;
+                }
+
+                if (strpos($journal->reference, 'JV-') !== 0) {
+                    if (preg_match('/^TRX-(\d+)$/', $journal->reference, $matches)) {
+                        $trxId = $matches[1];
+                        \App\Models\BankTransaction::where('id', $trxId)->get()->each->delete();
+                    }
+                }
+
+                \App\Models\BankTransaction::where('reference_number', $journal->reference)->get()->each->delete();
+
+                $journal->items()->delete();
+                $journal->delete();
+                $deletedCount++;
+            }
+        });
+
+        $message = "{$deletedCount} jurnal berhasil dihapus.";
+        if ($lockedCount > 0) {
+            $message .= " ({$lockedCount} jurnal dilewati karena periode akuntansi terkunci).";
+        }
+
+        return redirect()->route('accounting.journals.index')->with('success', $message);
     }
 
     private function generateReference($date)
