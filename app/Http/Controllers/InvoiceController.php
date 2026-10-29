@@ -3,13 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
-use Illuminate\Http\Request;
+use App\Models\Customer;
+use App\Models\Tax;
+use App\Models\BankAccount;
+use App\Models\InvoiceTemplate;
+use App\Models\Journal;
+use App\Models\BankTransaction;
+use App\Models\ActivityLog;
 use App\Services\PaymentGatewayService;
 use App\Services\WhatsAppService;
+use App\Services\AccountingService;
+use App\Services\InvoiceService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use App\Services\AccountingService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class InvoiceController extends Controller
 {
@@ -247,14 +257,14 @@ class InvoiceController extends Controller
         DB::transaction(function () use ($invoices, &$count) {
             foreach ($invoices as $invoice) {
                 // Ensure linked journals are cleaned up
-                \App\Models\Journal::where('reference', 'BILL-' . $invoice->invoice_number)->delete();
-                \App\Models\Journal::whereIn('reference', [
+                Journal::where('reference', 'BILL-' . $invoice->invoice_number)->delete();
+                Journal::whereIn('reference', [
                     'PAY-' . $invoice->invoice_number,
                     'REV-' . $invoice->invoice_number
                 ])->delete();
 
                 // Ensure linked bank transactions are deleted and balance is corrected
-                \App\Models\BankTransaction::where('description', 'like', '%[Pembayaran Invoice] ' . $invoice->invoice_number . '%')->get()->each->delete();
+                BankTransaction::where('description', 'like', '%[Pembayaran Invoice] ' . $invoice->invoice_number . '%')->get()->each->delete();
 
                 $invoice->delete();
                 $count++;
@@ -262,12 +272,12 @@ class InvoiceController extends Controller
         });
 
         if ($count > 0) {
-            \App\Models\ActivityLog::create([
-                'user_id' => auth()->id(),
+            ActivityLog::create([
+                'user_id' => Auth::id(),
                 'action' => 'deleted',
                 'description' => "Bulk Deleted {$count} Invoices.",
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
             ]);
         }
 
