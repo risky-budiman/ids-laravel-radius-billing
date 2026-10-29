@@ -261,6 +261,16 @@ class InvoiceController extends Controller
             }
         });
 
+        if ($count > 0) {
+            \App\Models\ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'deleted',
+                'description' => "Bulk Deleted {$count} Invoices.",
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+        }
+
         return redirect()->route('invoices.index')
             ->with('success', "{$count} invoice dan jurnal piutang terkait berhasil dihapus.");
     }

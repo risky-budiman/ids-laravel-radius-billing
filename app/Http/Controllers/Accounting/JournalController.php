@@ -268,6 +268,16 @@ class JournalController extends Controller
             }
         });
 
+        if ($deletedCount > 0) {
+            \App\Models\ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'deleted',
+                'description' => "Bulk Deleted {$deletedCount} Accounting Journals.",
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+        }
+
         $message = "{$deletedCount} jurnal berhasil dihapus.";
         if ($lockedCount > 0) {
             $message .= " ({$lockedCount} jurnal dilewati karena periode akuntansi terkunci).";

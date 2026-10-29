@@ -41,7 +41,7 @@ trait LogsActivity
 
     public function getModelIdentifier()
     {
-        $possibleFields = ['name', 'invoice_number', 'ticket_number', 'customer_code', 'username', 'code', 'email', 'id'];
+        $possibleFields = ['name', 'invoice_number', 'reference', 'ticket_number', 'customer_code', 'username', 'code', 'email', 'id'];
         
         foreach ($possibleFields as $field) {
             if (isset($this->{$field})) {

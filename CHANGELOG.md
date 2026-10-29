@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.5.37] - 2026-10-30
+- Fix invoice bulk delete cleanup, add journal filtering and bulk delete, update composer php 8.3 ([21ce7e1])
+- Update ACS WAN Config ([432118d])
+- Update Syetem Update ([6b99a74])
+- Add Fitur Backup & Retore, Add Fitur Import & Export data pelanggan ([d4f551c])
+- Update API Endpoint ([997ac06])
+- Update API endpoint ([f963520])
+- Update API endpoint ([56bbda3])
+- Update API endpoint ([6deb691])
+- Update API endpoint ([8ce1648])
+- Update API endpoint ([6e6d7e1])
+- Closing Priod API ([a3f1795])
+- Closing Priod API ([57d67d8])
+- Update API Finance ([2166c5b])
+- Update API Finance ([a5c7bb6])
+- Update endpoint GenieACS Portal Admin ([0f67c0d])
+
+
+
 ## [v1.5.36] - 2026-10-30
 - Update ACS WAN Config ([432118d])
 - Update Syetem Update ([6b99a74])
