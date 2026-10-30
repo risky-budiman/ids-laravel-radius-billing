@@ -67,7 +67,8 @@
                     <thead>
                         <tr class="bg-gray-50 dark:bg-gray-900/50">
                             <th class="p-4 text-xs font-bold text-gray-400 uppercase">Index</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Serial Number</th>
+                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Serial / MAC</th>
+                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">ONU Name</th>
                             <th class="p-4 text-xs font-bold text-gray-400 uppercase">Description</th>
                             <th class="p-4 text-xs font-bold text-gray-400 uppercase">Type</th>
                             <th class="p-4 text-xs font-bold text-gray-400 uppercase">Signal</th>
@@ -81,10 +82,11 @@
                         <template x-for="onu in onus" :key="onu.index">
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors">
                                 <td class="p-4 font-mono text-sm text-gray-600 dark:text-gray-400" x-text="onu.index"></td>
-                                <td class="p-4">
+                                <td class="p-4 font-mono text-sm">
                                     <span class="font-bold text-gray-900 dark:text-white" x-text="onu.sn"></span>
                                 </td>
-                                <td class="p-4 text-sm text-gray-600 dark:text-gray-400" x-text="onu.name || '-'"></td>
+                                <td class="p-4 text-sm font-semibold text-indigo-600 dark:text-indigo-400" x-text="onu.name || '-'"></td>
+                                <td class="p-4 text-sm text-gray-600 dark:text-gray-400" x-text="onu.description || '-'"></td>
                                 <td class="p-4 text-sm font-mono text-gray-600 dark:text-gray-400" x-text="onu.type"></td>
                                 <td class="p-4">
                                     <span class="font-bold" 
@@ -92,17 +94,20 @@
                                           x-text="onu.signal === 'LOST' || onu.signal === 'N/A' ? 'No Signal' : onu.signal + ' dBm'">
                                     </span>
                                 </td>
-                                <td class="p-4 text-xs font-bold text-gray-600 dark:text-gray-400 uppercase" x-text="onu.reason"></td>
+                                <td class="p-4 text-xs font-semibold" 
+                                    :class="['working', 'ready', 'online'].includes((onu.status || '').toLowerCase()) ? 'text-gray-500 dark:text-gray-400' : 'text-amber-500 dark:text-amber-400'"
+                                    x-text="onu.reason || '-'">
+                                </td>
                                 <td class="p-4">
                                     <span class="px-3 py-1 text-[10px] font-bold rounded-full uppercase"
-                                          :class="['working', 'ready', 'online'].includes(onu.status.toLowerCase()) 
+                                          :class="['working', 'ready', 'online'].includes((onu.status || '').toLowerCase()) 
                                             ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
                                             : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'"
                                           x-text="onu.status">
                                     </span>
                                 </td>
                                 <td class="p-4">
-                                    <button @click="openDetail(onu)" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                                    <button @click="openDetail(onu)" class="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 rounded-lg transition-colors">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                     </button>
                                 </td>
@@ -112,7 +117,7 @@
                         <!-- Empty/Loading State -->
                         <template x-if="onus.length === 0">
                             <tr>
-                                <td colspan="8" class="p-12 text-center text-gray-500 dark:text-gray-400 italic">
+                                <td colspan="9" class="p-12 text-center text-gray-500 dark:text-gray-400 italic">
                                     <template x-if="loading">
                                         <div class="flex flex-col items-center">
                                             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2"></div>
@@ -130,7 +135,7 @@
             </div>
         </div>
 
-        <!-- ONU Detail Modal (remains the same but updated for onus array) -->
+        <!-- ONU Detail Modal -->
         <div x-show="showDetail" 
              class="fixed inset-0 z-50 overflow-y-auto" 
              style="display: none;">
@@ -139,31 +144,45 @@
                 <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-lg w-full overflow-hidden border border-gray-100 dark:border-gray-700">
                     <div class="px-6 py-4 bg-indigo-600 flex justify-between items-center text-white">
                         <h3 class="font-bold">ONU Detailed Diagnostics</h3>
-                        <button @click="showDetail = false">&times;</button>
+                        <button @click="showDetail = false" class="text-white hover:text-gray-200 text-lg font-bold">&times;</button>
                     </div>
                     <div class="p-6">
                         <template x-if="selectedOnu">
                             <div class="space-y-4">
-                                <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
-                                    <span class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Customer Name</span>
-                                    <span class="text-lg font-bold text-gray-900 dark:text-white" x-text="selectedOnu.name"></span>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                                        <span class="text-[10px] uppercase font-bold text-gray-400 block mb-1">ONU Name</span>
+                                        <span class="text-base font-bold text-indigo-600 dark:text-indigo-400" x-text="selectedOnu.name"></span>
+                                    </div>
+                                    <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                                        <span class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Description</span>
+                                        <span class="text-base font-bold text-gray-900 dark:text-white" x-text="selectedOnu.description || '-'"></span>
+                                    </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <span class="text-[10px] uppercase font-bold text-gray-400 block">Serial Number</span>
-                                        <span class="font-bold text-gray-900 dark:text-white" x-text="selectedOnu.sn"></span>
+                                        <span class="text-[10px] uppercase font-bold text-gray-400 block">Serial / MAC</span>
+                                        <span class="font-bold text-gray-900 dark:text-white font-mono text-sm" x-text="selectedOnu.sn"></span>
                                     </div>
                                     <div>
                                         <span class="text-[10px] uppercase font-bold text-gray-400 block">Status</span>
-                                        <span class="font-bold uppercase text-xs" :class="['working', 'ready', 'online'].includes(selectedOnu.status.toLowerCase()) ? 'text-green-500' : 'text-red-500'" x-text="selectedOnu.status"></span>
+                                        <span class="font-bold uppercase text-xs" :class="['working', 'ready', 'online'].includes((selectedOnu.status || '').toLowerCase()) ? 'text-green-500' : 'text-red-500'" x-text="selectedOnu.status"></span>
                                     </div>
                                     <div>
                                         <span class="text-[10px] uppercase font-bold text-gray-400 block">Signal</span>
-                                        <span class="font-bold text-gray-900 dark:text-white" x-text="selectedOnu.signal === 'LOST' ? 'LOST' : selectedOnu.signal + ' dBm'"></span>
+                                        <span class="font-bold text-gray-900 dark:text-white" x-text="selectedOnu.signal === 'LOST' || selectedOnu.signal === 'N/A' ? 'No Signal' : selectedOnu.signal + ' dBm'"></span>
                                     </div>
                                     <div>
                                         <span class="text-[10px] uppercase font-bold text-gray-400 block">Last Reason</span>
-                                        <span class="font-bold text-gray-900 dark:text-white" x-text="selectedOnu.reason"></span>
+                                        <span class="font-bold text-gray-900 dark:text-white text-xs" x-text="selectedOnu.reason || '-'"></span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] uppercase font-bold text-gray-400 block">Register Time</span>
+                                        <span class="font-bold text-gray-900 dark:text-white text-xs font-mono" x-text="selectedOnu.reg_time || '-'"></span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] uppercase font-bold text-gray-400 block">Type</span>
+                                        <span class="font-bold text-gray-900 dark:text-white text-xs" x-text="selectedOnu.type"></span>
                                     </div>
                                 </div>
                             </div>

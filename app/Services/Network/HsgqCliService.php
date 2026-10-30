@@ -123,7 +123,40 @@ class HsgqCliService
         // 2. Get ONU Info for this specific port
         $infoOutput = $this->executeCommand("show onu-info {$portNum} all");
 
+        // 3. Get Alarm History for last offline/deregister reasons
+        $alarmOutput = $this->executeCommand("show alarm-history");
+
         $this->disconnect();
+
+        // Parse Alarm History:
+        // Format: Info: ONU 1/21 28:de:e5:cc:cc:85 Onu deregister, Reason:Laser out
+        // Format: Info: ONU 1/21 28:de:e5:cc:cc:85 ONU dying gasp
+        $alarmMap = [];
+        $alarmLines = explode("\n", $alarmOutput);
+        foreach ($alarmLines as $line) {
+            $line = trim($line);
+            if (preg_match('/ONU\s+(\d+\/\d+)(?:\s+Port\s+\d+)?\s+([0-9a-fA-F:]{17})\s+(.*)/i', $line, $m)) {
+                $onuKey = trim($m[1]);
+                $mac = strtolower(trim($m[2]));
+                $event = trim($m[3]);
+
+                $reason = $event;
+                if (preg_match('/Reason:\s*([^,\r\n]+)/i', $event, $rm)) {
+                    $reason = trim($rm[1]);
+                } elseif (stripos($event, 'dying gasp') !== false) {
+                    $reason = 'Dying Gasp (Power Cut)';
+                } elseif (stripos($event, 'link up') !== false) {
+                    $reason = 'Link Up';
+                }
+
+                if (!isset($alarmMap[$onuKey])) {
+                    $alarmMap[$onuKey] = $reason;
+                }
+                if (!isset($alarmMap[$mac])) {
+                    $alarmMap[$mac] = $reason;
+                }
+            }
+        }
 
         // Parse Optical Diagnostics:
         // Format: 1/1 20391582228 00:1a:69:43:12:29 45 °C 3.29 V 12 mA 1.7629 dBm -15.7840 dBm
@@ -167,18 +200,26 @@ class HsgqCliService
                     }
                 }
 
-                $displayName = ($onuDesc && $onuDesc !== 'NO-DESCRIPTI') ? $onuDesc : $onuName;
+                $onuKey = "{$p}/{$onuId}";
+                if ($status === 'online') {
+                    $reason = 'Normal (Online)';
+                } else {
+                    $reason = $alarmMap[$onuKey] ?? ($alarmMap[$mac] ?? 'Deregistered / Offline');
+                }
+
+                $description = ($onuDesc && $onuDesc !== 'NO-DESCRIPTI') ? $onuDesc : '-';
 
                 $results[] = [
                     'index'       => "1.1.{$portNum}.{$onuId}",
                     'onu_id'      => $onuId,
                     'sn'          => $mac, // MAC address dijadikan identifier SN
-                    'name'        => $displayName,
+                    'name'        => $onuName,
+                    'description' => $description,
                     'type'        => 'EPON ONU',
                     'status'      => $status,
                     'signal'      => $signalVal,
                     'reg_time'    => $regTime,
-                    'description' => $onuDesc,
+                    'reason'      => $reason,
                 ];
             }
         }
