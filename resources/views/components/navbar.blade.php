@@ -238,6 +238,14 @@
                         console.error('Synthetic sound generation failed:', e);
                     }
                 },
+                testRealtime() {
+                    fetch('{{ route('admin.test-realtime') }}')
+                        .then(r => r.json())
+                        .then(d => {
+                            console.log('⚡ Test realtime response:', d);
+                        })
+                        .catch(e => console.error('Test error:', e));
+                },
                 markAllRead() {
                     fetch('{{ route('api.notifications.read') }}', {
                         method: 'POST',
@@ -277,16 +285,7 @@
                     <span class="text-xl">🔔</span>
                     <span class="text-sm font-semibold" x-text="toastMessage"></span>
                 </div>
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                        },
-                        body: JSON.stringify({ id: id })
-                    }).then(() => {
-                        this.fetchNotifications();
-                    });
-                }
-            }" x-init="fetchNotifications(); initWebSocket()">
+
                 <button @click="isOpen = !isOpen" class="p-2 text-gray-500 rounded-full hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors relative focus:outline-none">
                     <span x-show="unreadCount > 0" class="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full ring-2 ring-white dark:ring-gray-900 flex items-center justify-center" x-text="unreadCount"></span>
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
@@ -301,7 +300,10 @@
                     
                     <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                         <span class="font-bold text-sm text-gray-900 dark:text-gray-100">Notifications</span>
-                        <button @click="markAllRead" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">Mark all as read</button>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" @click.stop="testRealtime" title="Kirim notifikasi tes langsung" class="text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 font-bold transition-colors">⚡ Tes Live</button>
+                            <button type="button" @click="markAllRead" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">Mark all as read</button>
+                        </div>
                     </div>
 
                     <div class="max-h-96 overflow-y-auto">
