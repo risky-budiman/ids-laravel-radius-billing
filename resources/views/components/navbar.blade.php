@@ -201,49 +201,8 @@
                     setup();
                 },
                 playNotificationSound() {
-                    try {
-                        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                        if (!AudioContextClass) return;
-
-                        if (!window._notifAudioCtx) {
-                            window._notifAudioCtx = new AudioContextClass();
-                        }
-                        const audioCtx = window._notifAudioCtx;
-
-                        const play = () => {
-                            const now = audioCtx.currentTime;
-                            const playTone = (freq, delay, duration, type = 'sine', volume = 0.35) => {
-                                const osc = audioCtx.createOscillator();
-                                const gain = audioCtx.createGain();
-                                osc.connect(gain);
-                                gain.connect(audioCtx.destination);
-
-                                osc.type = type;
-                                osc.frequency.setValueAtTime(freq, now + delay);
-
-                                gain.gain.setValueAtTime(volume, now + delay);
-                                gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + duration);
-
-                                osc.start(now + delay);
-                                osc.stop(now + delay + duration);
-                            };
-
-                            // Crisp C-major / E-major notification chime (easily heard)
-                            playTone(659.25, 0.00, 0.25, 'sine', 0.35);
-                            playTone(830.61, 0.08, 0.25, 'sine', 0.35);
-                            playTone(987.77, 0.16, 0.25, 'sine', 0.35);
-                            playTone(1318.51, 0.24, 0.55, 'triangle', 0.40);
-                        };
-
-                        if (audioCtx.state === 'suspended') {
-                            audioCtx.resume().then(play).catch(err => {
-                                console.warn('[Audio] Autoplay blocked by browser until user clicks page:', err);
-                            });
-                        } else {
-                            play();
-                        }
-                    } catch (e) {
-                        console.error('Notification sound error:', e);
+                    if (typeof window.playNotificationChime === 'function') {
+                        window.playNotificationChime();
                     }
                 },
                 testRealtime() {

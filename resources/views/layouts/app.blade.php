@@ -198,6 +198,9 @@
             }
         </script>
 
+        <!-- HTML5 Audio Element for Realtime Notification Chime -->
+        <audio id="notif-audio" src="{{ asset('sounds/notification.wav') }}" preload="auto"></audio>
+
         <!-- Global Floating Toast Notification (Pojok Kanan Bawah, 100% Reliable & Non-clipping) -->
         <div id="global-toast-container" class="hidden fixed bottom-6 right-6 z-[9999] max-w-sm w-[calc(100vw-3rem)] sm:w-96 transition-all duration-300 transform opacity-0 translate-y-4 pointer-events-auto">
             <div class="bg-slate-900/95 dark:bg-gray-800/95 text-white p-4 rounded-2xl shadow-2xl border border-slate-700/80 backdrop-blur-xl flex items-start space-x-3.5">
@@ -215,6 +218,22 @@
         </div>
 
         <script>
+            window.playNotificationChime = function() {
+                try {
+                    const audio = document.getElementById('notif-audio');
+                    if (audio) {
+                        audio.currentTime = 0;
+                        audio.volume = 0.95;
+                        const p = audio.play();
+                        if (p !== undefined) {
+                            p.catch(e => console.warn('[Audio] Autoplay blocked by browser policy:', e));
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[Audio] Play error:', e);
+                }
+            };
+
             window.showGlobalToast = function(msg) {
                 const el = document.getElementById('global-toast-container');
                 const textEl = document.getElementById('global-toast-text');
@@ -228,6 +247,9 @@
 
                 el.classList.remove('opacity-0', 'translate-y-4');
                 el.classList.add('opacity-100', 'translate-y-0');
+
+                // Play the authentic chime sound
+                window.playNotificationChime();
 
                 clearTimeout(window._toastTimer);
                 window._toastTimer = setTimeout(() => {
@@ -245,6 +267,14 @@
                     el.classList.add('hidden');
                 }, 300);
             };
+
+            // Prime audio on first click anywhere
+            document.addEventListener('click', () => {
+                const audio = document.getElementById('notif-audio');
+                if (audio) {
+                    audio.load();
+                }
+            }, { once: true });
         </script>
 
         @stack('modals')
