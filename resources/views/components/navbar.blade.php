@@ -129,6 +129,19 @@
                 isOpen: false,
                 toastMessage: null,
                 lastAlertTime: 0,
+                needPermission: ('Notification' in window && Notification.permission !== 'granted'),
+                requestSoundPermission() {
+                    if (typeof window.requestDesktopNotificationPermission === 'function') {
+                        window.requestDesktopNotificationPermission();
+                    } else if (typeof window.playNotificationChime === 'function') {
+                        window.playNotificationChime();
+                    }
+                    if ('Notification' in window) {
+                        Notification.requestPermission().then(perm => {
+                            this.needPermission = (perm !== 'granted');
+                        });
+                    }
+                },
                 showToast(msg) {
                     if (msg && typeof window.showGlobalToast === 'function') {
                         window.showGlobalToast(msg);
@@ -142,9 +155,23 @@
                     }
                     this.lastAlertTime = now;
                     this.fetchNotifications();
-                    this.playNotificationSound();
                     if (msg) {
                         this.showToast(msg);
+
+                        // Native OS Desktop Notification
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                            try {
+                                const notif = new Notification('Billing IDS', {
+                                    body: msg,
+                                    icon: '{{ asset('favicon.png') }}'
+                                });
+                                notif.onclick = function() {
+                                    window.focus();
+                                };
+                            } catch(e) {}
+                        }
+                    } else {
+                        this.playNotificationSound();
                     }
                 },
                 fetchNotifications() {
@@ -257,6 +284,16 @@
                             <button type="button" @click.stop="testRealtime" title="Kirim notifikasi tes langsung" class="text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 font-bold transition-colors">⚡ Tes Live</button>
                             <button type="button" @click="markAllRead" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">Mark all as read</button>
                         </div>
+                    </div>
+
+                    <!-- Permission Prompt Banner -->
+                    <div x-show="needPermission" class="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800/40 px-4 py-2.5 flex items-center justify-between text-xs transition-all">
+                        <span class="text-amber-800 dark:text-amber-300 font-medium text-[11px] flex items-center">
+                            <span class="mr-1.5">🔔</span> Izinkan suara & notifikasi desktop
+                        </span>
+                        <button type="button" @click.stop="requestSoundPermission" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold shadow-sm transition-colors text-[10px]">
+                            Aktifkan
+                        </button>
                     </div>
 
                     <div class="max-h-96 overflow-y-auto">

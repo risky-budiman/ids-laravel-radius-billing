@@ -198,6 +198,27 @@
             }
         </script>
 
+        <!-- Floating Browser Permission Prompt (Meminta Izin Browser 1 Kali) -->
+        <div id="notif-permission-banner" class="hidden fixed top-5 left-1/2 -translate-x-1/2 z-[10000] max-w-md w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-800/80 rounded-2xl shadow-2xl p-4 transition-all duration-300 pointer-events-auto">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <svg class="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h4 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">Izin Suara & Notifikasi</h4>
+                    <p class="text-xs text-gray-600 dark:text-gray-300 leading-snug">Aktifkan agar bel berdering & notif muncul saat ada tiket baru.</p>
+                </div>
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <button type="button" onclick="window.requestDesktopNotificationPermission()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 active:scale-95 transition-all">
+                        Izinkan
+                    </button>
+                    <button type="button" onclick="window.dismissPermissionBanner()" title="Tutup" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- HTML5 Audio Element for Realtime Notification Chime -->
         <audio id="notif-audio" src="{{ asset('sounds/notification.wav') }}" preload="auto"></audio>
 
@@ -218,6 +239,35 @@
         </div>
 
         <script>
+            let _audioUnlocked = false;
+
+            // Buka blokir audio autoplay secara instan pada interaksi pertama apapun di halaman
+            window.unlockAudio = function() {
+                if (_audioUnlocked) return;
+                const audio = document.getElementById('notif-audio');
+                if (audio) {
+                    const origVol = audio.volume;
+                    audio.volume = 0.001;
+                    const p = audio.play();
+                    if (p !== undefined) {
+                        p.then(() => {
+                            audio.pause();
+                            audio.currentTime = 0;
+                            audio.volume = origVol || 0.95;
+                            _audioUnlocked = true;
+                            console.log('🔊 [Audio] Autoplay browser berhasil di-unlock.');
+                        }).catch(e => {
+                            audio.volume = origVol || 0.95;
+                        });
+                    }
+                }
+            };
+
+            // Pasang event listener untuk interaksi pertama user (klik/ketik/sentuh) di mana saja
+            ['click', 'keydown', 'touchstart'].forEach(evt => {
+                document.addEventListener(evt, window.unlockAudio, { capture: true, once: true });
+            });
+
             window.playNotificationChime = function() {
                 try {
                     const audio = document.getElementById('notif-audio');
@@ -226,13 +276,57 @@
                         audio.volume = 0.95;
                         const p = audio.play();
                         if (p !== undefined) {
-                            p.catch(e => console.warn('[Audio] Autoplay blocked by browser policy:', e));
+                            p.catch(e => {
+                                console.warn('[Audio] Autoplay blocked by browser policy:', e);
+                            });
                         }
                     }
                 } catch (e) {
                     console.warn('[Audio] Play error:', e);
                 }
             };
+
+            window.requestDesktopNotificationPermission = function() {
+                // 1. Unlock audio & bunyikan chime
+                window.unlockAudio();
+                window.playNotificationChime();
+
+                // 2. Minta permission native browser
+                if ('Notification' in window) {
+                    Notification.requestPermission().then(permission => {
+                        console.log('[Notification] Permission result:', permission);
+                        window.dismissPermissionBanner();
+                        if (permission === 'granted') {
+                            try {
+                                new Notification('Radius Billing IDS', {
+                                    body: 'Suara & notifikasi desktop aktif untuk tiket realtime!',
+                                    icon: '{{ asset('favicon.png') }}'
+                                });
+                            } catch(e) {}
+                        }
+                    });
+                } else {
+                    window.dismissPermissionBanner();
+                }
+            };
+
+            window.dismissPermissionBanner = function() {
+                const banner = document.getElementById('notif-permission-banner');
+                if (banner) banner.classList.add('hidden');
+                sessionStorage.setItem('dismissed_notif_banner', 'true');
+            };
+
+            // Tampilkan banner jika browser belum memiliki izin (permission === 'default')
+            document.addEventListener('DOMContentLoaded', () => {
+                if ('Notification' in window && Notification.permission === 'default') {
+                    if (!sessionStorage.getItem('dismissed_notif_banner')) {
+                        setTimeout(() => {
+                            const banner = document.getElementById('notif-permission-banner');
+                            if (banner) banner.classList.remove('hidden');
+                        }, 800);
+                    }
+                }
+            });
 
             window.showGlobalToast = function(msg) {
                 const el = document.getElementById('global-toast-container');
@@ -267,14 +361,6 @@
                     el.classList.add('hidden');
                 }, 300);
             };
-
-            // Prime audio on first click anywhere
-            document.addEventListener('click', () => {
-                const audio = document.getElementById('notif-audio');
-                if (audio) {
-                    audio.load();
-                }
-            }, { once: true });
         </script>
 
         @stack('modals')
