@@ -277,11 +277,18 @@ class OltGateway
     // ═════════════════════════════════════════════════════
 
     /**
-     * Get all registered ONUs on a specific PON port via SNMP.
+     * Get all registered ONUs on a specific PON port via SNMP (or HSGQ CLI fallback).
      * Returns: index, onu_id, sn, name, type, status, signal
      */
     public function getOnusOnPort(int $shelf, int $slot, int $port): array
     {
+        // ── 1. Khusus Tipe OLT HSGQ (EPON / GPON) ──
+        if (str_contains(strtoupper($this->olt->olt_type ?? ''), 'HSGQ')) {
+            Log::info("HSGQ: Fetching ONUs on PON port {$port} for OLT: {$this->olt->name}");
+            $cliService = new HsgqCliService($this->olt);
+            return $cliService->getOnusOnPort($port);
+        }
+
         $shelf = $shelf ?: 1;
         Log::info("SNMP: Fetching ONUs on port {$shelf}/{$slot}/{$port} for OLT: {$this->olt->name}");
 
