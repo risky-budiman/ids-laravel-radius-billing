@@ -130,8 +130,9 @@
                 toastMessage: null,
                 lastAlertTime: 0,
                 showToast(msg) {
-                    this.toastMessage = msg;
-                    setTimeout(() => { this.toastMessage = null; }, 6000);
+                    if (msg) {
+                        window.dispatchEvent(new CustomEvent('show-toast', { detail: msg }));
+                    }
                 },
                 triggerAlert(msg) {
                     const now = Date.now();
@@ -279,28 +280,6 @@
                     });
                 }
             }" x-init="fetchNotifications(); initWebSocket(); document.addEventListener('click', () => { if(window._notifAudioCtx && window._notifAudioCtx.state === 'suspended') window._notifAudioCtx.resume(); }, { once: true })">
-                <!-- Floating Responsive Toast Alert -->
-                <div x-show="toastMessage" 
-                     x-transition:enter="transition ease-out duration-300"
-                     x-transition:enter-start="opacity-0 translate-y-3 sm:translate-y-4 scale-95"
-                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                     x-transition:leave="transition ease-in duration-200"
-                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                     x-transition:leave-end="opacity-0 translate-y-3 sm:translate-y-4 scale-95"
-                     class="fixed z-[999] top-4 inset-x-4 sm:top-auto sm:bottom-6 sm:inset-x-auto sm:right-6 max-w-md w-auto bg-slate-900/95 dark:bg-gray-800/95 backdrop-blur-xl text-white p-4 rounded-2xl shadow-2xl border border-white/10 flex items-start space-x-3.5 transition-all"
-                     style="display: none;">
-                    <div class="flex-shrink-0 w-9 h-9 rounded-xl bg-indigo-600/80 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                        <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    </div>
-                    <div class="flex-1 min-w-0 pr-2">
-                        <p class="text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-0.5">Notifikasi Realtime</p>
-                        <p class="text-sm font-medium text-slate-100 leading-snug break-words" x-text="toastMessage"></p>
-                    </div>
-                    <button type="button" @click="toastMessage = null" class="flex-shrink-0 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </div>
-
                 <button @click="isOpen = !isOpen" class="p-2 text-gray-500 rounded-full hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors relative focus:outline-none">
                     <span x-show="unreadCount > 0" class="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full ring-2 ring-white dark:ring-gray-900 flex items-center justify-center" x-text="unreadCount"></span>
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>

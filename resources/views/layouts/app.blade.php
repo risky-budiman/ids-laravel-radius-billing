@@ -197,6 +197,37 @@
                 });
             }
         </script>
+
+        <!-- Global Floating Toast Notification (Pojok Kanan Bawah, Bebas Tabrakan / Overflow) -->
+        <div x-data="{ toast: null, timer: null }"
+             @show-toast.window="
+                toast = $event.detail;
+                clearTimeout(timer);
+                timer = setTimeout(() => { toast = null; }, 6000);
+             "
+             x-show="toast"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+             x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+             class="fixed bottom-6 right-6 z-[9999] max-w-sm w-[calc(100vw-3rem)] sm:w-96 pointer-events-auto"
+             style="display: none;">
+            <div class="bg-slate-900/95 dark:bg-gray-800/95 text-white p-4 rounded-2xl shadow-2xl border border-slate-700/80 backdrop-blur-xl flex items-start space-x-3.5">
+                <div class="flex-shrink-0 w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                </div>
+                <div class="flex-1 min-w-0 pr-1">
+                    <p class="text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-0.5">Notifikasi Realtime</p>
+                    <p class="text-sm font-medium text-slate-100 leading-snug break-words" x-text="toast"></p>
+                </div>
+                <button type="button" @click="toast = null" class="flex-shrink-0 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+        </div>
+
         @stack('modals')
     </body>
 </html>
