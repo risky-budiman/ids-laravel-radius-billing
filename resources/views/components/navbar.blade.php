@@ -130,8 +130,8 @@
                 toastMessage: null,
                 lastAlertTime: 0,
                 showToast(msg) {
-                    if (msg) {
-                        window.dispatchEvent(new CustomEvent('show-toast', { detail: msg }));
+                    if (msg && typeof window.showGlobalToast === 'function') {
+                        window.showGlobalToast(msg);
                     }
                 },
                 triggerAlert(msg) {
