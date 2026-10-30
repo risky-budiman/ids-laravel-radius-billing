@@ -82,3 +82,4 @@ class HsgqOids
         return $clean ?: 'Connected';
     }
 }
+

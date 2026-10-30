@@ -13,9 +13,9 @@
                 </div>
             </div>
             <div class="flex space-x-2">
-                <button @click="syncLiveSnmp()" :disabled="loading" class="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30 flex items-center disabled:opacity-50">
+                <button @click="syncLiveData()" :disabled="loading" class="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30 flex items-center disabled:opacity-50">
                     <svg class="w-4 h-4 mr-2" :class="{'animate-spin': loading}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    <span x-text="loading ? 'Polling SNMP...' : 'Sync SNMP Data'">Sync SNMP Data</span>
+                    <span x-text="loading ? 'Refreshing Data...' : 'Sync Live Data'">Sync Live Data</span>
                 </button>
             </div>
         </div>
@@ -26,14 +26,25 @@
         selectedOnu: null,
         onus: @json($onus ?? []),
         loading: false,
-        syncLiveSnmp() {
+        syncLiveData() {
             this.loading = true;
-            fetch('{{ route('olts.get-port-data', [$olt->id, $port->id]) }}?fresh=1')
-                .then(res => res.json())
+            fetch('{{ route('olts.get-port-data', [$olt->id, $port->id], false) }}?fresh=1', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error('HTTP status ' + res.status);
+                    return res.json();
+                })
                 .then(data => {
                     this.onus = data.onus || [];
                 })
-                .catch(err => console.error('SNMP fetch error:', err))
+                .catch(err => {
+                    console.error('Fetch error:', err);
+                    alert('Gagal mengambil data ONU: ' + err.message);
+                })
                 .finally(() => {
                     this.loading = false;
                 });
@@ -78,7 +89,7 @@
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span>Fetching data via SNMP...</span>
+                        <span>Fetching live ONU data...</span>
                     </div>
                 </div>
             </div>

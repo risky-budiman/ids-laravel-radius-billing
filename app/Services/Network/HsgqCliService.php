@@ -97,13 +97,13 @@ class HsgqCliService
         fwrite($this->socket, $cmd . "\r\n");
         $buf = '';
         $start = microtime(true);
-        while (!feof($this->socket) && (microtime(true) - $start < 6)) {
+        while (!feof($this->socket) && (microtime(true) - $start < 12)) {
             $chunk = fread($this->socket, 4096);
             if ($chunk !== false && strlen($chunk) > 0) {
                 $buf .= $chunk;
                 if (str_contains($buf, '(config)#')) break;
             }
-            usleep(80000);
+            usleep(50000);
         }
         return $buf;
     }
@@ -120,8 +120,8 @@ class HsgqCliService
         // 1. Get Optical Diagnostics per port
         $diagOutput = $this->executeCommand("show optical-diag {$portNum}");
 
-        // 2. Get All ONU Info (karena show onu-info all menampilkan data semua port)
-        $infoOutput = $this->executeCommand("show onu-info all");
+        // 2. Get ONU Info for this specific port
+        $infoOutput = $this->executeCommand("show onu-info {$portNum} all");
 
         $this->disconnect();
 
