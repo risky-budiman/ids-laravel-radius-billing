@@ -13,47 +13,15 @@
                 </div>
             </div>
             <div class="flex space-x-2">
-                <button @click="syncLiveData()" :disabled="loading" class="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30 flex items-center disabled:opacity-50">
-                    <svg class="w-4 h-4 mr-2" :class="{'animate-spin': loading}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    <span x-text="loading ? 'Refreshing Data...' : 'Sync Live Data'">Sync Live Data</span>
+                <button @click="window.dispatchEvent(new CustomEvent('sync-onu-live'))" class="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30 flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <span>Sync Live Data</span>
                 </button>
             </div>
         </div>
     </x-slot>
 
-    <div class="space-y-6" x-data="{ 
-        showDetail: false, 
-        selectedOnu: null,
-        onus: @json($onus ?? []),
-        loading: false,
-        syncLiveData() {
-            this.loading = true;
-            fetch('{{ route('olts.get-port-data', [$olt->id, $port->id], false) }}?fresh=1', {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-                .then(res => {
-                    if (!res.ok) throw new Error('HTTP status ' + res.status);
-                    return res.json();
-                })
-                .then(data => {
-                    this.onus = data.onus || [];
-                })
-                .catch(err => {
-                    console.error('Fetch error:', err);
-                    alert('Gagal mengambil data ONU: ' + err.message);
-                })
-                .finally(() => {
-                    this.loading = false;
-                });
-        },
-        openDetail(onu) {
-            this.selectedOnu = onu;
-            this.showDetail = true;
-        }
-    }">
+    <div class="space-y-6" x-data="onuPortManager()">
         <!-- Port Summary Card -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="glass bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
@@ -205,4 +173,49 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        function onuPortManager() {
+            return {
+                showDetail: false,
+                selectedOnu: null,
+                onus: {!! json_encode($onus ?? []) !!},
+                loading: false,
+                init() {
+                    window.addEventListener('sync-onu-live', () => {
+                        this.syncLiveData();
+                    });
+                },
+                syncLiveData() {
+                    this.loading = true;
+                    fetch('{{ route('olts.get-port-data', [$olt->id, $port->id], false) }}?fresh=1', {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(res => {
+                        if (!res.ok) throw new Error('HTTP status ' + res.status);
+                        return res.json();
+                    })
+                    .then(data => {
+                        this.onus = data.onus || [];
+                    })
+                    .catch(err => {
+                        console.error('Fetch error:', err);
+                        alert('Gagal mengambil data ONU: ' + err.message);
+                    })
+                    .finally(() => {
+                        this.loading = false;
+                    });
+                },
+                openDetail(onu) {
+                    this.selectedOnu = onu;
+                    this.showDetail = true;
+                }
+            };
+        }
+    </script>
+    @endpush
 </x-app-layout>
