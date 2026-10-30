@@ -127,6 +127,11 @@
                 notifications: {},
                 unreadCount: 0,
                 isOpen: false,
+                toastMessage: null,
+                showToast(msg) {
+                    this.toastMessage = msg;
+                    setTimeout(() => { this.toastMessage = null; }, 6000);
+                },
                 fetchNotifications() {
                     fetch('{{ route('api.notifications') }}', {
                         headers: {
@@ -145,37 +150,68 @@
                         .catch(err => console.error('Notification fetch error:', err));
                 },
                 initWebSocket() {
-                    if (window.Echo) {
-                        const userId = {{ auth()->id() ?? 'null' }};
-                        if (userId) {
-                            // Listen to private user notification channel (broadcast notifications)
-                            window.Echo.private(`App.Models.User.${userId}`)
-                                .notification((notification) => {
-                                    this.fetchNotifications();
-                                    this.playNotificationSound();
-                                });
-
-                            // Listen to admin tickets channel for realtime events
-                            window.Echo.private('admin.tickets')
-                                .listen('.ticket.created', (e) => {
-                                    this.fetchNotifications();
-                                    this.playNotificationSound();
-                                })
-                                .listen('.ticket.reply.created', (e) => {
-                                    this.fetchNotifications();
-                                    this.playNotificationSound();
-                                })
-                                .listen('.ticket.updated', (e) => {
-                                    this.fetchNotifications();
-                                });
+                    const setup = () => {
+                        if (!window.Echo) {
+                            setTimeout(setup, 300);
+                            return;
                         }
-                    }
+                        const userId = {{ auth()->id() ?? 'null' }};
+                        if (!userId) return;
+
+                        console.log('🔌 [WebSocket] Subscribing to channels for user ID:', userId);
+
+                        // 1. Private User Notifications
+                        window.Echo.private(`App.Models.User.${userId}`)
+                            .notification((notification) => {
+                                console.log('🔔 [WebSocket] Received Notification:', notification);
+                                this.fetchNotifications();
+                                this.playNotificationSound();
+                                this.showToast(notification.message || 'Notifikasi Baru Masuk');
+                            });
+
+                        // 2. Admin Tickets Channel
+                        window.Echo.private('admin.tickets')
+                            .listen('.ticket.created', (e) => {
+                                console.log('🎫 [WebSocket] Ticket Created:', e);
+                                this.fetchNotifications();
+                                this.playNotificationSound();
+                                const num = e.ticket ? e.ticket.ticket_number : '';
+                                const sub = e.ticket ? e.ticket.subject : 'Tiket Baru';
+                                this.showToast(`🎫 Tiket Baru: #${num} - ${sub}`);
+                            })
+                            .listen('ticket.created', (e) => {
+                                console.log('🎫 [WebSocket] Ticket Created (no dot):', e);
+                                this.fetchNotifications();
+                                this.playNotificationSound();
+                            })
+                            .listen('.ticket.reply.created', (e) => {
+                                console.log('💬 [WebSocket] Ticket Reply:', e);
+                                this.fetchNotifications();
+                                this.playNotificationSound();
+                                const num = e.reply ? e.reply.ticket_number : '';
+                                const msg = e.reply ? e.reply.message : 'Balasan Baru';
+                                this.showToast(`💬 Balasan Tiket #${num}: ${msg}`);
+                            })
+                            .listen('ticket.reply.created', (e) => {
+                                this.fetchNotifications();
+                                this.playNotificationSound();
+                            })
+                            .listen('.ticket.updated', (e) => {
+                                console.log('⚙️ [WebSocket] Ticket Updated:', e);
+                                this.fetchNotifications();
+                            });
+                    };
+
+                    setup();
                 },
                 playNotificationSound() {
                     try {
                         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
                         if (!AudioContextClass) return;
                         const audioCtx = new AudioContextClass();
+                        if (audioCtx.state === 'suspended') {
+                            audioCtx.resume();
+                        }
                         
                         const playTone = (freq, start, duration, type = 'sine', volume = 0.25) => {
                             const osc = audioCtx.createOscillator();
@@ -218,6 +254,29 @@
                 markAsRead(id) {
                     fetch('{{ route('api.notifications.read') }}', {
                         method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                        },
+                        body: JSON.stringify({ id: id })
+                    }).then(() => {
+                        this.fetchNotifications();
+                    });
+                }
+            }" x-init="fetchNotifications(); initWebSocket()">
+                <!-- Floating Toast Alert -->
+                <div x-show="toastMessage" 
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0 translate-y-4"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 translate-y-4"
+                     class="fixed bottom-6 right-6 z-50 bg-indigo-600 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center space-x-3 border border-indigo-400/30"
+                     style="display: none;">
+                    <span class="text-xl">🔔</span>
+                    <span class="text-sm font-semibold" x-text="toastMessage"></span>
+                </div>
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content

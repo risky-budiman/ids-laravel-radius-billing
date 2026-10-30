@@ -54,6 +54,31 @@ Route::post('/webhooks/moota', [\App\Http\Controllers\PaymentWebhookController::
 Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknisi,kasir,sales'])->group(function () {
     Route::get('/', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
+    // Test Realtime WebSocket & Notification Route
+    Route::get('test-realtime', function () {
+        $ticket = \App\Models\Ticket::latest()->first() ?? new \App\Models\Ticket([
+            'id' => 999,
+            'ticket_number' => 'TT/TEST/' . now()->format('His'),
+            'subject' => 'Test Realtime WebSocket ' . now()->format('H:i:s'),
+            'type' => 'gangguan',
+            'status' => 'open',
+            'priority' => 'high',
+        ]);
+
+        // 1. Broadcast TicketCreated event ke Reverb
+        event(new \App\Events\TicketCreated($ticket));
+
+        // 2. Kirim Notifikasi ke User yang sedang login
+        auth()->user()->notify(new \App\Notifications\TicketCreatedNotification($ticket));
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Event WebSocket dan notifikasi berhasil ditembakkan!',
+            'ticket' => $ticket->ticket_number ?? 'TEST',
+            'time' => now()->toTimeString(),
+        ]);
+    })->name('admin.test-realtime');
+
     // RADIUS Session Management
     Route::post('radius/disconnect-all', [\App\Http\Controllers\Admin\RadiusController::class, 'disconnectAll'])->name('radius.disconnect-all');
     Route::post('radius/clear-stale', [\App\Http\Controllers\Admin\RadiusController::class, 'clearStaleSessions'])->name('radius.clear-stale');
