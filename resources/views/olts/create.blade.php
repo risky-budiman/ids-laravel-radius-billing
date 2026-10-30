@@ -24,6 +24,7 @@
                     <div class="space-y-2">
                         <label for="olt_type" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">OLT Type</label>
                         <select name="olt_type" id="olt_type" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
+                            <option value="HSGQ_EPON" {{ old('olt_type') == 'HSGQ_EPON' ? 'selected' : '' }}>HSGQ EPON (E04ID / E08L / Generic)</option>
                             <option value="ZTE_C320" {{ old('olt_type') == 'ZTE_C320' ? 'selected' : '' }}>ZTE ZXA10 C320</option>
                             <option value="ZTE_C300" {{ old('olt_type') == 'ZTE_C300' ? 'selected' : '' }}>ZTE ZXA10 C300</option>
                             <option value="HIOSO" {{ old('olt_type') == 'HIOSO' ? 'selected' : '' }}>Hioso (Generic)</option>

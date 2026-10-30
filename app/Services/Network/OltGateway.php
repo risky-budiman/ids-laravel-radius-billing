@@ -54,6 +54,35 @@ class OltGateway
      */
     public function getOltStatus(): array
     {
+        // ── 1. Cek Apakah Tipe OLT adalah HSGQ ──
+        if (str_contains(strtoupper($this->olt->olt_type ?? ''), 'HSGQ')) {
+            $rawUptime = $this->snmp()->getSafe(HsgqOids::SYS_UPTIME);
+            if ($rawUptime === null) {
+                $sysName = $this->snmp()->getSafe(HsgqOids::SYS_NAME);
+                if ($sysName === null) {
+                    return ['status' => 'offline', 'cpu' => 0, 'uptime' => 'N/A', 'temp' => 0];
+                }
+            }
+
+            $uptime = $rawUptime ? HsgqOids::formatUptime((string) $rawUptime) : 'Connected';
+
+            // CPU Usage
+            $cpuVal = $this->snmp()->getSafe(HsgqOids::HSGQ_CPU_USAGE);
+            $cpu = $cpuVal !== null && is_numeric($cpuVal) ? (int)$cpuVal : 0;
+
+            // Temperature
+            $tempVal = $this->snmp()->getSafe(HsgqOids::HSGQ_TEMPERATURE);
+            $temp = $tempVal !== null && is_numeric($tempVal) ? (int)$tempVal : 0;
+
+            return [
+                'status' => 'online',
+                'cpu'    => $cpu,
+                'uptime' => $uptime,
+                'temp'   => $temp,
+            ];
+        }
+
+        // ── 2. Standar ZTE OLT ──
         $rawUptime = $this->snmp()->getSafe(ZteOids::SYS_UPTIME);
 
         if ($rawUptime === null) {
@@ -114,6 +143,34 @@ class OltGateway
     {
         $portsMap = [];
         $activePortKeys = [];
+
+        // ── 1. Khusus Tipe OLT HSGQ (EPON / GPON) ──
+        if (str_contains(strtoupper($this->olt->olt_type ?? ''), 'HSGQ')) {
+            $portCount = (int)($this->snmp()->getSafe(HsgqOids::HSGQ_PON_COUNT) ?? 4);
+            if ($portCount <= 0 || $portCount > 16) $portCount = 4;
+
+            for ($p = 1; $p <= $portCount; $p++) {
+                $shelf = 1;
+                $slot = 1;
+                $key = "{$shelf}/{$slot}/{$p}";
+
+                // Base ID port PON di HSGQ: 16777472 (PON1), +256 per port berikutnya
+                $portSnmpId = 16777472 + (($p - 1) * 256);
+                $linkStat = $this->snmp()->getSafe(HsgqOids::PORT_ADMIN_STAT_TABLE . '.' . $portSnmpId);
+                // Di firmware HSGQ E04ID: Col 6 bernilai 2 (Link Up / Ready)
+                $isOnline = ($linkStat == '2' || $linkStat == '1' || $linkStat == 'up');
+
+                $portsMap[$key] = [
+                    'shelf'       => $shelf,
+                    'slot'        => $slot,
+                    'port'        => $p,
+                    'status'      => $isOnline ? 'active' : 'inactive',
+                    'description' => "EPON Port PON{$p} (HSGQ)",
+                ];
+            }
+
+            return array_values($portsMap);
+        }
 
         // 1. Scan registered ONUs to identify active slots and ports
         foreach (ZteOids::ONU_SN_TABLES as $tableOid) {
