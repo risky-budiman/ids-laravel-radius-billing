@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.5.51] - 2026-10-30
+- feat: add interactive audio activator pill and auto-unlock on interaction (v1.5.50) ([f80f3ba])
+- feat: add one-time browser permission banner and silent audio unlock on interaction (v1.5.49) ([3f9536d])
+- feat: add authentic WAV notification audio file and HTML5 audio player (v1.5.48) ([6e0d7b6])
+- fix: implement native DOM toast with smooth transition to guarantee popup visibility (v1.5.47) ([d117f3d])
+- fix: move toast to root layout bottom-right to prevent clipping by navbar (v1.5.46) ([a03906e])
+- feat: make toast banner and dropdown fully responsive with close button (v1.5.45) ([86cb7a2])
+- fix: resolve audio context promise and auto-unlock sound on user gesture (v1.5.44) ([4e8c206])
+- fix: debounce notifications and remove duplicate listener bindings (v1.5.43) ([654154d])
+- fix: resolve alpine syntax error in navbar, broadcast directly to local reverb (v1.5.42) ([8777ad9])
+- feat: add visual toast, robust echo listener, and test-realtime endpoint (v1.5.41) ([f1d5dfd])
+- feat: implement real-time WebSocket notifications and tickets with Laravel Reverb (v1.5.39) ([194f242])
+- Clean up imports and facades in InvoiceController ([51ed219])
+- Add full activity logging for invoice bulk delete and journal management ([5025a59])
+- Fix invoice bulk delete cleanup, add journal filtering and bulk delete, update composer php 8.3 ([21ce7e1])
+- Update ACS WAN Config ([432118d])
+
+
+
 ## [v1.5.50] - 2026-10-30
 - feat: add one-time browser permission banner and silent audio unlock on interaction (v1.5.49) ([3f9536d])
 - feat: add authentic WAV notification audio file and HTML5 audio player (v1.5.48) ([6e0d7b6])

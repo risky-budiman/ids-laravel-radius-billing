@@ -158,17 +158,27 @@
                     if (msg) {
                         this.showToast(msg);
 
-                        // Native OS Desktop Notification
+                        // Native OS Desktop Notification (Sama seperti Facebook & PWA: Selalu Berdering via Sistem OS)
                         if ('Notification' in window && Notification.permission === 'granted') {
-                            try {
-                                const notif = new Notification('Billing IDS', {
-                                    body: msg,
-                                    icon: '{{ asset('favicon.png') }}'
+                            const notifTitle = 'Billing IDS - Notifikasi';
+                            const notifOptions = {
+                                body: msg,
+                                icon: '{{ asset('favicon.png') }}',
+                                badge: '{{ asset('favicon.png') }}',
+                                tag: 'ticket-notif-' + Date.now(),
+                                renotify: true,
+                                silent: false // Memastikan Windows membunyikan nada dering OS
+                            };
+
+                            if ('serviceWorker' in navigator) {
+                                navigator.serviceWorker.ready.then(reg => {
+                                    reg.showNotification(notifTitle, notifOptions);
+                                }).catch(() => {
+                                    try { new Notification(notifTitle, notifOptions); } catch(e) {}
                                 });
-                                notif.onclick = function() {
-                                    window.focus();
-                                };
-                            } catch(e) {}
+                            } else {
+                                try { new Notification(notifTitle, notifOptions); } catch(e) {}
+                            }
                         }
                     } else {
                         this.playNotificationSound();

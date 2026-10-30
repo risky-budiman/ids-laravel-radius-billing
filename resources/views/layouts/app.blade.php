@@ -219,12 +219,6 @@
             </div>
         </div>
 
-        <!-- Floating Audio Activator Pill (Solusi Chrome Autoplay: 1x Klik Membuka Suara Permanen) -->
-        <div id="audio-activator-pill" onclick="window.activateAudioDirectly()" class="fixed bottom-6 left-6 z-[9998] cursor-pointer bg-slate-900/90 hover:bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2.5 border border-indigo-500/40 backdrop-blur-md transition-all duration-300 animate-pulse hover:scale-105 active:scale-95">
-            <span class="text-base">🔊</span>
-            <span id="audio-activator-text" class="text-xs font-bold text-slate-100">Klik di sini untuk aktifkan audio tiket</span>
-        </div>
-
         <!-- HTML5 Audio Element for Realtime Notification Chime -->
         <audio id="notif-audio" src="{{ asset('sounds/notification.wav') }}" preload="auto"></audio>
 
@@ -247,7 +241,7 @@
         <script>
             let _audioUnlocked = false;
 
-            // Buka blokir audio autoplay secara instan pada interaksi pertama apapun di halaman
+            // Buka gembok audio autoplay secara instan pada interaksi pertama apapun di halaman
             window.unlockAudio = function() {
                 if (_audioUnlocked) return;
                 const audio = document.getElementById('notif-audio');
@@ -261,49 +255,15 @@
                             audio.currentTime = 0;
                             audio.volume = origVol || 0.95;
                             _audioUnlocked = true;
-                            console.log('🔊 [Audio] Autoplay browser berhasil di-unlock.');
-                        }).catch(e => {
+                        }).catch(() => {
                             audio.volume = origVol || 0.95;
                         });
                     }
                 }
             };
 
-            window.activateAudioDirectly = function() {
-                window.unlockAudio();
-                window.playNotificationChime();
-                const pill = document.getElementById('audio-activator-pill');
-                const text = document.getElementById('audio-activator-text');
-                if (pill && text) {
-                    text.innerText = 'Audio tiket aktif!';
-                    pill.classList.remove('animate-pulse', 'border-indigo-500/40');
-                    pill.classList.add('bg-emerald-600', 'border-emerald-400');
-                    setTimeout(() => {
-                        pill.style.opacity = '0';
-                        setTimeout(() => pill.remove(), 400);
-                    }, 1200);
-                }
-            };
-
-            // Hilangkan pill dan buka audio begitu user klik/interaksi pertama di mana saja
-            const dismissPillOnAnyInteraction = () => {
-                window.unlockAudio();
-                const pill = document.getElementById('audio-activator-pill');
-                if (pill) {
-                    pill.style.opacity = '0';
-                    setTimeout(() => pill.remove(), 300);
-                }
-            };
-
             ['click', 'keydown', 'touchstart'].forEach(evt => {
-                document.addEventListener(evt, dismissPillOnAnyInteraction, { capture: true, once: true });
-            });
-
-            document.addEventListener('DOMContentLoaded', () => {
-                if (navigator.userActivation && navigator.userActivation.hasBeenActive) {
-                    const pill = document.getElementById('audio-activator-pill');
-                    if (pill) pill.remove();
-                }
+                document.addEventListener(evt, window.unlockAudio, { capture: true, once: true });
             });
 
             window.playNotificationChime = function() {
@@ -315,19 +275,12 @@
                         const p = audio.play();
                         if (p !== undefined) {
                             p.catch(e => {
-                                console.warn('[Audio] Autoplay blocked by browser policy:', e);
-                                const pill = document.getElementById('audio-activator-pill');
-                                const text = document.getElementById('audio-activator-text');
-                                if (pill && text) {
-                                    text.innerText = 'Tiket masuk! Klik untuk bunyikan';
-                                    pill.classList.add('animate-bounce');
-                                }
+                                // Silent: jika audio halaman belum di-klik,
+                                // notifikasi desktop Windows / Service Worker tetap berbunyi via sistem OS.
                             });
                         }
                     }
-                } catch (e) {
-                    console.warn('[Audio] Play error:', e);
-                }
+                } catch (e) {}
             };
 
             window.requestDesktopNotificationPermission = function() {
