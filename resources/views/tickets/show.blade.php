@@ -49,7 +49,7 @@
                                         <span class="px-3 py-1 text-xs font-bold rounded-full {{ $typeColors[$ticket->type] ?? 'bg-gray-100' }}">
                                             {{ strtoupper($ticket->type) }}
                                         </span>
-                                        <span class="px-3 py-1 text-xs font-bold rounded-full {{ $statusColors[$ticket->status] ?? 'bg-gray-100' }}">
+                                        <span id="ticket-status-badge" class="px-3 py-1 text-xs font-bold rounded-full {{ $statusColors[$ticket->status] ?? 'bg-gray-100' }}">
                                             {{ str_replace('_', ' ', strtoupper($ticket->status)) }}
                                         </span>
                                         @if($ticket->isOverdue())
@@ -86,14 +86,73 @@
                                 </div>
                             @endif
 
-                            <!-- Ticket Activity / Replies -->
-                            <div class="mt-12">
+                            <!-- Ticket Activity / Replies with Realtime WebSocket -->
+                            <div class="mt-12" x-data="{
+                                initEcho() {
+                                    if (window.Echo) {
+                                        window.Echo.private('ticket.{{ $ticket->id }}')
+                                            .listen('.ticket.reply.created', (event) => {
+                                                this.appendLiveReply(event.reply);
+                                            })
+                                            .listen('.ticket.updated', (event) => {
+                                                const statusBadge = document.getElementById('ticket-status-badge');
+                                                if (statusBadge && event.ticket.status) {
+                                                    statusBadge.innerText = event.ticket.status.replace('_', ' ').toUpperCase();
+                                                }
+                                            });
+                                    }
+                                },
+                                appendLiveReply(reply) {
+                                    const container = document.getElementById('replies-container');
+                                    const emptyMsg = document.getElementById('empty-replies-msg');
+                                    if (emptyMsg) emptyMsg.remove();
+                                    if (container) {
+                                        const initial = reply.user_name ? reply.user_name.charAt(0).toUpperCase() : '?';
+                                        const bgClass = reply.is_staff 
+                                            ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' 
+                                            : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400';
+                                        const cardBg = reply.is_staff 
+                                            ? 'bg-white dark:bg-gray-800/50' 
+                                            : 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800';
+                                        
+                                        const attachmentHtml = reply.attachment_url ? `
+                                            <div class='mt-4 pt-4 border-t border-gray-50 dark:border-gray-700/50'>
+                                                <a href='${reply.attachment_url}' target='_blank' class='inline-flex items-center text-xs text-indigo-600 hover:underline'>
+                                                    Lihat Lampiran
+                                                </a>
+                                            </div>
+                                        ` : '';
+
+                                        const div = document.createElement('div');
+                                        div.className = 'flex space-x-4 transition-all duration-300';
+                                        div.innerHTML = `
+                                            <div class='flex-shrink-0'>
+                                                <div class='w-10 h-10 rounded-2xl ${bgClass} flex items-center justify-center font-bold'>
+                                                    ${initial}
+                                                </div>
+                                            </div>
+                                            <div class='flex-1'>
+                                                <div class='${cardBg} p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm'>
+                                                    <div class='flex justify-between items-center mb-3'>
+                                                        <span class='font-bold text-gray-900 dark:text-white'>${reply.user_name}</span>
+                                                        <span class='text-[10px] text-gray-400 uppercase'>${reply.created_at}</span>
+                                                    </div>
+                                                    <p class='text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap'>${reply.message}</p>
+                                                    ${attachmentHtml}
+                                                </div>
+                                            </div>
+                                        `;
+                                        container.appendChild(div);
+                                        div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                    }
+                                }
+                            }" x-init="initEcho()">
                                 <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center">
                                     <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
                                     Activity Log & Replies
                                 </h4>
                                 
-                                <div class="space-y-6 mb-8">
+                                <div id="replies-container" class="space-y-6 mb-8">
                                     @forelse($ticket->replies as $reply)
                                         <div class="flex space-x-4">
                                             <div class="flex-shrink-0">
@@ -123,7 +182,7 @@
                                             </div>
                                         </div>
                                     @empty
-                                        <p class="text-center py-8 text-gray-400 italic text-sm">No replies yet. Be the first to reply.</p>
+                                        <p id="empty-replies-msg" class="text-center py-8 text-gray-400 italic text-sm">No replies yet. Be the first to reply.</p>
                                     @endforelse
                                 </div>
 

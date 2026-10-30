@@ -40,9 +40,11 @@ echo "🔐 Fixing permissions for www-data..."
 sudo chown -R www-data:www-data storage bootstrap/cache
 sudo chmod -R 775 storage bootstrap/cache
 
-# 9. Restart Horizon & PHP-FPM (Reload code & OPcache)
-echo "🌅 Restarting Laravel Horizon & PHP-FPM..."
+# 9. Restart Horizon, Reverb & PHP-FPM (Reload code & OPcache)
+echo "🌅 Restarting Laravel Horizon, Reverb & PHP-FPM..."
 php artisan horizon:terminate || true
+php artisan reverb:restart || true
+sudo supervisorctl restart reverb:* || true
 sudo systemctl restart php8.3-fpm || true
 
 # 10. Selesai

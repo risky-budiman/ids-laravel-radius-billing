@@ -28,6 +28,13 @@ class TicketReply extends Model
             $ticket = $reply->ticket;
             if (!$ticket) return;
 
+            // Broadcast realtime reply event to room & admin channel
+            try {
+                event(new \App\Events\TicketReplyCreated($reply));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to broadcast ticket reply: ' . $e->getMessage());
+            }
+
             if ($reply->is_system) {
                 return;
             }

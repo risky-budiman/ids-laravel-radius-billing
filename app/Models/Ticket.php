@@ -98,11 +98,35 @@ class Ticket extends Model
 
         static::created(function ($ticket) {
             SendTicketToWhatsAppGroupJob::dispatch($ticket, 'created');
+
+            // Broadcast realtime event
+            try {
+                event(new \App\Events\TicketCreated($ticket));
+
+                // Notify all staff/admins
+                $staff = \App\Models\User::whereIn('role', [
+                    \App\Models\User::ROLE_ADMINISTRATOR,
+                    \App\Models\User::ROLE_ADMIN,
+                    \App\Models\User::ROLE_TEKNISI,
+                ])->get();
+                \Illuminate\Support\Facades\Notification::send($staff, new \App\Notifications\TicketCreatedNotification($ticket));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to broadcast or notify on ticket creation: ' . $e->getMessage());
+            }
         });
 
         static::updated(function ($ticket) {
             if ($ticket->wasChanged(['status', 'assigned_to', 'resolution_notes'])) {
                 SendTicketToWhatsAppGroupJob::dispatch($ticket, 'updated');
+            }
+
+            // Broadcast realtime ticket update event
+            if ($ticket->wasChanged(['status', 'assigned_to', 'resolution_notes', 'priority', 'subject'])) {
+                try {
+                    event(new \App\Events\TicketUpdated($ticket));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('Failed to broadcast ticket update: ' . $e->getMessage());
+                }
             }
 
             if ($ticket->wasChanged('status')) {

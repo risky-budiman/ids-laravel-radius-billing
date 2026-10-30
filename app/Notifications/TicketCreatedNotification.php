@@ -3,9 +3,11 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 
-class TicketCreatedNotification extends Notification
+class TicketCreatedNotification extends Notification implements ShouldBroadcast
 {
     use Queueable;
 
@@ -18,15 +20,13 @@ class TicketCreatedNotification extends Notification
 
     public function via($notifiable)
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     public function toArray($notifiable)
     {
-        $hasReplies = $this->ticket->replies()->whereNotNull('user_id')->orWhereNull('user_id')->count() > 0;
         // Check if the last reply was from the customer (user_id is null)
         $lastReply = $this->ticket->replies()->latest()->first();
-        
         $ticketNum = $this->ticket->ticket_number ?? ('#' . $this->ticket->id);
         
         if ($lastReply && $lastReply->user_id === null && !$lastReply->is_system) {
@@ -41,5 +41,16 @@ class TicketCreatedNotification extends Notification
             'message' => $msg,
             'url' => route('tickets.show', $this->ticket->id),
         ];
+    }
+
+    public function toBroadcast($notifiable)
+    {
+        return new BroadcastMessage([
+            'id' => $this->id,
+            'type' => static::class,
+            'data' => $this->toArray($notifiable),
+            'read_at' => null,
+            'created_at' => now()->toIso8601String(),
+        ]);
     }
 }
