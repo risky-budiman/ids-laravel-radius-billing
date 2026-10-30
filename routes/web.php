@@ -68,9 +68,6 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         // 1. Broadcast TicketCreated event ke Reverb
         event(new \App\Events\TicketCreated($ticket));
 
-        // 2. Kirim Notifikasi ke User yang sedang login
-        auth()->user()->notify(new \App\Notifications\TicketCreatedNotification($ticket));
-
         return response()->json([
             'status' => 'success',
             'message' => 'Event WebSocket dan notifikasi berhasil ditembakkan!',

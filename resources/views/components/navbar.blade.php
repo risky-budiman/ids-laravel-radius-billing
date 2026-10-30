@@ -128,9 +128,23 @@
                 unreadCount: 0,
                 isOpen: false,
                 toastMessage: null,
+                lastAlertTime: 0,
                 showToast(msg) {
                     this.toastMessage = msg;
                     setTimeout(() => { this.toastMessage = null; }, 6000);
+                },
+                triggerAlert(msg) {
+                    const now = Date.now();
+                    // Debounce: cegah notifikasi ganda dalam jeda 1.5 detik
+                    if (now - this.lastAlertTime < 1500) {
+                        return;
+                    }
+                    this.lastAlertTime = now;
+                    this.fetchNotifications();
+                    this.playNotificationSound();
+                    if (msg) {
+                        this.showToast(msg);
+                    }
                 },
                 fetchNotifications() {
                     fetch('{{ route('api.notifications') }}', {
@@ -140,12 +154,8 @@
                     })
                         .then(res => res.json())
                         .then(data => {
-                            const prevUnread = this.unreadCount;
                             this.notifications = data;
                             this.unreadCount = data['Belum Dibaca'] ? data['Belum Dibaca'].length : 0;
-                            if (this.unreadCount > prevUnread) {
-                                this.playNotificationSound();
-                            }
                         })
                         .catch(err => console.error('Notification fetch error:', err));
                 },
@@ -164,37 +174,22 @@
                         window.Echo.private(`App.Models.User.${userId}`)
                             .notification((notification) => {
                                 console.log('🔔 [WebSocket] Received Notification:', notification);
-                                this.fetchNotifications();
-                                this.playNotificationSound();
-                                this.showToast(notification.message || 'Notifikasi Baru Masuk');
+                                this.triggerAlert(notification.message || 'Notifikasi Baru');
                             });
 
                         // 2. Admin Tickets Channel
                         window.Echo.private('admin.tickets')
                             .listen('.ticket.created', (e) => {
                                 console.log('🎫 [WebSocket] Ticket Created:', e);
-                                this.fetchNotifications();
-                                this.playNotificationSound();
                                 const num = e.ticket ? e.ticket.ticket_number : '';
                                 const sub = e.ticket ? e.ticket.subject : 'Tiket Baru';
-                                this.showToast(`🎫 Tiket Baru: #${num} - ${sub}`);
-                            })
-                            .listen('ticket.created', (e) => {
-                                console.log('🎫 [WebSocket] Ticket Created (no dot):', e);
-                                this.fetchNotifications();
-                                this.playNotificationSound();
+                                this.triggerAlert(`🎫 Tiket Baru: #${num} - ${sub}`);
                             })
                             .listen('.ticket.reply.created', (e) => {
                                 console.log('💬 [WebSocket] Ticket Reply:', e);
-                                this.fetchNotifications();
-                                this.playNotificationSound();
                                 const num = e.reply ? e.reply.ticket_number : '';
                                 const msg = e.reply ? e.reply.message : 'Balasan Baru';
-                                this.showToast(`💬 Balasan Tiket #${num}: ${msg}`);
-                            })
-                            .listen('ticket.reply.created', (e) => {
-                                this.fetchNotifications();
-                                this.playNotificationSound();
+                                this.triggerAlert(`💬 Balasan Tiket #${num}: ${msg}`);
                             })
                             .listen('.ticket.updated', (e) => {
                                 console.log('⚙️ [WebSocket] Ticket Updated:', e);
