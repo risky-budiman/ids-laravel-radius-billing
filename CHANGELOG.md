@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.5.45] - 2026-10-30
+- fix: resolve audio context promise and auto-unlock sound on user gesture (v1.5.44) ([4e8c206])
+- fix: debounce notifications and remove duplicate listener bindings (v1.5.43) ([654154d])
+- fix: resolve alpine syntax error in navbar, broadcast directly to local reverb (v1.5.42) ([8777ad9])
+- feat: add visual toast, robust echo listener, and test-realtime endpoint (v1.5.41) ([f1d5dfd])
+- feat: implement real-time WebSocket notifications and tickets with Laravel Reverb (v1.5.39) ([194f242])
+- Clean up imports and facades in InvoiceController ([51ed219])
+- Add full activity logging for invoice bulk delete and journal management ([5025a59])
+- Fix invoice bulk delete cleanup, add journal filtering and bulk delete, update composer php 8.3 ([21ce7e1])
+- Update ACS WAN Config ([432118d])
+- Update Syetem Update ([6b99a74])
+- Add Fitur Backup & Retore, Add Fitur Import & Export data pelanggan ([d4f551c])
+- Update API Endpoint ([997ac06])
+- Update API endpoint ([f963520])
+- Update API endpoint ([56bbda3])
+- Update API endpoint ([6deb691])
+
+
+
 ## [v1.5.44] - 2026-10-30
 - fix: debounce notifications and remove duplicate listener bindings (v1.5.43) ([654154d])
 - fix: resolve alpine syntax error in navbar, broadcast directly to local reverb (v1.5.42) ([8777ad9])
