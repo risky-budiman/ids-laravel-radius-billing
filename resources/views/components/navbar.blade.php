@@ -203,34 +203,46 @@
                     try {
                         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
                         if (!AudioContextClass) return;
-                        const audioCtx = new AudioContextClass();
-                        if (audioCtx.state === 'suspended') {
-                            audioCtx.resume();
+
+                        if (!window._notifAudioCtx) {
+                            window._notifAudioCtx = new AudioContextClass();
                         }
-                        
-                        const playTone = (freq, start, duration, type = 'sine', volume = 0.25) => {
-                            const osc = audioCtx.createOscillator();
-                            const gainNode = audioCtx.createGain();
-                            osc.connect(gainNode);
-                            gainNode.connect(audioCtx.destination);
-                            
-                            osc.type = type;
-                            osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
-                            
-                            gainNode.gain.setValueAtTime(volume, audioCtx.currentTime + start);
-                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + start + duration);
-                            
-                            osc.start(audioCtx.currentTime + start);
-                            osc.stop(audioCtx.currentTime + start + duration);
+                        const audioCtx = window._notifAudioCtx;
+
+                        const play = () => {
+                            const now = audioCtx.currentTime;
+                            const playTone = (freq, delay, duration, type = 'sine', volume = 0.35) => {
+                                const osc = audioCtx.createOscillator();
+                                const gain = audioCtx.createGain();
+                                osc.connect(gain);
+                                gain.connect(audioCtx.destination);
+
+                                osc.type = type;
+                                osc.frequency.setValueAtTime(freq, now + delay);
+
+                                gain.gain.setValueAtTime(volume, now + delay);
+                                gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + duration);
+
+                                osc.start(now + delay);
+                                osc.stop(now + delay + duration);
+                            };
+
+                            // Crisp C-major / E-major notification chime (easily heard)
+                            playTone(659.25, 0.00, 0.25, 'sine', 0.35);
+                            playTone(830.61, 0.08, 0.25, 'sine', 0.35);
+                            playTone(987.77, 0.16, 0.25, 'sine', 0.35);
+                            playTone(1318.51, 0.24, 0.55, 'triangle', 0.40);
                         };
-                        
-                        // Play a loud C-major arpeggio chime (melodic & easily heard)
-                        playTone(523.25, 0.0, 0.4, 'sine', 0.25);      // C5 (Base soft tone)
-                        playTone(659.25, 0.08, 0.4, 'sine', 0.25);     // E5 (Middle soft tone)
-                        playTone(783.99, 0.16, 0.4, 'sine', 0.25);     // G5 (High soft tone)
-                        playTone(1046.50, 0.24, 0.6, 'triangle', 0.18); // C6 (Brighter chime tone for sharpness)
+
+                        if (audioCtx.state === 'suspended') {
+                            audioCtx.resume().then(play).catch(err => {
+                                console.warn('[Audio] Autoplay blocked by browser until user clicks page:', err);
+                            });
+                        } else {
+                            play();
+                        }
                     } catch (e) {
-                        console.error('Synthetic sound generation failed:', e);
+                        console.error('Notification sound error:', e);
                     }
                 },
                 testRealtime() {
@@ -266,7 +278,7 @@
                         this.fetchNotifications();
                     });
                 }
-            }" x-init="fetchNotifications(); initWebSocket()">
+            }" x-init="fetchNotifications(); initWebSocket(); document.addEventListener('click', () => { if(window._notifAudioCtx && window._notifAudioCtx.state === 'suspended') window._notifAudioCtx.resume(); }, { once: true })">
                 <!-- Floating Toast Alert -->
                 <div x-show="toastMessage" 
                      x-transition:enter="transition ease-out duration-300"
