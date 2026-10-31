@@ -151,14 +151,18 @@ class GenerateCustomerInvoice implements ShouldQueue
         $message = $template->message;
         $periode = $invoice->period_start ? ($invoice->period_start->format('d M') . ' - ' . $invoice->period_end->format('d M Y')) : now()->format('F Y');
         $paymentLink = url('/pay/' . $invoice->invoice_number);
+        $customerId = $customer->customer_code ?: ($customer->username ? explode('@', $customer->username)[0] : (string)$customer->id);
 
         $replace = [
-            '{id_pelanggan}' => $customer->username,
+            '{id_pelanggan}' => $customerId,
+            '{customer_code}' => $customerId,
+            '{username}' => $customer->username,
+            '{pppoe_username}' => $customer->username,
             '{name}' => $customer->name,
             '{periode}' => $periode,
             '{amount}' => number_format($invoice->amount, 0, ',', '.'),
             '{invoice_number}' => $invoice->invoice_number,
-            '{due_date}' => $invoice->due_date->format('d-m-Y'),
+            '{due_date}' => $invoice->due_date ? $invoice->due_date->format('d-m-Y') : '-',
             '{payment_link}' => $paymentLink,
         ];
 

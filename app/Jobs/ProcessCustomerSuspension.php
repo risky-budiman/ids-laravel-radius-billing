@@ -64,9 +64,13 @@ class ProcessCustomerSuspension implements ShouldQueue
             $amount = $customer->invoices()->where('status', 'unpaid')->sum('amount');
             $latestUnpaid = $customer->invoices()->where('status', 'unpaid')->latest()->first();
             $paymentLink = $latestUnpaid ? url('/pay/' . $latestUnpaid->invoice_number) : route('customer.login');
+            $customerId = $customer->customer_code ?: ($customer->username ? explode('@', $customer->username)[0] : (string)$customer->id);
 
             $replace = [
-                '{id_pelanggan}' => $customer->username,
+                '{id_pelanggan}' => $customerId,
+                '{customer_code}' => $customerId,
+                '{username}' => $customer->username,
+                '{pppoe_username}' => $customer->username,
                 '{name}' => $customer->name,
                 '{reason}' => $reason,
                 '{amount}' => number_format($amount, 0, ',', '.'),

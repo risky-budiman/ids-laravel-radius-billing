@@ -63,20 +63,22 @@ class SendWhatsappMessageJob implements ShouldQueue
         $amount = $unpaidInvoices->sum('amount');
         $latestUnpaid = $customer->invoices()->where('status', 'unpaid')->latest()->first();
         $paymentLink = $latestUnpaid ? url('/pay/' . $latestUnpaid->invoice_number) : route('customer.login');
-        
+        $customerId = $customer->customer_code ?: ($customer->username ? explode('@', $customer->username)[0] : (string)$customer->id);
+
         $formattedDate = date('d-m-Y H:i');
         if ($this->customDate) {
             $formattedDate = \Carbon\Carbon::parse($this->customDate)->format('d-m-Y H:i');
         }
 
         $replace = [
-            '{id_pelanggan}' => $customer->username,
+            '{id_pelanggan}' => $customerId,
+            '{customer_code}' => $customerId,
+            '{username}' => $customer->username,
+            '{pppoe_username}' => $customer->username,
             '{name}' => $customer->name,
             '{amount}' => number_format($amount, 0, ',', '.'),
             '{payment_link}' => $paymentLink,
             '{tanggal}' => $formattedDate,
-            // {periode}, {invoice_number}, {due_date}, {status}, {reason} are highly contextual
-            // For general broadcast, we leave them or replace with generic info if we can
         ];
 
         $message = str_replace(array_keys($replace), array_values($replace), $message);
