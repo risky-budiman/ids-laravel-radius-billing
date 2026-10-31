@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#4f46e5">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>Portal Pelanggan | {{ get_setting('company_name', 'Radius ISP') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="preconnect" href="https://fonts.bunny.net">

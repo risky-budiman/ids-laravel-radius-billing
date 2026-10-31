@@ -23,6 +23,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (!app()->runningInConsole()) {
+            if (request()->isSecure() || request()->header('X-Forwarded-Proto') === 'https' || str_starts_with(config('app.url'), 'https://') || app()->isProduction()) {
+                \Illuminate\Support\Facades\URL::forceScheme('https');
+            }
+        }
+
         \App\Models\Customer::observe(\App\Observers\CustomerObserver::class);
         \App\Models\Radius\Nas::observe(\App\Observers\NasObserver::class);
         
