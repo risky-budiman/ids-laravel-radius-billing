@@ -3,7 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice {{ $invoice->invoice_number }} - {{ config('app.name', 'ISP NETWORK') }}</title>
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    @php
+        $companyName = get_setting('company_name', config('app.name', 'Radius ISP'));
+        $companyLogo = get_setting('company_logo');
+        $appIcon = get_setting('app_icon');
+        $companyAddress = get_setting('company_address');
+        $companyPhone = get_setting('company_phone');
+        $companyEmail = get_setting('company_email');
+        $companyTagline = get_setting('company_tagline', 'Internet Service Provider');
+        $footerNote = get_setting('invoice_footer_note');
+        $customerId = $invoice->customer ? ($invoice->customer->customer_code ?: ($invoice->customer->username ? explode('@', $invoice->customer->username)[0] : $invoice->customer->id)) : '-';
+    @endphp
+    <title>Invoice {{ $invoice->invoice_number }} - {{ $companyName }}</title>
+    @if($appIcon)
+        <link rel="icon" type="image/png" href="{{ asset('storage/' . $appIcon) }}">
+    @elseif($companyLogo)
+        <link rel="icon" type="image/png" href="{{ asset('storage/' . $companyLogo) }}">
+    @endif
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -39,17 +56,30 @@
                 <div class="flex flex-col md:flex-row justify-between items-start mb-20 gap-12">
                     <div>
                         <div class="flex items-center mb-6">
-                            <div class="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mr-5 shadow-xl shadow-indigo-600/20">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            </div>
+                            @if($companyLogo)
+                                <div class="w-16 h-16 rounded-2xl flex items-center justify-center bg-white mr-5 shadow-lg border border-slate-100 p-2 overflow-hidden">
+                                    <img src="{{ asset('storage/' . $companyLogo) }}" alt="{{ $companyName }}" class="max-w-full max-h-full object-contain">
+                                </div>
+                            @else
+                                <div class="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mr-5 shadow-xl shadow-indigo-600/20 font-black text-xl">
+                                    {{ strtoupper(substr($companyName, 0, 2)) }}
+                                </div>
+                            @endif
                             <div>
-                                <h1 class="text-3xl font-black tracking-tight text-slate-900 uppercase">{{ config('app.name', 'ISP NETWORK') }}</h1>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">High-Speed Connectivity</p>
+                                <h1 class="text-2xl md:text-3xl font-black tracking-tight text-slate-900 uppercase">{{ $companyName }}</h1>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">{{ $companyTagline }}</p>
                             </div>
                         </div>
-                        <div class="space-y-1">
-                            <p class="text-sm text-slate-500 font-medium">Headquarters: Jawa Barat, Indonesia</p>
-                            <p class="text-sm text-slate-500 font-medium">Customer Care: support@isp-network.com</p>
+                        <div class="space-y-1 text-sm text-slate-500 font-medium">
+                            @if($companyAddress)
+                                <p>{{ $companyAddress }}</p>
+                            @endif
+                            @if($companyPhone)
+                                <p>Telp / CS: {{ $companyPhone }}</p>
+                            @endif
+                            @if($companyEmail)
+                                <p>Email: {{ $companyEmail }}</p>
+                            @endif
                         </div>
                     </div>
 
@@ -67,11 +97,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-16 mb-20">
                     <div class="p-8 rounded-[2rem] bg-slate-50 border border-slate-100">
                         <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-200 pb-2">Ditagihkan Kepada:</h4>
-                        <p class="text-xl font-black text-slate-900 mb-1">{{ $invoice->customer->name }}</p>
-                        <p class="text-sm font-bold text-indigo-600 mb-4">ID Pelanggan: #{{ $invoice->customer->username }}</p>
+                        <p class="text-xl font-black text-slate-900 mb-1">{{ $invoice->customer->name ?? '-' }}</p>
+                        <p class="text-sm font-bold text-indigo-600 mb-4">ID Pelanggan: {{ $customerId }}</p>
                         <div class="space-y-1 text-sm text-slate-500 font-medium leading-relaxed">
-                            <p>{{ $invoice->customer->address }}</p>
-                            <p>{{ $invoice->customer->phone }}</p>
+                            <p>{{ $invoice->customer->address ?? '-' }}</p>
+                            <p>{{ $invoice->customer->phone ?? '-' }}</p>
                         </div>
                     </div>
 
@@ -81,7 +111,7 @@
                             <div>
                                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Periode Layanan</p>
                                 <p class="text-sm font-black text-slate-900">{{ $invoice->billing_period }}</p>
-                                <p class="text-xs font-medium text-slate-400">{{ $invoice->period_start->translatedFormat('d M Y') }} - {{ $invoice->period_end->translatedFormat('d M Y') }}</p>
+                                <p class="text-xs font-medium text-slate-400">{{ $invoice->period_start ? $invoice->period_start->translatedFormat('d M Y') : '-' }} - {{ $invoice->period_end ? $invoice->period_end->translatedFormat('d M Y') : '-' }}</p>
                             </div>
                             <div>
                                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tanggal Jatuh Tempo</p>
@@ -147,7 +177,7 @@
                         <div class="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 relative overflow-hidden">
                             <div class="absolute left-0 top-0 h-full w-1.5 bg-indigo-600"></div>
                             <p class="text-xs text-slate-600 leading-relaxed font-medium">
-                                {{ $invoice->notes ?: 'Silakan lakukan pembayaran sebelum tanggal jatuh tempo. Keterlambatan dapat menyebabkan isolir layanan secara otomatis oleh sistem kami. Simpan bukti pembayaran ini sebagai referensi di masa depan.' }}
+                                {{ $footerNote ?: ($invoice->notes ?: 'Silakan lakukan pembayaran sebelum tanggal jatuh tempo. Keterlambatan dapat menyebabkan isolir layanan secara otomatis oleh sistem kami. Simpan bukti pembayaran ini sebagai referensi di masa depan.') }}
                             </p>
                         </div>
                     </div>
@@ -190,10 +220,9 @@
             
             <div class="bg-slate-900 py-10 px-8 text-center border-t border-white/5">
                 <div class="flex flex-col md:flex-row justify-between items-center gap-6 max-w-4xl mx-auto">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">{{ config('app.name') }} OFFICIAL DIGITAL RECEIPT</p>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">{{ $companyName }} OFFICIAL DIGITAL RECEIPT</p>
                     <div class="flex space-x-6">
-                        <span class="text-[10px] font-bold text-slate-600 uppercase">Trusted by {{ \App\Models\Customer::count() }}+ Clients</span>
-                        <span class="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Ver: 2.0.4</span>
+                        <span class="text-[10px] font-bold text-slate-600 uppercase">Ver: {{ app_version() }}</span>
                     </div>
                 </div>
             </div>
