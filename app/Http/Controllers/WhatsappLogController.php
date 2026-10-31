@@ -47,4 +47,22 @@ class WhatsappLogController extends Controller
             return back()->with('error', 'Kirim ulang gagal: ' . $whatsappLog->error_reason);
         }
     }
+
+    public function destroy(WhatsappLog $whatsappLog)
+    {
+        $whatsappLog->delete();
+        return back()->with('success', 'Riwayat pesan berhasil dihapus.');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:whatsapp_logs,id',
+        ]);
+
+        $count = WhatsappLog::whereIn('id', $validated['ids'])->delete();
+
+        return back()->with('success', "{$count} riwayat pesan berhasil dihapus.");
+    }
 }

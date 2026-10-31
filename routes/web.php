@@ -299,6 +299,8 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         // WhatsApp Logs
         Route::get('whatsapp-logs', [\App\Http\Controllers\WhatsappLogController::class, 'index'])->name('whatsapp-logs.index');
         Route::post('whatsapp-logs/{whatsappLog}/resend', [\App\Http\Controllers\WhatsappLogController::class, 'resend'])->name('whatsapp-logs.resend');
+        Route::delete('whatsapp-logs/{whatsappLog}', [\App\Http\Controllers\WhatsappLogController::class, 'destroy'])->name('whatsapp-logs.destroy');
+        Route::post('whatsapp-logs/bulk-destroy', [\App\Http\Controllers\WhatsappLogController::class, 'bulkDestroy'])->name('whatsapp-logs.bulk-destroy');
         
         // Location Master Data
         Route::get('locations/regions', [\App\Http\Controllers\LocationDataController::class, 'regions'])->name('locations.regions');
