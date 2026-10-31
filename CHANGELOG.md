@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.5.58] - 2026-11-01
+- fix(security): resolve mixed content not secure by trusting proxies, forcing https scheme, and upgrading insecure requests ([078889c])
+- feat(olt): separate onu name and desc, add last reason from alarm history ([120ab94])
+- fix(view): extract alpine component to script block to prevent html attribute tag break ([975ca5e])
+- fix(olt): optimize hsgq cli query per-port and fix relative fetch route in show_port ([379b32e])
+- feat(olt): add automated ONU discovery and optical diagnostics for HSGQ EPON (v1.5.53) ([d5ec73a])
+- feat(olt): add pure SNMP integration for HSGQ EPON OLT (v1.5.52) ([cee7200])
+- feat: adopt Facebook ServiceWorker notification pattern with OS chime (v1.5.51) ([e54dbc0])
+- feat: add interactive audio activator pill and auto-unlock on interaction (v1.5.50) ([f80f3ba])
+- feat: add one-time browser permission banner and silent audio unlock on interaction (v1.5.49) ([3f9536d])
+- feat: add authentic WAV notification audio file and HTML5 audio player (v1.5.48) ([6e0d7b6])
+- fix: implement native DOM toast with smooth transition to guarantee popup visibility (v1.5.47) ([d117f3d])
+- fix: move toast to root layout bottom-right to prevent clipping by navbar (v1.5.46) ([a03906e])
+- feat: make toast banner and dropdown fully responsive with close button (v1.5.45) ([86cb7a2])
+- fix: resolve audio context promise and auto-unlock sound on user gesture (v1.5.44) ([4e8c206])
+- fix: debounce notifications and remove duplicate listener bindings (v1.5.43) ([654154d])
+
+
+
 ## [v1.5.57] - 2026-10-31
 - feat(olt): separate onu name and desc, add last reason from alarm history ([120ab94])
 - fix(view): extract alpine component to script block to prevent html attribute tag break ([975ca5e])

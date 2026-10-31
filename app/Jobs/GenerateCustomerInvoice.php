@@ -78,6 +78,18 @@ class GenerateCustomerInvoice implements ShouldQueue
             }
         }
 
+        // Prevent duplicate invoice generation for the same customer & period
+        $existingInvoice = Invoice::where('customer_id', $customer->id)
+            ->whereDate('period_start', $startDate->toDateString())
+            ->whereDate('period_end', $endDate->toDateString())
+            ->first();
+
+        if ($existingInvoice) {
+            Log::info("Invoice for {$customer->username} period {$startDate->toDateString()} already exists (#{$existingInvoice->invoice_number}), skipping generation.");
+            $customer->syncBillingDates();
+            return;
+        }
+
         // Subtotal after discount for tax calculation
         $subtotalAfterDiscount = max(0, $subtotal - $discountAmount);
 
@@ -95,7 +107,7 @@ class GenerateCustomerInvoice implements ShouldQueue
         $totalAmount = $subtotalAfterDiscount + $taxAmount;
 
         $invoice = Invoice::create([
-            'invoice_number' => 'INV-' . strtoupper(uniqid()),
+            'invoice_number' => Invoice::generateUniqueInvoiceNumber('INV'),
             'customer_id' => $customer->id,
             'billing_period' => '1 Month',
             'period_start' => $startDate,

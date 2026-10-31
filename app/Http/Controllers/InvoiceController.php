@@ -105,7 +105,7 @@ class InvoiceController extends Controller
         $totalAmount = $subtotal + $taxAmount;
 
         $invoice = Invoice::create([
-            'invoice_number' => 'INV-' . strtoupper(uniqid()),
+            'invoice_number' => Invoice::generateUniqueInvoiceNumber('INV'),
             'billing_period' => $validated['billing_period'] ?? '1 Month',
             'period_start' => $validated['period_start'],
             'period_end' => $validated['period_end'],

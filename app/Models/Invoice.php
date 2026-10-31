@@ -52,8 +52,32 @@ class Invoice extends Model
         return $this->belongsTo(Tax::class);
     }
 
+    /**
+     * Generate a guaranteed unique, collision-proof invoice number
+     */
+    public static function generateUniqueInvoiceNumber(string $prefix = 'INV'): string
+    {
+        do {
+            $number = $prefix . '-' . date('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6));
+        } while (static::where('invoice_number', $number)->exists());
+
+        return $number;
+    }
+
     protected static function booted()
     {
+        static::creating(function ($invoice) {
+            if (empty($invoice->invoice_number)) {
+                $invoice->invoice_number = static::generateUniqueInvoiceNumber();
+            } else {
+                // Auto-resolve collision if number already exists
+                while (static::where('invoice_number', $invoice->invoice_number)->exists()) {
+                    $prefix = str_starts_with($invoice->invoice_number, 'INV-INST-') ? 'INV-INST' : 'INV';
+                    $invoice->invoice_number = static::generateUniqueInvoiceNumber($prefix);
+                }
+            }
+        });
+
         static::deleted(function ($invoice) {
             // Remove associated accrual & payment journals to prevent inflated balances
             \App\Models\Journal::where('reference', 'BILL-' . $invoice->invoice_number)->delete();

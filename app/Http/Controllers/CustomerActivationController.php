@@ -208,7 +208,7 @@ class CustomerActivationController extends Controller
         // 4. Handle Payment Gateway Redirection if selected
         if ($request->payment_method === 'pg' && $customer->installation_fee > 0) {
             $invoice = \App\Models\Invoice::create([
-                'invoice_number' => 'INV-INST-' . strtoupper(uniqid()),
+                'invoice_number' => \App\Models\Invoice::generateUniqueInvoiceNumber('INV-INST'),
                 'customer_id' => $customer->id,
                 'amount' => $customer->installation_fee,
                 'status' => 'unpaid',
