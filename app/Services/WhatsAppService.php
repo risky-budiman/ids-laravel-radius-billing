@@ -9,7 +9,33 @@ use Illuminate\Support\Facades\Log;
 class WhatsAppService
 {
     /**
-     * Send a WhatsApp message using Fonnte.
+     * Calculate random staggered delay in seconds based on system settings.
+     * Used to prevent account suspension/ban during mass messaging.
+     */
+    public static function getRandomDelay(): int
+    {
+        $enabled = (bool) get_setting('whatsapp_enable_delay', true);
+        if (!$enabled) {
+            return 0;
+        }
+
+        $min = (int) get_setting('whatsapp_delay_min', 5);
+        $max = (int) get_setting('whatsapp_delay_max', 12);
+
+        if ($min > $max) {
+            $temp = $min;
+            $min = $max;
+            $max = $temp;
+        }
+
+        $min = max(1, $min);
+        $max = max($min, $max);
+
+        return rand($min, $max);
+    }
+
+    /**
+     * Send a WhatsApp message using active gateways.
      */
     public function sendMessage($target, $message, $logId = null): bool
     {

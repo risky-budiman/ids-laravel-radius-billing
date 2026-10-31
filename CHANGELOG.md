@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.5.64] - 2026-11-01
+- fix(portal): make invoice portal branding and company details fully dynamic (v1.5.62) ([550b181])
+- fix(whatsapp): map id_pelanggan to real customer_code instead of pppoe username ([19fff77])
+- fix(payment): register universal pay and portal routes, and resolve dynamic payment links in whatsapp notifications ([4fd1d0a])
+- feat(whatsapp): add single delete, bulk delete, and message detail modal ([eed7b7a])
+- fix(invoice): prevent duplicate invoice number collision with unique collision-proof generator and duplicate period check ([bf098a7])
+- fix(security): resolve mixed content not secure by trusting proxies, forcing https scheme, and upgrading insecure requests ([078889c])
+- feat(olt): separate onu name and desc, add last reason from alarm history ([120ab94])
+- fix(view): extract alpine component to script block to prevent html attribute tag break ([975ca5e])
+- fix(olt): optimize hsgq cli query per-port and fix relative fetch route in show_port ([379b32e])
+- feat(olt): add automated ONU discovery and optical diagnostics for HSGQ EPON (v1.5.53) ([d5ec73a])
+- feat(olt): add pure SNMP integration for HSGQ EPON OLT (v1.5.52) ([cee7200])
+- feat: adopt Facebook ServiceWorker notification pattern with OS chime (v1.5.51) ([e54dbc0])
+- feat: add interactive audio activator pill and auto-unlock on interaction (v1.5.50) ([f80f3ba])
+- feat: add one-time browser permission banner and silent audio unlock on interaction (v1.5.49) ([3f9536d])
+- feat: add authentic WAV notification audio file and HTML5 audio player (v1.5.48) ([6e0d7b6])
+
+
+
 ## [v1.5.63] - 2026-11-01
 - fix(whatsapp): map id_pelanggan to real customer_code instead of pppoe username ([19fff77])
 - fix(payment): register universal pay and portal routes, and resolve dynamic payment links in whatsapp notifications ([4fd1d0a])

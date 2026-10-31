@@ -19,15 +19,17 @@ class ProcessCustomerSuspension implements ShouldQueue
 
     public $customer;
     public $reason;
+    public $waDelay;
     public $timeout = 120; // 2 minutes max
     
     /**
      * Create a new job instance.
      */
-    public function __construct(Customer $customer, string $reason)
+    public function __construct(Customer $customer, string $reason, int $waDelay = 0)
     {
         $this->customer = $customer;
         $this->reason = $reason;
+        $this->waDelay = $waDelay;
     }
 
     /**
@@ -57,28 +59,12 @@ class ProcessCustomerSuspension implements ShouldQueue
             $coaService->disconnect($nas->nasname, $nas->secret, $customer->username);
         }
 
-        // Send WA Notification
-        $template = \App\Models\WhatsappTemplate::where('type', 'suspension')->first();
-        if ($template && $template->is_active) {
-            $message = $template->message;
-            $amount = $customer->invoices()->where('status', 'unpaid')->sum('amount');
-            $latestUnpaid = $customer->invoices()->where('status', 'unpaid')->latest()->first();
-            $paymentLink = $latestUnpaid ? url('/pay/' . $latestUnpaid->invoice_number) : route('customer.login');
-            $customerId = $customer->customer_code ?: ($customer->username ? explode('@', $customer->username)[0] : (string)$customer->id);
-
-            $replace = [
-                '{id_pelanggan}' => $customerId,
-                '{customer_code}' => $customerId,
-                '{username}' => $customer->username,
-                '{pppoe_username}' => $customer->username,
-                '{name}' => $customer->name,
-                '{reason}' => $reason,
-                '{amount}' => number_format($amount, 0, ',', '.'),
-                '{payment_link}' => $paymentLink,
-            ];
-
-            $message = str_replace(array_keys($replace), array_values($replace), $message);
-            $waService->sendMessage($customer->phone, $message);
+        // Send WA Notification via Queued Job with Anti-Ban Delay
+        if (!empty($customer->phone)) {
+            $job = \App\Jobs\SendCustomerSuspensionWhatsappJob::dispatch($customer->id, $reason);
+            if ($this->waDelay > 0) {
+                $job->delay(now()->addSeconds($this->waDelay));
+            }
         }
     }
 }

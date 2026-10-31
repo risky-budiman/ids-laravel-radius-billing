@@ -40,6 +40,40 @@ class IntegrationController extends Controller
         return redirect()->back()->with('success', 'NOC Bot settings updated successfully!');
     }
 
+    public function updateAntiBan(Request $request)
+    {
+        $request->validate([
+            'whatsapp_delay_min' => 'required|integer|min:1|max:60',
+            'whatsapp_delay_max' => 'required|integer|min:1|max:120',
+        ]);
+
+        $min = (int) $request->whatsapp_delay_min;
+        $max = (int) $request->whatsapp_delay_max;
+
+        if ($min > $max) {
+            return redirect()->back()->withErrors(['whatsapp_delay_max' => 'Jeda maksimal harus lebih besar atau sama dengan jeda minimal.']);
+        }
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'whatsapp_delay_min'],
+            ['value' => (string) $min, 'type' => 'integer']
+        );
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'whatsapp_delay_max'],
+            ['value' => (string) $max, 'type' => 'integer']
+        );
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'whatsapp_enable_delay'],
+            ['value' => $request->has('whatsapp_enable_delay') ? '1' : '0', 'type' => 'boolean']
+        );
+
+        \Illuminate\Support\Facades\Cache::forget('app_settings');
+
+        return redirect()->back()->with('success', 'Pengaturan Proteksi Interval Anti-Ban WhatsApp berhasil diperbarui.');
+    }
+
     public function update(Request $request)
     {
         // Example dynamic payload format:

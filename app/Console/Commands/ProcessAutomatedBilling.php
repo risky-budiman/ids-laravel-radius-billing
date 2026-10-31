@@ -50,20 +50,27 @@ class ProcessAutomatedBilling extends Command
             ->whereDate('billing_next_date', '<=', now()->toDateString())
             ->get();
 
+        $accumulatedWaDelay = 0;
+
         foreach ($customers as $customer) {
             if ($this->option('dry-run')) {
                 $this->line("Dry-run: Would dispatch invoice generation for {$customer->username}");
                 continue;
             }
 
-            GenerateCustomerInvoice::dispatch($customer);
-            $this->info("Dispatched invoice generation job for {$customer->username}");
+            GenerateCustomerInvoice::dispatch($customer, $accumulatedWaDelay);
+            $this->info("Dispatched invoice generation job for {$customer->username} (WA Delay: {$accumulatedWaDelay}s)");
+
+            if (!empty($customer->phone)) {
+                $accumulatedWaDelay += \App\Services\WhatsAppService::getRandomDelay();
+            }
         }
     }
 
     private function dispatchSuspensions()
     {
         $this->info("Checking for customers needing suspension...");
+        $accumulatedDelay = 0;
 
         // 1. Postpaid Suspension (Overdue Unpaid Invoices)
         $postpaidOverdue = Customer::where('is_active', true)
@@ -76,7 +83,10 @@ class ProcessAutomatedBilling extends Command
             ->get();
 
         foreach ($postpaidOverdue as $customer) {
-            $this->dispatchSuspensionJob($customer, "Tagihan Pasca Bayar belum lunas melewati jatuh tempo.");
+            $this->dispatchSuspensionJob($customer, "Tagihan Pasca Bayar belum lunas melewati jatuh tempo.", $accumulatedDelay);
+            if (!empty($customer->phone)) {
+                $accumulatedDelay += \App\Services\WhatsAppService::getRandomDelay();
+            }
         }
 
         // 2. Prepaid Fixed Suspension
@@ -91,7 +101,10 @@ class ProcessAutomatedBilling extends Command
             ->get();
             
         foreach ($prepaidFixedOverdue as $customer) {
-            $this->dispatchSuspensionJob($customer, "Tagihan Prabayar Fixed belum lunas atau masa aktif habis.");
+            $this->dispatchSuspensionJob($customer, "Tagihan Prabayar Fixed belum lunas atau masa aktif habis.", $accumulatedDelay);
+            if (!empty($customer->phone)) {
+                $accumulatedDelay += \App\Services\WhatsAppService::getRandomDelay();
+            }
         }
 
         // 3. Prepaid Renewal Suspension
@@ -103,18 +116,21 @@ class ProcessAutomatedBilling extends Command
             ->get();
 
         foreach ($prepaidRenewalOverdue as $customer) {
-            $this->dispatchSuspensionJob($customer, "Masa aktif Prabayar (Renewal) telah habis.");
+            $this->dispatchSuspensionJob($customer, "Masa aktif Prabayar (Renewal) telah habis.", $accumulatedDelay);
+            if (!empty($customer->phone)) {
+                $accumulatedDelay += \App\Services\WhatsAppService::getRandomDelay();
+            }
         }
     }
 
-    private function dispatchSuspensionJob($customer, $reason)
+    private function dispatchSuspensionJob($customer, $reason, int $waDelay = 0)
     {
         if ($this->option('dry-run')) {
             $this->line("Dry-run: Would dispatch suspension for {$customer->username}. Reason: {$reason}");
             return;
         }
 
-        ProcessCustomerSuspension::dispatch($customer, $reason);
-        $this->warn("Dispatched suspension job for {$customer->username}");
+        ProcessCustomerSuspension::dispatch($customer, $reason, $waDelay);
+        $this->warn("Dispatched suspension job for {$customer->username} (WA Delay: {$waDelay}s)");
     }
 }

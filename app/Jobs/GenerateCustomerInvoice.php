@@ -17,14 +17,16 @@ class GenerateCustomerInvoice implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $customer;
+    public $waDelay;
     public $timeout = 120; // 2 minutes max
     
     /**
      * Create a new job instance.
      */
-    public function __construct(Customer $customer)
+    public function __construct(Customer $customer, int $waDelay = 0)
     {
         $this->customer = $customer;
+        $this->waDelay = $waDelay;
     }
 
     /**
@@ -136,8 +138,13 @@ class GenerateCustomerInvoice implements ShouldQueue
         // Update next billing schedule
         $customer->syncBillingDates();
 
-        // Send WhatsApp Notification
-        $this->sendInvoiceNotification($customer, $invoice, $waService);
+        // Send WhatsApp Notification via Queued Job with Anti-Ban Delay
+        if (!empty($customer->phone)) {
+            $job = \App\Jobs\SendInvoiceWhatsappJob::dispatch($invoice->id);
+            if ($this->waDelay > 0) {
+                $job->delay(now()->addSeconds($this->waDelay));
+            }
+        }
     }
 
     private function sendInvoiceNotification($customer, $invoice, $waService)

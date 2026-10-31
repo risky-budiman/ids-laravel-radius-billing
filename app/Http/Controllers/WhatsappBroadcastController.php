@@ -76,7 +76,9 @@ class WhatsappBroadcastController extends Controller
         $customDate = $request->custom_date;
         $template = WhatsappTemplate::find($templateId);
 
-        // Dispatch Jobs
+        $accumulatedDelay = 0;
+
+        // Dispatch Jobs with Anti-Ban Staggered Delay
         foreach ($customerIds as $customerId) {
             $customer = Customer::find($customerId);
             if ($customer && $customer->phone) {
@@ -87,7 +89,12 @@ class WhatsappBroadcastController extends Controller
                     'status' => 'pending'
                 ]);
 
-                SendWhatsappMessageJob::dispatch($customerId, $templateId, $customDate, $log->id);
+                $job = SendWhatsappMessageJob::dispatch($customerId, $templateId, $customDate, $log->id);
+                if ($accumulatedDelay > 0) {
+                    $job->delay(now()->addSeconds($accumulatedDelay));
+                }
+
+                $accumulatedDelay += \App\Services\WhatsAppService::getRandomDelay();
             }
         }
 

@@ -314,39 +314,37 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Bulk send WhatsApp notifications for selected invoices
+     * Bulk send WhatsApp notifications for selected invoices with anti-ban delay
      */
-    public function bulkWhatsApp(Request $request, WhatsAppService $waService)
+    public function bulkWhatsApp(Request $request)
     {
         $request->validate(['ids' => 'required|array', 'ids.*' => 'integer']);
 
         $invoices = Invoice::with('customer')->whereIn('id', $request->ids)->where('status', 'unpaid')->get();
-        $sent = 0;
-        $failed = 0;
+        $dispatched = 0;
+        $noPhone = 0;
+        $accumulatedDelay = 0;
 
         foreach ($invoices as $invoice) {
             $customer = $invoice->customer;
-            if (!$customer || !$customer->phone) {
-                $failed++;
+            if (!$customer || empty($customer->phone)) {
+                $noPhone++;
                 continue;
             }
 
-            $portalUrl = url('/pay/' . $invoice->invoice_number);
-            $message = "Halo *{$customer->name}*,\n\n" .
-                      "Tagihan internet Anda untuk nomor *{$invoice->invoice_number}* sebesar *Rp " . number_format($invoice->amount, 0, ',', '.') . "* telah terbit.\n\n" .
-                      "Silakan bayar melalui link portal resmi kami berikut ini:\n" .
-                      "{$portalUrl}\n\n" .
-                      "Terima kasih.";
-
-            if ($waService->sendMessage($customer->phone, $message)) {
-                $sent++;
-            } else {
-                $failed++;
+            $job = \App\Jobs\SendInvoiceWhatsappJob::dispatch($invoice->id);
+            if ($accumulatedDelay > 0) {
+                $job->delay(now()->addSeconds($accumulatedDelay));
             }
+
+            $accumulatedDelay += \App\Services\WhatsAppService::getRandomDelay();
+            $dispatched++;
         }
 
-        $msg = "{$sent} notifikasi WhatsApp berhasil dikirim.";
-        if ($failed > 0) $msg .= " {$failed} gagal.";
+        $msg = "{$dispatched} notifikasi WhatsApp berhasil dimasukkan ke antrean dengan jeda interval aman.";
+        if ($noPhone > 0) {
+            $msg .= " ({$noPhone} invoice dilewati karena tanpa nomor HP).";
+        }
 
         return redirect()->route('invoices.index')->with('success', $msg);
     }

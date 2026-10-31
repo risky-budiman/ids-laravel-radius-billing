@@ -18,6 +18,49 @@
 
             <div class="grid grid-cols-1 gap-6">
 
+                <!-- Anti-Ban & Interval Settings -->
+                <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-indigo-100 dark:border-indigo-900/50 overflow-hidden">
+                    <div class="bg-indigo-50/70 dark:bg-indigo-950/40 px-6 py-4 border-b border-indigo-100 dark:border-indigo-900/50 flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <span class="p-2 bg-indigo-600 text-white rounded-xl shadow-md shadow-indigo-600/30">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </span>
+                            <div>
+                                <h3 class="font-bold text-gray-900 dark:text-gray-100">Proteksi Anti-Ban & Interval Waktu Pengiriman</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Atur jeda acak antar pesan massal (tagihan harian & broadcast) agar nomor WhatsApp aman dari pemblokiran Meta.</p>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider {{ get_setting('whatsapp_enable_delay', true) ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-gray-200 text-gray-600' }}">
+                            {{ get_setting('whatsapp_enable_delay', true) ? 'PROTECTED' : 'DISABLED' }}
+                        </span>
+                    </div>
+                    <form action="{{ route('integrations.whatsapp.anti-ban') }}" method="POST" class="p-6 space-y-5">
+                        @csrf
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <x-input-label value="Jeda Minimal Antar Pesan (Detik)" />
+                                <x-text-input name="whatsapp_delay_min" type="number" min="1" max="60" value="{{ get_setting('whatsapp_delay_min', 5) }}" class="mt-1 w-full" required />
+                                <p class="text-[11px] text-gray-500 mt-1">Waktu jeda terpendek sebelum pesan berikutnya dikirim (Rekomendasi: 5 detik).</p>
+                            </div>
+                            <div>
+                                <x-input-label value="Jeda Maksimal Antar Pesan (Detik)" />
+                                <x-text-input name="whatsapp_delay_max" type="number" min="1" max="120" value="{{ get_setting('whatsapp_delay_max', 12) }}" class="mt-1 w-full" required />
+                                <p class="text-[11px] text-gray-500 mt-1">Waktu jeda terpanjang sebelum pesan berikutnya dikirim (Rekomendasi: 12 detik).</p>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
+                            <label class="flex items-center text-sm cursor-pointer select-none">
+                                <input type="checkbox" name="whatsapp_enable_delay" value="1" {{ get_setting('whatsapp_enable_delay', true) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                                <span class="ml-2 font-medium text-gray-700 dark:text-gray-300">Aktifkan Proteksi Interval Waktu Acak (Staggered Jitter)</span>
+                            </label>
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-indigo-600/20 active:scale-95 transition-all text-sm">
+                                Simpan Pengaturan Proteksi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
                 <!-- Fonnte -->
                 @php $f = $gateways->get('fonnte'); @endphp
                 <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">

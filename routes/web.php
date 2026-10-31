@@ -333,6 +333,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         // Integrations & Settings
         Route::get('integrations/payment', [\App\Http\Controllers\IntegrationController::class, 'payment'])->name('integrations.payment');
         Route::get('integrations/whatsapp', [\App\Http\Controllers\IntegrationController::class, 'whatsapp'])->name('integrations.whatsapp');
+        Route::post('integrations/whatsapp/anti-ban', [\App\Http\Controllers\IntegrationController::class, 'updateAntiBan'])->name('integrations.whatsapp.anti-ban');
         Route::get('integrations/noc-bot', [\App\Http\Controllers\IntegrationController::class, 'nocBot'])->name('integrations.noc-bot');
         Route::post('integrations/update', [\App\Http\Controllers\IntegrationController::class, 'update'])->name('integrations.update');
         Route::post('integrations/noc-bot', [\App\Http\Controllers\IntegrationController::class, 'updateNocBot'])->name('integrations.noc-bot.update');
