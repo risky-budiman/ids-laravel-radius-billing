@@ -62,7 +62,8 @@ class ProcessCustomerSuspension implements ShouldQueue
         if ($template && $template->is_active) {
             $message = $template->message;
             $amount = $customer->invoices()->where('status', 'unpaid')->sum('amount');
-            $paymentLink = config('app.url') . '/portal'; // General portal link since multiple invoices might exist
+            $latestUnpaid = $customer->invoices()->where('status', 'unpaid')->latest()->first();
+            $paymentLink = $latestUnpaid ? url('/pay/' . $latestUnpaid->invoice_number) : route('customer.login');
 
             $replace = [
                 '{id_pelanggan}' => $customer->username,

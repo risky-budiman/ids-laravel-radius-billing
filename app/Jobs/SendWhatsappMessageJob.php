@@ -59,8 +59,10 @@ class SendWhatsappMessageJob implements ShouldQueue
         $message = $template->message;
         
         // Calculate dynamic variables if needed
-        $amount = $customer->invoices()->where('status', 'unpaid')->sum('amount');
-        $paymentLink = config('app.url') . '/portal';
+        $unpaidInvoices = $customer->invoices()->where('status', 'unpaid');
+        $amount = $unpaidInvoices->sum('amount');
+        $latestUnpaid = $customer->invoices()->where('status', 'unpaid')->latest()->first();
+        $paymentLink = $latestUnpaid ? url('/pay/' . $latestUnpaid->invoice_number) : route('customer.login');
         
         $formattedDate = date('d-m-Y H:i');
         if ($this->customDate) {

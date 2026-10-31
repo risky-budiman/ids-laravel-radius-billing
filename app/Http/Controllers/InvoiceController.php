@@ -214,8 +214,8 @@ class InvoiceController extends Controller
             return redirect()->back()->with('error', 'Nomor WhatsApp pelanggan tidak ditemukan.');
         }
 
-        // 1. Generate Signed URL for the portal
-        $portalUrl = URL::signedRoute('portal.invoice', ['invoice' => $invoice->id]);
+        // 1. Generate Direct Payment URL for the portal
+        $portalUrl = url('/pay/' . $invoice->invoice_number);
 
         // 2. Compose Message
         $message = "Halo *{$customer->name}*,\n\n" .
@@ -331,7 +331,7 @@ class InvoiceController extends Controller
                 continue;
             }
 
-            $portalUrl = URL::signedRoute('portal.invoice', ['invoice' => $invoice->id]);
+            $portalUrl = url('/pay/' . $invoice->invoice_number);
             $message = "Halo *{$customer->name}*,\n\n" .
                       "Tagihan internet Anda untuk nomor *{$invoice->invoice_number}* sebesar *Rp " . number_format($invoice->amount, 0, ',', '.') . "* telah terbit.\n\n" .
                       "Silakan bayar melalui link portal resmi kami berikut ini:\n" .

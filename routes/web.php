@@ -35,10 +35,14 @@ Route::middleware(['auth:web,customer', 'role:customer,administrator,admin,tekni
 });
 
 
-// Public Customer Portal (Signed URL)
+// Public Customer Portal & Dynamic Payment Link
+Route::get('/pay/{invoice}', [\App\Http\Controllers\PortalController::class, 'pay'])->name('portal.pay');
+Route::get('/portal', function () {
+    return redirect()->route('customer.login');
+})->name('portal.home');
+
 Route::get('/portal/invoice/{invoice}', [\App\Http\Controllers\PortalController::class, 'showInvoice'])
-    ->name('portal.invoice')
-    ->middleware('signed');
+    ->name('portal.invoice');
 
 Route::get('/portal/invoice/{invoice}/pay', [\App\Http\Controllers\InvoiceController::class, 'pay'])
     ->name('portal.invoice.pay');

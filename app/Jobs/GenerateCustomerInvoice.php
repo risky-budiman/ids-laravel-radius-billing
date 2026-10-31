@@ -149,8 +149,8 @@ class GenerateCustomerInvoice implements ShouldQueue
         }
 
         $message = $template->message;
-        $periode = $invoice->period_start->format('d M') . ' - ' . $invoice->period_end->format('d M Y');
-        $paymentLink = config('app.url') . '/pay/' . $invoice->invoice_number; // Assuming you have a payment route or just general portal
+        $periode = $invoice->period_start ? ($invoice->period_start->format('d M') . ' - ' . $invoice->period_end->format('d M Y')) : now()->format('F Y');
+        $paymentLink = url('/pay/' . $invoice->invoice_number);
 
         $replace = [
             '{id_pelanggan}' => $customer->username,

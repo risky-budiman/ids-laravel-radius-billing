@@ -9,13 +9,15 @@ use Illuminate\Http\Request;
 class PortalController extends Controller
 {
     /**
-     * Show the public invoice portal using a signed URL.
+     * Show the public invoice portal.
+     * Supports Route Model Binding, Invoice ID, or Invoice Number.
      */
-    public function showInvoice(Request $request, Invoice $invoice)
+    public function showInvoice(Request $request, $invoice)
     {
-        // Double check signed signature (though middleware usually handles this)
-        if (!$request->hasValidSignature()) {
-            abort(403, 'Link kadaluarsa atau tidak sah.');
+        if (!$invoice instanceof Invoice) {
+            $invoice = Invoice::where('invoice_number', $invoice)
+                ->orWhere('id', $invoice)
+                ->firstOrFail();
         }
 
         $activeGateways = Gateway::where('type', 'payment')
@@ -23,5 +25,13 @@ class PortalController extends Controller
             ->get();
 
         return view('portal.invoice-portal', compact('invoice', 'activeGateways'));
+    }
+
+    /**
+     * Universal short payment link (/pay/{invoice})
+     */
+    public function pay(Request $request, $invoice)
+    {
+        return $this->showInvoice($request, $invoice);
     }
 }
