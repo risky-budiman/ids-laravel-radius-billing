@@ -22,20 +22,31 @@ class LoginController extends Controller
             'phone' => 'required',
         ]);
 
-        $customer_code = $request->customer_id;
-        $phone = $request->phone;
+        $customer_code = trim($request->customer_id);
+        $phone = trim($request->phone);
 
-        // Find customer by code and phone (initial verification)
-        $customer = Customer::where('customer_code', $customer_code)
-            ->where('phone', 'like', '%' . substr($phone, -10)) // Flexible match for phone
+        $cleanedPhone = preg_replace('/[^0-9]/', '', $phone);
+        $phoneSuffix = strlen($cleanedPhone) >= 9 ? substr($cleanedPhone, -9) : $cleanedPhone;
+
+        // Find customer by code, username, or ID and phone
+        $customer = Customer::where(function ($q) use ($customer_code) {
+                $q->where('customer_code', $customer_code)
+                  ->orWhere('username', $customer_code)
+                  ->orWhere('username', 'like', $customer_code . '@%')
+                  ->orWhere('id', $customer_code);
+            })
+            ->where(function ($q) use ($phone, $phoneSuffix) {
+                $q->where('phone', 'like', '%' . $phoneSuffix)
+                  ->orWhere('phone', $phone);
+            })
             ->first();
 
         if (!$customer) {
             return back()->with('error', 'Data pelanggan tidak ditemukan atau nomor HP tidak cocok.');
         }
 
-        if (!$customer->is_active) {
-            return back()->with('error', 'Layanan Anda sedang non-aktif. Silakan hubungi Admin.');
+        if ($customer->status === Customer::STATUS_TERMINATED) {
+            return back()->with('error', 'Akun pelanggan ini telah berhenti berlangganan. Silakan hubungi Admin.');
         }
 
         // Zero-Touch: If customer has no password, set it to their phone number

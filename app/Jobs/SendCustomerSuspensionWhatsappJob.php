@@ -82,3 +82,4 @@ class SendCustomerSuspensionWhatsappJob implements ShouldQueue
         Log::info("Suspension WA: Sent to {$customer->username} ({$customer->phone}). Reason: {$this->reason}");
     }
 }
+

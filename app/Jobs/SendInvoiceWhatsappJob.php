@@ -100,3 +100,4 @@ class SendInvoiceWhatsappJob implements ShouldQueue
         Log::info("Invoice WA: Dispatched to {$customer->username} ({$customer->phone}) for INV #{$invoice->invoice_number}");
     }
 }
+
