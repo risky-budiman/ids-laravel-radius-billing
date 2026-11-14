@@ -1,239 +1,202 @@
+@php
+    $companyName = get_setting('company_name', config('app.name', 'Radius ISP'));
+    $companyLogo = get_setting('company_logo');
+    $appIcon = get_setting('app_icon');
+    $companyAddress = get_setting('company_address');
+    $companyPhone = get_setting('company_phone');
+    $companyEmail = get_setting('company_email');
+    $footerNote = get_setting('invoice_footer_note');
+    $waNumber = $companyPhone ? preg_replace('/^0/', '62', preg_replace('/\D/', '', $companyPhone)) : null;
+
+    $customer = $invoice->customer;
+    $customerId = $customer ? ($customer->customer_code ?: ($customer->username ? explode('@', $customer->username)[0] : $customer->id)) : '-';
+    // Samarkan sebagian nomor HP: link invoice bisa diteruskan ke orang lain.
+    $maskedPhone = $customer?->phone ? preg_replace('/(\d{4})\d+(\d{3})/', '$1••••$2', $customer->phone) : null;
+
+    $isPaid = $invoice->status === 'paid';
+    $isOverdue = ! $isPaid && $invoice->due_date && $invoice->due_date->isPast();
+    $d = fn ($date, $fmt = 'd F Y') => $date ? $date->locale('id')->translatedFormat($fmt) : '-';
+    $rp = fn ($v) => 'Rp ' . number_format((float) $v, 0, ',', '.');
+    $subtotal = $invoice->subtotal ?: $invoice->amount;
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="robots" content="noindex, nofollow">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-    @php
-        $companyName = get_setting('company_name', config('app.name', 'Radius ISP'));
-        $companyLogo = get_setting('company_logo');
-        $appIcon = get_setting('app_icon');
-        $companyAddress = get_setting('company_address');
-        $companyPhone = get_setting('company_phone');
-        $companyEmail = get_setting('company_email');
-        $companyTagline = get_setting('company_tagline', 'Internet Service Provider');
-        $footerNote = get_setting('invoice_footer_note');
-        $customerId = $invoice->customer ? ($invoice->customer->customer_code ?: ($invoice->customer->username ? explode('@', $invoice->customer->username)[0] : $invoice->customer->id)) : '-';
-    @endphp
-    <title>Invoice {{ $invoice->invoice_number }} - {{ $companyName }}</title>
-    @if($appIcon)
-        <link rel="icon" type="image/png" href="{{ asset('storage/' . $appIcon) }}">
-    @elseif($companyLogo)
-        <link rel="icon" type="image/png" href="{{ asset('storage/' . $companyLogo) }}">
+    <title>Invoice {{ $invoice->invoice_number }} · {{ $companyName }}</title>
+    @if($appIcon || $companyLogo)
+        <link rel="icon" type="image/png" href="{{ asset('storage/' . ($appIcon ?: $companyLogo)) }}">
     @endif
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.4); }
-        .invoice-box { box-shadow: 0 40px 100px rgba(0,0,0,0.05); }
-        @media print { .no-print { display: none; } body { background: white; padding: 0; } .invoice-box { box-shadow: none; border: none; width: 100%; max-width: 100%; } .glass-card { border: none; background: transparent; } }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: #fff !important; }
+            .print-flat { box-shadow: none !important; border-color: #e2e8f0 !important; }
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 antialiased min-h-screen py-12 px-4">
+<body class="min-h-screen bg-surface-50 text-surface-900">
+    <div class="max-w-2xl mx-auto px-4 py-6 sm:py-10 space-y-4">
 
-    <div class="max-w-4xl mx-auto">
-        <!-- Top Controls (No Print) -->
-        <div class="no-print flex justify-between items-center mb-10">
-            <div class="flex items-center space-x-4">
-                <a href="javascript:history.back()" class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 hover:text-indigo-600 border border-slate-200 transition-all hover:shadow-md">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                </a>
-                <span class="text-sm font-bold text-slate-400">Portal Pembayaran Resmi</span>
+        {{-- Bar atas --}}
+        <div class="no-print flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 min-w-0">
+                @if($companyLogo)
+                    <img src="{{ asset('storage/' . $companyLogo) }}" alt="" class="h-8 w-auto max-w-[7rem] object-contain">
+                @else
+                    <div class="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white text-sm font-semibold">{{ mb_strtoupper(mb_substr($companyName, 0, 1)) }}</div>
+                @endif
+                <span class="text-sm font-semibold truncate">{{ $companyName }}</span>
             </div>
-            <button onclick="window.print()" class="flex items-center px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 transition-all active:scale-95">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4"></path></svg>
-                Simpan PDF
+            <button type="button" onclick="window.print()" class="btn-secondary btn-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Cetak / PDF
             </button>
         </div>
 
-        <div class="invoice-box bg-white rounded-[3rem] overflow-hidden relative border border-slate-100">
-            <!-- Accent Top Line -->
-            <div class="h-2 w-full {{ $invoice->status == 'paid' ? 'bg-emerald-500' : 'bg-amber-500' }}"></div>
+        @if(session('error'))
+            <div class="no-print flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-3" role="alert">
+                <x-icon name="exclamation" class="w-5 h-5 text-rose-600 shrink-0" />
+                <div class="text-sm text-rose-700">
+                    <p class="font-medium">Pembayaran belum dapat diproses</p>
+                    <p class="mt-0.5">Silakan coba metode lain atau hubungi kami. <span class="text-rose-500">({{ session('error') }})</span></p>
+                </div>
+            </div>
+        @endif
 
-            <div class="p-8 md:p-16">
-                <!-- Branding & Status Header -->
-                <div class="flex flex-col md:flex-row justify-between items-start mb-20 gap-12">
+        {{-- Ringkasan & pembayaran --}}
+        <div class="card print-flat overflow-hidden">
+            <div class="p-5 sm:p-6">
+                <div class="flex items-start justify-between gap-3">
                     <div>
-                        <div class="flex items-center mb-6">
-                            @if($companyLogo)
-                                <div class="w-16 h-16 rounded-2xl flex items-center justify-center bg-white mr-5 shadow-lg border border-slate-100 p-2 overflow-hidden">
-                                    <img src="{{ asset('storage/' . $companyLogo) }}" alt="{{ $companyName }}" class="max-w-full max-h-full object-contain">
-                                </div>
-                            @else
-                                <div class="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mr-5 shadow-xl shadow-indigo-600/20 font-black text-xl">
-                                    {{ strtoupper(substr($companyName, 0, 2)) }}
-                                </div>
-                            @endif
-                            <div>
-                                <h1 class="text-2xl md:text-3xl font-black tracking-tight text-slate-900 uppercase">{{ $companyName }}</h1>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">{{ $companyTagline }}</p>
-                            </div>
-                        </div>
-                        <div class="space-y-1 text-sm text-slate-500 font-medium">
-                            @if($companyAddress)
-                                <p>{{ $companyAddress }}</p>
-                            @endif
-                            @if($companyPhone)
-                                <p>Telp / CS: {{ $companyPhone }}</p>
-                            @endif
-                            @if($companyEmail)
-                                <p>Email: {{ $companyEmail }}</p>
-                            @endif
-                        </div>
+                        <p class="text-sm text-surface-500">{{ $isPaid ? 'Total dibayar' : 'Total tagihan' }}</p>
+                        <p class="mt-1 text-3xl font-semibold tracking-tight tabular-nums">{{ $rp($invoice->amount) }}</p>
                     </div>
-
-                    <div class="md:text-right">
-                        <div class="inline-block px-5 py-2 rounded-2xl mb-6 font-black uppercase tracking-widest text-[10px] border {{ $invoice->status == 'paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100' }}">
-                            {{ $invoice->status == 'paid' ? 'Lunas / Paid' : 'Belum Bayar / Unpaid' }}
-                        </div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-2">Invoice Number</p>
-                        <p class="text-3xl font-black text-slate-900 leading-none">{{ $invoice->invoice_number }}</p>
-                        <p class="text-sm font-bold text-slate-400 mt-2">Diterbitkan: {{ $invoice->created_at->translatedFormat('d F Y') }}</p>
-                    </div>
-                </div>
-
-                <!-- Client & Summary Info -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-16 mb-20">
-                    <div class="p-8 rounded-[2rem] bg-slate-50 border border-slate-100">
-                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-200 pb-2">Ditagihkan Kepada:</h4>
-                        <p class="text-xl font-black text-slate-900 mb-1">{{ $invoice->customer->name ?? '-' }}</p>
-                        <p class="text-sm font-bold text-indigo-600 mb-4">ID Pelanggan: {{ $customerId }}</p>
-                        <div class="space-y-1 text-sm text-slate-500 font-medium leading-relaxed">
-                            <p>{{ $invoice->customer->address ?? '-' }}</p>
-                            <p>{{ $invoice->customer->phone ?? '-' }}</p>
-                        </div>
-                    </div>
-
-                    <div class="md:text-right px-4">
-                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-200 pb-2">Ringkasan Tagihan:</h4>
-                        <div class="space-y-4">
-                            <div>
-                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Periode Layanan</p>
-                                <p class="text-sm font-black text-slate-900">{{ $invoice->billing_period }}</p>
-                                <p class="text-xs font-medium text-slate-400">{{ $invoice->period_start ? $invoice->period_start->translatedFormat('d M Y') : '-' }} - {{ $invoice->period_end ? $invoice->period_end->translatedFormat('d M Y') : '-' }}</p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tanggal Jatuh Tempo</p>
-                                <p class="text-lg font-black text-rose-600">{{ $invoice->due_date->translatedFormat('d F Y') }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Line Items Table -->
-                <div class="mb-20">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="border-b-2 border-slate-100">
-                                <th class="pb-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Deskripsi Layanan</th>
-                                <th class="pb-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Subtotal</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-50">
-                            <tr>
-                                <td class="py-8">
-                                    <p class="text-base font-black text-slate-900">Internet Subscription: {{ $invoice->customer->package->name ?? 'Service Fee' }}</p>
-                                    <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">Unlimited High-Speed Data Plan</p>
-                                </td>
-                                <td class="py-8 text-right font-black text-slate-900 text-lg">
-                                    Rp {{ number_format($invoice->subtotal, 0, ',', '.') }}
-                                </td>
-                            </tr>
-                            @if($invoice->tax_amount > 0)
-                            <tr>
-                                <td class="py-6">
-                                    <p class="text-sm font-bold text-slate-500 italic">Pajak (PPN 11%)</p>
-                                </td>
-                                <td class="py-6 text-right font-bold text-slate-500 text-base">
-                                    Rp {{ number_format($invoice->tax_amount, 0, ',', '.') }}
-                                </td>
-                            </tr>
-                            @endif
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="2" class="pt-8">
-                                    <div class="bg-slate-900 rounded-[2.5rem] p-10 flex flex-col md:flex-row justify-between items-center text-white relative overflow-hidden group">
-                                        <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mt-32 -mr-32 group-hover:bg-indigo-500/20 transition-all"></div>
-                                        <div>
-                                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Total Amount Due</p>
-                                            <p class="text-sm text-indigo-400 font-bold italic">Terbilang: # {{ strtoupper(\App\Services\AccountingService::terbilang($invoice->amount)) }} RUPIAH #</p>
-                                        </div>
-                                        <div class="mt-6 md:mt-0 text-right">
-                                            <p class="text-4xl font-black tracking-tight">Rp {{ number_format($invoice->amount, 0, ',', '.') }}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-
-                <!-- Bottom Section: Payment & Notes -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-                    <div>
-                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Instruksi Penting:</h4>
-                        <div class="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 relative overflow-hidden">
-                            <div class="absolute left-0 top-0 h-full w-1.5 bg-indigo-600"></div>
-                            <p class="text-xs text-slate-600 leading-relaxed font-medium">
-                                {{ $footerNote ?: ($invoice->notes ?: 'Silakan lakukan pembayaran sebelum tanggal jatuh tempo. Keterlambatan dapat menyebabkan isolir layanan secara otomatis oleh sistem kami. Simpan bukti pembayaran ini sebagai referensi di masa depan.') }}
-                            </p>
-                        </div>
-                    </div>
-
-                    @if($invoice->status == 'unpaid')
-                    <div class="no-print space-y-4">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest md:text-right mb-4">Pilih Metode Pembayaran:</p>
-                        
-                        <div class="flex flex-col gap-3">
-                            @forelse($activeGateways as $gw)
-                                <a href="{{ \Illuminate\Support\Facades\URL::signedRoute('portal.invoice.pay', ['invoice' => $invoice, 'gateway' => $gw->provider]) }}" 
-                                   class="group flex items-center justify-between p-5 bg-white border border-slate-200 rounded-2xl hover:border-indigo-600 transition-all hover:shadow-lg active:scale-95">
-                                    <div class="flex items-center space-x-4">
-                                        <div class="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center font-black text-indigo-600 text-[10px] border border-slate-100 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                                            {{ strtoupper(substr($gw->provider, 0, 3)) }}
-                                        </div>
-                                        <span class="font-black text-slate-900 uppercase tracking-tighter">BAYAR VIA {{ ucfirst($gw->provider) }}</span>
-                                    </div>
-                                    <svg class="w-5 h-5 text-slate-300 group-hover:translate-x-1 group-hover:text-indigo-600 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7-7 7"></path></svg>
-                                </a>
-                            @empty
-                                <div class="p-6 bg-slate-50 rounded-2xl text-center">
-                                    <p class="text-xs text-slate-500 font-bold uppercase italic">Metode pembayaran online tidak tersedia.</p>
-                                    <p class="text-[10px] text-slate-400 mt-1">Silakan hubungi Billing Support untuk info transfer manual.</p>
-                                </div>
-                            @endforelse
-                        </div>
-                    </div>
+                    @if($isPaid)
+                        <span class="badge-success">Lunas</span>
+                    @elseif($isOverdue)
+                        <span class="badge-danger">Lewat jatuh tempo</span>
                     @else
-                    <div class="md:text-right flex flex-col md:items-end">
-                        <div class="inline-flex items-center text-emerald-600 font-black px-8 py-4 bg-emerald-50 rounded-[2rem] border border-emerald-100 shadow-sm">
-                            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            PEMBAYARAN SUDAH DITERIMA
-                        </div>
-                        <p class="text-[10px] font-bold text-slate-400 mt-3 uppercase tracking-widest">Paid at: {{ $invoice->paid_at ? $invoice->paid_at->translatedFormat('d F Y, H:i') : '-' }}</p>
-                    </div>
+                        <span class="badge-warning">Belum dibayar</span>
                     @endif
                 </div>
+                <p class="mt-2 text-sm {{ $isOverdue ? 'text-rose-600' : 'text-surface-500' }}">
+                    @if($isPaid)
+                        Dibayar {{ $d($invoice->paid_at, 'd F Y, H:i') }}
+                    @else
+                        Jatuh tempo {{ $d($invoice->due_date) }}
+                        @if($isOverdue) — segera lakukan pembayaran agar layanan tidak terisolir. @endif
+                    @endif
+                </p>
             </div>
-            
-            <div class="bg-slate-900 py-10 px-8 text-center border-t border-white/5">
-                <div class="flex flex-col md:flex-row justify-between items-center gap-6 max-w-4xl mx-auto">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">{{ $companyName }} OFFICIAL DIGITAL RECEIPT</p>
-                    <div class="flex space-x-6">
-                        <span class="text-[10px] font-bold text-slate-600 uppercase">Ver: {{ app_version() }}</span>
+
+            @unless($isPaid)
+                <div class="no-print border-t border-surface-200 bg-surface-50/60 p-5 sm:p-6">
+                    <p class="text-sm font-medium mb-3">Pilih metode pembayaran</p>
+                    <div class="space-y-2">
+                        @forelse($activeGateways as $gw)
+                            <a href="{{ \Illuminate\Support\Facades\URL::signedRoute('portal.invoice.pay', ['invoice' => $invoice, 'gateway' => $gw->provider]) }}"
+                               class="group flex items-center gap-3 rounded-lg border border-surface-200 bg-white px-4 py-3 hover:border-primary-400 hover:bg-primary-50/40 transition-colors">
+                                <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-primary-50 text-primary-600 text-[11px] font-semibold uppercase">{{ substr($gw->provider, 0, 3) }}</span>
+                                <span class="flex-1 min-w-0">
+                                    <span class="block text-sm font-medium">Bayar via {{ ucfirst($gw->provider) }}</span>
+                                    <span class="block text-xs text-surface-500">Virtual account, e-wallet, QRIS, dan lainnya</span>
+                                </span>
+                                <x-icon name="chevron-right" class="w-4 h-4 text-surface-400 group-hover:text-primary-600" />
+                            </a>
+                        @empty
+                            <div class="rounded-lg border border-dashed border-surface-300 bg-white px-4 py-5 text-center">
+                                <p class="text-sm font-medium">Pembayaran online belum tersedia</p>
+                                <p class="mt-0.5 text-xs text-surface-500">Silakan hubungi kami untuk informasi transfer manual.</p>
+                            </div>
+                        @endforelse
                     </div>
+                    @if($waNumber)
+                        <a href="https://wa.me/{{ $waNumber }}?text={{ urlencode('Halo, saya ingin bertanya tentang tagihan ' . $invoice->invoice_number) }}" target="_blank" rel="noopener"
+                           class="mt-3 inline-flex text-sm font-medium text-primary-600 hover:underline">Butuh bantuan? Chat WhatsApp</a>
+                    @endif
                 </div>
-            </div>
+            @endunless
         </div>
-        
-        <div class="mt-12 text-center space-y-4">
-            <p class="text-slate-400 text-[10px] font-bold leading-relaxed max-w-2xl mx-auto uppercase tracking-wider">
-                Dokumen ini sah secara hukum dan diterbitkan secara elektronik. <br>Segala bentuk manipulasi data pada invoice ini akan ditindak sesuai peraturan perundang-undangan yang berlaku.
+
+        {{-- Rincian invoice --}}
+        <div class="card print-flat">
+            <div class="card-header">
+                <div>
+                    <p class="card-title">Invoice</p>
+                    <p class="text-xs text-surface-500 font-mono mt-0.5">{{ $invoice->invoice_number }}</p>
+                </div>
+                <p class="text-xs text-surface-500 text-right">Diterbitkan<br>{{ $d($invoice->created_at) }}</p>
+            </div>
+
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 p-5 text-sm">
+                <div>
+                    <dt class="text-xs text-surface-500">Ditagihkan kepada</dt>
+                    <dd class="mt-0.5 font-medium">{{ $customer->name ?? '-' }}</dd>
+                    <dd class="text-surface-500">ID {{ $customerId }}</dd>
+                    @if($customer?->address)<dd class="text-surface-500">{{ $customer->address }}</dd>@endif
+                    @if($maskedPhone)<dd class="text-surface-500">{{ $maskedPhone }}</dd>@endif
+                </div>
+                <div>
+                    <dt class="text-xs text-surface-500">Periode layanan</dt>
+                    <dd class="mt-0.5 font-medium">{{ $invoice->billing_period ?: '-' }}</dd>
+                    <dd class="text-surface-500">{{ $d($invoice->period_start, 'd M Y') }} – {{ $d($invoice->period_end, 'd M Y') }}</dd>
+                </div>
+            </dl>
+
+            <div class="border-t border-surface-200 px-5 py-4 text-sm space-y-2.5">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="font-medium">Internet {{ $customer->package->name ?? '' }}</p>
+                        <p class="text-xs text-surface-500">Biaya berlangganan{{ $invoice->billing_period ? ' · ' . $invoice->billing_period : '' }}</p>
+                    </div>
+                    <p class="tabular-nums">{{ $rp($subtotal) }}</p>
+                </div>
+                @if((float) $invoice->discount_amount > 0)
+                    <div class="flex items-center justify-between gap-4 text-emerald-700">
+                        <p>Diskon{{ $invoice->discount_type === 'percentage' ? ' (' . rtrim(rtrim(number_format($invoice->discount_value, 2, ',', '.'), '0'), ',') . '%)' : '' }}</p>
+                        <p class="tabular-nums">−{{ $rp($invoice->discount_amount) }}</p>
+                    </div>
+                @endif
+                @if((float) $invoice->tax_amount > 0)
+                    <div class="flex items-center justify-between gap-4 text-surface-600">
+                        <p>{{ $invoice->tax->name ?? 'Pajak (PPN)' }}</p>
+                        <p class="tabular-nums">{{ $rp($invoice->tax_amount) }}</p>
+                    </div>
+                @endif
+                <div class="flex items-center justify-between gap-4 border-t border-surface-200 pt-3">
+                    <p class="font-semibold">Total</p>
+                    <p class="font-semibold tabular-nums">{{ $rp($invoice->amount) }}</p>
+                </div>
+                <p class="text-xs text-surface-500 italic">Terbilang: {{ ucfirst(\App\Services\AccountingService::terbilang($invoice->amount)) }} rupiah</p>
+            </div>
+
+            @if($footerNote || $invoice->notes)
+                <div class="border-t border-surface-200 px-5 py-4">
+                    <p class="text-xs font-medium text-surface-500 mb-1">Catatan</p>
+                    <p class="text-sm text-surface-600">{{ $footerNote ?: $invoice->notes }}</p>
+                </div>
+            @endif
+        </div>
+
+        {{-- Penerbit --}}
+        <div class="text-center text-xs text-surface-500 space-y-1 pt-2">
+            <p class="font-medium text-surface-700">{{ $companyName }}</p>
+            @if($companyAddress)<p>{{ $companyAddress }}</p>@endif
+            <p>
+                @if($companyPhone) Telp/CS {{ $companyPhone }} @endif
+                @if($companyPhone && $companyEmail) · @endif
+                @if($companyEmail) {{ $companyEmail }} @endif
             </p>
+            <p class="pt-2 text-surface-400">Invoice ini diterbitkan secara elektronik dan sah tanpa tanda tangan.</p>
         </div>
     </div>
-
 </body>
 </html>

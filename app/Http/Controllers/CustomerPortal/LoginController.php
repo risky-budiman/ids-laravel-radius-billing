@@ -42,11 +42,13 @@ class LoginController extends Controller
             ->first();
 
         if (!$customer) {
-            return back()->with('error', 'Data pelanggan tidak ditemukan atau nomor HP tidak cocok.');
+            return back()->withInput($request->only('customer_id', 'phone'))
+                ->with('error', 'Data pelanggan tidak ditemukan atau nomor HP tidak cocok.');
         }
 
         if ($customer->status === Customer::STATUS_TERMINATED) {
-            return back()->with('error', 'Akun pelanggan ini telah berhenti berlangganan. Silakan hubungi Admin.');
+            return back()->withInput($request->only('customer_id'))
+                ->with('error', 'Akun pelanggan ini telah berhenti berlangganan. Silakan hubungi Admin.');
         }
 
         // Zero-Touch: If customer has no password, set it to their phone number

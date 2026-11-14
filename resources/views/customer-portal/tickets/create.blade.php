@@ -1,69 +1,58 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center space-x-4">
-            <a href="{{ route('customer.tickets.index') }}" class="text-gray-400 hover:text-indigo-600 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+    <div class="max-w-2xl mx-auto space-y-4">
+        <div class="flex items-center gap-2">
+            <a href="{{ route('customer.tickets.index') }}" class="btn-ghost btn-icon -ml-2" aria-label="Kembali">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             </a>
-            <h2 class="font-black text-2xl text-gray-900 dark:text-white tracking-tight">
-                Buat Laporan Gangguan
-            </h2>
+            <div>
+                <h1 class="text-xl font-semibold tracking-tight text-surface-900 dark:text-white">Laporkan Gangguan</h1>
+                <p class="text-sm text-surface-500 dark:text-surface-400">Ceritakan kendalanya agar teknisi kami bisa segera membantu.</p>
+            </div>
         </div>
-    </x-slot>
 
-    <div class="max-w-3xl mx-auto py-10 sm:px-6 lg:px-8">
-        <form action="{{ route('customer.tickets.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+        <form action="{{ route('customer.tickets.store') }}" method="POST" enctype="multipart/form-data" class="card p-5 sm:p-6 space-y-5"
+              x-data="{ sending: false }" @submit="sending = true">
             @csrf
-            
-            <div class="glass bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-gray-700">
-                <div class="mb-8">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Detail Keluhan</h3>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm">Ceritakan kendala koneksi yang Anda alami agar teknisi kami dapat segera memperbaikinya.</p>
-                </div>
-                
-                <div class="space-y-6">
-                    <div>
-                        <x-input-label for="subject" value="Topik Kendala (Judul)" />
-                        <x-text-input id="subject" name="subject" type="text" class="mt-1 block w-full" placeholder="Contoh: Internet Mati Total / Lampu LOS Merah / Koneksi Lambat" required autofocus />
-                        <x-input-error class="mt-2" :messages="$errors->get('subject')" />
-                    </div>
 
-                    <div>
-                        <x-input-label for="description" value="Deskripsi Detail" />
-                        <textarea id="description" name="description" rows="5" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-xl shadow-sm" placeholder="Jelaskan sejak kapan internet bermasalah, lampu apa saja yang menyala di modem, dsb..." required></textarea>
-                        <x-input-error class="mt-2" :messages="$errors->get('description')" />
-                    </div>
-
-                    <div>
-                        <x-input-label for="attachment" value="Lampiran Foto (Opsional)" />
-                        <input type="file" id="attachment" name="attachment" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400
-                            file:mr-4 file:py-2 file:px-4
-                            file:rounded-xl file:border-0
-                            file:text-sm file:font-semibold
-                            file:bg-indigo-50 file:text-indigo-700
-                            hover:file:bg-indigo-100
-                            dark:file:bg-indigo-900/30 dark:file:text-indigo-400
-                        "/>
-                        <p class="text-xs text-gray-500 mt-1">Format gambar (JPG, PNG). Maksimal 5MB. Lampirkan foto lampu modem atau pesan error untuk mempercepat perbaikan.</p>
-                        <x-input-error class="mt-2" :messages="$errors->get('attachment')" />
-                    </div>
-                    
-                    <div class="p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl">
-                        <div class="flex items-start">
-                            <svg class="w-5 h-5 text-amber-600 dark:text-amber-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <p class="text-sm text-amber-800 dark:text-amber-200">
-                                Pastikan modem dalam keadaan menyala agar sistem kami dapat mengecek koneksi Anda secara langsung. Laporan Anda akan segera masuk ke antrean pengecekan teknisi.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+            <div>
+                <label for="subject" class="label">Kendala</label>
+                <input id="subject" name="subject" type="text" value="{{ old('subject') }}" required autofocus list="subject-suggestions"
+                       class="input @error('subject') input-error @enderror" placeholder="Contoh: Internet mati total">
+                <datalist id="subject-suggestions">
+                    <option value="Internet mati total">
+                    <option value="Lampu LOS merah di modem">
+                    <option value="Koneksi lambat">
+                    <option value="WiFi tidak muncul">
+                    <option value="Sering putus-putus">
+                </datalist>
+                <x-input-error class="mt-1.5" :messages="$errors->get('subject')" />
             </div>
 
-            <div class="flex justify-end gap-4">
-                <a href="{{ route('customer.tickets.index') }}" class="px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
-                    Batal
-                </a>
-                <button type="submit" class="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/30">
-                    Kirim Laporan
+            <div>
+                <label for="description" class="label">Penjelasan</label>
+                <textarea id="description" name="description" rows="5" required
+                          class="input @error('description') input-error @enderror"
+                          placeholder="Sejak kapan bermasalah, lampu apa saja yang menyala di modem, perangkat apa yang terdampak…">{{ old('description') }}</textarea>
+                <x-input-error class="mt-1.5" :messages="$errors->get('description')" />
+            </div>
+
+            <div>
+                <label for="attachment" class="label">Foto (opsional)</label>
+                <input type="file" id="attachment" name="attachment" accept="image/*"
+                       class="block w-full text-sm text-surface-600 dark:text-surface-300 file:mr-3 file:h-9 file:px-3.5 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-surface-100 file:text-surface-700 hover:file:bg-surface-200 dark:file:bg-surface-800 dark:file:text-surface-200">
+                <p class="help-text">JPG atau PNG, maksimal 5 MB. Foto lampu modem sangat membantu teknisi.</p>
+                <x-input-error class="mt-1.5" :messages="$errors->get('attachment')" />
+            </div>
+
+            <div class="flex items-start gap-2.5 rounded-lg bg-surface-50 dark:bg-surface-800/50 px-3.5 py-3">
+                <svg class="w-5 h-5 text-surface-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <p class="text-sm text-surface-600 dark:text-surface-300">Biarkan modem tetap menyala agar sistem kami bisa mengecek koneksi Anda dari jarak jauh.</p>
+            </div>
+
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-1">
+                <a href="{{ route('customer.tickets.index') }}" class="btn-secondary">Batal</a>
+                <button type="submit" class="btn-primary" :disabled="sending">
+                    <span x-text="sending ? 'Mengirim…' : 'Kirim laporan'">Kirim laporan</span>
                 </button>
             </div>
         </form>

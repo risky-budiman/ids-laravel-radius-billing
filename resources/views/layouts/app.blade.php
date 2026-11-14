@@ -128,6 +128,24 @@
 
                 {{-- Konten halaman --}}
                 <main class="flex-grow {{ $isPortal ? 'p-4 pb-32 sm:p-6 lg:pb-8' : 'p-4 sm:p-6 lg:p-8' }}">
+                    @if($isPortal && (session('success') || session('error') || $errors->any()))
+                        <div class="max-w-3xl mx-auto mb-4 space-y-2" x-data="{ show: true }" x-show="show">
+                            @if(session('success'))
+                                <div class="flex items-start gap-2.5 rounded-lg border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 px-3.5 py-3" role="status">
+                                    <x-icon name="check-circle" class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                    <p class="flex-1 text-sm text-emerald-800 dark:text-emerald-300">{{ session('success') }}</p>
+                                    <button type="button" @click="show = false" class="text-emerald-700/60 hover:text-emerald-800" aria-label="Tutup"><x-icon name="x" class="w-4 h-4" /></button>
+                                </div>
+                            @endif
+                            @if(session('error') || $errors->any())
+                                <div class="flex items-start gap-2.5 rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 px-3.5 py-3" role="alert">
+                                    <x-icon name="exclamation" class="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />
+                                    <p class="flex-1 text-sm text-rose-700 dark:text-rose-300">{{ session('error') ?: $errors->first() }}</p>
+                                    <button type="button" @click="show = false" class="text-rose-700/60 hover:text-rose-800" aria-label="Tutup"><x-icon name="x" class="w-4 h-4" /></button>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
                     {{ $slot }}
                 </main>
                 
@@ -160,7 +178,9 @@
         </script>
 
         <!-- Floating Browser Permission Prompt (Meminta Izin Browser 1 Kali) -->
-        <div id="notif-permission-banner" class="hidden fixed bottom-4 left-4 lg:left-[17rem] z-[10000] max-w-sm w-[calc(100vw-2rem)] card shadow-elevated p-4 pointer-events-auto {{ $isPortal ? '!bottom-24 lg:!bottom-4' : '' }}">
+        {{-- Banner izin notifikasi tiket: khusus panel staf (portal pelanggan punya ajakan sendiri) --}}
+        @unless($isPortal)
+        <div id="notif-permission-banner" class="hidden fixed bottom-4 left-4 lg:left-[17rem] z-[10000] max-w-sm w-[calc(100vw-2rem)] card shadow-elevated p-4 pointer-events-auto">
             <div class="flex items-start gap-3">
                 <div class="w-9 h-9 rounded-lg bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center shrink-0">
                     <x-icon name="bell" class="w-5 h-5" />
@@ -175,6 +195,7 @@
                 </div>
             </div>
         </div>
+        @endunless
 
         <!-- HTML5 Audio Element for Realtime Notification Chime -->
         <audio id="notif-audio" src="{{ asset('sounds/notification.wav') }}" preload="auto"></audio>

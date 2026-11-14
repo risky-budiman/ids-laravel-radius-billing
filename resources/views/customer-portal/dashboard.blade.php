@@ -1,169 +1,180 @@
+@php
+    $firstName = explode(' ', trim($customer->name))[0];
+    $package = $customer->package;
+    $statusMap = [
+        'active' => ['badge-success', 'Aktif'],
+        'new' => ['badge-info', 'Baru'],
+        'waiting_activation' => ['badge-warning', 'Menunggu aktivasi'],
+        'suspended' => ['badge-danger', 'Terisolir'],
+        'waiting_dismantle' => ['badge-warning', 'Menunggu pencabutan'],
+        'dismantled' => ['badge-gray', 'Dicabut'],
+    ];
+    $accountStatus = $statusMap[$customer->status ?? ''] ?? ($customer->is_active ? ['badge-success', 'Aktif'] : ['badge-gray', 'Nonaktif']);
+
+    $rx = $customer->signalCache->rx_power ?? null;
+    $rxNum = is_numeric($rx) ? (float) $rx : null;
+    [$signalLabel, $signalTone] = match (true) {
+        $rxNum === null => ['Tidak tersedia', 'text-surface-400'],
+        $rxNum >= -24 => ['Sangat baik', 'text-emerald-600 dark:text-emerald-400'],
+        $rxNum >= -27 => ['Baik', 'text-emerald-600 dark:text-emerald-400'],
+        default => ['Lemah', 'text-rose-600 dark:text-rose-400'],
+    };
+    $signalPct = $rxNum === null ? 0 : max(5, min(100, (30 + $rxNum) * 6.5));
+
+    $unpaidTotal = $unpaidInvoices->sum('amount');
+    $nextInvoice = $unpaidInvoices->sortBy('due_date')->first();
+@endphp
+
 <x-app-layout>
-    <div class="space-y-6 animate-fade-in pb-10">
-        <!-- Greeting & Quick Profile -->
-        <div class="flex items-center justify-between px-2">
-            <div>
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Selamat Datang</p>
-                <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{{ explode(' ', $customer->name)[0] }} 👋</h2>
-            </div>
-            <div class="w-12 h-12 rounded-full border-2 border-indigo-100 dark:border-indigo-900 p-0.5">
-                <img src="https://ui-avatars.com/api/?name={{ urlencode($customer->name) }}&background=6366f1&color=fff" class="w-full h-full rounded-full object-cover" alt="Profile">
-            </div>
+    <div class="max-w-3xl mx-auto space-y-5">
+
+        {{-- Sapaan --}}
+        <div>
+            <p class="text-sm text-surface-500 dark:text-surface-400">Halo,</p>
+            <h1 class="text-2xl font-semibold tracking-tight text-surface-900 dark:text-white">{{ $firstName }}</h1>
         </div>
 
-        <!-- Main Service Status Card (MyIndiHome Style) -->
-        <div class="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-[2rem] p-6 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
-            <div class="relative z-10">
-                <div class="flex justify-between items-center mb-6">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-md">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                        </div>
-                        <span class="text-xs font-black uppercase tracking-widest">Internet Fiber</span>
-                    </div>
-                    <span class="px-3 py-1 bg-emerald-400 text-emerald-950 text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-emerald-500/20">
-                        {{ $isOnline ? 'Aktif' : 'Non-Aktif' }}
-                    </span>
-                </div>
-
-                <div class="mb-6">
-                    <p class="text-indigo-100 text-[10px] font-bold uppercase tracking-widest mb-1">Paket Anda</p>
-                    <h3 class="text-2xl font-black">{{ $customer->package->name }}</h3>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 border-t border-white/10 pt-6">
-                    <div>
-                        <p class="text-indigo-200 text-[9px] font-bold uppercase tracking-widest mb-1">ID Pelanggan</p>
-                        <p class="text-sm font-black">{{ $customer->customer_code }}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-indigo-200 text-[9px] font-bold uppercase tracking-widest mb-1">Kecepatan</p>
-                        <p class="text-sm font-black">{{ $customer->package->speed_limit }} Mbps</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Status Koneksi Section -->
-        <div class="px-2">
-            <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Layanan Anda</h4>
-        </div>
-
-        <!-- Usage / Signal Status -->
-        <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-            <div class="flex justify-between items-center mb-4">
-                <h4 class="font-black text-slate-900 dark:text-white text-sm">Status Koneksi</h4>
-                <div class="w-2 h-2 rounded-full {{ $isOnline ? 'bg-emerald-500' : 'bg-rose-500' }} animate-pulse"></div>
-            </div>
-            
-            <div class="space-y-4">
-                @php $rx = $customer->signalCache->rx_power ?? '-'; @endphp
-                <div class="flex items-center justify-between">
-                    <span class="text-xs text-gray-500 font-medium">Kualitas Sinyal</span>
-                    <span class="text-xs font-black {{ $rx < -27 ? 'text-rose-600' : 'text-emerald-600' }}">{{ $rx }} dBm</span>
-                </div>
-                <div class="w-full bg-gray-100 dark:bg-gray-700 h-1.5 rounded-full overflow-hidden">
-                    @php 
-                        $percentage = 0;
-                        if(is_numeric($rx)) {
-                            $percentage = max(0, min(100, (30 + (float)$rx) * 5)); // Just a rough visualization
-                        }
-                    @endphp
-                    <div class="h-full {{ $rx < -27 ? 'bg-rose-500' : 'bg-emerald-500' }}" style="width: {{ $percentage }}%"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Latest Billing Notification -->
+        {{-- Tagihan belum dibayar: prioritas utama --}}
         @if($unpaidInvoices->count() > 0)
-            <div class="bg-rose-50 dark:bg-rose-900/20 rounded-3xl p-6 border border-rose-100 dark:border-rose-800 flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 bg-rose-100 dark:bg-rose-900/50 rounded-xl flex items-center justify-center text-rose-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                    <div>
-                        <p class="text-xs font-black text-rose-900 dark:text-rose-400">Tagihan Belum Dibayar</p>
-                        <p class="text-[10px] text-rose-700/70 dark:text-rose-400/70">Total: Rp {{ number_format($unpaidInvoices->sum('amount'), 0, ',', '.') }}</p>
+            <div class="card border-amber-200 dark:border-amber-500/30 bg-amber-50/60 dark:bg-amber-500/5 p-5">
+                <div class="flex items-start gap-3">
+                    <span class="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 shrink-0">
+                        <x-icon name="document" class="w-5 h-5" />
+                    </span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-amber-900 dark:text-amber-200">
+                            {{ $unpaidInvoices->count() }} tagihan belum dibayar
+                        </p>
+                        <p class="mt-0.5 text-2xl font-semibold tabular-nums text-surface-900 dark:text-white">Rp {{ number_format($unpaidTotal, 0, ',', '.') }}</p>
+                        @if($nextInvoice?->due_date)
+                            <p class="mt-0.5 text-xs {{ $nextInvoice->due_date->isPast() ? 'text-rose-600 dark:text-rose-400' : 'text-amber-800/80 dark:text-amber-300/80' }}">
+                                {{ $nextInvoice->due_date->isPast() ? 'Lewat jatuh tempo' : 'Jatuh tempo' }} {{ $nextInvoice->due_date->locale('id')->translatedFormat('d F Y') }}
+                            </p>
+                        @endif
                     </div>
                 </div>
-                <a href="{{ route('customer.invoices') }}" class="text-[10px] font-black text-rose-600 uppercase tracking-widest underline">Bayar</a>
+                <div class="mt-4 flex gap-2">
+                    @if($nextInvoice)
+                        <a href="{{ \Illuminate\Support\Facades\URL::signedRoute('portal.invoice', $nextInvoice->id) }}" class="btn-primary flex-1">Bayar sekarang</a>
+                    @endif
+                    <a href="{{ route('customer.invoices') }}" class="btn-secondary">Lihat tagihan</a>
+                </div>
             </div>
         @endif
 
-        <!-- Promo Banner -->
-        <div class="relative rounded-3xl bg-slate-900 p-8 text-white overflow-hidden shadow-xl">
-            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
-            <div class="relative z-10">
-                <span class="inline-block px-3 py-1 bg-indigo-600 rounded-lg text-[8px] font-black uppercase tracking-widest mb-3">Promo Eksklusif</span>
-                <h4 class="text-xl font-black mb-2 leading-tight text-white">Undang Teman, <br> Diskon Rp 50.000!</h4>
-                <p class="text-white/80 text-xs font-medium mb-4">Gunakan kode referral Anda.</p>
-                <button class="bg-white text-slate-900 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg">Cek Kode</button>
+        {{-- Layanan --}}
+        <div class="card overflow-hidden">
+            <div class="p-5 bg-primary-600 text-white">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-sm text-primary-100">Paket internet</p>
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium">
+                        <span class="w-1.5 h-1.5 rounded-full {{ $isOnline ? 'bg-emerald-300' : 'bg-surface-300' }}"></span>
+                        {{ $isOnline ? 'Online' : 'Offline' }}
+                    </span>
+                </div>
+                <p class="mt-1 text-xl font-semibold">{{ $package->name ?? 'Belum ada paket' }}</p>
+                @if($package?->speed_limit)
+                    <p class="text-sm text-primary-100">Hingga {{ $package->speed_limit }} Mbps</p>
+                @endif
             </div>
+            <dl class="grid grid-cols-2 divide-x divide-surface-200 dark:divide-surface-800">
+                <div class="p-4">
+                    <dt class="text-xs text-surface-500 dark:text-surface-400">ID Pelanggan</dt>
+                    <dd class="mt-0.5 text-sm font-medium font-mono text-surface-900 dark:text-white">{{ $customer->customer_code }}</dd>
+                </div>
+                <div class="p-4">
+                    <dt class="text-xs text-surface-500 dark:text-surface-400">Status akun</dt>
+                    <dd class="mt-1"><span class="{{ $accountStatus[0] }}">{{ $accountStatus[1] }}</span></dd>
+                </div>
+            </dl>
         </div>
 
-        <!-- Integrated Notification Prompt -->
-        <div id="pwa-prompt" class="hidden bg-indigo-50 dark:bg-indigo-900/20 p-5 rounded-3xl border border-indigo-100 dark:border-indigo-800 flex items-center justify-between gap-4" x-data="{ dismissed: localStorage.getItem('pwa_prompt_dismissed') === 'true' }" x-show="!dismissed">
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-indigo-500/20">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                </div>
-                <div>
-                    <h4 class="font-black text-indigo-950 dark:text-indigo-400 text-xs">Aktifkan Notifikasi</h4>
-                    <p class="text-[10px] text-indigo-700/70 dark:text-indigo-400/70 leading-tight">Dapatkan info tagihan & promo terbaru.</p>
-                </div>
+        {{-- Kualitas sinyal --}}
+        <div class="card p-5">
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-semibold text-surface-900 dark:text-white">Kualitas sinyal fiber</h2>
+                <span class="text-sm font-medium {{ $signalTone }}">{{ $signalLabel }}</span>
             </div>
-            <div class="flex items-center gap-3">
-                <button onclick="subscribeToPush()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all">Ya</button>
-                <button @click="dismissed = true; localStorage.setItem('pwa_prompt_dismissed', 'true')" class="text-gray-400 hover:text-gray-600 p-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+            <div class="mt-3 h-2 rounded-full bg-surface-100 dark:bg-surface-800 overflow-hidden">
+                <div class="h-full rounded-full {{ $rxNum !== null && $rxNum < -27 ? 'bg-rose-500' : 'bg-emerald-500' }}" style="width: {{ $signalPct }}%"></div>
+            </div>
+            <p class="mt-2 text-xs text-surface-500 dark:text-surface-400">
+                @if($rxNum !== null)
+                    Daya terima {{ number_format($rxNum, 2, ',', '.') }} dBm.
+                    @if($rxNum < -27) Sinyal lemah dapat membuat koneksi lambat — silakan laporkan gangguan. @endif
+                @else
+                    Data sinyal belum tersedia.
+                @endif
+            </p>
+        </div>
+
+        {{-- Menu cepat --}}
+        <div class="grid grid-cols-3 gap-3">
+            @foreach([
+                [route('customer.invoices'), 'document', 'Tagihan'],
+                [route('customer.boosters'), 'bolt', 'Booster'],
+                [route('customer.tickets.create'), 'support', 'Lapor gangguan'],
+            ] as [$url, $ico, $lbl])
+                <a href="{{ $url }}" class="card p-4 flex flex-col items-center gap-2 text-center hover:border-primary-300 dark:hover:border-primary-500/40 transition-colors">
+                    <span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400">
+                        <x-icon :name="$ico" class="w-5 h-5" />
+                    </span>
+                    <span class="text-xs font-medium text-surface-700 dark:text-surface-200">{{ $lbl }}</span>
+                </a>
+            @endforeach
+        </div>
+
+        {{-- Ajakan aktifkan notifikasi --}}
+        <div id="pwa-prompt" class="hidden card p-4" x-data="{ dismissed: localStorage.getItem('pwa_prompt_dismissed') === 'true', msg: '' }" x-show="!dismissed">
+            <div class="flex items-start gap-3">
+                <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400 shrink-0">
+                    <x-icon name="bell" class="w-5 h-5" />
+                </span>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-surface-900 dark:text-white">Aktifkan notifikasi</p>
+                    <p class="text-xs text-surface-500 dark:text-surface-400">Dapatkan pengingat tagihan dan info gangguan.</p>
+                    <p class="text-xs mt-1 text-primary-600 dark:text-primary-400" x-show="msg" x-text="msg" x-cloak></p>
+                    <div class="mt-3 flex gap-2">
+                        <button type="button" onclick="subscribeToPush(this)" class="btn-primary btn-sm">Aktifkan</button>
+                        <button type="button" @click="dismissed = true; localStorage.setItem('pwa_prompt_dismissed', 'true')" class="btn-ghost btn-sm">Nanti saja</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     @push('scripts')
     <script>
-        // Check for push subscription status and show prompt
         document.addEventListener('DOMContentLoaded', async () => {
-            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                return;
-            }
-
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
             const registration = await navigator.serviceWorker.ready;
             const subscription = await registration.pushManager.getSubscription();
-            
-            if (!subscription) {
-                document.getElementById('pwa-prompt').classList.remove('hidden');
-            }
+            if (!subscription) document.getElementById('pwa-prompt').classList.remove('hidden');
         });
 
-        async function subscribeToPush() {
+        async function subscribeToPush(btn) {
+            const box = document.getElementById('pwa-prompt');
+            const setMsg = (m) => { if (box && box._x_dataStack) box._x_dataStack[0].msg = m; };
             try {
+                btn.disabled = true;
                 const registration = await navigator.serviceWorker.ready;
                 const subscription = await registration.pushManager.subscribe({
                     userVisibleOnly: true,
                     applicationServerKey: '{{ config('services.webpush.public_key') }}'
                 });
-
-                // Send to server
                 await fetch('{{ route('customer.push.subscribe') }}', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
                     body: JSON.stringify(subscription)
                 });
-
-                document.getElementById('pwa-prompt').classList.add('hidden');
-                alert('Terima kasih! Notifikasi Anda telah aktif.');
+                setMsg('Notifikasi aktif. Terima kasih!');
+                setTimeout(() => box.classList.add('hidden'), 1500);
             } catch (error) {
                 console.error('Failed to subscribe:', error);
-                alert('Gagal mengaktifkan notifikasi. Silakan coba lagi.');
+                setMsg('Gagal mengaktifkan notifikasi. Pastikan izin notifikasi browser diizinkan.');
+                btn.disabled = false;
             }
         }
     </script>
     @endpush
 </x-app-layout>
-

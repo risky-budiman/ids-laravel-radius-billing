@@ -1,40 +1,40 @@
 <x-app-layout>
-    <div class="space-y-4 animate-fade-in pb-10">
-        <div class="flex items-center justify-between px-2">
-            <h2 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">Booster</h2>
+    <div class="max-w-3xl mx-auto space-y-4">
+        <div>
+            <h1 class="text-xl font-semibold tracking-tight text-surface-900 dark:text-white">Booster Kuota</h1>
+            <p class="text-sm text-surface-500 dark:text-surface-400">Tambahan kuota saat pemakaian Anda mencapai batas FUP bulan ini.</p>
         </div>
 
-        <div class="grid grid-cols-1 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             @forelse($boosters as $booster)
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group">
-                    <div class="relative z-10">
-                        <div class="flex justify-between items-center mb-4">
-                            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-md">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-3xl font-black text-indigo-600 dark:text-indigo-400">{{ $booster->quota_gb }}</span>
-                                <span class="text-xs font-black text-gray-400">GB</span>
-                            </div>
+                <div class="card p-5 flex flex-col">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="text-sm font-medium text-surface-900 dark:text-white">{{ $booster->name }}</p>
+                            <p class="mt-1 text-2xl font-semibold tabular-nums text-surface-900 dark:text-white">
+                                {{ $booster->quota_gb }} <span class="text-sm font-medium text-surface-500">GB</span>
+                            </p>
                         </div>
-
-                        <h3 class="text-base font-black text-slate-950 dark:text-white mb-2">{{ $booster->name }}</h3>
-                        
-                        <div class="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-gray-700/50">
-                            <div>
-                                <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Harga</p>
-                                <p class="text-base font-black text-slate-950 dark:text-white">Rp {{ number_format($booster->price, 0, ',', '.') }}</p>
-                            </div>
-                            <form action="{{ route('customer.boosters.buy', $booster->id) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-md">Beli</button>
-                            </form>
-                        </div>
+                        <span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400 shrink-0">
+                            <x-icon name="bolt" class="w-5 h-5" />
+                        </span>
+                    </div>
+                    <div class="mt-5 pt-4 border-t border-surface-200 dark:border-surface-800 flex items-center justify-between gap-3">
+                        <p class="text-base font-semibold tabular-nums text-surface-900 dark:text-white">Rp {{ number_format($booster->price, 0, ',', '.') }}</p>
+                        <form action="{{ route('customer.boosters.buy', $booster->id) }}" method="POST"
+                              onsubmit="return confirm('Beli {{ addslashes($booster->name) }} ({{ $booster->quota_gb }} GB) seharga Rp {{ number_format($booster->price, 0, ',', '.') }}?')">
+                            @csrf
+                            <button type="submit" class="btn-primary btn-sm">Beli</button>
+                        </form>
                     </div>
                 </div>
             @empty
-                <div class="bg-white dark:bg-gray-800 p-10 rounded-2xl text-center border border-dashed border-gray-200 dark:border-gray-700">
-                    <p class="text-xs text-gray-500 font-bold">Belum ada paket Booster tersedia.</p>
+                <div class="card sm:col-span-2 px-6 py-12 text-center">
+                    <div class="mx-auto w-10 h-10 rounded-full bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-400 mb-3">
+                        <x-icon name="bolt" class="w-5 h-5" />
+                    </div>
+                    <p class="text-sm font-medium text-surface-700 dark:text-surface-200">Belum ada paket booster</p>
+                    <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5">Paket booster akan tampil di sini bila tersedia.</p>
                 </div>
             @endforelse
         </div>
