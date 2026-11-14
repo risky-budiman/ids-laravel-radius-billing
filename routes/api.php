@@ -64,99 +64,115 @@ Route::prefix('v1/admin')->name('api.admin.')->group(function () {
     // Public: Login
     Route::post('/login', [AdminAuthController::class, 'login']);
 
-    // Protected: All admin routes require Sanctum token + active staff role
+    // Protected: semua route admin wajib token Sanctum milik STAF yang aktif.
+    // Batasan role per kelompok disamakan dengan route web (routes/web.php).
     Route::middleware(['auth:sanctum', 'admin.role'])->group(function () {
-        // Auth
+        // Auth & Dashboard (semua staf)
         Route::post('/logout', [AdminAuthController::class, 'logout']);
         Route::get('/profile', [AdminAuthController::class, 'profile']);
-
-        // Dashboard
         Route::get('/dashboard', [AdminDashboardController::class, 'index']);
 
-        // Customers (Fase 3)
-        Route::get('/customers/form-data', [AdminCustomerController::class, 'formData']);
-        Route::post('/customers/bulk-action', [AdminCustomerController::class, 'bulkAction']);
-        Route::post('/customers/{id}/reset-fup', [AdminCustomerController::class, 'resetFup']);
-        Route::apiResource('/customers', AdminCustomerController::class);
+        // Customers (Fase 3) — operasional
+        Route::middleware('admin.role:administrator,admin,teknisi,sales')->group(function () {
+            Route::get('/customers/form-data', [AdminCustomerController::class, 'formData']);
+            Route::post('/customers/bulk-action', [AdminCustomerController::class, 'bulkAction']);
+            Route::post('/customers/{id}/reset-fup', [AdminCustomerController::class, 'resetFup']);
+            Route::apiResource('/customers', AdminCustomerController::class)->except(['destroy']);
+        });
+        Route::delete('/customers/{customer}', [AdminCustomerController::class, 'destroy'])
+            ->middleware('admin.role:administrator,admin')->name('customers.destroy');
 
-        // Packages (Fase 4)
-        Route::apiResource('/packages', AdminPackageController::class);
+        // Packages (Fase 4) — baca: semua staf, ubah: admin
+        Route::apiResource('/packages', AdminPackageController::class)->only(['index', 'show']);
+        Route::apiResource('/packages', AdminPackageController::class)->only(['store', 'update', 'destroy'])
+            ->middleware('admin.role:administrator,admin');
 
-        // Invoices (Fase 5)
-        Route::post('/invoices/bulk-mark-paid', [AdminInvoiceController::class, 'bulkMarkPaid']);
-        Route::post('/invoices/bulk-delete', [AdminInvoiceController::class, 'bulkDelete']);
-        Route::post('/invoices/{id}/pay', [AdminInvoiceController::class, 'pay']);
-        Route::post('/invoices/{id}/whatsapp', [AdminInvoiceController::class, 'sendWhatsApp']);
-        Route::apiResource('/invoices', AdminInvoiceController::class);
+        // Invoices (Fase 5) — admin & kasir
+        Route::middleware('admin.role:administrator,admin,kasir')->group(function () {
+            Route::post('/invoices/bulk-mark-paid', [AdminInvoiceController::class, 'bulkMarkPaid']);
+            Route::post('/invoices/bulk-delete', [AdminInvoiceController::class, 'bulkDelete']);
+            Route::post('/invoices/{id}/pay', [AdminInvoiceController::class, 'pay']);
+            Route::post('/invoices/{id}/whatsapp', [AdminInvoiceController::class, 'sendWhatsApp']);
+            Route::apiResource('/invoices', AdminInvoiceController::class);
+        });
 
         // Tickets (Fase 6)
-        Route::post('/tickets/{id}/claim', [AdminTicketController::class, 'claim']);
-        Route::post('/tickets/{id}/reply', [AdminTicketController::class, 'reply']);
-        Route::post('/tickets/{id}/close', [AdminTicketController::class, 'close']);
-        Route::apiResource('/tickets', AdminTicketController::class);
+        Route::middleware('admin.role:administrator,admin,teknisi,sales')->group(function () {
+            Route::post('/tickets/{id}/claim', [AdminTicketController::class, 'claim']);
+            Route::post('/tickets/{id}/reply', [AdminTicketController::class, 'reply']);
+            Route::post('/tickets/{id}/close', [AdminTicketController::class, 'close']);
+            Route::apiResource('/tickets', AdminTicketController::class);
+        });
 
-        // Online Users & RADIUS (Fase 7)
-        Route::get('/online-users', [AdminOnlineUserController::class, 'index']);
-        Route::post('/online-users/{id}/kick', [AdminOnlineUserController::class, 'kick']);
-        Route::post('/online-users/{id}/force-close', [AdminOnlineUserController::class, 'forceClose']);
+        // Online Users, NOC, Inventory (Fase 7-9) — teknis
+        Route::middleware('admin.role:administrator,admin,teknisi')->group(function () {
+            Route::get('/online-users', [AdminOnlineUserController::class, 'index']);
+            Route::post('/online-users/{id}/kick', [AdminOnlineUserController::class, 'kick']);
+            Route::post('/online-users/{id}/force-close', [AdminOnlineUserController::class, 'forceClose']);
 
-        // NOC & OLT (Fase 8)
-        Route::get('/noc', [AdminNocController::class, 'index']);
-        Route::get('/noc/discovery', [AdminNocController::class, 'discovery']);
-        Route::get('/noc/signals', [AdminNocController::class, 'signals']);
-        Route::post('/noc/olts/{id}/test-connection', [AdminNocController::class, 'testConnection']);
+            Route::get('/noc', [AdminNocController::class, 'index']);
+            Route::get('/noc/discovery', [AdminNocController::class, 'discovery']);
+            Route::get('/noc/signals', [AdminNocController::class, 'signals']);
+            Route::post('/noc/olts/{id}/test-connection', [AdminNocController::class, 'testConnection']);
 
-        // Inventory & Fixed Assets (Fase 9)
-        Route::get('/inventory', [AdminInventoryController::class, 'index']);
-        Route::post('/inventory', [AdminInventoryController::class, 'store']);
-        Route::get('/inventory/{id}/serials', [AdminInventoryController::class, 'serials']);
-        Route::post('/inventory/{id}/movement', [AdminInventoryController::class, 'recordMovement']);
-        Route::get('/inventory/fixed-assets', [AdminInventoryController::class, 'fixedAssets']);
-        Route::get('/inventory/suppliers', [AdminInventoryController::class, 'suppliers']);
+            Route::get('/inventory', [AdminInventoryController::class, 'index']);
+            Route::post('/inventory', [AdminInventoryController::class, 'store']);
+            Route::get('/inventory/{id}/serials', [AdminInventoryController::class, 'serials']);
+            Route::post('/inventory/{id}/movement', [AdminInventoryController::class, 'recordMovement']);
+            Route::get('/inventory/fixed-assets', [AdminInventoryController::class, 'fixedAssets']);
+            Route::get('/inventory/suppliers', [AdminInventoryController::class, 'suppliers']);
 
-        // Finance (Fase 10)
-        Route::get('/finance/accounts', [AdminFinanceController::class, 'accounts']);
-        Route::post('/finance/accounts', [AdminFinanceController::class, 'storeAccount']);
-        Route::put('/finance/accounts/{id}', [AdminFinanceController::class, 'updateAccount']);
-        Route::delete('/finance/accounts/{id}', [AdminFinanceController::class, 'deleteAccount']);
-        Route::get('/finance/transactions', [AdminFinanceController::class, 'transactions']);
-        Route::post('/finance/transaction', [AdminFinanceController::class, 'recordTransaction']);
-        Route::post('/finance/transfer', [AdminFinanceController::class, 'transfer']);
+            // GenieACS — perangkat pelanggan
+            Route::get('/genieacs/servers', [AdminGenieAcsController::class, 'servers']);
+            Route::get('/genieacs/devices', [AdminGenieAcsController::class, 'devices']);
+            Route::get('/genieacs/devices/{deviceId}', [AdminGenieAcsController::class, 'showDevice']);
+            Route::post('/genieacs/devices/{deviceId}/reboot', [AdminGenieAcsController::class, 'rebootDevice']);
+            Route::post('/genieacs/devices/{deviceId}/refresh', [AdminGenieAcsController::class, 'refreshDevice']);
+            Route::post('/genieacs/devices/{deviceId}/config', [AdminGenieAcsController::class, 'updateConfig']);
+            Route::post('/genieacs/devices/{deviceId}/tags', [AdminGenieAcsController::class, 'updateTags']);
+        });
 
-        // Accounting (Fase 11)
-        Route::get('/accounting/coa', [AdminAccountingController::class, 'coa']);
-        Route::get('/accounting/journals', [AdminAccountingController::class, 'journals']);
-        Route::get('/accounting/profit-loss', [AdminAccountingController::class, 'profitLoss']);
-        Route::get('/accounting/balance-sheet', [AdminAccountingController::class, 'balanceSheet']);
-        Route::get('/accounting/cash-flow', [AdminAccountingController::class, 'cashFlow']);
-        Route::get('/accounting/tax-summary', [AdminAccountingController::class, 'taxSummary']);
-        Route::get('/accounting/ledger', [AdminAccountingController::class, 'ledger']);
-        Route::get('/accounting/closing-periods', [AdminAccountingController::class, 'closingPeriods']);
-        Route::post('/accounting/closing/process', [AdminAccountingController::class, 'processClosing']);
-        Route::post('/accounting/closing/reopen', [AdminAccountingController::class, 'reopenClosing']);
-        Route::post('/accounting/sync-journals', [AdminAccountingController::class, 'syncJournals']);
-        Route::delete('/accounting/journals/bulk', [AdminAccountingController::class, 'bulkDestroyJournals']);
-        Route::delete('/accounting/journals/{id}', [AdminAccountingController::class, 'destroyJournal']);
+        // Finance (Fase 10) — kasir boleh lihat & catat transaksi, kelola rekening/transfer: admin
+        Route::middleware('admin.role:administrator,admin,kasir')->group(function () {
+            Route::get('/finance/accounts', [AdminFinanceController::class, 'accounts']);
+            Route::get('/finance/transactions', [AdminFinanceController::class, 'transactions']);
+            Route::post('/finance/transaction', [AdminFinanceController::class, 'recordTransaction']);
+        });
+        Route::middleware('admin.role:administrator,admin')->group(function () {
+            Route::post('/finance/accounts', [AdminFinanceController::class, 'storeAccount']);
+            Route::put('/finance/accounts/{id}', [AdminFinanceController::class, 'updateAccount']);
+            Route::delete('/finance/accounts/{id}', [AdminFinanceController::class, 'deleteAccount']);
+            Route::post('/finance/transfer', [AdminFinanceController::class, 'transfer']);
 
-        // System Admin (Fase 12)
-        Route::get('/admin/users', [AdminSystemAdminController::class, 'users']);
-        Route::post('/admin/users', [AdminSystemAdminController::class, 'storeUser']);
-        Route::post('/admin/users/{id}/toggle-status', [AdminSystemAdminController::class, 'toggleUserStatus']);
-        Route::get('/admin/settings', [AdminSystemAdminController::class, 'settings']);
-        Route::post('/admin/settings', [AdminSystemAdminController::class, 'updateSettings']);
-        Route::get('/admin/locations', [AdminSystemAdminController::class, 'networkLocations']);
+            // Accounting (Fase 11)
+            Route::get('/accounting/coa', [AdminAccountingController::class, 'coa']);
+            Route::get('/accounting/journals', [AdminAccountingController::class, 'journals']);
+            Route::get('/accounting/profit-loss', [AdminAccountingController::class, 'profitLoss']);
+            Route::get('/accounting/balance-sheet', [AdminAccountingController::class, 'balanceSheet']);
+            Route::get('/accounting/cash-flow', [AdminAccountingController::class, 'cashFlow']);
+            Route::get('/accounting/tax-summary', [AdminAccountingController::class, 'taxSummary']);
+            Route::get('/accounting/ledger', [AdminAccountingController::class, 'ledger']);
+            Route::get('/accounting/closing-periods', [AdminAccountingController::class, 'closingPeriods']);
+            Route::post('/accounting/closing/process', [AdminAccountingController::class, 'processClosing']);
+            Route::post('/accounting/closing/reopen', [AdminAccountingController::class, 'reopenClosing']);
+            Route::post('/accounting/sync-journals', [AdminAccountingController::class, 'syncJournals']);
+            Route::delete('/accounting/journals/bulk', [AdminAccountingController::class, 'bulkDestroyJournals']);
+            Route::delete('/accounting/journals/{id}', [AdminAccountingController::class, 'destroyJournal']);
+        });
 
-        // GenieACS (TR-069 & CPE Management - Fase 13)
-        Route::get('/genieacs/servers', [AdminGenieAcsController::class, 'servers']);
-        Route::post('/genieacs/servers', [AdminGenieAcsController::class, 'storeServer']);
-        Route::put('/genieacs/servers/{id}', [AdminGenieAcsController::class, 'updateServer']);
-        Route::delete('/genieacs/servers/{id}', [AdminGenieAcsController::class, 'destroyServer']);
-        Route::get('/genieacs/devices', [AdminGenieAcsController::class, 'devices']);
-        Route::get('/genieacs/devices/{deviceId}', [AdminGenieAcsController::class, 'showDevice']);
-        Route::post('/genieacs/devices/{deviceId}/reboot', [AdminGenieAcsController::class, 'rebootDevice']);
-        Route::post('/genieacs/devices/{deviceId}/refresh', [AdminGenieAcsController::class, 'refreshDevice']);
-        Route::post('/genieacs/devices/{deviceId}/factory-reset', [AdminGenieAcsController::class, 'factoryResetDevice']);
-        Route::post('/genieacs/devices/{deviceId}/config', [AdminGenieAcsController::class, 'updateConfig']);
-        Route::post('/genieacs/devices/{deviceId}/tags', [AdminGenieAcsController::class, 'updateTags']);
+        // System Admin & konfigurasi server (Fase 12-13) — administrator saja
+        Route::middleware('admin.role:administrator')->group(function () {
+            Route::get('/admin/users', [AdminSystemAdminController::class, 'users']);
+            Route::post('/admin/users', [AdminSystemAdminController::class, 'storeUser']);
+            Route::post('/admin/users/{id}/toggle-status', [AdminSystemAdminController::class, 'toggleUserStatus']);
+            Route::get('/admin/settings', [AdminSystemAdminController::class, 'settings']);
+            Route::post('/admin/settings', [AdminSystemAdminController::class, 'updateSettings']);
+            Route::get('/admin/locations', [AdminSystemAdminController::class, 'networkLocations']);
+
+            Route::post('/genieacs/servers', [AdminGenieAcsController::class, 'storeServer']);
+            Route::put('/genieacs/servers/{id}', [AdminGenieAcsController::class, 'updateServer']);
+            Route::delete('/genieacs/servers/{id}', [AdminGenieAcsController::class, 'destroyServer']);
+            Route::post('/genieacs/devices/{deviceId}/factory-reset', [AdminGenieAcsController::class, 'factoryResetDevice']);
+        });
     });
 });
