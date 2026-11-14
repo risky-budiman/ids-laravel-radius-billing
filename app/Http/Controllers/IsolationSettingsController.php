@@ -57,7 +57,7 @@ class IsolationSettingsController extends Controller
         $data = $request->validate([
             'isolir_enabled' => 'nullable|boolean',
             'isolir_mode' => ['required', Rule::in(['range', 'pool'])],
-            'isolir_group' => ['required', 'string', 'max:64', 'regex:/^[A-Za-z0-9_.\-]+$/'],
+            'isolir_group' => ['nullable', 'string', 'max:64', 'regex:/^[A-Za-z0-9_.\-]+$/'],
             'isolir_ip_start' => 'nullable|required_if:isolir_mode,range|ipv4',
             'isolir_ip_end' => 'nullable|required_if:isolir_mode,range|ipv4',
             'isolir_pool_name' => ['nullable', 'required_if:isolir_mode,pool', 'string', 'max:64', 'regex:/^[A-Za-z0-9_.\-]+$/'],
@@ -93,6 +93,7 @@ class IsolationSettingsController extends Controller
         }
         $data['isolir_allowed_hosts'] = implode("\n", IsolationService::parseHostList((string) ($data['isolir_allowed_hosts'] ?? '')));
 
+        $data['isolir_group'] = ($data['isolir_group'] ?? '') ?: 'ISOLIR';   // grup internal FreeRADIUS, bukan profil MikroTik
         $data['isolir_enabled'] = $request->boolean('isolir_enabled') ? '1' : '0';
         $stats = $this->isolation->saveSettings($data);
 

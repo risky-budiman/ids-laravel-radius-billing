@@ -103,12 +103,14 @@
                         <p class="help-text">IP pelanggan otomatis masuk address list ini — memudahkan aturan firewall.</p>
                     </div>
                     <div>
-                        <label for="isolir_mikrotik_group" class="label">Profil PPP isolir <span class="text-surface-400 font-normal">(opsional)</span></label>
-                        <input id="isolir_mikrotik_group" name="isolir_mikrotik_group" value="{{ $v('isolir_mikrotik_group') }}" class="input font-mono" placeholder="profile-isolir">
+                        <label for="isolir_mikrotik_group" class="label">Profil PPP isolir di MikroTik <span class="text-surface-400 font-normal">(opsional)</span></label>
+                        <input id="isolir_mikrotik_group" name="isolir_mikrotik_group" value="{{ $v('isolir_mikrotik_group') }}" class="input font-mono" placeholder="kosongkan = profil default PPPoE">
+                        <p class="help-text">Kosongkan bila router tidak punya profil khusus isolir — pelanggan memakai profil default PPPoE server. Bila diisi, skrip di bawah membuat profil ini otomatis (salinan profil <span class="font-mono">default</span>) jika belum ada.</p>
                     </div>
                     <div>
-                        <label for="isolir_group" class="label">Nama grup RADIUS</label>
-                        <input id="isolir_group" name="isolir_group" value="{{ $group }}" class="input font-mono" required>
+                        <label for="isolir_group" class="label">Nama grup RADIUS <span class="text-surface-400 font-normal">(internal)</span></label>
+                        <input id="isolir_group" name="isolir_group" value="{{ $group }}" class="input font-mono" placeholder="ISOLIR">
+                        <p class="help-text">Grup di database FreeRADIUS yang dibuat otomatis oleh sistem — <strong>bukan</strong> profil MikroTik dan tidak perlu dibuat di router. Biarkan ISOLIR.</p>
                     </div>
                     <div class="sm:col-span-2">
                         <label for="isolir_page_host" class="label">Alamat server halaman isolir <span class="text-surface-400 font-normal">(untuk contoh skrip di bawah)</span></label>

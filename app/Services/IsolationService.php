@@ -479,6 +479,19 @@ class IsolationService
             $lines[] = '/ppp aaa set use-radius=yes accounting=yes interim-update=5m';
             $lines[] = '';
         }
+        if ($cfg['isolir_mikrotik_group'] !== '') {
+            $profile = $cfg['isolir_mikrotik_group'];
+            $extra = ($cfg['isolir_rate_limit'] !== '' ? ' rate-limit=' . $cfg['isolir_rate_limit'] : '')
+                . ($cfg['isolir_address_list'] !== '' ? ' address-list=' . $cfg['isolir_address_list'] : '');
+            $lines[] = '# Profil PPP isolir (dikirim RADIUS sebagai Mikrotik-Group). Dibuat bila belum ada,';
+            $lines[] = '# disalin dari profil default agar local-address & DNS sama dengan pelanggan biasa.';
+            $lines[] = ":if ([:len [/ppp profile find name=" . $q($profile) . "]] = 0) do={ /ppp profile add name=" . $q($profile) . ' copy-from=default comment="ISOLIR profil" }';
+            if ($extra !== '') {
+                $lines[] = '/ppp profile set [find name=' . $q($profile) . ']' . $extra;
+            }
+            $lines[] = '';
+        }
+
         $lines[] = '# 1) Tujuan yang tetap bisa diakses pelanggan terisolir (billing & pembayaran)';
         $lines[] = "/ip firewall address-list remove [find list={$list} comment~\"^ISOLIR\"]";
         foreach ($this->allowedHosts() as $h) {

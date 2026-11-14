@@ -251,6 +251,27 @@ class IsolationTest extends TestCase
         ])->assertSessionHasErrors('isolir_allowed_hosts');
     }
 
+    public function test_ppp_profile_is_optional_and_created_by_script_when_set(): void
+    {
+        $admin = User::factory()->create(['role' => 'administrator', 'is_active' => true]);
+
+        // Grup kosong -> ISOLIR; profil kosong -> tidak ada Mikrotik-Group (pakai profil default router)
+        $this->actingAs($admin)->post(route('settings.isolation.update'), [
+            'isolir_enabled' => '1', 'isolir_mode' => 'range', 'isolir_group' => '',
+            'isolir_ip_start' => '10.255.0.2', 'isolir_ip_end' => '10.255.0.50', 'isolir_rate_limit' => '256k/256k',
+        ])->assertSessionHasNoErrors();
+        $this->assertSame('ISOLIR', app(IsolationService::class)->groupName());
+        $this->assertNull(RadGroupReply::where('groupname', 'ISOLIR')->where('attribute', 'Mikrotik-Group')->first());
+        $this->assertStringNotContainsString('/ppp profile', app(IsolationService::class)->mikrotikScript());
+
+        // Profil diisi -> dikirim RADIUS & dibuat skrip bila belum ada (salinan profil default)
+        $this->configure(['isolir_mikrotik_group' => 'profile-isolir']);
+        $this->assertSame('profile-isolir', RadGroupReply::where('groupname', 'ISOLIR')->where('attribute', 'Mikrotik-Group')->value('value'));
+        $script = app(IsolationService::class)->mikrotikScript();
+        $this->assertStringContainsString(':if ([:len [/ppp profile find name="profile-isolir"]] = 0) do={ /ppp profile add name="profile-isolir" copy-from=default', $script);
+        $this->assertStringContainsString('/ppp profile set [find name="profile-isolir"] rate-limit=256k/256k address-list=isolir', $script);
+    }
+
     public function test_isolation_page_recognises_customer_by_ip_and_ignores_spoofed_header(): void
     {
         $this->configure([]);
