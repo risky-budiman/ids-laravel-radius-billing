@@ -87,6 +87,7 @@ class LoginRequest extends FormRequest
 
         if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
+            RateLimiter::hit($this->accountThrottleKey(), self::ACCOUNT_DECAY_SECONDS);
 
             throw ValidationException::withMessages([
                 'login' => trans('auth.failed'),
@@ -103,13 +104,21 @@ class LoginRequest extends FormRequest
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        $perIp = RateLimiter::tooManyAttempts($this->throttleKey(), 5);
+        // Batas per AKUN, tidak bergantung IP: menebak password dengan berganti-ganti IP
+        // (atau memalsukan X-Forwarded-For) tetap terhenti.
+        $perAccount = RateLimiter::tooManyAttempts($this->accountThrottleKey(), self::ACCOUNT_MAX_ATTEMPTS);
+
+        if (! $perIp && ! $perAccount) {
             return;
         }
 
         event(new Lockout($this));
 
-        $seconds = RateLimiter::availableIn($this->throttleKey());
+        $seconds = max(
+            $perIp ? RateLimiter::availableIn($this->throttleKey()) : 0,
+            $perAccount ? RateLimiter::availableIn($this->accountThrottleKey()) : 0,
+        );
 
         throw ValidationException::withMessages([
             'login' => trans('auth.throttle', [
@@ -125,5 +134,14 @@ class LoginRequest extends FormRequest
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->string('login')).'|'.$this->ip());
+    }
+
+    /** Maks. gagal login per akun (semua IP) dalam ACCOUNT_DECAY_SECONDS. */
+    public const ACCOUNT_MAX_ATTEMPTS = 20;
+    public const ACCOUNT_DECAY_SECONDS = 900;
+
+    public function accountThrottleKey(): string
+    {
+        return 'login-account|' . Str::transliterate(Str::lower($this->string('login')));
     }
 }

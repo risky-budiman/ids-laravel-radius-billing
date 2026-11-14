@@ -13,7 +13,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->trustProxies(at: '*');
+        // Hanya proxy yang benar-benar di depan aplikasi yang boleh menentukan IP klien lewat
+        // X-Forwarded-For. Dulu '*' (siapa saja): batas percobaan login per IP bisa ditembus
+        // dengan memalsukan header. Default: nginx lokal. Di belakang Cloudflare / load balancer,
+        // isi TRUSTED_PROXIES di .env dengan rentang IP-nya (dipisah koma), atau '*' bila
+        // memang semua lalu lintas melewati proxy tersebut.
+        $trusted = trim((string) env('TRUSTED_PROXIES', '127.0.0.1,::1'));
+        $middleware->trustProxies(at: $trusted === '*' ? '*' : array_values(array_filter(array_map('trim', explode(',', $trusted)))));
 
         $middleware->validateCsrfTokens(except: [
             '/webhooks/midtrans',
