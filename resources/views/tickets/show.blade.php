@@ -5,7 +5,7 @@
                 Detail Tiket <span class="font-mono text-surface-500 dark:text-surface-400 font-normal">{{ $ticket->ticket_number }}</span>
             </h2>
             <div class="flex items-center gap-2">
-                <a href="{{ route(\'tickets.edit\', $ticket) }}" class="btn-secondary">
+                <a href="{{ route('tickets.edit', $ticket) }}" class="btn-secondary">
                     Edit tiket
                 </a>
                 @if(auth()->user()->isAdministrator())

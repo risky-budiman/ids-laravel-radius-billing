@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.5.82] - 2026-11-14
+- fix(ui): restore solid background for invoice payment modals ([fcb18fe])
+- feat(ui): apply design system to remaining admin pages ([6822470])
+- feat(ui): restyle finance pages and add Indonesian error pages ([f3790ae])
+- feat(ui): restyle customer forms, invoice create, ticket detail and form inputs ([b1b9f77])
+- feat(ui): redesign customer detail page with real billing history ([d8ae937])
+- feat(print): global print system and redesigned accounting reports ([eccd032])
+- feat(invoice): modern custom template engine and correct thermal size ([024a741])
+- feat(ui): redesign admin login and invoice print page ([59feac7])
+- feat(ui): redesign customer portal, login and public invoice page ([e02ec73])
+- fix(security): harden RADIUS CoA, login rate limits and debug routes ([57219ef])
+- fix(security): stop invoice enumeration on the public payment portal ([1f1ac37])
+- fix(security): make payment webhooks fail-closed ([87c7d2a])
+- fix(security): restrict admin API to staff tokens and per-role groups ([c63fa31])
+- feat(ui): restyle invoices, tickets and subscribers list pages ([fbc7516])
+- feat(ui): redesign dashboard with clean card layout ([ea49987])
+
+
+
 ## [v1.5.81] - 2026-11-14
 - feat(ui): apply design system to remaining admin pages ([6822470])
 - feat(ui): restyle finance pages and add Indonesian error pages ([f3790ae])
