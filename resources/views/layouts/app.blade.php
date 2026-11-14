@@ -115,6 +115,28 @@
                     </header>
                 @endif
 
+                {{-- Kop dokumen: hanya tampil saat dicetak --}}
+                @if(!$isPortal)
+                    <div class="print-only print-letterhead mb-4 pb-3 border-b-2 border-surface-800">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                @if(get_setting('company_logo'))
+                                    <img src="{{ asset('storage/' . get_setting('company_logo')) }}" alt="" style="max-height:36px; max-width:140px; object-fit:contain;">
+                                @endif
+                                <div>
+                                    <div style="font-size:15px; font-weight:700;">{{ $companyName }}</div>
+                                    @if(get_setting('company_address'))
+                                        <div style="font-size:10.5px; color:#475569;">{{ get_setting('company_address') }}</div>
+                                    @endif
+                                </div>
+                            </div>
+                            <div style="font-size:10.5px; color:#475569; text-align:right; white-space:nowrap;">
+                                Dicetak {{ now()->locale('id')->translatedFormat('d F Y, H:i') }}<br>oleh {{ auth()->user()->name ?? '-' }}
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Header halaman --}}
                 @isset($header)
                     @if(!$isPortal)
@@ -162,6 +184,20 @@
 
         @stack('scripts')
         
+        <!-- Cetak selalu dalam mode terang (hemat tinta & mudah dibaca) -->
+        <script>
+            (function () {
+                let wasDark = false;
+                window.addEventListener('beforeprint', () => {
+                    wasDark = document.documentElement.classList.contains('dark');
+                    document.documentElement.classList.remove('dark');
+                });
+                window.addEventListener('afterprint', () => {
+                    if (wasDark) document.documentElement.classList.add('dark');
+                });
+            })();
+        </script>
+
         <!-- PWA Service Worker Registration -->
         <script>
             if ('serviceWorker' in navigator) {

@@ -65,3 +65,22 @@ if (!function_exists('app_version')) {
         return 'v1.0.0';
     }
 }
+
+if (!function_exists('rupiah')) {
+    /**
+     * Format angka sebagai rupiah.
+     * Mode akuntansi (default): nilai negatif ditulis dalam kurung, mis. (Rp 33.000).
+     */
+    function rupiah($value, int $decimals = 0, bool $accounting = true, bool $prefix = true): string
+    {
+        $value = (float) $value;
+        $abs = number_format(abs($value), $decimals, ',', '.');
+        $text = ($prefix ? 'Rp ' : '') . $abs;
+
+        if ($value < 0) {
+            return $accounting ? '(' . $text . ')' : '-' . $text;
+        }
+
+        return $text;
+    }
+}

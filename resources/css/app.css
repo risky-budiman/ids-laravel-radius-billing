@@ -163,7 +163,80 @@
         @apply block px-3 py-1.5 rounded-md text-[13px] text-surface-500 dark:text-surface-400 transition-colors
                hover:text-surface-900 hover:bg-surface-100 dark:hover:text-white dark:hover:bg-surface-800/70;
     }
+    /* ---- Dokumen laporan keuangan (layar & cetak) ---- */
+    .report-doc {
+        @apply card p-5 sm:p-8 print:p-0 print:border-0;
+    }
+    .report-table { @apply w-full text-sm border-collapse; }
+    .report-table td, .report-table th { @apply py-2 align-top; }
+    .report-table th { @apply text-left text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 border-b border-surface-300 dark:border-surface-700; }
+    .report-section td {
+        @apply pt-6 pb-2 text-xs font-semibold uppercase tracking-wide text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-surface-800;
+    }
+    .report-row td { @apply border-b border-surface-100 dark:border-surface-800/70 text-surface-700 dark:text-surface-300; }
+    .report-row td:first-child { @apply pl-3; }
+    .report-code { @apply font-mono text-xs text-surface-400 mr-2; }
+    .report-subtotal td { @apply pt-2.5 pb-2.5 font-semibold text-surface-900 dark:text-white border-t border-surface-300 dark:border-surface-600; }
+    .report-total td {
+        @apply pt-3 pb-3 text-base font-semibold text-surface-900 dark:text-white border-t-2 border-b-4 border-double border-surface-800 dark:border-surface-300;
+    }
+    .amount { @apply text-right tabular-nums whitespace-nowrap; }
+    .report-table th.amount, .report-table td.amount { @apply text-right pl-4; }
+    .amount-neg { @apply text-rose-600 dark:text-rose-400; }
+
     .nav-subitem-active {
         @apply text-primary-700 font-medium bg-primary-50/70 dark:text-primary-300 dark:bg-primary-500/10;
     }
+}
+
+/* ==========================================================================
+   Cetak (berlaku untuk semua halaman yang memakai layout aplikasi)
+   - Sembunyikan navigasi & tombol, lepaskan area scroll agar seluruh isi tercetak
+   - Halaman bisa menandai elemen dengan .no-print / print:hidden, atau .print-only
+   ========================================================================== */
+.print-only { display: none; }
+
+@media print {
+    @page { size: A4; margin: 12mm 12mm 14mm; }
+
+    html, body {
+        background: #fff !important;
+        color: #0f172a !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Lepaskan layout h-screen/overflow agar konten tidak terpotong satu layar */
+    body > div, #main-scroll, main {
+        display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+    }
+    main { padding: 0 !important; }
+
+    /* Kerangka aplikasi tidak ikut tercetak */
+    aside[aria-label="Navigasi utama"], #main-scroll > header, #main-scroll > footer,
+    nav[aria-label="Navigasi portal"], #notif-permission-banner, #global-toast-container,
+    .no-print, .page-header .btn, .page-header .btn-primary, .page-header .btn-secondary,
+    .page-header button, .page-header form, .page-header a[class*="btn"] {
+        display: none !important;
+    }
+    .print-only { display: block !important; }
+    /* Halaman dengan kop surat formal sendiri (mis. laporan pengeluaran barang) tidak memakai kop global */
+    body:has(.formal-report) .print-letterhead,
+    body:has(.own-letterhead) .print-letterhead { display: none !important; }
+
+    /* Judul halaman tetap tercetak, tanpa latar */
+    .page-header { background: transparent !important; border: 0 !important; }
+    .page-header > div { padding: 0 0 8px !important; }
+
+    /* Kartu & tabel: hemat tinta, rapi di kertas */
+    .card, [class*="shadow"] { box-shadow: none !important; }
+    .card { border-color: #e2e8f0 !important; break-inside: avoid; }
+    table { break-inside: auto; }
+    tr, td, th { break-inside: avoid; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+    a { color: inherit !important; text-decoration: none !important; }
 }
