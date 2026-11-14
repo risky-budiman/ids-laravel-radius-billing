@@ -12,7 +12,8 @@ return [
     'directory' => env('BACKUP_DIRECTORY'),
 
     // Path mysqldump bila tidak ada di PATH (mis. C:/laragon/bin/mysql/.../mysqldump.exe)
-    'mysqldump_path' => env('BACKUP_MYSQLDUMP_PATH', 'mysqldump'),
+    // Kosong = dicari otomatis (PATH, folder instalasi MySQL/MariaDB, lokasi umum)
+    'mysqldump_path' => env('BACKUP_MYSQLDUMP_PATH', ''),
 
     // Salinan ke disk lain di config/filesystems.php (mis. s3, sftp). Kosong = hanya lokal.
     'remote_disk' => env('BACKUP_REMOTE_DISK', ''),

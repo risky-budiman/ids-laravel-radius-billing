@@ -44,7 +44,7 @@ class DatabaseDumpService
         $gzPath = $sqlPath . '.gz';
 
         $command = [
-            (string) config('backup.mysqldump_path', 'mysqldump'),
+            $this->resolveDumpBinary($conn),
             '--host=' . ($cfg['host'] ?? '127.0.0.1'),
             '--port=' . ($cfg['port'] ?? 3306),
             '--user=' . ($cfg['username'] ?? 'root'),
@@ -74,6 +74,62 @@ class DatabaseDumpService
         $this->prune();
 
         return ['file' => basename($gzPath), 'path' => $gzPath, 'size' => File::size($gzPath), 'remote' => $remote];
+    }
+
+    /**
+     * Cari program dump. Proses web server sering tidak punya mysqldump di PATH (mis. Laragon/XAMPP
+     * di Windows), dan MariaDB terbaru menamainya mariadb-dump. Urutan pencarian:
+     * BACKUP_MYSQLDUMP_PATH -> PATH -> folder instalasi server (SELECT @@basedir) -> lokasi umum.
+     */
+    public function resolveDumpBinary(?string $connection = null): string
+    {
+        $configured = trim((string) config('backup.mysqldump_path', ''));
+        if ($configured !== '' && $configured !== 'mysqldump') {
+            if (is_file($configured)) {
+                return $configured;
+            }
+            throw new RuntimeException("BACKUP_MYSQLDUMP_PATH menunjuk ke file yang tidak ada: {$configured}");
+        }
+
+        $isWin = PHP_OS_FAMILY === 'Windows';
+        $names = $isWin ? ['mysqldump.exe', 'mariadb-dump.exe'] : ['mysqldump', 'mariadb-dump'];
+
+        $finder = new \Symfony\Component\Process\ExecutableFinder();
+        foreach (['mysqldump', 'mariadb-dump'] as $name) {
+            if ($found = $finder->find($name)) {
+                return $found;
+            }
+        }
+
+        $candidates = [];
+        try {
+            $baseDir = rtrim((string) \Illuminate\Support\Facades\DB::connection($connection)->selectOne('SELECT @@basedir AS d')?->d, '/\\');
+            if ($baseDir !== '') {
+                foreach ($names as $n) {
+                    $candidates[] = $baseDir . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . $n;
+                }
+            }
+        } catch (\Throwable) {
+            // server tidak bisa ditanya; lanjut ke lokasi umum
+        }
+
+        $globs = $isWin
+            ? ['C:/laragon/bin/mysql/*/bin/', 'C:/xampp/mysql/bin/', 'C:/Program Files/MySQL/*/bin/', 'C:/Program Files/MariaDB*/bin/']
+            : ['/usr/bin/', '/usr/local/bin/', '/usr/local/mysql/bin/', '/opt/homebrew/bin/'];
+        foreach ($globs as $dir) {
+            foreach ($names as $n) {
+                $candidates = array_merge($candidates, glob($dir . $n) ?: []);
+            }
+        }
+
+        foreach ($candidates as $c) {
+            if (is_file($c)) {
+                return $c;
+            }
+        }
+
+        throw new RuntimeException('Program mysqldump tidak ditemukan di server. Pasang paket mysql-client / mariadb-client, '
+            . 'atau isi BACKUP_MYSQLDUMP_PATH di .env dengan path lengkapnya (mis. /usr/bin/mysqldump), lalu jalankan php artisan config:cache.');
     }
 
     /** Kompres bertahap (blok 1 MB) agar dump besar tidak memenuhi memori. */

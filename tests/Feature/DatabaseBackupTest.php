@@ -20,6 +20,7 @@ class DatabaseBackupTest extends TestCase
     use RefreshDatabase;
 
     private string $dir;
+    private string $fakeBinary;
 
     protected function setUp(): void
     {
@@ -27,6 +28,11 @@ class DatabaseBackupTest extends TestCase
         // Folder sementara: test tidak boleh menyentuh backup sungguhan di storage/
         $this->dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'dbbackup-test-' . uniqid();
         config(['backup.directory' => $this->dir]);
+        // Program dump palsu (eksekusinya dipalsukan Process::fake) agar test jalan di mesin tanpa MySQL
+        File::ensureDirectoryExists($this->dir);
+        $this->fakeBinary = $this->dir . DIRECTORY_SEPARATOR . 'fake-mysqldump';
+        file_put_contents($this->fakeBinary, '');
+        config(['backup.mysqldump_path' => $this->fakeBinary]);
 
         // Koneksi default seolah-olah MySQL (data tes tetap di sqlite)
         config(['database.connections.mysql_fake' => [
@@ -136,6 +142,20 @@ class DatabaseBackupTest extends TestCase
         $this->actingAs($admin)->get(route('backup.database.download', 'db_lain.sql.gz'))->assertRedirect(route('backup.index'));
         $this->actingAs(User::factory()->create(['role' => 'admin', 'is_active' => true]))
             ->get(route('backup.database.download', $file))->assertForbidden();
+    }
+
+    public function test_configured_dump_path_must_exist_and_error_explains_the_fix(): void
+    {
+        config(['backup.mysqldump_path' => $this->dir . '/tidak-ada/mysqldump']);
+        try {
+            app(DatabaseDumpService::class)->resolveDumpBinary();
+            $this->fail('harus gagal');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('BACKUP_MYSQLDUMP_PATH', $e->getMessage());
+        }
+
+        config(['backup.mysqldump_path' => $this->fakeBinary]);
+        $this->assertSame($this->fakeBinary, app(DatabaseDumpService::class)->resolveDumpBinary());
     }
 
     public function test_backup_is_scheduled_daily(): void
