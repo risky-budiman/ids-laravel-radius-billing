@@ -22,6 +22,9 @@ class Customer extends Authenticatable
     const STATUS_DISMANTLED = 'dismantled';
     const STATUS_CANCELED = 'canceled';
 
+    /** Layanan sudah/akan dicabut: pembayaran tidak boleh mengaktifkan kembali. */
+    const TERMINATED_STATUSES = [self::STATUS_WAITING_DISMANTLE, self::STATUS_DISMANTLED, self::STATUS_CANCELED];
+
     const TYPE_PERSONAL = 'personal';
     const TYPE_CORPORATE = 'corporate';
     const TYPE_VIP = 'vip';

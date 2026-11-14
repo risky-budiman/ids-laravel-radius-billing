@@ -84,8 +84,11 @@ class InvoiceService
             $bankTx->save();
 
             // 2. Reactivate Customer
+            // Pelunasan tunggakan pelanggan yang sudah/akan dicabut (dismantle) atau dibatalkan
+            // tidak boleh menghidupkan lagi layanannya; aktivasi ulang harus lewat alur aktivasi.
             $customer = $invoice->customer;
-            if ($customer) {
+            $terminated = $customer && in_array($customer->status, Customer::TERMINATED_STATUSES, true);
+            if ($customer && ! $terminated) {
                 $customer->update([
                     'is_active' => true,
                     'status' => Customer::STATUS_ACTIVE

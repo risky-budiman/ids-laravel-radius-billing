@@ -146,4 +146,24 @@ class CustomerLifecycleTest extends TestCase
         $this->assertTrue(BankTransaction::where('description', 'like', '%INV-API-PAY-1%')->where('amount', 150000)->exists());
         $this->assertSame(Customer::STATUS_ACTIVE, $c->fresh()->status);
     }
+
+    public function test_paying_arrears_of_a_dismantled_customer_does_not_reactivate_service(): void
+    {
+        $this->actingAs($this->staff('kasir'));
+
+        foreach ([Customer::STATUS_DISMANTLED, Customer::STATUS_WAITING_DISMANTLE, Customer::STATUS_CANCELED] as $i => $status) {
+            $c = $this->customer("CUST-TERM-$i");
+            Customer::whereKey($c->id)->update(['status' => $status, 'is_active' => false]);
+            $invoice = Invoice::create([
+                'customer_id' => $c->id, 'invoice_number' => "INV-TERM-$i", 'subtotal' => 100000, 'amount' => 100000,
+                'status' => 'unpaid', 'due_date' => now()->subDays(30),
+            ]);
+
+            app(\App\Services\InvoiceService::class)->markAsPaid($invoice->fresh());
+
+            $this->assertSame('paid', $invoice->fresh()->status, "invoice $status harus tetap lunas");
+            $this->assertSame($status, $c->fresh()->status, "pelanggan $status tidak boleh aktif lagi");
+            $this->assertFalse((bool) $c->fresh()->is_active);
+        }
+    }
 }
