@@ -3,10 +3,6 @@
     $enabled = old('isolir_enabled', $cfg['isolir_enabled']) == '1';
     $mode = $v('isolir_mode') ?: 'range';
     $group = $v('isolir_group') ?: 'ISOLIR';
-    $host = $cfg['isolir_page_host'] ?: '<IP-SERVER-BILLING>';
-    $hostIp = explode(':', $host)[0];
-    $rangeText = ($cfg['isolir_ip_start'] && $cfg['isolir_ip_end']) ? $cfg['isolir_ip_start'] . '-' . $cfg['isolir_ip_end'] : '<IP-AWAL>-<IP-AKHIR>';
-    $srcMatch = $cfg['isolir_address_list'] ? 'src-address-list=' . $cfg['isolir_address_list'] : 'src-address=' . $rangeText;
     $pct = $capacity['total'] ? min(100, round($capacity['used'] / $capacity['total'] * 100)) : 0;
 @endphp
 
@@ -77,7 +73,7 @@
                     </div>
                 </fieldset>
 
-                <div class="grid sm:grid-cols-2 gap-4" x-show="mode === 'range'">
+                <div class="grid sm:grid-cols-2 gap-4">
                     <div>
                         <label for="isolir_ip_start" class="label">IP awal</label>
                         <input id="isolir_ip_start" name="isolir_ip_start" value="{{ $v('isolir_ip_start') }}" class="input font-mono" placeholder="10.255.0.2" inputmode="decimal">
@@ -85,7 +81,7 @@
                     <div>
                         <label for="isolir_ip_end" class="label">IP akhir</label>
                         <input id="isolir_ip_end" name="isolir_ip_end" value="{{ $v('isolir_ip_end') }}" class="input font-mono" placeholder="10.255.3.254" inputmode="decimal">
-                        <p class="help-text">Alamat berakhiran .0 dan .255 dilewati. Gunakan subnet yang tidak dipakai pelanggan aktif.</p>
+                        <p class="help-text" x-text="mode === 'range' ? 'Alamat berakhiran .0 dan .255 dilewati. Gunakan subnet yang tidak dipakai pelanggan aktif.' : 'Mode pool: rentang ini dipakai untuk membuat IP pool & aturan firewall di skrip MikroTik.'"></p>
                     </div>
                 </div>
 
@@ -116,8 +112,28 @@
                     </div>
                     <div class="sm:col-span-2">
                         <label for="isolir_page_host" class="label">Alamat server halaman isolir <span class="text-surface-400 font-normal">(untuk contoh skrip di bawah)</span></label>
-                        <input id="isolir_page_host" name="isolir_page_host" value="{{ $v('isolir_page_host') }}" class="input font-mono sm:max-w-sm" placeholder="103.10.10.5:8088">
+                        <input id="isolir_page_host" name="isolir_page_host" value="{{ $v('isolir_page_host') }}" class="input font-mono sm:max-w-sm" placeholder="{{ ($serverIp ?? '103.10.10.5') . ':' . $pagePort }} (otomatis)">
                     </div>
+                </div>
+
+                {{-- Bypass: tujuan yang tetap bisa diakses pelanggan terisolir --}}
+                <div class="pt-2 border-t border-surface-100 dark:border-surface-800">
+                    <p class="label">Tetap bisa diakses saat isolir (bypass)</p>
+                    <p class="help-text !mt-0 mb-3">Server billing & kanal pembayaran agar pelanggan terisolir tetap bisa membayar. Daftar otomatis disusun dari data sistem:</p>
+                    <div class="rounded-lg border border-surface-200 dark:border-surface-700 divide-y divide-surface-100 dark:divide-surface-800 max-h-60 overflow-y-auto">
+                        @forelse($allowedHosts as $h)
+                            <div class="flex items-center justify-between gap-3 px-3 py-1.5 text-xs">
+                                <span class="font-mono text-surface-800 dark:text-surface-200">{{ $h['address'] }}</span>
+                                <span class="text-surface-400 text-right">{{ $h['source'] }}</span>
+                            </div>
+                        @empty
+                            <p class="px-3 py-3 text-xs text-surface-500">Belum ada — isi APP_URL / alamat server, aktifkan gateway pembayaran, atau tambah manual.</p>
+                        @endforelse
+                    </div>
+                    <label for="isolir_allowed_hosts" class="label mt-4">Tambahan manual <span class="text-surface-400 font-normal">(opsional, satu per baris)</span></label>
+                    <textarea id="isolir_allowed_hosts" name="isolir_allowed_hosts" rows="3" class="input !h-auto font-mono text-xs"
+                              placeholder="# domain, IP, atau CIDR&#10;bayar.contoh-bank.co.id&#10;103.20.30.0/24">{{ $v('isolir_allowed_hosts') }}</textarea>
+                    <p class="help-text">Mis. halaman bank / e-wallet lain. Wildcard (*.domain) tidak didukung MikroTik — tulis domain lengkapnya.</p>
                 </div>
 
                 <label class="flex items-start gap-3 rounded-lg bg-surface-50 dark:bg-surface-800/50 p-4 cursor-pointer">
@@ -134,32 +150,48 @@
             </div>
         </form>
 
-        {{-- Contoh konfigurasi router --}}
+        {{-- Contoh konfigurasi router: diisi otomatis dari data sistem --}}
         <section class="card" x-data="{ copied: false }">
-            <div class="card-header flex items-center justify-between gap-4">
+            <div class="card-header flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h3 class="card-title">Contoh konfigurasi MikroTik</h3>
-                    <p class="text-xs text-surface-500 dark:text-surface-400">Sesuaikan dengan jaringan Anda sebelum dijalankan di setiap router (NAS).</p>
+                    <h3 class="card-title">Skrip MikroTik (otomatis dari data sistem)</h3>
+                    <p class="text-xs text-surface-500 dark:text-surface-400">
+                        Server billing: <span class="font-mono">{{ $serverIp ?? 'tidak terdeteksi — isi "Alamat server halaman isolir"' }}</span>
+                        · halaman isolir port <span class="font-mono">{{ $pagePort }}</span>
+                        · {{ count($allowedHosts) }} tujuan bypass
+                    </p>
                 </div>
-                <button type="button" class="btn-secondary btn-sm"
-                        @click="navigator.clipboard.writeText($refs.script.innerText); copied = true; setTimeout(() => copied = false, 1500)">
-                    <span x-text="copied ? 'Tersalin' : 'Salin'"></span>
-                </button>
+                <div class="flex flex-wrap items-center gap-2">
+                    @if($nasList->isNotEmpty())
+                        <form method="GET" action="{{ route('settings.isolation') }}">
+                            <label for="nas" class="sr-only">Router (NAS)</label>
+                            <select id="nas" name="nas" class="input !h-9 !w-auto" onchange="this.form.submit()">
+                                @foreach($nasList as $n)
+                                    <option value="{{ $n->id }}" @selected($nas && $nas->id === $n->id)>{{ $n->shortname ?: $n->nasname }} ({{ $n->nasname }})</option>
+                                @endforeach
+                            </select>
+                        </form>
+                    @endif
+                    <button type="button" class="btn-secondary btn-sm"
+                            @click="navigator.clipboard.writeText($refs.script.innerText); copied = true; setTimeout(() => copied = false, 1500)">
+                        <span x-text="copied ? 'Tersalin' : 'Salin'"></span>
+                    </button>
+                    <a href="{{ route('settings.isolation.script', ['nas' => $nas?->id]) }}" class="btn-primary btn-sm">Unduh .rsc</a>
+                </div>
             </div>
-<pre x-ref="script" class="m-0 overflow-x-auto bg-surface-950 text-surface-100 text-xs leading-relaxed p-5 rounded-b-xl font-mono"><code>@if($cfg['isolir_mode'] === 'pool')/ip pool add name={{ $cfg['isolir_pool_name'] ?: 'pool-isolir' }} ranges={{ $rangeText }}
-@endif
-# Izinkan DNS & akses ke server billing, arahkan HTTP ke halaman isolir, blokir sisanya
-/ip firewall nat add chain=dstnat {{ $srcMatch }} protocol=tcp dst-port=80 dst-address=!{{ $hostIp }} action=dst-nat to-addresses={{ $hostIp }} to-ports={{ explode(':', $host)[1] ?? '80' }} comment="Isolir: redirect ke halaman tagihan"
-/ip firewall filter add chain=forward {{ $srcMatch }} dst-address={{ $hostIp }} action=accept comment="Isolir: izinkan server billing"
-/ip firewall filter add chain=forward {{ $srcMatch }} protocol=udp dst-port=53 action=accept comment="Isolir: izinkan DNS"
-/ip firewall filter add chain=forward {{ $srcMatch }} action=drop comment="Isolir: blokir internet"</code></pre>
-            <div class="card-body text-xs text-surface-500 dark:text-surface-400 space-y-2">
-                <p>Halaman isolir tersedia di <span class="font-mono text-surface-700 dark:text-surface-200">{{ route('isolation.page') }}</span>. Karena redirect MikroTik tidak bisa mengubah path, siapkan port khusus di nginx yang selalu menampilkan halaman ini, misalnya:</p>
-<pre class="m-0 overflow-x-auto bg-surface-100 dark:bg-surface-800 text-surface-800 dark:text-surface-200 p-3 rounded-lg font-mono">server {
-    listen {{ explode(':', $host)[1] ?? '8088' }};
-    location / { proxy_pass http://127.0.0.1/isolir; proxy_set_header Host {{ parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost' }}; proxy_set_header X-Forwarded-For $remote_addr; }
-}</pre>
-                <p>Pastikan aplikasi mempercayai header <span class="font-mono">X-Forwarded-For</span> dari 127.0.0.1 agar pelanggan dikenali dari IP isolirnya.</p>
+<pre x-ref="script" class="m-0 max-h-[28rem] overflow-auto bg-surface-950 text-surface-100 text-xs leading-relaxed p-5 font-mono">{{ $script }}</pre>
+            <div class="card-body text-xs text-surface-500 dark:text-surface-400 space-y-3">
+                <p>
+                    Jalankan di <strong>setiap router</strong> (pilih router di atas — bagian RADIUS memakai secret NAS tersebut).
+                    Unggah file <span class="font-mono">.rsc</span> ke router lalu jalankan <span class="font-mono">/import isolir-{{ $nas?->shortname ?: 'mikrotik' }}.rsc</span>, atau tempel di Terminal.
+                    Skrip aman dijalankan ulang setiap kali daftar bypass berubah.
+                </p>
+                <p>Halaman isolir: siapkan port khusus nginx di server billing yang selalu menampilkan <span class="font-mono">{{ route('isolation.page') }}</span>:</p>
+<pre class="m-0 overflow-x-auto bg-surface-100 dark:bg-surface-800 text-surface-800 dark:text-surface-200 p-3 rounded-lg font-mono">{{ $nginx }}</pre>
+                <p>
+                    Agar halaman isolir mengenali pelanggan, server billing harus melihat IP isolir asli (tanpa masquerade dari router).
+                    Bila tidak, halaman tetap tampil dengan tombol masuk ke portal pelanggan.
+                </p>
             </div>
         </section>
 

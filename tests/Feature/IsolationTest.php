@@ -199,6 +199,58 @@ class IsolationTest extends TestCase
         $this->assertSame(['Paket-50M'], $this->radGroups($c));
     }
 
+    public function test_bypass_list_is_built_from_system_data(): void
+    {
+        config(['app.url' => 'https://billing.contoh.net']);
+        \App\Models\Gateway::create(['name' => 'Midtrans', 'provider' => 'midtrans', 'type' => 'payment', 'is_active' => true, 'credentials' => []]);
+        \App\Models\Gateway::create(['name' => 'Duitku', 'provider' => 'duitku', 'type' => 'payment', 'is_active' => false, 'credentials' => []]);
+        $c = $this->activeCustomer();
+        Invoice::create(['customer_id' => $c->id, 'invoice_number' => 'INV-PG-1', 'amount' => 1, 'subtotal' => 1, 'status' => 'unpaid',
+            'due_date' => now(), 'payment_url' => 'https://checkout.gateway-baru.co.id/pay/abc']);
+        $this->configure(['isolir_page_host' => '103.10.10.5:8088', 'isolir_allowed_hosts' => "bayar.bank.co.id\n10.20.0.0/24"]);
+
+        $hosts = collect(app(IsolationService::class)->allowedHosts())->pluck('source', 'address');
+
+        $this->assertSame('Aplikasi billing (APP_URL)', $hosts['billing.contoh.net']);
+        $this->assertSame('Server halaman isolir', $hosts['103.10.10.5']);
+        $this->assertSame('Gateway Midtrans', $hosts['app.midtrans.com']);
+        $this->assertArrayNotHasKey('passport.duitku.com', $hosts->all(), 'gateway nonaktif tidak dibuka');
+        $this->assertSame('Dari link pembayaran invoice', $hosts['checkout.gateway-baru.co.id']);
+        $this->assertSame('Tambahan manual', $hosts['bayar.bank.co.id']);
+        $this->assertSame('Tambahan manual', $hosts['10.20.0.0/24']);
+    }
+
+    public function test_mikrotik_script_is_filled_from_system_data_and_downloadable(): void
+    {
+        $this->configure(['isolir_page_host' => '103.10.10.5:8088', 'isolir_address_list' => '']);
+        $nas = Nas::first();
+        $admin = User::factory()->create(['role' => 'administrator', 'is_active' => true]);
+
+        $script = app(IsolationService::class)->mikrotikScript($nas);
+
+        $this->assertStringContainsString('/radius add address=103.10.10.5 secret="sec-a"', $script);
+        $this->assertStringContainsString('/radius incoming set accept=yes port=3799', $script);
+        $this->assertStringContainsString('src-address=10.255.0.254-10.255.1.10', $script);
+        $this->assertStringContainsString('address-list add list=isolir-allow address=103.10.10.5', $script);
+        $this->assertStringContainsString('to-addresses=103.10.10.5 to-ports=8088', $script);
+        $this->assertStringContainsString('dst-address-list=!isolir-allow', $script);
+        $this->assertStringContainsString('remove [find comment~"^ISOLIR:"]', $script, 'harus aman dijalankan ulang');
+        $this->assertStringNotContainsString('<IP-', $script, 'tidak boleh ada placeholder bila data tersedia');
+
+        $res = $this->actingAs($admin)->get(route('settings.isolation.script', ['nas' => $nas->id]));
+        $res->assertOk()->assertHeader('Content-Disposition', 'attachment; filename="isolir-nas-a.rsc"');
+        $this->assertStringContainsString('# Router: nas-a (10.0.0.1)', $res->getContent());
+
+        $this->actingAs($admin)->get(route('settings.isolation'))->assertOk()
+            ->assertSee('Skrip MikroTik (otomatis dari data sistem)')->assertSee('rewrite ^ /isolir break;', false);
+
+        // Entri manual tidak valid ditolak
+        $this->actingAs($admin)->post(route('settings.isolation.update'), [
+            'isolir_enabled' => '1', 'isolir_mode' => 'range', 'isolir_group' => 'ISOLIR',
+            'isolir_ip_start' => '10.255.0.2', 'isolir_ip_end' => '10.255.0.50', 'isolir_allowed_hosts' => "*.midtrans.com\nok.co.id",
+        ])->assertSessionHasErrors('isolir_allowed_hosts');
+    }
+
     public function test_isolation_page_recognises_customer_by_ip_and_ignores_spoofed_header(): void
     {
         $this->configure([]);

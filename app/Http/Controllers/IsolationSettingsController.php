@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\CustomerIsolation;
+use App\Models\Radius\Nas;
 use App\Services\CustomerLifecycleService;
 use App\Services\IsolationService;
 use Illuminate\Http\Request;
@@ -18,13 +19,36 @@ class IsolationSettingsController extends Controller
     {
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $nasList = Nas::orderBy('shortname')->get(['id', 'nasname', 'shortname', 'secret']);
+        $nas = $nasList->firstWhere('id', (int) $request->query('nas')) ?? $nasList->first();
+
         return view('settings.isolation', [
             'cfg' => $this->isolation->config(),
             'capacity' => $this->isolation->capacity(),
             'isolations' => CustomerIsolation::with('customer:id,name,customer_code,username,status')->latest('isolated_at')->limit(200)->get(),
             'suspendedCount' => Customer::where('status', Customer::STATUS_SUSPENDED)->count(),
+            'allowedHosts' => $this->isolation->allowedHosts(),
+            'nasList' => $nasList,
+            'nas' => $nas,
+            'serverIp' => $this->isolation->serverIp(),
+            'pagePort' => $this->isolation->pagePort(),
+            'script' => $this->isolation->mikrotikScript($nas),
+            'nginx' => $this->isolation->nginxSnippet(),
+        ]);
+    }
+
+    /** Unduh skrip RouterOS (.rsc) untuk NAS terpilih, siap di-import: /import isolir.rsc */
+    public function script(Request $request)
+    {
+        $nas = Nas::find((int) $request->query('nas'));
+        $name = 'isolir-' . ($nas ? preg_replace('/[^A-Za-z0-9_-]+/', '-', $nas->shortname ?: $nas->nasname) : 'mikrotik') . '.rsc';
+
+        return response($this->isolation->mikrotikScript($nas), 200, [
+            'Content-Type' => 'text/plain; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $name . '"',
+            'Cache-Control' => 'no-store',
         ]);
     }
 
@@ -40,7 +64,8 @@ class IsolationSettingsController extends Controller
             'isolir_rate_limit' => ['nullable', 'string', 'max:64', 'regex:/^[0-9A-Za-z\/ .]+$/'],
             'isolir_address_list' => ['nullable', 'string', 'max:64', 'regex:/^[A-Za-z0-9_.\-]+$/'],
             'isolir_mikrotik_group' => ['nullable', 'string', 'max:64', 'regex:/^[A-Za-z0-9_.\-]+$/'],
-            'isolir_page_host' => 'nullable|string|max:255',
+            'isolir_page_host' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9.\-]+(:\d{1,5})?$/'],
+            'isolir_allowed_hosts' => 'nullable|string|max:5000',
             'disconnect_now' => 'nullable|boolean',
         ], [
             'isolir_ip_start.required_if' => 'IP awal wajib diisi untuk mode rentang IP.',
@@ -59,6 +84,14 @@ class IsolationSettingsController extends Controller
                 return back()->withInput()->withErrors(['isolir_ip_end' => 'Rentang terlalu besar (maksimal 65.536 alamat).']);
             }
         }
+
+        $invalid = array_filter(IsolationService::parseHostList((string) ($data['isolir_allowed_hosts'] ?? '')),
+            fn ($h) => ! IsolationService::isValidAllowEntry($h));
+        if ($invalid) {
+            return back()->withInput()->withErrors(['isolir_allowed_hosts' => 'Entri tidak valid: ' . implode(', ', $invalid)
+                . '. Gunakan nama domain (mis. checkout.xendit.co), IP, atau CIDR; wildcard (*) tidak didukung MikroTik.']);
+        }
+        $data['isolir_allowed_hosts'] = implode("\n", IsolationService::parseHostList((string) ($data['isolir_allowed_hosts'] ?? '')));
 
         $data['isolir_enabled'] = $request->boolean('isolir_enabled') ? '1' : '0';
         $stats = $this->isolation->saveSettings($data);
