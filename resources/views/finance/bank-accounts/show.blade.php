@@ -14,9 +14,14 @@
                     </p>
                 </div>
             </div>
+            <div class="flex flex-wrap items-center gap-3">
+            <a href="{{ route('bank-statement.index', ['account' => $bankAccount->id]) }}" class="btn-secondary">
+                <x-icon name="receipt" class="w-4 h-4" /> Rekening Koran
+            </a>
             <div class="bg-emerald-50 dark:bg-emerald-900/20 px-6 py-3 rounded-xl border border-emerald-100 dark:border-emerald-800/50">
                 <p class="text-xs text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mb-1">Saldo Saat Ini</p>
                 <p class="text-2xl font-semibold text-emerald-700 dark:text-emerald-300 tabular-nums">Rp {{ number_format($bankAccount->balance, 0, ',', '.') }}</p>
+            </div>
             </div>
         </div>
     </x-slot>

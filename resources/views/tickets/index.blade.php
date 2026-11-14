@@ -6,6 +6,11 @@
                 <p class="page-subtitle">Aktivasi, gangguan, dan dismantle pelanggan.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
+                @if(auth()->user()->isAdmin())
+                    <a href="{{ route('tickets.recap') }}" class="btn-ghost">
+                        <x-icon name="chart-bar" class="w-4 h-4" /> Rekap Bulanan / Tahunan
+                    </a>
+                @endif
                 <a href="{{ route('tickets.create', ['type' => 'dismantle']) }}" class="btn-secondary">
                     <x-icon name="plus" class="w-4 h-4" /> Dismantle
                 </a>

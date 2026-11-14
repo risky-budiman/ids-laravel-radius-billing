@@ -27,7 +27,11 @@ class Ticket extends Model
 
     protected $casts = [
         'due_date' => 'date',
+        'resolved_at' => 'datetime',
     ];
+
+    /** Status yang berarti pekerjaan tiket sudah selesai. */
+    public const DONE_STATUSES = ['resolved', 'closed'];
 
     public function customer()
     {
@@ -93,6 +97,22 @@ class Ticket extends Model
                 $prefix = get_setting($prefixKey, $fallbacks[$type] ?? 'TKT');
                 $count = static::whereDate('created_at', now()->toDateString())->count();
                 $ticket->ticket_number = $prefix . '/' . now()->format('Ymd') . '/' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+            }
+        });
+
+        // Catat waktu selesai untuk rekap kinerja tim. RESOLVED -> CLOSED tidak mengubahnya;
+        // tiket yang dibuka ulang / dibatalkan dikosongkan lagi.
+        static::saving(function ($ticket) {
+            if (! $ticket->isDirty('status') && $ticket->exists) {
+                return;
+            }
+            $done = in_array($ticket->status, self::DONE_STATUSES, true);
+            $wasDone = $ticket->exists && in_array($ticket->getOriginal('status'), self::DONE_STATUSES, true);
+
+            if ($done && (! $wasDone || ! $ticket->resolved_at)) {
+                $ticket->resolved_at = now();
+            } elseif (! $done) {
+                $ticket->resolved_at = null;
             }
         });
 

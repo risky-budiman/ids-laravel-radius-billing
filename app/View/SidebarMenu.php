@@ -81,7 +81,10 @@ class SidebarMenu
             $management[] = self::link('Routers (NAS)', 'nas.index', 'server', ['nas.*']);
         }
         if ($isAdmin || $isTeknisi || $isSales) {
-            $management[] = self::link('Tickets', 'tickets.index', 'ticket', ['tickets.*']);
+            $management[] = self::link('Tickets', 'tickets.index', 'ticket', ['tickets.index', 'tickets.create', 'tickets.show', 'tickets.edit']);
+        }
+        if ($isAdmin) {
+            $management[] = self::link('Rekap Tiket', 'tickets.recap', 'chart-bar', ['tickets.recap*']);
         }
         $sections[] = ['label' => 'Management', 'items' => $management];
 
@@ -101,6 +104,7 @@ class SidebarMenu
         $finance = [];
         if ($isAdmin || $isKasir) {
             $finance[] = self::link('Kas & Bank', 'bank-accounts.index', 'credit-card', ['bank-accounts.*', 'bank-transactions.*']);
+            $finance[] = self::link('Rekening Koran', 'bank-statement.index', 'receipt', ['bank-statement.*']);
         }
         // Route accounting.* hanya untuk administrator & admin.
         if ($isAdmin) {

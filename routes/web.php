@@ -180,6 +180,11 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
 
     // TICKETS: Admin, Teknisi & Sales
     Route::middleware('role:administrator,admin,teknisi,sales')->group(function () {
+        // Rekap audit pekerjaan tim (didaftarkan sebelum resource agar tidak tertangkap tickets/{ticket})
+        Route::middleware('role:administrator,admin')->group(function () {
+            Route::get('tickets/recap', [\App\Http\Controllers\TicketRecapController::class, 'index'])->name('tickets.recap');
+            Route::get('tickets/recap/export', [\App\Http\Controllers\TicketRecapController::class, 'export'])->name('tickets.recap.export');
+        });
         Route::resource('tickets', \App\Http\Controllers\TicketController::class);
         Route::post('tickets/{ticket}/claim', [\App\Http\Controllers\TicketController::class, 'claim'])->name('tickets.claim');
         Route::post('tickets/{ticket}/reply', [\App\Http\Controllers\TicketController::class, 'reply'])->name('tickets.reply');
@@ -274,6 +279,10 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         });
 
         Route::get('bank-accounts/{bankAccount}', [\App\Http\Controllers\Finance\BankAccountController::class, 'show'])->name('bank-accounts.show');
+
+        // Rekening koran bulanan / tahunan (akses rekening mengikuti halaman detail)
+        Route::get('statement', [\App\Http\Controllers\Finance\BankStatementController::class, 'index'])->name('bank-statement.index');
+        Route::get('statement/export', [\App\Http\Controllers\Finance\BankStatementController::class, 'export'])->name('bank-statement.export');
 
         // Staff/Cashier Specific Actions
         Route::middleware('role:admin,kasir,teknisi')->group(function () {
