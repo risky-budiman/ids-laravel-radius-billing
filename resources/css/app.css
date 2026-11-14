@@ -36,6 +36,11 @@
    Dipakai bertahap oleh halaman-halaman: .card, .btn, .input, .badge, .table
    ========================================================================== */
 @layer components {
+    /* Kompatibilitas: `.glass-card` dulu didefinisikan per halaman; kini alias kartu solid. */
+    .glass-card {
+        @apply bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 shadow-card;
+    }
+
     /* Kompatibilitas: kelas lama `.glass` dipakai di banyak halaman. */
     .glass {
         @apply bg-white/80 dark:bg-surface-900/70 backdrop-blur-xl border border-surface-200/70 dark:border-white/5;

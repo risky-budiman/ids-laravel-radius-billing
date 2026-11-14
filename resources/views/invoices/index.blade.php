@@ -290,7 +290,7 @@
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95"
              x-cloak>
-            <div @click.away="showPaymentModal = false" class="glass-card rounded-lg w-full max-w-lg overflow-hidden relative border border-gray-200 dark:border-gray-700 shadow-elevated">
+            <div @click.away="showPaymentModal = false" class="bg-white dark:bg-surface-900 rounded-xl w-full max-w-lg overflow-hidden relative border border-surface-200 dark:border-surface-800 shadow-elevated">
                 <div class="bg-emerald-600 px-6 py-6 text-white relative">
                     <h3 class="font-bold text-xl tracking-tight">Manual Payment</h3>
                     <p class="text-emerald-100 text-xs font-bold uppercase tracking-wide mt-1 opacity-80">Recording external transaction</p>
@@ -351,7 +351,7 @@
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95"
              x-cloak>
-            <div @click.away="showBulkPayModal = false" class="glass-card rounded-lg w-full max-w-lg overflow-hidden relative border border-gray-200 dark:border-gray-700 shadow-elevated">
+            <div @click.away="showBulkPayModal = false" class="bg-white dark:bg-surface-900 rounded-xl w-full max-w-lg overflow-hidden relative border border-surface-200 dark:border-surface-800 shadow-elevated">
                 <div class="bg-emerald-600 px-6 py-6 text-white relative">
                     <h3 class="font-bold text-xl tracking-tight">Bulk Payment</h3>
                     <p class="text-emerald-100 text-xs font-bold uppercase tracking-wide mt-1 opacity-80">
