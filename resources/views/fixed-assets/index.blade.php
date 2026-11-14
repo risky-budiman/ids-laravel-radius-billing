@@ -22,7 +22,7 @@
         </div>
     @endif
 
-    <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div class="card overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
@@ -48,18 +48,18 @@
                             <td class="px-6 py-4 text-gray-600 dark:text-gray-300">
                                 Rp {{ number_format($asset->purchase_price, 0, ',', '.') }}
                             </td>
-                            <td class="px-6 py-4 font-black text-gray-900 dark:text-gray-100">
+                            <td class="px-6 py-4 font-semibold text-gray-900 dark:text-gray-100">
                                 Rp {{ number_format($asset->net_book_value, 0, ',', '.') }}
-                                <div class="text-[10px] text-gray-400 font-normal">Depreciated: Rp {{ number_format($asset->accumulated_depreciation, 0, ',', '.') }}</div>
+                                <div class="text-xs text-gray-400 font-normal">Depreciated: Rp {{ number_format($asset->accumulated_depreciation, 0, ',', '.') }}</div>
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
                                 {{ $asset->useful_life_months }} months
                             </td>
                             <td class="px-6 py-4">
                                 @if($asset->status === 'active')
-                                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase tracking-widest">Active</span>
+                                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">Active</span>
                                 @else
-                                    <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-[10px] font-black uppercase tracking-widest">Disposed</span>
+                                    <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">Disposed</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-right">

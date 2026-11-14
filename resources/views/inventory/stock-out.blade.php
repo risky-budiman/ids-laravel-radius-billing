@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="max-w-3xl mx-auto">
-        <div class="glass bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="card overflow-hidden">
             <div class="bg-rose-600 px-8 py-6 text-white">
                 <h3 class="font-bold text-lg">Input Barang Keluar</h3>
                 <p class="text-rose-100 text-xs mt-1">Catat pengeluaran barang untuk infrastruktur, pemasangan jalur, atau pemeliharaan.</p>
@@ -98,16 +98,16 @@
                     </div>
                 </div>
 
-                <div x-show="!trackSerial && selectedItem" class="p-4 bg-gray-50 dark:bg-gray-900/30 rounded-2xl border border-gray-100 dark:border-gray-800 flex items-center">
+                <div x-show="!trackSerial && selectedItem" class="p-4 bg-gray-50 dark:bg-gray-900/30 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center">
                     <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <p class="text-xs text-gray-500">Barang ini tidak menggunakan pelacakan Serial Number (Consumables).</p>
                 </div>
 
                 <!-- Serial Number Selection Section -->
-                <div x-show="trackSerial" x-transition class="bg-rose-50/50 dark:bg-rose-900/10 p-6 rounded-2xl border border-dashed border-rose-200 dark:border-rose-800 space-y-4">
-                    <p class="text-xs font-black text-rose-600 uppercase tracking-widest">Pilih Serial Number (SN)</p>
+                <div x-show="trackSerial" x-transition class="bg-rose-50/50 dark:bg-rose-900/10 p-6 rounded-xl border border-dashed border-rose-200 dark:border-rose-800 space-y-4">
+                    <p class="text-xs font-semibold text-rose-600 ">Pilih Serial Number (SN)</p>
                     <div class="flex justify-between items-center">
-                        <p class="text-[10px] text-gray-500">Pilih satu atau lebih SN yang akan dikeluarkan dari gudang.</p>
+                        <p class="text-xs text-gray-500">Pilih satu atau lebih SN yang akan dikeluarkan dari gudang.</p>
                         <x-barcode-scanner />
                     </div>
                     
@@ -126,7 +126,7 @@
                         @endforeach
                     </div>
                     <input type="hidden" name="quantity" x-model="quantity">
-                    <p class="text-[10px] font-bold text-gray-500 uppercase">Item terpilih: <span class="text-rose-600" x-text="quantity"></span></p>
+                    <p class="text-xs font-bold text-gray-500">Item terpilih: <span class="text-rose-600" x-text="quantity"></span></p>
                 </div>
 
                 <div>
@@ -136,7 +136,7 @@
 
                 <div class="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-700">
                     <a href="{{ route('inventory.index') }}" class="px-6 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">Cancel</a>
-                    <button type="submit" :disabled="isSubmitting" @click="isSubmitting = true" class="bg-rose-500 hover:bg-rose-600 disabled:bg-gray-400 text-white px-10 py-2 rounded-xl text-sm font-bold shadow-lg shadow-rose-500/20 transition-all flex items-center">
+                    <button type="submit" :disabled="isSubmitting" @click="isSubmitting = true" class="bg-rose-500 hover:bg-rose-600 disabled:bg-gray-400 text-white px-10 py-2 rounded-xl text-sm font-bold shadow-sm transition-all flex items-center">
                         <template x-if="isSubmitting">
                             <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         </template>

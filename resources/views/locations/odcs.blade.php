@@ -47,7 +47,7 @@
         }"
     >
         @if(session('success'))
-            <div class="px-5 py-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl font-medium shadow-sm flex items-center">
+            <div class="px-5 py-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl font-medium shadow-sm flex items-center">
                 <svg class="w-5 h-5 mr-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                 {{ session('success') }}
             </div>
@@ -59,15 +59,15 @@
         @endif
 
         <!-- Card Input Form -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-lg border border-gray-100/50 dark:border-gray-700/50 p-8 overflow-hidden relative">
+        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-lg border border-gray-100/50 dark:border-gray-700/50 p-8 overflow-hidden relative">
             <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-50 dark:bg-indigo-900/10 rounded-full blur-3xl -mr-20 -mt-20 z-0"></div>
             
             <div class="relative z-10">
                 <div class="flex items-center mb-6">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-inner mr-4 text-white">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center shadow-inner mr-4 text-white">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                     </div>
-                    <h3 class="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 tracking-tight">Add ODC Cabinet</h3>
+                    <h3 class="text-lg font-semibold text-surface-900 dark:text-white">Add ODC Cabinet</h3>
                 </div>
 
                 <form action="{{ route('locations.odc.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-7 gap-6 items-end">
@@ -105,7 +105,7 @@
                         <input type="number" name="total_ports" placeholder="288" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all px-4 py-3" />
                     </div>
                     <div class="md:col-span-1">
-                        <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 font-bold shadow-lg transition-all">
+                        <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg transition-all">
                             Save
                         </button>
                     </div>
@@ -114,7 +114,7 @@
         </div>
 
         <!-- Data Table -->
-        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full whitespace-nowrap align-middle">
                     <thead class="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
@@ -156,7 +156,7 @@
                                     <span class="block text-indigo-500">Lat: {{ $o->latitude }}</span>
                                     <span class="block text-indigo-500">Lon: {{ $o->longitude }}</span>
                                 @else
-                                    <span class="italic text-gray-400 text-[10px]">No Coordinates</span>
+                                    <span class="italic text-gray-400 text-xs">No Coordinates</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
@@ -194,7 +194,7 @@
         <div x-show="editModalOpen" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
             <div class="flex items-center justify-center min-h-screen px-4">
                 <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="editModalOpen = false"></div>
-                <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-lg p-8 relative z-10 border border-gray-100 dark:border-gray-700">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-lg p-8 relative z-10 border border-gray-100 dark:border-gray-700">
                     <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Edit ODC: <span x-text="editOdc.id" class="text-indigo-500"></span></h3>
                     
                     <form :action="`{{ url('admin/locations/odcs') }}/${editOdc.id}`" method="POST" class="space-y-4">
@@ -236,7 +236,7 @@
 
                         <div class="flex justify-end gap-3 mt-8">
                             <button type="button" @click="editModalOpen = false" class="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Cancel</button>
-                            <button type="submit" class="px-10 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/30">Update ODC</button>
+                            <button type="submit" class="px-10 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-sm">Update ODC</button>
                         </div>
                     </form>
                 </div>
@@ -247,7 +247,7 @@
         <div x-show="mapPickerOpen" class="fixed inset-0 z-[60] overflow-y-auto" x-cloak>
             <div class="flex items-center justify-center min-h-screen px-4">
                 <div class="fixed inset-0 bg-gray-900/80 backdrop-blur-md" @click="mapPickerOpen = false"></div>
-                <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col relative z-10 overflow-hidden border border-gray-100 dark:border-gray-700">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-4xl h-[80vh] flex flex-col relative z-10 overflow-hidden border border-gray-100 dark:border-gray-700">
                     <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white">Pick Location</h3>
                         <p class="text-sm text-gray-500">Click on map or drag marker to set position</p>

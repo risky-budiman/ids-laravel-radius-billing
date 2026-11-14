@@ -5,7 +5,7 @@
                 {{ __('Inventory: Categories') }}
             </h2>
             @if(auth()->user()->isAdmin())
-            <a href="{{ route('inventory.category.create') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20">
+            <a href="{{ route('inventory.category.create') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">
                 + Add Category
             </a>
             @endif
@@ -26,7 +26,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         @forelse($categories as $category)
-            <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 relative overflow-hidden group">
+            <div class="glass bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 relative overflow-hidden group">
                 <div class="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-indigo-500/5 rounded-full blur-xl group-hover:bg-indigo-500/10 transition-colors pointer-events-none"></div>
                 
                 <div class="flex justify-between items-start relative z-10">
@@ -51,10 +51,10 @@
                 
                 <div class="mt-4 flex justify-between items-end">
                     <div>
-                        <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Total Products</span>
-                        <p class="text-xl font-black text-indigo-600">{{ $category->items_count }}</p>
+                        <span class="text-xs text-gray-400 font-bold tracking-wider">Total Products</span>
+                        <p class="text-xl font-semibold text-indigo-600">{{ $category->items_count }}</p>
                     </div>
-                    <a href="{{ route('inventory.index', ['category' => $category->id]) }}" class="text-[10px] font-bold text-gray-400 hover:text-indigo-600 transition-colors uppercase">View Items →</a>
+                    <a href="{{ route('inventory.index', ['category' => $category->id]) }}" class="text-xs font-bold text-gray-400 hover:text-indigo-600 transition-colors">View Items →</a>
                 </div>
             </div>
         @empty

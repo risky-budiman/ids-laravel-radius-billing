@@ -11,7 +11,7 @@
     </x-slot>
 
     <div class="max-w-xl mx-auto">
-        <div class="glass bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="glass bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="bg-amber-500 px-8 py-6 text-white relative overflow-hidden">
                 <div class="absolute right-0 top-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
                 <h3 class="font-bold text-xl relative z-10">Update Category</h3>
@@ -30,14 +30,14 @@
 
                 <div>
                     <x-input-label value="Description" />
-                    <textarea name="description" rows="4" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-2xl shadow-sm focus:ring-amber-500 focus:border-amber-500">{{ old('description') ?? $category->description }}</textarea>
+                    <textarea name="description" rows="4" class="mt-1 input">{{ old('description') ?? $category->description }}</textarea>
                 </div>
 
                 <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-100 dark:border-gray-700">
                     <a href="{{ route('inventory.categories') }}" class="px-6 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">
                         Cancel
                     </a>
-                    <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white px-10 py-2.5 rounded-2xl font-bold transition-all shadow-lg shadow-amber-500/20 transform hover:-translate-y-0.5">
+                    <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white px-10 py-2.5 rounded-xl font-bold transition-all shadow-sm transform ">
                         Update Category
                     </button>
                 </div>

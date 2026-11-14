@@ -47,7 +47,7 @@
         }"
     >
         @if(session('success'))
-            <div class="px-5 py-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl font-medium shadow-sm flex items-center">
+            <div class="px-5 py-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl font-medium shadow-sm flex items-center">
                 <svg class="w-5 h-5 mr-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                 {{ session('success') }}
             </div>
@@ -59,15 +59,15 @@
         @endif
 
         <!-- Card Input Form -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-lg border border-gray-100/50 dark:border-gray-700/50 p-8 overflow-hidden relative">
+        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-lg border border-gray-100/50 dark:border-gray-700/50 p-8 overflow-hidden relative">
             <div class="absolute top-0 right-0 w-64 h-64 bg-cyan-50 dark:bg-cyan-900/10 rounded-full blur-3xl -mr-20 -mt-20 z-0"></div>
             
             <div class="relative z-10">
                 <div class="flex items-center mb-6">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-inner mr-4 text-white">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500 flex items-center justify-center shadow-inner mr-4 text-white">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
                     </div>
-                    <h3 class="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 tracking-tight">Add STB (Distribution Box)</h3>
+                    <h3 class="text-lg font-semibold text-surface-900 dark:text-white">Add STB (Distribution Box)</h3>
                 </div>
 
                 <form action="{{ route('locations.stb.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-6 gap-6 items-end">
@@ -97,7 +97,7 @@
                         <input type="text" name="longitude" id="create_lon" placeholder="106.123" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all px-4 py-3" />
                     </div>
                     <div class="md:col-span-2">
-                        <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-6 py-3 rounded-xl hover:from-cyan-700 hover:to-blue-700 font-bold shadow-lg shadow-cyan-500/30 transform hover:-translate-y-0.5 transition-all">
+                        <button type="submit" class="w-full bg-cyan-600 text-white px-6 py-3 rounded-xl font-bold shadow-sm transform  transition-all">
                             Save STB
                         </button>
                     </div>
@@ -106,7 +106,7 @@
         </div>
 
         <!-- Data Table -->
-        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full whitespace-nowrap align-middle">
                     <thead class="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
@@ -139,7 +139,7 @@
                                     <span class="block">Lat: {{ $t->latitude }}</span>
                                     <span class="block">Lon: {{ $t->longitude }}</span>
                                 @else
-                                    <span class="italic text-gray-400 text-[10px]">No Coordinates</span>
+                                    <span class="italic text-gray-400 text-xs">No Coordinates</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
@@ -183,7 +183,7 @@
         <div x-show="editModalOpen" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
             <div class="flex items-center justify-center min-h-screen px-4">
                 <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="editModalOpen = false"></div>
-                <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-lg p-8 relative z-10 border border-gray-100 dark:border-gray-700">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-lg p-8 relative z-10 border border-gray-100 dark:border-gray-700">
                     <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Edit STB: <span x-text="editStb.code" class="text-cyan-500"></span></h3>
                     
                     <form :action="`{{ url('admin/locations/stbs') }}/${editStb.id}`" method="POST" class="space-y-4">
@@ -231,7 +231,7 @@
         <div x-show="mapPickerOpen" class="fixed inset-0 z-[60] overflow-y-auto" x-cloak>
             <div class="flex items-center justify-center min-h-screen px-4">
                 <div class="fixed inset-0 bg-gray-900/80 backdrop-blur-md" @click="mapPickerOpen = false"></div>
-                <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col relative z-10 overflow-hidden border border-gray-100 dark:border-gray-700">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-4xl h-[80vh] flex flex-col relative z-10 overflow-hidden border border-gray-100 dark:border-gray-700">
                     <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white">Pick Location</h3>
                         <p class="text-sm text-gray-500">Click on map or drag marker to set position</p>

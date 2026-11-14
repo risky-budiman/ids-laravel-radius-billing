@@ -5,17 +5,17 @@
                 {{ __('Inventory: Products & Stock') }}
             </h2>
             <div class="flex space-x-3">
-                <a href="{{ route('inventory.stock-in') }}" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-emerald-500/20">
+                <a href="{{ route('inventory.stock-in') }}" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">
                     + Stock In
                 </a>
-                <a href="{{ route('inventory.stock-out') }}" class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-rose-500/20">
+                <a href="{{ route('inventory.stock-out') }}" class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">
                     - Stock Out
                 </a>
                 @if(auth()->user()->isAdmin())
                 <a href="{{ route('inventory.outflow') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold transition-all">
                     Audit Log
                 </a>
-                <a href="{{ route('inventory.create') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20">
+                <a href="{{ route('inventory.create') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">
                     + New Product
                 </a>
                 @endif
@@ -25,15 +25,15 @@
 
     <!-- Stock Summary Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="glass bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden">
+        <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden">
             <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl"></div>
-            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Total Items</p>
-            <h3 class="text-3xl font-black text-gray-900 dark:text-white mt-1">{{ $totalItems }}</h3>
+            <p class="text-xs font-bold text-gray-400 tracking-wider">Total Items</p>
+            <h3 class="text-3xl font-semibold text-gray-900 dark:text-white mt-1">{{ $totalItems }}</h3>
         </div>
-        <div class="glass bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden">
+        <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden">
             <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl"></div>
-            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Low Stock Alerts</p>
-            <h3 class="text-3xl font-black text-amber-500 mt-1">{{ $lowStockItems }}</h3>
+            <p class="text-xs font-bold text-gray-400 tracking-wider">Low Stock Alerts</p>
+            <h3 class="text-3xl font-semibold text-amber-500 mt-1">{{ $lowStockItems }}</h3>
         </div>
     </div>
 
@@ -49,7 +49,7 @@
         </div>
     @endif
 
-    <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+    <div class="card overflow-hidden mb-6">
         <div class="overflow-x-auto">
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
@@ -77,7 +77,7 @@
                                     <div>
                                         <span class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $item->name }}</span>
                                         @if($item->track_serial)
-                                            <span class="ml-2 px-1.5 py-0.5 bg-indigo-50 text-indigo-500 text-[8px] font-black rounded uppercase">SN Tracked</span>
+                                            <span class="ml-2 px-1.5 py-0.5 bg-indigo-50 text-indigo-500 text-xs font-semibold rounded">SN Tracked</span>
                                         @endif
                                     </div>
                                 </div>
@@ -91,10 +91,10 @@
                             <td class="px-6 py-4">
                                 @php $stock = $item->stock_count; @endphp
                                 <div class="flex items-center space-x-2">
-                                    <span class="text-sm font-black {{ $stock <= $item->min_stock ? 'text-red-500' : 'text-gray-900 dark:text-white' }}">
+                                    <span class="text-sm font-semibold {{ $stock <= $item->min_stock ? 'text-red-500' : 'text-gray-900 dark:text-white' }}">
                                         {{ $stock }}
                                     </span>
-                                    <span class="text-[10px] text-gray-400 font-bold uppercase">{{ $item->unit }}</span>
+                                    <span class="text-xs text-gray-400">{{ $item->unit }}</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-xs font-medium text-gray-500">

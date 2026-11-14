@@ -33,10 +33,10 @@
             </div>
             @endif
 
-            <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div class="p-8 bg-amber-50 dark:bg-amber-900/10 border-b border-amber-100 dark:border-amber-800/50">
                     <div class="flex items-center gap-4">
-                        <div class="p-3 bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
+                        <div class="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
                             <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                         </div>
                         <div>
@@ -77,7 +77,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                     <span class="text-gray-500">Rp</span>
                                 </div>
-                                <input type="text" id="display_amount" placeholder="0,00" class="w-full pl-12 border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl shadow-sm focus:border-amber-500 focus:ring-amber-500 text-lg font-bold" oninput="formatCurrency(this, 'amount')" onblur="finalizeCurrency(this, 'amount')">
+                                <input type="text" id="display_amount" placeholder="0,00" class="w-full pl-12 border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-amber-500 focus:ring-amber-500 text-lg font-bold" oninput="formatCurrency(this, 'amount')" onblur="finalizeCurrency(this, 'amount')">
                                 <input type="hidden" id="amount" name="amount" value="{{ old('amount', $bankTransaction->amount) }}">
                             </div>
                             @error('amount') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
@@ -120,7 +120,7 @@
                         <a href="{{ route('bank-accounts.show', $bankTransaction->bank_account_id) }}" class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
                             ← Kembali ke mutasi
                         </a>
-                        <button type="submit" class="inline-flex items-center px-10 py-4 bg-amber-600 border border-transparent rounded-2xl font-bold text-white uppercase tracking-widest hover:bg-amber-700 active:bg-amber-900 focus:outline-none focus:border-amber-900 focus:ring ring-amber-300 transition ease-in-out duration-150 shadow-lg shadow-amber-500/30">
+                        <button type="submit" class="inline-flex items-center px-10 py-4 bg-amber-600 border border-transparent rounded-xl font-bold text-white  hover:bg-amber-700 active:bg-amber-900 focus:outline-none focus:border-amber-900 focus:ring ring-amber-300 transition ease-in-out duration-150 shadow-sm">
                             Simpan Perubahan
                             <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         </button>

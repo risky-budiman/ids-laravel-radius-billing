@@ -7,7 +7,7 @@
 
     <div class="py-12">
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-3xl border border-gray-100 dark:border-gray-700">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-xl border border-gray-100 dark:border-gray-700">
                 <form action="{{ route('accounting.taxes.store') }}" method="POST" class="p-8 space-y-6">
                     @csrf
                     
@@ -35,12 +35,12 @@
                                 <option value="{{ $account->id }}">{{ $account->code }} - {{ $account->name }}</option>
                             @endforeach
                         </select>
-                        <p class="text-[10px] text-gray-400 mt-2 italic">Gunakan akun "2103 - Hutang Pajak (PPN)" untuk pajak keluaran.</p>
+                        <p class="text-xs text-gray-400 mt-2 italic">Gunakan akun "2103 - Hutang Pajak (PPN)" untuk pajak keluaran.</p>
                     </div>
 
                     <div class="flex justify-end pt-4 space-x-3">
                         <a href="{{ route('accounting.taxes.index') }}" class="px-6 py-2 text-sm font-medium text-gray-500 hover:text-gray-700">Batal</a>
-                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-2 rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/20 transition-all">Simpan Pajak</button>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-2 rounded-xl text-sm font-bold shadow-sm transition-all">Simpan Pajak</button>
                     </div>
                 </form>
             </div>

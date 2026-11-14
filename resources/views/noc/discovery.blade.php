@@ -31,7 +31,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
             <template x-if="isRunning">
-                <div class="mb-6 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-2xl p-4 flex items-center justify-between">
+                <div class="mb-6 bg-surface-50/60 dark:bg-surface-800/30 border border-surface-200 dark:border-surface-800 rounded-xl p-4 flex items-center justify-between">
                     <div class="flex items-center">
                         <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600 mr-3"></div>
                         <span class="text-sm font-medium text-indigo-700 dark:text-indigo-400">Pemindaian sedang berjalan di latar belakang...</span>
@@ -41,7 +41,7 @@
             </template>
 
             <div x-show="!onus.length && !isRunning" x-cloak>
-                <div class="bg-white dark:bg-gray-800 rounded-3xl p-16 text-center border border-gray-100 dark:border-gray-700 shadow-sm">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-16 text-center border border-gray-100 dark:border-gray-700 shadow-sm">
                     <div class="inline-flex p-6 bg-gray-50 dark:bg-gray-900 rounded-full mb-6">
                         <svg class="w-16 h-16 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
@@ -51,16 +51,16 @@
             </div>
 
             <div x-show="onus.length" x-cloak>
-                <div class="glass bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div class="card overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
                             <thead>
                                 <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
-                                    <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Source OLT</th>
-                                    <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Position</th>
-                                    <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Serial Number</th>
-                                    <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Discovery Mode</th>
-                                    <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400">Source OLT</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400">Position</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400">Serial Number</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400">Discovery Mode</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -87,10 +87,10 @@
                                             <span class="font-mono font-bold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-lg" x-text="onu.sn"></span>
                                         </td>
                                         <td class="px-8 py-5">
-                                            <span class="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded uppercase">SNMP Auto-Scan</span>
+                                            <span class="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded">SNMP Auto-Scan</span>
                                         </td>
                                         <td class="px-8 py-5 text-right">
-                                            <a :href="'{{ route('customers.create') }}?sn=' + onu.sn + '&olt_id=' + onu.olt_id + '&pos=' + onu.full_index + '&onu_type=' + (onu.type || 'ALL')" class="inline-flex items-center px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-500/20">
+                                            <a :href="'{{ route('customers.create') }}?sn=' + onu.sn + '&olt_id=' + onu.olt_id + '&pos=' + onu.full_index + '&onu_type=' + (onu.type || 'ALL')" class="inline-flex items-center px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs rounded-xl transition-all shadow-sm">
                                                 Register
                                             </a>
                                         </td>

@@ -4,7 +4,7 @@
             <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
                 {{ __('Invoice Template Builder') }}
             </h2>
-            <a href="{{ route('invoice-templates.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-500/30">
+            <a href="{{ route('invoice-templates.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all  shadow-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 Buat Template Baru
             </a>
@@ -13,18 +13,18 @@
 
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         @if(session('success'))
-            <div class="mb-6 px-5 py-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400 font-medium text-sm">
+            <div class="mb-6 px-5 py-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400 font-medium text-sm">
                 {{ session('success') }}
             </div>
         @endif
         @if(session('error'))
-            <div class="mb-6 px-5 py-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl dark:bg-rose-900/20 dark:border-rose-800 dark:text-rose-400 font-medium text-sm">
+            <div class="mb-6 px-5 py-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl dark:bg-rose-900/20 dark:border-rose-800 dark:text-rose-400 font-medium text-sm">
                 {{ session('error') }}
             </div>
         @endif
 
         <!-- Variable Reference Card -->
-        <div class="mb-8 glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div class="mb-8 glass bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h3 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Cara Kerja</h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                 Buat template invoice dengan HTML & CSS lalu sisipkan <strong>variabel</strong> seperti <code class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded text-xs font-bold">{nama_pelanggan}</code>, <code class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded text-xs font-bold">{rp_total}</code>, dll. 
@@ -34,7 +34,7 @@
 
         @if($templates->isEmpty())
             <div class="text-center py-20">
-                <div class="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <div class="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center mx-auto mb-6">
                     <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 </div>
                 <h3 class="text-lg font-bold text-gray-700 dark:text-gray-300 mb-2">Belum ada template</h3>
@@ -47,7 +47,7 @@
         @else
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach($templates as $template)
-                <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden group hover:shadow-lg transition-all duration-300">
+                <div class="card overflow-hidden group hover:shadow-lg transition-all duration-300">
                     <!-- Preview Thumbnail -->
                     <div class="h-48 bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 overflow-hidden relative">
                         <div class="transform scale-[0.35] origin-top-left w-[286%] h-[286%] p-8 pointer-events-none">
@@ -71,7 +71,7 @@
                         <div class="flex items-center justify-between mb-3">
                             <h4 class="font-bold text-gray-900 dark:text-white text-sm truncate">{{ $template->name }}</h4>
                             @if($template->is_default)
-                                <span class="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-wider">Default</span>
+                                <span class="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs rounded-full tracking-wider">Default</span>
                             @endif
                         </div>
                         <div class="flex items-center justify-between">

@@ -19,7 +19,7 @@
             <div class="grid grid-cols-1 gap-6">
 
                 <!-- Anti-Ban & Interval Settings -->
-                <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-indigo-100 dark:border-indigo-900/50 overflow-hidden">
+                <div class="glass bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-indigo-100 dark:border-indigo-900/50 overflow-hidden">
                     <div class="bg-indigo-50/70 dark:bg-indigo-950/40 px-6 py-4 border-b border-indigo-100 dark:border-indigo-900/50 flex justify-between items-center">
                         <div class="flex items-center space-x-3">
                             <span class="p-2 bg-indigo-600 text-white rounded-xl shadow-md shadow-indigo-600/30">
@@ -30,7 +30,7 @@
                                 <p class="text-xs text-slate-500 dark:text-slate-400">Atur jeda acak antar pesan massal (tagihan harian & broadcast) agar nomor WhatsApp aman dari pemblokiran Meta.</p>
                             </div>
                         </div>
-                        <span class="px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider {{ get_setting('whatsapp_enable_delay', true) ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-gray-200 text-gray-600' }}">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider {{ get_setting('whatsapp_enable_delay', true) ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-gray-200 text-gray-600' }}">
                             {{ get_setting('whatsapp_enable_delay', true) ? 'PROTECTED' : 'DISABLED' }}
                         </span>
                     </div>
@@ -54,7 +54,7 @@
                                 <input type="checkbox" name="whatsapp_enable_delay" value="1" {{ get_setting('whatsapp_enable_delay', true) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
                                 <span class="ml-2 font-medium text-gray-700 dark:text-gray-300">Aktifkan Proteksi Interval Waktu Acak (Staggered Jitter)</span>
                             </label>
-                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-indigo-600/20 active:scale-95 transition-all text-sm">
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-indigo-600/20  transition-all text-sm">
                                 Simpan Pengaturan Proteksi
                             </button>
                         </div>
@@ -63,7 +63,7 @@
 
                 <!-- Fonnte -->
                 @php $f = $gateways->get('fonnte'); @endphp
-                <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div class="card overflow-hidden">
                     <div class="bg-emerald-50/50 dark:bg-emerald-900/20 px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                         <div class="flex items-center space-x-3">
                             <svg class="w-6 h-6 text-emerald-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.082 19.163c-1.81 0-3.534-.446-5.112-1.267l-5.666 1.48 1.508-5.494c-.908-1.625-1.401-3.475-1.401-5.359 0-6.178 5.039-11.206 11.234-11.206 5.864 0 10.952 4.675 10.952 11.215 0 6.182-5.043 11.21-11.235 11.231z"></path></svg>
@@ -95,7 +95,7 @@
 
                 <!-- Wablas -->
                 @php $w = $gateways->get('wablas'); @endphp
-                <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div class="card overflow-hidden">
                     <div class="bg-blue-50/50 dark:bg-blue-900/20 px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                         <div class="flex items-center space-x-3">
                             <svg class="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.082 19.163c-1.81 0-3.534-.446-5.112-1.267l-5.666 1.48 1.508-5.494c-.908-1.625-1.401-3.475-1.401-5.359 0-6.178 5.039-11.206 11.234-11.206 5.864 0 10.952 4.675 10.952 11.215 0 6.182-5.043 11.21-11.235 11.231z"></path></svg>
@@ -130,7 +130,7 @@
 
                 <!-- Starsender -->
                 @php $s = $gateways->get('starsender'); @endphp
-                <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div class="card overflow-hidden">
                     <div class="bg-amber-50/50 dark:bg-amber-900/20 px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                         <div class="flex items-center space-x-3">
                             <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
@@ -161,7 +161,7 @@
 
                 <!-- Mekari Qontak -->
                 @php $m = $gateways->get('mekari'); @endphp
-                <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div class="card overflow-hidden">
                     <div class="bg-indigo-50/50 dark:bg-indigo-900/20 px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                         <div class="flex items-center space-x-3">
                             <svg class="w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
@@ -203,7 +203,7 @@
 
                 <!-- Meta WhatsApp Cloud API -->
                 @php $meta = $gateways->get('meta'); @endphp
-                <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div class="card overflow-hidden">
                     <div class="bg-rose-50/50 dark:bg-rose-900/20 px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                         <div class="flex items-center space-x-3">
                             <svg class="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2h1.5A2.5 2.5 0 0019 9.5V8a2 2 0 00-2-2h-3a2 2 0 01-2-2V3.055M11 20.055V18a2 2 0 00-2-2h-1a2 2 0 01-2-2v-1a2 2 0 00-2-2H2.055M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -251,7 +251,7 @@
                     </form>
                 </div>
 
-                <div class="mt-8 bg-indigo-50 dark:bg-indigo-900/20 rounded-3xl p-8 border border-indigo-100 dark:border-indigo-800/50">
+                <div class="mt-8 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-8 border border-indigo-100 dark:border-indigo-800/50">
                     <h4 class="font-bold text-indigo-900 dark:text-indigo-300 mb-4 flex items-center">
                         <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Panduan Penggunaan Multi-Gateway & Failover

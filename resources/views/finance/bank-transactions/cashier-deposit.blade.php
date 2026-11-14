@@ -28,10 +28,10 @@
             </div>
             @endif
 
-            <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div class="p-8 bg-emerald-50 dark:bg-emerald-900/10 border-b border-emerald-100 dark:border-emerald-800/50">
                     <div class="flex items-center gap-4">
-                        <div class="p-3 bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
+                        <div class="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
                             <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
                         <div>
@@ -46,7 +46,7 @@
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         <!-- From Account -->
-                        <div class="p-6 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
+                        <div class="p-6 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700">
                             <label for="from_account_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">Kasir (Sumber Dana)</label>
                             <select id="from_account_id" name="from_account_id" class="input" required onchange="updateBalanceInfo(this)">
                                 <option value="">Pilih Kas Anda</option>
@@ -60,7 +60,7 @@
                         </div>
 
                         <!-- To Account -->
-                        <div class="p-6 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
+                        <div class="p-6 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700">
                             <label for="to_account_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">Rekening Perusahaan (Tujuan)</label>
                             <select id="to_account_id" name="to_account_id" class="input" required>
                                 <option value="">Pilih Rekening Tujuan</option>
@@ -78,7 +78,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                     <span class="text-gray-500">Rp</span>
                                 </div>
-                                <input type="text" id="display_amount" placeholder="0,00" class="w-full pl-12 border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-lg font-bold" oninput="formatCurrency(this, 'amount')" onblur="finalizeCurrency(this, 'amount')">
+                                <input type="text" id="display_amount" placeholder="0,00" class="w-full pl-12 border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-lg font-bold" oninput="formatCurrency(this, 'amount')" onblur="finalizeCurrency(this, 'amount')">
                                 <input type="hidden" id="amount" name="amount" value="{{ old('amount') }}">
                             </div>
                         </div>
@@ -95,7 +95,7 @@
                     </div>
 
                     <div class="flex justify-end pt-6 border-t border-gray-100 dark:border-gray-700">
-                        <button type="submit" class="inline-flex items-center px-10 py-4 bg-emerald-600 border border-transparent rounded-2xl font-bold text-white uppercase tracking-widest hover:bg-emerald-700 active:bg-emerald-900 focus:outline-none focus:border-emerald-900 focus:ring ring-emerald-300 transition ease-in-out duration-150 shadow-lg shadow-emerald-500/30">
+                        <button type="submit" class="inline-flex items-center px-10 py-4 bg-emerald-600 border border-transparent rounded-xl font-bold text-white  hover:bg-emerald-700 active:bg-emerald-900 focus:outline-none focus:border-emerald-900 focus:ring ring-emerald-300 transition ease-in-out duration-150 shadow-sm">
                             Konfirmasi Setoran
                             <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </button>

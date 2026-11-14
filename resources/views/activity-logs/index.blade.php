@@ -5,7 +5,7 @@
                 {{ __('System Activity Logs') }}
             </h2>
             <div class="flex space-x-3">
-                <span class="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-black uppercase tracking-widest rounded-xl border border-indigo-100 dark:border-indigo-800">
+                <span class="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-semibold  rounded-xl border border-indigo-100 dark:border-indigo-800">
                     Live Audit Trail
                 </span>
             </div>
@@ -14,13 +14,13 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="glass-premium bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-[2.5rem] border border-gray-100 dark:border-gray-700">
+            <div class="glass-premium bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-100 dark:border-gray-700">
                 <div class="p-8">
                     <!-- Filter Bar -->
-                    <div class="mb-8 p-6 bg-gray-50 dark:bg-gray-900/50 rounded-3xl border border-gray-100 dark:border-gray-800">
+                    <div class="mb-8 p-6 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
                         <form action="{{ route('activity-logs.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4">
                             <div>
-                                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">User</label>
+                                <label class="block text-xs font-semibold text-gray-400 mb-2 ml-1">User</label>
                                 <select name="user_id" class="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500">
                                     <option value="">All Users</option>
                                     @foreach($users as $user)
@@ -30,7 +30,7 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Action</label>
+                                <label class="block text-xs font-semibold text-gray-400 mb-2 ml-1">Action</label>
                                 <select name="action" class="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500">
                                     <option value="">All Actions</option>
                                     <option value="created" {{ request('action') == 'created' ? 'selected' : '' }}>Created</option>
@@ -41,16 +41,16 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Date Start</label>
+                                <label class="block text-xs font-semibold text-gray-400 mb-2 ml-1">Date Start</label>
                                 <input type="date" name="date_start" value="{{ request('date_start') }}" class="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Date End</label>
+                                <label class="block text-xs font-semibold text-gray-400 mb-2 ml-1">Date End</label>
                                 <input type="date" name="date_end" value="{{ request('date_end') }}" class="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                             <div class="flex items-end space-x-2">
                                 <div class="flex-grow">
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Search</label>
+                                    <label class="block text-xs font-semibold text-gray-400 mb-2 ml-1">Search</label>
                                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Search description..." class="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500">
                                 </div>
                                 <button type="submit" class="p-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all">
@@ -67,12 +67,12 @@
                         <table class="w-full text-left">
                             <thead>
                                 <tr class="border-b border-gray-100 dark:border-gray-700">
-                                    <th class="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">#</th>
-                                    <th class="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">User</th>
-                                    <th class="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Action</th>
-                                    <th class="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Description</th>
-                                    <th class="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">IP Address</th>
-                                    <th class="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Date</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">#</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">User</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">Action</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">Description</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">IP Address</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">Date</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
@@ -91,13 +91,13 @@
                                         </td>
                                         <td class="px-6 py-5 whitespace-nowrap">
                                             @if($activity->action === 'created')
-                                                <span class="px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-black uppercase tracking-widest rounded-full">Created</span>
+                                                <span class="px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs rounded-full">Created</span>
                                             @elseif($activity->action === 'updated')
-                                                <span class="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-widest rounded-full">Updated</span>
+                                                <span class="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs rounded-full">Updated</span>
                                             @elseif($activity->action === 'deleted')
-                                                <span class="px-3 py-1 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-widest rounded-full">Deleted</span>
+                                                <span class="px-3 py-1 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs rounded-full">Deleted</span>
                                             @else
-                                                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-[10px] font-black uppercase tracking-widest rounded-full">{{ $activity->action }}</span>
+                                                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded-full">{{ $activity->action }}</span>
                                             @endif
                                         </td>
                                         <td class="px-6 py-5">
@@ -109,7 +109,7 @@
                                                     @if(isset($activity->properties['old']) && $activity->action === 'updated')
                                                         @foreach($activity->properties['new'] as $key => $value)
                                                             @if(in_array($key, ['id', 'created_at', 'updated_at', 'deleted_at'])) @continue @endif
-                                                            <div class="text-[10px] flex items-center space-x-2">
+                                                            <div class="text-xs flex items-center space-x-2">
                                                                 <span class="font-mono text-gray-400 dark:text-gray-500 uppercase">{{ str_replace('_', ' ', $key) }}:</span>
                                                                 <span class="px-1.5 py-0.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded border border-red-100 dark:border-red-900/30 line-through opacity-70">
                                                                     {{ is_array($activity->properties['old'][$key] ?? '') ? json_encode($activity->properties['old'][$key]) : ($activity->properties['old'][$key] ?? 'N/A') }}
@@ -121,7 +121,7 @@
                                                             </div>
                                                         @endforeach
                                                     @elseif(isset($activity->properties['old']) && $activity->action === 'deleted')
-                                                        <div class="text-[10px] text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-900/50 p-2 rounded-lg border border-gray-100 dark:border-gray-800">
+                                                        <div class="text-xs text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-900/50 p-2 rounded-lg border border-gray-100 dark:border-gray-800">
                                                             Pernah memiliki data: 
                                                             @php 
                                                                 $filteredOld = array_diff_key($activity->properties['old'], array_flip(['id', 'created_at', 'updated_at', 'deleted_at']));

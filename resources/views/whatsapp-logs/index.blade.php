@@ -59,7 +59,7 @@
                  x-transition:leave="transition ease-in duration-150"
                  x-transition:leave-start="opacity-100 translate-y-0"
                  x-transition:leave-end="opacity-0 -translate-y-2"
-                 class="flex items-center justify-between p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-2xl shadow-sm">
+                 class="flex items-center justify-between p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl shadow-sm">
                 <div class="flex items-center space-x-2">
                     <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-rose-600 text-white text-xs font-bold" x-text="selected.length"></span>
                     <span class="text-sm font-semibold text-rose-900 dark:text-rose-200">Riwayat pesan dipilih</span>
@@ -82,7 +82,7 @@
             </div>
 
             <!-- Table Section -->
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <form action="{{ route('whatsapp-logs.index') }}" method="GET" class="flex flex-col sm:flex-row gap-3 w-full">
                         <div class="flex-1">
@@ -118,7 +118,7 @@
                                 <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tujuan</th>
                                 <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-1/3">
                                     Isi Pesan 
-                                    <span class="text-[10px] lowercase font-normal text-emerald-600 dark:text-emerald-400">(klik untuk baca detail)</span>
+                                    <span class="text-xs lowercase font-normal text-emerald-600 dark:text-emerald-400">(klik untuk baca detail)</span>
                                 </th>
                                 <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                                 <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
@@ -244,7 +244,7 @@
             <div class="flex items-center justify-center min-h-screen px-4 py-8">
                 <div class="fixed inset-0 transition-opacity bg-gray-900/70 backdrop-blur-sm" @click="closeModal()"></div>
                 
-                <div class="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden border border-gray-100 dark:border-gray-700 z-10"
+                <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-sm max-w-xl w-full overflow-hidden border border-gray-100 dark:border-gray-700 z-10"
                      x-show="showModal"
                      x-transition:enter="transition ease-out duration-200"
                      x-transition:enter-start="opacity-0 scale-95"
@@ -266,16 +266,16 @@
                     <div class="p-6 space-y-4" x-if="selectedLog">
                         <!-- Info Meta Grid -->
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700/60">
-                                <span class="text-[10px] uppercase font-bold text-gray-400 block mb-0.5">Nomor Tujuan</span>
+                            <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700/60">
+                                <span class="text-xs font-bold text-gray-400 block mb-0.5">Nomor Tujuan</span>
                                 <span class="text-sm font-bold font-mono text-gray-900 dark:text-white" x-text="selectedLog?.target_phone"></span>
                             </div>
-                            <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700/60">
-                                <span class="text-[10px] uppercase font-bold text-gray-400 block mb-0.5">Waktu Kirim</span>
+                            <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700/60">
+                                <span class="text-xs font-bold text-gray-400 block mb-0.5">Waktu Kirim</span>
                                 <span class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="selectedLog?.full_date"></span>
                             </div>
-                            <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700/60">
-                                <span class="text-[10px] uppercase font-bold text-gray-400 block mb-0.5">Status</span>
+                            <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700/60">
+                                <span class="text-xs font-bold text-gray-400 block mb-0.5">Status</span>
                                 <template x-if="selectedLog?.status === 'sent'">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
                                         Terkirim
@@ -296,8 +296,8 @@
 
                         <!-- Error Box if failed -->
                         <template x-if="selectedLog?.status === 'failed' && selectedLog?.error_reason">
-                            <div class="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-2xl">
-                                <span class="text-[10px] uppercase font-bold text-rose-600 dark:text-rose-400 block mb-1">Alasan Kegagalan</span>
+                            <div class="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl">
+                                <span class="text-xs font-bold text-rose-600 dark:text-rose-400 block mb-1">Alasan Kegagalan</span>
                                 <p class="text-xs text-rose-700 dark:text-rose-300 font-mono break-words" x-text="selectedLog?.error_reason"></p>
                             </div>
                         </template>
@@ -311,7 +311,7 @@
                                     <span x-text="copied ? 'Tersalin!' : 'Salin Pesan'">Salin Pesan</span>
                                 </button>
                             </div>
-                            <div class="p-4 bg-gray-50 dark:bg-gray-900/70 rounded-2xl border border-gray-100 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap font-sans max-h-72 overflow-y-auto leading-relaxed select-text" 
+                            <div class="p-4 bg-gray-50 dark:bg-gray-900/70 rounded-xl border border-gray-100 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap font-sans max-h-72 overflow-y-auto leading-relaxed select-text" 
                                  x-text="selectedLog?.message">
                             </div>
                         </div>

@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-center">
-                <div class="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white text-xl font-bold mr-4 shadow-lg shadow-indigo-200">
+                <div class="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-xl font-bold mr-4 shadow-lg shadow-indigo-200">
                     {{ substr($partner->name, 0, 1) }}
                 </div>
                 <div>
@@ -13,7 +13,7 @@
                 </div>
             </div>
             @if(auth()->user()->isMitra())
-                <button x-data="" @click="$dispatch('open-modal', 'request-withdrawal')" class="inline-flex items-center px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-2xl transition-all shadow-lg shadow-emerald-200 dark:shadow-none">
+                <button x-data="" @click="$dispatch('open-modal', 'request-withdrawal')" class="inline-flex items-center px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-emerald-200 dark:shadow-none">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     Request Withdrawal
                 </button>
@@ -24,28 +24,28 @@
     <div class="py-6">
         <!-- Stats -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Earned</p>
-                <p class="text-2xl font-black text-gray-900 dark:text-white mt-2">Rp {{ number_format($stats['total_earned'], 0, ',', '.') }}</p>
+            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                <p class="text-xs font-bold text-gray-400 ">Total Earned</p>
+                <p class="text-2xl font-semibold text-gray-900 dark:text-white mt-2">Rp {{ number_format($stats['total_earned'], 0, ',', '.') }}</p>
             </div>
-            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm border-l-4 border-l-indigo-500">
-                <p class="text-xs font-bold text-indigo-500 uppercase tracking-widest">Current Balance</p>
-                <p class="text-2xl font-black text-gray-900 dark:text-white mt-2">Rp {{ number_format($stats['balance'], 0, ',', '.') }}</p>
+            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm border-l-4 border-l-indigo-500">
+                <p class="text-xs font-bold text-indigo-500 ">Current Balance</p>
+                <p class="text-2xl font-semibold text-gray-900 dark:text-white mt-2">Rp {{ number_format($stats['balance'], 0, ',', '.') }}</p>
             </div>
-            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Payouts</p>
-                <p class="text-2xl font-black text-gray-900 dark:text-white mt-2">Rp {{ number_format($stats['total_withdrawn'], 0, ',', '.') }}</p>
+            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                <p class="text-xs font-bold text-gray-400 ">Total Payouts</p>
+                <p class="text-2xl font-semibold text-gray-900 dark:text-white mt-2">Rp {{ number_format($stats['total_withdrawn'], 0, ',', '.') }}</p>
             </div>
-            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Active Subscribers</p>
-                <p class="text-2xl font-black text-gray-900 dark:text-white mt-2">{{ $stats['customer_count'] }}</p>
+            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                <p class="text-xs font-bold text-gray-400 ">Active Subscribers</p>
+                <p class="text-2xl font-semibold text-gray-900 dark:text-white mt-2">{{ $stats['customer_count'] }}</p>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Left: Commission History -->
             <div class="lg:col-span-2 space-y-6">
-                <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="font-bold text-gray-900 dark:text-white">Recent Commissions</h3>
                         <span class="text-xs text-gray-400">Last 50 transactions</span>
@@ -53,7 +53,7 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
                             <thead>
-                                <tr class="bg-gray-50/50 dark:bg-gray-900/50 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                                <tr class="bg-gray-50/50 dark:bg-gray-900/50 text-xs font-bold text-gray-500">
                                     <th class="px-6 py-3">Date</th>
                                     <th class="px-6 py-3">Subscriber</th>
                                     <th class="px-6 py-3">Invoice</th>
@@ -70,9 +70,9 @@
                                     <td class="px-6 py-4 text-right font-bold text-emerald-600">+Rp {{ number_format($comm->amount, 0, ',', '.') }}</td>
                                     <td class="px-6 py-4 text-center">
                                         @if($comm->status === 'earned')
-                                            <span class="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-md text-[10px] font-bold uppercase">Ready</span>
+                                            <span class="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-md text-xs">Ready</span>
                                         @else
-                                            <span class="px-2 py-1 bg-gray-100 text-gray-500 rounded-md text-[10px] font-bold uppercase">Withdrawn</span>
+                                            <span class="px-2 py-1 bg-gray-100 text-gray-500 rounded-md text-xs">Withdrawn</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -89,25 +89,25 @@
 
             <!-- Right: Subscriber List -->
             <div class="space-y-6">
-                <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-50 dark:border-gray-700">
                         <h3 class="font-bold text-gray-900 dark:text-white">Your Subscribers</h3>
                     </div>
                     <div class="p-2">
                         <div class="space-y-1">
                             @forelse($customers as $customer)
-                            <div class="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-900/30 rounded-2xl transition-colors group">
+                            <div class="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-900/30 rounded-xl transition-colors group">
                                 <div class="flex items-center">
                                     <div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 text-xs font-bold mr-3">
                                         {{ substr($customer->name, 0, 1) }}
                                     </div>
                                     <div>
                                         <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $customer->name }}</p>
-                                        <p class="text-[10px] text-gray-500">{{ $customer->package->name ?? 'No Package' }}</p>
+                                        <p class="text-xs text-gray-500">{{ $customer->package->name ?? 'No Package' }}</p>
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <span class="text-[10px] {{ $customer->is_active ? 'text-emerald-500' : 'text-rose-500' }} font-bold uppercase tracking-tighter">
+                                    <span class="text-xs {{ $customer->is_active ? 'text-emerald-500' : 'text-rose-500' }} font-bold ">
                                         {{ $customer->is_active ? 'Active' : 'Inactive' }}
                                     </span>
                                 </div>
@@ -119,7 +119,7 @@
                     </div>
                 </div>
 
-                <div class="glass bg-slate-900 rounded-3xl p-6 text-white border border-slate-800">
+                <div class="glass bg-slate-900 rounded-xl p-6 text-white border border-slate-800">
                     <h4 class="font-bold mb-4 flex items-center">
                         <svg class="w-4 h-4 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Payout Information

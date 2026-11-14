@@ -291,7 +291,7 @@
              x-transition:leave-end="opacity-0 scale-95"
              x-cloak>
             <div @click.away="showPaymentModal = false" class="glass-card rounded-lg w-full max-w-lg overflow-hidden relative border border-gray-200 dark:border-gray-700 shadow-elevated">
-                <div class="bg-gradient-to-r from-emerald-600 to-teal-700 px-6 py-6 text-white relative">
+                <div class="bg-emerald-600 px-6 py-6 text-white relative">
                     <h3 class="font-bold text-xl tracking-tight">Manual Payment</h3>
                     <p class="text-emerald-100 text-xs font-bold uppercase tracking-wide mt-1 opacity-80">Recording external transaction</p>
                     <button @click="showPaymentModal = false" class="absolute top-8 right-8 text-white/50 hover:text-white transition-colors">
@@ -306,31 +306,31 @@
                     
                     <div class="mb-8 grid grid-cols-2 gap-4">
                         <div class="p-5 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                            <label class="block text-[10px] font-semibold text-indigo-500 uppercase tracking-wide mb-1">Invoice ID</label>
+                            <label class="block text-xs font-semibold text-indigo-500 mb-1">Invoice ID</label>
                             <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="activeInvoiceNumber"></p>
                         </div>
                         <div class="p-5 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                            <label class="block text-[10px] font-semibold text-emerald-500 uppercase tracking-wide mb-1">Total Due</label>
+                            <label class="block text-xs font-semibold text-emerald-500 mb-1">Total Due</label>
                             <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="'Rp ' + activeInvoiceAmount"></p>
                         </div>
                     </div>
 
                     <div class="mb-8">
-                        <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-3">Receiving Bank Account</label>
+                        <label class="block text-xs font-semibold text-gray-400 mb-3">Receiving Bank Account</label>
                         <select name="bank_account_id" class="w-full py-2.5 rounded-lg border-gray-100 dark:border-gray-700 dark:bg-gray-900/50 text-sm font-bold focus:ring-emerald-500 focus:border-emerald-500 transition-all" required>
                             <option value="">Select Account...</option>
                             @foreach($bankAccounts as $acc)
                                 <option value="{{ $acc->id }}">{{ $acc->bank_name }} - {{ $acc->account_name }}</option>
                             @endforeach
                         </select>
-                        <p class="mt-3 text-[10px] text-gray-400 font-medium italic px-2 leading-relaxed">
+                        <p class="mt-3 text-xs text-gray-400 font-medium italic px-2 leading-relaxed">
                             <span class="text-emerald-500 font-semibold mr-1">NOTE:</span>
                             Payment will be automatically logged to the general ledger and the customer service will be reactivated if currently suspended.
                         </p>
                     </div>
 
                     <div class="flex flex-col gap-3">
-                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl shadow-sm transition-all transform hover:-translate-y-1 active:scale-95">
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl shadow-sm transition-all transform">
                             CONFIRM PAYMENT
                         </button>
                         <button type="button" @click="showPaymentModal = false" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 font-bold py-4 rounded-xl transition-all">
@@ -352,7 +352,7 @@
              x-transition:leave-end="opacity-0 scale-95"
              x-cloak>
             <div @click.away="showBulkPayModal = false" class="glass-card rounded-lg w-full max-w-lg overflow-hidden relative border border-gray-200 dark:border-gray-700 shadow-elevated">
-                <div class="bg-gradient-to-r from-emerald-600 to-teal-700 px-6 py-6 text-white relative">
+                <div class="bg-emerald-600 px-6 py-6 text-white relative">
                     <h3 class="font-bold text-xl tracking-tight">Bulk Payment</h3>
                     <p class="text-emerald-100 text-xs font-bold uppercase tracking-wide mt-1 opacity-80">
                         Marking <span x-text="selectedIds.length" class="text-white"></span> invoices as paid
@@ -370,27 +370,27 @@
                     
                     <div class="mb-8">
                         <div class="p-5 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl border border-indigo-100 dark:border-indigo-800/30 mb-5">
-                            <label class="block text-[10px] font-semibold text-indigo-500 uppercase tracking-wide mb-1">Total Invoice Dipilih</label>
+                            <label class="block text-xs font-semibold text-indigo-500 mb-1">Total Invoice Dipilih</label>
                             <p class="text-lg font-semibold text-gray-900 dark:text-white" x-text="selectedIds.length + ' invoice (hanya yang berstatus unpaid akan diproses)'"></p>
                         </div>
                     </div>
 
                     <div class="mb-8">
-                        <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-3">Rekening Penerima</label>
+                        <label class="block text-xs font-semibold text-gray-400 mb-3">Rekening Penerima</label>
                         <select name="bank_account_id" class="w-full py-2.5 rounded-lg border-gray-100 dark:border-gray-700 dark:bg-gray-900/50 text-sm font-bold focus:ring-emerald-500 focus:border-emerald-500 transition-all" required>
                             <option value="">Pilih Rekening...</option>
                             @foreach($bankAccounts as $acc)
                                 <option value="{{ $acc->id }}">{{ $acc->bank_name }} - {{ $acc->account_name }}</option>
                             @endforeach
                         </select>
-                        <p class="mt-3 text-[10px] text-gray-400 font-medium italic px-2 leading-relaxed">
+                        <p class="mt-3 text-xs text-gray-400 font-medium italic px-2 leading-relaxed">
                             <span class="text-emerald-500 font-semibold mr-1">NOTE:</span>
                             Semua invoice terpilih yang berstatus unpaid akan ditandai lunas, dicatat ke kas/bank, dan layanan pelanggan akan direaktivasi.
                         </p>
                     </div>
 
                     <div class="flex flex-col gap-3">
-                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl shadow-sm transition-all transform hover:-translate-y-1 active:scale-95">
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl shadow-sm transition-all transform">
                             KONFIRMASI PEMBAYARAN MASSAL
                         </button>
                         <button type="button" @click="showBulkPayModal = false" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 font-bold py-4 rounded-xl transition-all">
@@ -415,13 +415,13 @@
                 <!-- Modal Header -->
                 <div class="px-8 py-6 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 shrink-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
                     <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-indigo-600 dark:bg-indigo-500 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-600/25">
+                        <div class="w-12 h-12 bg-indigo-600 dark:bg-indigo-500 rounded-lg flex items-center justify-center shadow-sm">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         </div>
                         <div>
                             <div class="flex items-center space-x-3">
                                 <h2 class="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">Generate Invoice</h2>
-                                <span class="px-3 py-1 rounded-full text-[9px] font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 uppercase tracking-wide">Billing Engine</span>
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">Billing Engine</span>
                             </div>
                             <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Manual billing creation for active subscribers.</p>
                         </div>
@@ -469,7 +469,7 @@
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                                     <div>
-                                        <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 px-1">Duration</label>
+                                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 px-1">Duration</label>
                                         <select id="billing_duration" name="billing_period" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-4 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
                                             @for ($i = 1; $i <= 12; $i++)
                                                 <option value="{{ $i }} Month{{ $i > 1 ? 's' : '' }}" class="dark:bg-slate-900 dark:text-white" data-months="{{ $i }}" {{ $i == 1 ? 'selected' : '' }}>
@@ -480,11 +480,11 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 px-1">Start Date</label>
+                                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 px-1">Start Date</label>
                                         <input id="period_start" name="period_start" value="{{ old('period_start') }}" type="date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-4 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" required />
                                     </div>
                                     <div>
-                                        <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 px-1">End Date</label>
+                                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 px-1">End Date</label>
                                         <input id="period_end" name="period_end" value="{{ old('period_end') }}" type="date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-4 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" required />
                                     </div>
                                 </div>
@@ -496,7 +496,7 @@
                                     </div>
                                     <div class="max-w-xs">
                                         <input id="due_date" name="due_date" value="{{ old('due_date') }}" type="date" class="w-full bg-rose-50/60 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 rounded-lg py-3.5 px-5 text-sm font-bold text-rose-700 dark:text-rose-300 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all" required />
-                                        <p class="mt-2 text-[10px] text-slate-400 dark:text-slate-500 font-medium px-1">Synced automatically with subscriber cycle.</p>
+                                        <p class="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium px-1">Synced automatically with subscriber cycle.</p>
                                     </div>
                                 </div>
                             </div>
@@ -510,14 +510,14 @@
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
                                     <div>
-                                        <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 px-1">Base Amount (Rp)</label>
+                                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 px-1">Base Amount (Rp)</label>
                                         <div class="relative">
                                             <span class="absolute left-4 top-3.5 font-bold text-sm text-slate-400 dark:text-slate-500">Rp</span>
                                             <input id="amount" name="amount" value="{{ old('amount') }}" type="number" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 pl-11 pr-5 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" placeholder="0" required />
                                         </div>
                                     </div>
                                     <div>
-                                        <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 px-1">Tax Scheme</label>
+                                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 px-1">Tax Scheme</label>
                                         <select id="tax_id" name="tax_id" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-5 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
                                             <option value="" class="dark:bg-slate-900 dark:text-white">No Tax Applied</option>
                                             @foreach($taxes as $tax)
@@ -544,7 +544,7 @@
                                 <div class="flex items-center justify-between mb-7 relative z-10">
                                     <div class="flex items-center space-x-2">
                                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                        <span class="text-[10px] font-semibold text-indigo-100 dark:text-indigo-300 uppercase tracking-[0.25em]">Audit Summary</span>
+                                        <span class="text-xs font-semibold text-indigo-100 dark:text-indigo-300">Audit Summary</span>
                                     </div>
                                     <div class="p-2 bg-white/15 dark:bg-slate-800 rounded-xl text-white dark:text-indigo-400 border border-white/20 dark:border-slate-700">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
@@ -552,7 +552,7 @@
                                 </div>
 
                                 <div class="text-center mb-7 relative z-10">
-                                    <span class="text-[10px] font-bold text-indigo-200 dark:text-slate-400 uppercase tracking-wide mb-1.5 block">Total Payable</span>
+                                    <span class="text-xs font-bold text-indigo-200 dark:text-slate-400 mb-1.5 block">Total Payable</span>
                                     <div class="flex items-baseline justify-center">
                                         <span class="text-lg font-semibold mr-1 text-indigo-200 dark:text-indigo-400 italic">Rp</span>
                                         <span id="total_display" class="text-4xl font-semibold tracking-tight text-white font-mono drop-shadow">0</span>
@@ -570,12 +570,12 @@
                                     </div>
                                 </div>
 
-                                <button type="submit" class="w-full bg-white dark:bg-indigo-600 hover:bg-slate-100 dark:hover:bg-indigo-500 text-indigo-900 dark:text-white font-semibold py-2.5 rounded-lg transition-all shadow-xl active:scale-95 uppercase tracking-wide text-xs relative z-10 flex items-center justify-center space-x-2 group">
+                                <button type="submit" class="w-full bg-white dark:bg-indigo-600 hover:bg-slate-100 dark:hover:bg-indigo-500 text-indigo-900 dark:text-white font-semibold py-2.5 rounded-lg transition-all shadow-sm  uppercase tracking-wide text-xs relative z-10 flex items-center justify-center space-x-2 group">
                                     <span>Publish Invoice</span>
                                     <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                                 </button>
                                 
-                                <button type="button" @click="showCreateModal = false" class="w-full block text-center mt-3 text-[10px] font-bold text-indigo-200 dark:text-slate-400 hover:text-white uppercase tracking-wide transition-colors py-2 relative z-10">
+                                <button type="button" @click="showCreateModal = false" class="w-full block text-center mt-3 text-xs font-bold text-indigo-200 dark:text-slate-400 hover:text-white transition-colors py-2 relative z-10">
                                     Discard & Exit
                                 </button>
                             </div>

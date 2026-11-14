@@ -43,10 +43,10 @@
             
             @if(auth()->user()->isAdministrator())
             <!-- Summary Card -->
-            <div class="mb-8 bg-gradient-to-br from-emerald-600 to-teal-700 rounded-3xl p-8 text-white shadow-xl shadow-emerald-500/20 relative overflow-hidden">
+            <div class="mb-8 bg-emerald-600 rounded-xl p-8 text-white shadow-sm relative overflow-hidden">
                 <div class="relative z-10">
                     <p class="text-emerald-100 text-sm font-medium uppercase tracking-wider mb-1">Total Saldo Perusahaan</p>
-                    <h3 class="text-4xl font-black tabular-nums">Rp {{ number_format($totalBalance, 2, ',', '.') }}</h3>
+                    <h3 class="text-4xl font-semibold tabular-nums">Rp {{ number_format($totalBalance, 2, ',', '.') }}</h3>
                 </div>
                 <div class="absolute right-0 bottom-0 opacity-10 translate-x-10 translate-y-10">
                     <svg class="w-64 h-64" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14H11v-2h2v2zm0-4H11V7h2v5z"/></svg>
@@ -86,7 +86,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @forelse($accounts as $account)
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow group">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow group">
                     <div class="p-6">
                         <div class="flex justify-between items-start mb-4">
                             <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-700 text-emerald-600 dark:text-emerald-400">
@@ -133,7 +133,7 @@
                         
                         <div class="flex flex-col">
                             <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-bold mb-1">Saldo Saat Ini</p>
-                            <p class="text-2xl font-black text-gray-900 dark:text-white tabular-nums">
+                            <p class="text-2xl font-semibold text-gray-900 dark:text-white tabular-nums">
                                 Rp {{ number_format($account->balance, 2, ',', '.') }}
                             </p>
                         </div>

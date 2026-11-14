@@ -108,7 +108,7 @@
         <aside class="w-64 bg-slate-50/50 dark:bg-slate-950 border-r border-slate-100 dark:border-slate-900 hidden lg:flex flex-col z-30">
             <div class="flex-1 overflow-y-auto px-8 space-y-6" style="padding-top: 40px; padding-bottom: 60px;">
                 <div>
-                    <h3 class="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.25em] mb-6">Menu Panduan</h3>
+                    <h3 class="text-xs font-semibold text-slate-400 dark:text-slate-600 mb-6">Menu Panduan</h3>
                     <nav class="space-y-1">
                         @foreach($navigation as $nav)
                         <a href="{{ route('docs.index', $nav['slug']) }}" 
@@ -122,7 +122,7 @@
 
             <!-- Minimalist Exit -->
             <div class="p-8 border-t border-slate-100 dark:border-slate-900">
-                <a href="{{ route('dashboard') }}" class="text-[10px] font-black text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 uppercase tracking-widest flex items-center transition-colors">
+                <a href="{{ route('dashboard') }}" class="text-xs font-semibold text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center transition-colors">
                     <svg class="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                     Close Docs
                 </a>
@@ -139,7 +139,7 @@
 
                 <!-- Simple Footer -->
                 <div class="mt-32 pt-12 border-t border-slate-50 dark:border-slate-900">
-                    <p class="text-[10px] font-bold text-slate-300 dark:text-slate-700 uppercase tracking-[0.3em]">
+                    <p class="text-xs font-bold text-slate-300 dark:text-slate-700">
                         Documentation &bull; Updated {{ date('Y') }}
                     </p>
                 </div>

@@ -16,7 +16,7 @@
         </div>
     @endif
 
-    <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div class="card overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
@@ -40,11 +40,11 @@
                             <td class="px-6 py-4 text-gray-900 dark:text-gray-100 font-medium">
                                 {{ $po->supplier ? $po->supplier->name : 'N/A' }}
                             </td>
-                            <td class="px-6 py-4 font-black text-gray-900 dark:text-gray-100">
+                            <td class="px-6 py-4 font-semibold text-gray-900 dark:text-gray-100">
                                 Rp {{ number_format($po->total_amount, 0, ',', '.') }}
                             </td>
                             <td class="px-6 py-4">
-                                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
                                     {{ $po->status }}
                                 </span>
                             </td>

@@ -11,15 +11,15 @@
         </div>
     </x-slot>
 
-    <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+    <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-50 dark:bg-gray-900/50">
-                        <th class="p-6 text-xs font-bold text-gray-500 uppercase tracking-widest">Pelanggan</th>
-                        <th class="p-6 text-xs font-bold text-gray-500 uppercase tracking-widest">Paket Layanan</th>
-                        <th class="p-6 text-xs font-bold text-gray-500 uppercase tracking-widest text-center">Status</th>
-                        <th class="p-6 text-xs font-bold text-gray-500 uppercase tracking-widest text-right">Tgl Terdaftar</th>
+                        <th class="p-6 text-xs font-bold text-gray-500 ">Pelanggan</th>
+                        <th class="p-6 text-xs font-bold text-gray-500 ">Paket Layanan</th>
+                        <th class="p-6 text-xs font-bold text-gray-500  text-center">Status</th>
+                        <th class="p-6 text-xs font-bold text-gray-500  text-right">Tgl Terdaftar</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -35,9 +35,9 @@
                         </td>
                         <td class="p-6 text-center">
                             @if($c->is_active)
-                                <span class="px-3 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest">AKTIF</span>
+                                <span class="px-3 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full text-xs">AKTIF</span>
                             @else
-                                <span class="px-3 py-1 bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 rounded-full text-[10px] font-black uppercase tracking-widest">SUSPENDED</span>
+                                <span class="px-3 py-1 bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 rounded-full text-xs">SUSPENDED</span>
                             @endif
                         </td>
                         <td class="p-6 text-right text-sm text-gray-500 font-medium">

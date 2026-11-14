@@ -11,7 +11,7 @@
     </x-slot>
 
     <div class="max-w-3xl mx-auto">
-        <div class="glass bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="glass bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="bg-indigo-600 px-8 py-6 text-white relative overflow-hidden">
                 <div class="absolute right-0 top-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
                 <h3 class="font-bold text-xl relative z-10">Product Information</h3>
@@ -24,7 +24,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2">
                         <x-input-label value="Product Category" />
-                        <select name="category_id" required class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-2xl shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <select name="category_id" required class="mt-1 input">
                             <option value="">Select Category</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
@@ -47,7 +47,7 @@
 
                     <div>
                         <x-input-label value="Unit of Measurement" />
-                        <select name="unit" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-2xl shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <select name="unit" class="mt-1 input">
                             <option value="pcs" {{ old('unit') == 'pcs' ? 'selected' : '' }}>pcs</option>
                             <option value="meters" {{ old('unit') == 'meters' ? 'selected' : '' }}>meters</option>
                             <option value="unit" {{ old('unit') == 'unit' ? 'selected' : '' }}>unit</option>
@@ -59,7 +59,7 @@
                     <div>
                         <x-input-label value="Minimum Stock Alert" />
                         <x-text-input name="min_stock" type="number" :value="old('min_stock', 10)" required class="mt-1 w-full" />
-                        <p class="text-[10px] text-gray-400 mt-1">Get notified when stock drops below this value.</p>
+                        <p class="text-xs text-gray-400 mt-1">Get notified when stock drops below this value.</p>
                         <x-input-error :messages="$errors->get('min_stock')" class="mt-1" />
                     </div>
 
@@ -73,14 +73,14 @@
 
                 <div>
                     <x-input-label value="Description (Optional)" />
-                    <textarea name="description" rows="3" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-2xl shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Technical specifications or notes...">{{ old('description') }}</textarea>
+                    <textarea name="description" rows="3" class="mt-1 input" placeholder="Technical specifications or notes...">{{ old('description') }}</textarea>
                 </div>
 
                 <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-100 dark:border-gray-700">
                     <a href="{{ route('inventory.index') }}" class="px-6 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">
                         Cancel
                     </a>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-2.5 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-600/20 transform hover:-translate-y-0.5">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-2.5 rounded-xl font-bold transition-all shadow-sm transform ">
                         Create Product
                     </button>
                 </div>

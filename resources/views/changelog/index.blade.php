@@ -50,7 +50,7 @@
                                     <div class="bg-blue-50 dark:bg-blue-900/20 border border-dashed border-blue-400 dark:border-blue-500 p-6 rounded-xl shadow-sm group">
                                         <div class="flex items-center justify-between mb-4">
                                             <h3 class="text-xl font-bold text-blue-800 dark:text-blue-300">{{ $log->version }}</h3>
-                                            <span class="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400">Update</span>
+                                            <span class="text-xs text-blue-600 dark:text-blue-400">Update</span>
                                         </div>
 
                                         <div class="space-y-2">
@@ -94,7 +94,7 @@
                                     <div class="bg-blue-50 dark:bg-blue-900/20 border border-dashed border-blue-400 dark:border-blue-500 p-6 rounded-xl shadow-sm group">
                                         <div class="flex items-center justify-between mb-4">
                                             <h3 class="text-xl font-bold text-blue-800 dark:text-blue-300">{{ $log->version }}</h3>
-                                            <span class="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400">Update</span>
+                                            <span class="text-xs text-blue-600 dark:text-blue-400">Update</span>
                                         </div>
 
                                         <div class="space-y-2">

@@ -1,7 +1,7 @@
 <x-app-layout>
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-900 overflow-hidden shadow-2xl rounded-3xl border border-gray-200 dark:border-gray-800">
+            <div class="bg-white dark:bg-gray-900 overflow-hidden shadow-sm rounded-xl border border-gray-200 dark:border-gray-800">
                 <div class="p-8">
                     <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                         <div>
@@ -15,18 +15,18 @@
                         <div class="flex flex-col sm:flex-row items-center gap-3">
                             <div class="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/20 px-4 py-2 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
                                 <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Total Database:</span>
-                                <span class="text-sm font-black text-indigo-700 dark:text-indigo-300">{{ $customers->count() }}</span>
+                                <span class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">{{ $customers->count() }}</span>
                             </div>
                             <div class="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-2 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
                                 <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Markers Rendered:</span>
-                                <span id="marker-count" class="text-sm font-black text-emerald-700 dark:text-emerald-300">0</span>
+                                <span id="marker-count" class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">0</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Map Container -->
                     <div class="relative group">
-                        <div id="customer-map" style="height: 600px; width: 100%;" class="rounded-2xl border-4 border-white dark:border-gray-800 shadow-xl overflow-hidden z-0 bg-gray-100 dark:bg-gray-800"></div>
+                        <div id="customer-map" style="height: 600px; width: 100%;" class="rounded-xl border-4 border-white dark:border-gray-800 shadow-sm overflow-hidden z-0 bg-gray-100 dark:bg-gray-800"></div>
                     </div>
                 </div>
             </div>
@@ -217,7 +217,7 @@
                             <div class="bg-white dark:bg-gray-900 overflow-hidden rounded-lg shadow-lg" style="min-width: 200px;">
                                 <div class="h-1 bg-blue-500"></div>
                                 <div class="p-4">
-                                    <div class="text-[10px] uppercase font-bold text-blue-500 mb-1">Subscriber</div>
+                                    <div class="text-xs font-bold text-blue-500 mb-1">Subscriber</div>
                                     <h3 class="font-bold text-gray-900 dark:text-white text-base mb-2">${customer.name}</h3>
                                     <div class="space-y-1">
                                         <div class="text-xs text-gray-500">User: ${customer.username}</div>

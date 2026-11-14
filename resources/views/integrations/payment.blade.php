@@ -19,7 +19,7 @@
 
             <!-- Midtrans -->
             @php $m = $gateways->get('midtrans'); @endphp
-            <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="card overflow-hidden">
                 <div class="bg-indigo-50/50 dark:bg-indigo-900/20 px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                     <h3 class="font-bold text-gray-900 dark:text-gray-100">Midtrans</h3>
                     <span class="px-2 py-1 rounded text-xs font-bold {{ ($m->is_active ?? false) ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600' }}">
@@ -51,12 +51,12 @@
                         <x-text-input name="credentials[client_key]" value="{{ $m->credentials['client_key'] ?? '' }}" class="mt-1 w-full" />
                     </div>
                     <div class="mt-4 p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-xl space-y-4">
-                        <span class="block text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Midtrans Dashboard Configuration URLs</span>
+                        <span class="block text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Midtrans Dashboard Configuration URLs</span>
                         
                         <div class="space-y-3">
                             <!-- Payment Notification URL -->
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase">Payment Notification URL *</label>
+                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">Payment Notification URL *</label>
                                 <div class="mt-1 flex rounded-md shadow-sm">
                                     <input type="text" id="url_pay_notif" readonly value="{{ url('/webhooks/midtrans') }}" class="flex-1 min-w-0 block w-full px-3 py-1.5 rounded-none rounded-l-md text-xs font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 focus:ring-indigo-500 focus:border-indigo-500 select-all" />
                                     <button type="button" onclick="copyUrl('url_pay_notif', 'btn_pay_notif')" id="btn_pay_notif" class="inline-flex items-center px-3 py-1.5 border border-l-0 border-gray-200 dark:border-gray-700 rounded-r-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 text-xs font-semibold">Copy</button>
@@ -65,7 +65,7 @@
 
                             <!-- Recurring Notification URL -->
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase">Recurring Notification URL *</label>
+                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">Recurring Notification URL *</label>
                                 <div class="mt-1 flex rounded-md shadow-sm">
                                     <input type="text" id="url_rec_notif" readonly value="{{ url('/webhooks/midtrans') }}" class="flex-1 min-w-0 block w-full px-3 py-1.5 rounded-none rounded-l-md text-xs font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 focus:ring-indigo-500 focus:border-indigo-500 select-all" />
                                     <button type="button" onclick="copyUrl('url_rec_notif', 'btn_rec_notif')" id="btn_rec_notif" class="inline-flex items-center px-3 py-1.5 border border-l-0 border-gray-200 dark:border-gray-700 rounded-r-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 text-xs font-semibold">Copy</button>
@@ -74,7 +74,7 @@
 
                             <!-- Pay Account Notification URL -->
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase">Pay Account Notification URL *</label>
+                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">Pay Account Notification URL *</label>
                                 <div class="mt-1 flex rounded-md shadow-sm">
                                     <input type="text" id="url_acc_notif" readonly value="{{ url('/webhooks/midtrans') }}" class="flex-1 min-w-0 block w-full px-3 py-1.5 rounded-none rounded-l-md text-xs font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 focus:ring-indigo-500 focus:border-indigo-500 select-all" />
                                     <button type="button" onclick="copyUrl('url_acc_notif', 'btn_acc_notif')" id="btn_acc_notif" class="inline-flex items-center px-3 py-1.5 border border-l-0 border-gray-200 dark:border-gray-700 rounded-r-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 text-xs font-semibold">Copy</button>
@@ -83,7 +83,7 @@
 
                             <!-- Finish Redirect URL -->
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase">Finish Redirect URL *</label>
+                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">Finish Redirect URL *</label>
                                 <div class="mt-1 flex rounded-md shadow-sm">
                                     <input type="text" id="url_finish_redir" readonly value="{{ url('/client/invoices') }}" class="flex-1 min-w-0 block w-full px-3 py-1.5 rounded-none rounded-l-md text-xs font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 focus:ring-indigo-500 focus:border-indigo-500 select-all" />
                                     <button type="button" onclick="copyUrl('url_finish_redir', 'btn_finish_redir')" id="btn_finish_redir" class="inline-flex items-center px-3 py-1.5 border border-l-0 border-gray-200 dark:border-gray-700 rounded-r-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 text-xs font-semibold">Copy</button>
@@ -92,7 +92,7 @@
 
                             <!-- Unfinish Redirect URL -->
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase">Unfinish Redirect URL *</label>
+                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">Unfinish Redirect URL *</label>
                                 <div class="mt-1 flex rounded-md shadow-sm">
                                     <input type="text" id="url_unfinish_redir" readonly value="{{ url('/client/invoices') }}" class="flex-1 min-w-0 block w-full px-3 py-1.5 rounded-none rounded-l-md text-xs font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 focus:ring-indigo-500 focus:border-indigo-500 select-all" />
                                     <button type="button" onclick="copyUrl('url_unfinish_redir', 'btn_unfinish_redir')" id="btn_unfinish_redir" class="inline-flex items-center px-3 py-1.5 border border-l-0 border-gray-200 dark:border-gray-700 rounded-r-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 text-xs font-semibold">Copy</button>
@@ -101,7 +101,7 @@
 
                             <!-- Error Redirect URL -->
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase">Error Redirect URL *</label>
+                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">Error Redirect URL *</label>
                                 <div class="mt-1 flex rounded-md shadow-sm">
                                     <input type="text" id="url_error_redir" readonly value="{{ url('/client/invoices') }}" class="flex-1 min-w-0 block w-full px-3 py-1.5 rounded-none rounded-l-md text-xs font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 focus:ring-indigo-500 focus:border-indigo-500 select-all" />
                                     <button type="button" onclick="copyUrl('url_error_redir', 'btn_error_redir')" id="btn_error_redir" class="inline-flex items-center px-3 py-1.5 border border-l-0 border-gray-200 dark:border-gray-700 rounded-r-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 text-xs font-semibold">Copy</button>
@@ -109,7 +109,7 @@
                             </div>
                         </div>
 
-                        <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-normal">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 leading-normal">
                             * Salin masing-masing URL di atas dan masukkan ke dashboard Midtrans Anda di menu <strong>Settings > Payment > Notification URL</strong> dan <strong>Redirect URL</strong>.
                         </p>
                     </div>
@@ -125,7 +125,7 @@
 
             <!-- Xendit -->
             @php $x = $gateways->get('xendit'); @endphp
-            <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="card overflow-hidden">
                 <div class="bg-blue-50/50 dark:bg-blue-900/20 px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                     <h3 class="font-bold text-gray-900 dark:text-gray-100">Xendit</h3>
                     <span class="px-2 py-1 rounded text-xs font-bold {{ ($x->is_active ?? false) ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600' }}">
@@ -146,12 +146,12 @@
                         <x-text-input name="credentials[callback_token]" value="{{ $x->credentials['callback_token'] ?? '' }}" class="mt-1 w-full" />
                     </div>
                     <div class="mt-4 p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-xl space-y-2">
-                        <span class="block text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Xendit Dashboard Webhook URL</span>
+                        <span class="block text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Xendit Dashboard Webhook URL</span>
                         <div class="flex rounded-md shadow-sm">
                             <input type="text" id="url_xendit_webhook" readonly value="{{ url('/webhooks/xendit') }}" class="flex-1 min-w-0 block w-full px-3 py-1.5 rounded-none rounded-l-md text-xs font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 select-all focus:ring-indigo-500" />
                             <button type="button" onclick="copyUrl('url_xendit_webhook', 'btn_xendit_webhook')" id="btn_xendit_webhook" class="inline-flex items-center px-3 py-1.5 border border-l-0 border-gray-200 dark:border-gray-700 rounded-r-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 text-xs font-semibold">Copy</button>
                         </div>
-                        <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-normal">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 leading-normal">
                             Masukkan URL ini di dashboard Xendit (Configuration > Webhooks) untuk events **Invoice Paid** dan **Invoice Settled**.
                         </p>
                     </div>
@@ -167,7 +167,7 @@
 
             <!-- Duitku -->
             @php $d = $gateways->get('duitku'); @endphp
-            <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="card overflow-hidden">
                 <div class="bg-rose-50/50 dark:bg-rose-900/20 px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                     <h3 class="font-bold text-gray-900 dark:text-gray-100">Duitku</h3>
                     <span class="px-2 py-1 rounded text-xs font-bold {{ ($d->is_active ?? false) ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600' }}">
@@ -195,12 +195,12 @@
                         <x-text-input name="credentials[api_key]" value="{{ $d->credentials['api_key'] ?? '' }}" class="mt-1 w-full" type="password" />
                     </div>
                     <div class="mt-4 p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-xl space-y-2">
-                        <span class="block text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Duitku Callback URL</span>
+                        <span class="block text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Duitku Callback URL</span>
                         <div class="flex rounded-md shadow-sm">
                             <input type="text" id="url_duitku_webhook" readonly value="{{ url('/webhooks/duitku') }}" class="flex-1 min-w-0 block w-full px-3 py-1.5 rounded-none rounded-l-md text-xs font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 select-all focus:ring-indigo-500" />
                             <button type="button" onclick="copyUrl('url_duitku_webhook', 'btn_duitku_webhook')" id="btn_duitku_webhook" class="inline-flex items-center px-3 py-1.5 border border-l-0 border-gray-200 dark:border-gray-700 rounded-r-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 text-xs font-semibold">Copy</button>
                         </div>
-                        <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-normal">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 leading-normal">
                             Masukkan URL ini di portal Duitku Merchant (Settings > Project API) pada kolom **Url Callback**.
                         </p>
                     </div>
@@ -216,7 +216,7 @@
 
             <!-- Moota -->
             @php $mo = $gateways->get('moota'); @endphp
-            <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="card overflow-hidden">
                 <div class="bg-teal-50/50 dark:bg-teal-900/20 px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                     <h3 class="font-bold text-gray-900 dark:text-gray-100">Moota (Mutation Check)</h3>
                     <span class="px-2 py-1 rounded text-xs font-bold {{ ($mo->is_active ?? false) ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600' }}">
@@ -242,12 +242,12 @@
                         <p class="help-text">Isi sama persis dengan <em>Secret Token</em> pada pengaturan webhook di dashboard Moota. Webhook tanpa signature yang valid akan ditolak. Bila kosong, API Token dipakai sebagai secret (konfigurasi lama).</p>
                     </div>
                     <div class="mt-4 p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-xl space-y-2">
-                        <span class="block text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Moota Webhook URL</span>
+                        <span class="block text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Moota Webhook URL</span>
                         <div class="flex rounded-md shadow-sm">
                             <input type="text" id="url_moota_webhook" readonly value="{{ url('/webhooks/moota') }}" class="flex-1 min-w-0 block w-full px-3 py-1.5 rounded-none rounded-l-md text-xs font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 select-all focus:ring-indigo-500" />
                             <button type="button" onclick="copyUrl('url_moota_webhook', 'btn_moota_webhook')" id="btn_moota_webhook" class="inline-flex items-center px-3 py-1.5 border border-l-0 border-gray-200 dark:border-gray-700 rounded-r-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 text-xs font-semibold">Copy</button>
                         </div>
-                        <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-normal">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 leading-normal">
                             Masukkan URL ini di dashboard Moota (Integrasi > Webhook) untuk mendeteksi otomatis mutasi rekening bank Anda.
                         </p>
                     </div>

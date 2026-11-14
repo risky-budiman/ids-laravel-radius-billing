@@ -17,24 +17,24 @@
         <div class="max-w-7xl mx-auto space-y-6">
             <!-- Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Current Status</p>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <p class="text-xs font-bold text-gray-400 ">Current Status</p>
                     <div class="mt-2 flex items-center gap-2">
                         @php
                             $lastLog = $logs->last();
                             $lastPower = $lastLog ? $lastLog->rx_power : null;
                         @endphp
-                        <span class="text-2xl font-black text-gray-900 dark:text-white">{{ $lastPower ?? 'N/A' }} dBm</span>
+                        <span class="text-2xl font-semibold text-gray-900 dark:text-white">{{ $lastPower ?? 'N/A' }} dBm</span>
                     </div>
                 </div>
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Average (30 Days)</p>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <p class="text-xs font-bold text-gray-400 ">Average (30 Days)</p>
                     <div class="mt-2">
-                        <span class="text-2xl font-black text-indigo-600">{{ round($logs->avg('rx_power'), 2) }} dBm</span>
+                        <span class="text-2xl font-semibold text-indigo-600">{{ round($logs->avg('rx_power'), 2) }} dBm</span>
                     </div>
                 </div>
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">OLT Source</p>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <p class="text-xs font-bold text-gray-400 ">OLT Source</p>
                     <div class="mt-2">
                         <span class="text-lg font-bold text-gray-700 dark:text-gray-300">{{ $customer->olt->name }}</span>
                     </div>
@@ -42,7 +42,7 @@
             </div>
 
             <!-- Chart -->
-            <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
                 <h3 class="font-bold text-gray-900 dark:text-white mb-6">Optical Power Trend (Rx)</h3>
                 <div class="h-[400px]">
                     <canvas id="signalChart"></canvas>
@@ -50,7 +50,7 @@
             </div>
 
             <!-- Data Table -->
-            <div class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                 <div class="px-8 py-5 border-b border-gray-100 dark:border-gray-700">
                     <h3 class="font-bold text-gray-900 dark:text-white">Recent Logs</h3>
                 </div>
@@ -71,7 +71,7 @@
                                         {{ $log->rx_power }} dBm
                                     </td>
                                     <td class="px-8 py-4">
-                                        <span class="uppercase text-[10px] font-bold px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                                        <span class="uppercase text-xs font-bold px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                                             {{ $log->status }}
                                         </span>
                                     </td>

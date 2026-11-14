@@ -39,7 +39,7 @@
             navigator.clipboard.writeText(this.script);
         }
     }">
-        <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="card overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left whitespace-nowrap">
                     <thead>
@@ -90,9 +90,9 @@
         <div x-show="modalOpen" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
             <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" @click="modalOpen = false"></div>
             <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                <div class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border border-gray-100 dark:border-gray-700/60 glass">
+                <div class="relative transform overflow-hidden rounded-xl bg-white dark:bg-gray-800 text-left shadow-sm transition-all sm:my-8 sm:w-full sm:max-w-2xl border border-gray-100 dark:border-gray-700/60 glass">
                     <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700/50 flex justify-between items-center">
-                        <h3 class="text-lg font-black text-gray-900 dark:text-white flex items-center">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
                             <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                             Mikrotik Configuration Script
                         </h3>
@@ -104,25 +104,25 @@
                         <p class="text-xs text-gray-500 dark:text-gray-400">Copy and paste this script directly into Mikrotik Terminal (New Terminal) to connect your Mikrotik with the Radius Server.</p>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/30 p-4 rounded-xl border border-slate-100 dark:border-slate-800/50">
                             <div>
-                                <span class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Router IP / NAS IP</span>
+                                <span class="block text-xs font-bold text-gray-500 dark:text-gray-400">Router IP / NAS IP</span>
                                 <span class="text-sm font-bold text-slate-850 dark:text-slate-200" x-text="nasName"></span>
                             </div>
                             <div>
-                                <span class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Shared Secret</span>
+                                <span class="block text-xs font-bold text-gray-500 dark:text-gray-400">Shared Secret</span>
                                 <span class="text-sm font-mono font-bold text-slate-850 dark:text-slate-200" x-text="nasSecret"></span>
                             </div>
                         </div>
                         <div>
                             <x-input-label value="Radius Server IP Address (Active)" />
                             <x-text-input type="text" x-model="radiusIp" class="mt-1 w-full bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400" readonly disabled />
-                            <p class="text-[10px] text-gray-500 mt-1">IP server Radius aktif saat ini (dideteksi secara otomatis oleh sistem).</p>
+                            <p class="text-xs text-gray-500 mt-1">IP server Radius aktif saat ini (dideteksi secara otomatis oleh sistem).</p>
                         </div>
                         <div>
                             <x-input-label value="Mikrotik Terminal Script" />
                             <div class="relative mt-1">
                                 <textarea readonly x-text="script" rows="6" class="w-full font-mono text-xs bg-slate-950 text-emerald-400 border border-slate-800 rounded-xl p-4 focus:ring-0 focus:border-slate-800 cursor-text select-all"></textarea>
                                 <div class="absolute right-3 bottom-3" x-data="{ copied: false }">
-                                    <button type="button" @click="copyScript(); copied = true; setTimeout(() => copied = false, 2000)" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold transition-all shadow-md hover:shadow-indigo-500/20 flex items-center">
+                                    <button type="button" @click="copyScript(); copied = true; setTimeout(() => copied = false, 2000)" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-md hover:shadow-indigo-500/20 flex items-center">
                                         <span x-show="!copied">Copy Script</span>
                                         <span x-show="copied" class="flex items-center text-emerald-200">
                                             <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>

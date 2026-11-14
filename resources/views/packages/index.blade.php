@@ -7,7 +7,7 @@
                 </h2>
                 <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Manage billing plans and bandwidth profiles</p>
             </div>
-            <a href="{{ route('packages.create') }}" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/30 hover:scale-[1.02] active:scale-[0.98]">
+            <a href="{{ route('packages.create') }}" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm ] ]">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 New Package
             </a>
@@ -16,7 +16,7 @@
 
     @if(session('success'))
         <div class="mb-6 animate-fade-in-down">
-            <div class="px-4 py-3 bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 rounded-2xl flex items-center shadow-sm">
+            <div class="px-4 py-3 bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 rounded-xl flex items-center shadow-sm">
                 <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
                 <span class="font-medium">{{ session('success') }}</span>
             </div>
@@ -25,23 +25,23 @@
 
     @if(session('error'))
         <div class="mb-6 animate-fade-in-down">
-            <div class="px-4 py-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 rounded-2xl flex items-start sm:items-center shadow-sm gap-3">
+            <div class="px-4 py-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 rounded-xl flex items-start sm:items-center shadow-sm gap-3">
                 <svg class="w-5 h-5 flex-shrink-0 text-rose-600 dark:text-rose-400 mt-0.5 sm:mt-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                 <span class="font-medium text-sm leading-relaxed">{{ session('error') }}</span>
             </div>
         </div>
     @endif
 
-    <div class="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-3xl shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700/50 overflow-hidden">
+    <div class="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left">
                 <thead>
                     <tr class="bg-gray-50/50 dark:bg-gray-900/40 border-b border-gray-100 dark:border-gray-700">
-                        <th class="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Plan Details</th>
-                        <th class="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Speed Profile</th>
-                        <th class="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">MikroTik Group</th>
-                        <th class="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Monthly Rate</th>
-                        <th class="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                        <th class="px-8 py-5 text-xs font-bold text-gray-400 ">Plan Details</th>
+                        <th class="px-6 py-5 text-xs font-bold text-gray-400  text-center">Speed Profile</th>
+                        <th class="px-6 py-5 text-xs font-bold text-gray-400 ">MikroTik Group</th>
+                        <th class="px-6 py-5 text-xs font-bold text-gray-400 ">Monthly Rate</th>
+                        <th class="px-8 py-5 text-xs font-bold text-gray-400  text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
@@ -67,7 +67,7 @@
                                     </div>
                                     
                                     <!-- Detailed Limitations -->
-                                    <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] uppercase font-bold tracking-tighter">
+                                    <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs font-bold tracking-tighter">
                                         @if($package->burst_limit_up || $package->burst_limit_down)
                                             <div class="text-amber-600 flex items-center col-span-2 justify-center mb-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded">
                                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
@@ -88,7 +88,7 @@
 
                                     @if($package->enable_fup)
                                         <div class="mt-2 flex justify-center">
-                                            <span class="text-[10px] px-2 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-full font-bold tracking-tight">FUP: {{ $package->fup_limit_gb }}GB</span>
+                                            <span class="text-xs px-2 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-full font-bold tracking-tight">FUP: {{ $package->fup_limit_gb }}GB</span>
                                         </div>
                                     @endif
                                 </div>

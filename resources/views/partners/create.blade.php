@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="max-w-4xl py-6">
-        <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
             <form action="{{ route('partners.store') }}" method="POST" class="p-8">
                 @csrf
                 

@@ -6,10 +6,10 @@
     </x-slot>
 
     <div class="max-w-4xl">
-        <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
             <div class="p-8">
                 <div class="flex items-center mb-8">
-                    <div class="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl text-indigo-600 mr-4">
+                    <div class="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-600 mr-4">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                     </div>
                     <div>
@@ -27,7 +27,7 @@
                             <div>
                                 <x-input-label :value="__('Company Logo')" />
                                 <div class="relative group mt-2">
-                                    <div class="w-full h-32 bg-slate-50 dark:bg-slate-900 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center overflow-hidden transition-all group-hover:border-indigo-300">
+                                    <div class="w-full h-32 bg-slate-50 dark:bg-slate-900 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center overflow-hidden transition-all group-hover:border-indigo-300">
                                         @if(isset($settings['company_logo']))
                                             <img src="{{ asset('storage/' . $settings['company_logo']->value) }}" class="w-full h-full object-contain p-4" id="logo_preview">
                                         @else
@@ -36,7 +36,7 @@
                                     </div>
                                     <input type="file" name="company_logo" class="absolute inset-0 opacity-0 cursor-pointer" onchange="const img = document.getElementById('logo_preview'); if(img) img.src = window.URL.createObjectURL(this.files[0]);">
                                 </div>
-                                <p class="text-[9px] text-slate-400 mt-2 italic">* Digunakan pada Laporan & Halaman Login</p>
+                                <p class="text-xs text-slate-400 mt-2 italic">* Digunakan pada Laporan & Halaman Login</p>
                             </div>
 
                             <div>
@@ -51,8 +51,8 @@
                                         <input type="file" name="app_icon" class="absolute inset-0 opacity-0 cursor-pointer" onchange="const img = document.getElementById('icon_preview'); if(img) img.src = window.URL.createObjectURL(this.files[0]);">
                                     </div>
                                     <div>
-                                        <p class="text-[10px] font-bold text-slate-700 dark:text-slate-300">Upload Icon</p>
-                                        <p class="text-[9px] text-slate-400">Format: ICO, PNG (Square)</p>
+                                        <p class="text-xs font-bold text-slate-700 dark:text-slate-300">Upload Icon</p>
+                                        <p class="text-xs text-slate-400">Format: ICO, PNG (Square)</p>
                                     </div>
                                 </div>
                             </div>
@@ -105,7 +105,7 @@
                             </h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <!-- Card 1: B2B Partner -->
-                                <div class="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                <div class="bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
                                     <div class="flex items-center justify-between mb-4">
                                         <div>
                                             <h5 class="text-sm font-bold text-gray-900 dark:text-white">B2B Partner Management</h5>
@@ -133,7 +133,7 @@
                                 </div>
 
                                 <!-- Card 2: FUP Management -->
-                                <div class="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                <div class="bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
                                     <div class="flex items-center justify-between mb-4">
                                         <div>
                                             <h5 class="text-sm font-bold text-gray-900 dark:text-white">FUP & Quota Management</h5>
@@ -144,11 +144,11 @@
                                             <label for="enable_fup_module" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer">Aktifkan FUP</label>
                                         </div>
                                     </div>
-                                    <p class="text-[10px] text-gray-400 italic mt-8">Modul ini memungkinkan sistem mendeteksi pemakaian kuota dan menurunkan kecepatan secara otomatis.</p>
+                                    <p class="text-xs text-gray-400 italic mt-8">Modul ini memungkinkan sistem mendeteksi pemakaian kuota dan menurunkan kecepatan secara otomatis.</p>
                                 </div>
 
                                 <!-- Card 3: Sales Force Commission -->
-                                <div class="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                <div class="bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
                                     <div class="flex items-center justify-between mb-4">
                                         <div>
                                             <h5 class="text-sm font-bold text-gray-900 dark:text-white">Internal Sales Incentive</h5>
@@ -186,7 +186,7 @@
                                     <div class="md:col-span-1 lg:col-span-1">
                                         <x-input-label for="whatsapp_group_id" :value="__('Global Default Group ID')" />
                                         <x-text-input id="whatsapp_group_id" name="whatsapp_group_id" type="text" class="mt-1 block w-full bg-indigo-50/30" :value="$settings['whatsapp_group_id']->value ?? ''" placeholder="12036302..." />
-                                        <p class="text-[9px] text-slate-400 mt-1">* Digunakan jika group per tipe tidak diisi</p>
+                                        <p class="text-xs text-slate-400 mt-1">* Digunakan jika group per tipe tidak diisi</p>
                                     </div>
                                     <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         <div>
@@ -210,7 +210,7 @@
                                             <x-text-input id="whatsapp_group_id_maintenance" name="whatsapp_group_id_maintenance" type="text" class="mt-1 block w-full text-xs" :value="$settings['whatsapp_group_id_maintenance']->value ?? ''" />
                                         </div>
                                     </div>
-                                    <div class="md:col-span-2 lg:col-span-3 mt-2 flex items-center text-[10px] text-slate-500 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
+                                    <div class="md:col-span-2 lg:col-span-3 mt-2 flex items-center text-xs text-slate-500 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
                                         <svg class="w-3 h-3 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                         <span><strong>Tips:</strong> Dapatkan ID Grup (format: <code>12036xxx@g.us</code>) dari Dashboard Provider (Fonnte/Wablas) atau kirim <code>/groups</code> ke nomor API Anda.</span>
                                     </div>

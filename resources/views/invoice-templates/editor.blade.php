@@ -16,7 +16,7 @@
             @csrf
             @if($template) @method('PUT') @endif
 
-            <div class="flex flex-wrap items-center gap-4 mb-4 p-4 glass bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+            <div class="flex flex-wrap items-center gap-4 mb-4 p-4 glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
                 <div class="flex-1 min-w-[200px]">
                     <input type="text" name="name" value="{{ old('name', $template->name ?? '') }}" placeholder="Nama Template (misal: Invoice Standar A4)" required
                         class="w-full border-none bg-gray-50 dark:bg-gray-900 rounded-xl py-2.5 px-4 text-sm font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
@@ -36,7 +36,7 @@
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                     Preview
                 </button>
-                <button type="submit" class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-500/30 flex items-center">
+                <button type="submit" class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all  shadow-sm flex items-center">
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     Simpan Template
                 </button>
@@ -47,7 +47,7 @@
                 <!-- LEFT: Code Editor -->
                 <div class="flex flex-col gap-4">
                     <!-- Variable Reference -->
-                    <div class="glass bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4" x-data="{ varOpen: false }">
+                    <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4" x-data="{ varOpen: false }">
                         <button type="button" @click="varOpen = !varOpen" class="w-full flex items-center justify-between text-sm font-bold text-gray-700 dark:text-gray-300">
                             <span class="flex items-center">
                                 <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
@@ -58,7 +58,7 @@
                         <div x-show="varOpen" x-transition class="mt-4 space-y-4" style="display:none;">
                             @foreach($variables as $group => $vars)
                             <div>
-                                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{{ $group }}</h4>
+                                <h4 class="text-xs font-semibold text-gray-400 mb-2">{{ $group }}</h4>
                                 <div class="flex flex-wrap gap-1.5">
                                     @foreach($vars as $var => $desc)
                                     <button type="button" @click="insertVariable('{{ $var }}')" title="{{ $desc }}"
@@ -73,10 +73,10 @@
                     </div>
 
                     <!-- HTML Editor -->
-                    <div class="flex-1 glass bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col">
+                    <div class="flex-1 glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col">
                         <div class="px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">HTML Content</span>
-                            <span class="text-[10px] text-gray-400">Tulis kode HTML template invoice Anda</span>
+                            <span class="text-xs font-semibold text-gray-400">HTML Content</span>
+                            <span class="text-xs text-gray-400">Tulis kode HTML template invoice Anda</span>
                         </div>
                         <textarea name="html_content" id="htmlEditor" x-ref="htmlEditor"
                             class="flex-1 w-full border-none bg-gray-900 text-emerald-400 font-mono text-sm p-4 focus:ring-0 resize-none"
@@ -85,10 +85,10 @@
                     </div>
 
                     <!-- CSS Editor -->
-                    <div class="glass bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col">
+                    <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col">
                         <div class="px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">CSS (Opsional)</span>
-                            <span class="text-[10px] text-gray-400">Style tambahan untuk template</span>
+                            <span class="text-xs font-semibold text-gray-400">CSS (Opsional)</span>
+                            <span class="text-xs text-gray-400">Style tambahan untuk template</span>
                         </div>
                         <textarea name="css_content" id="cssEditor" x-ref="cssEditor"
                             class="w-full border-none bg-gray-900 text-sky-400 font-mono text-sm p-4 focus:ring-0 resize-none"
@@ -98,12 +98,12 @@
                 </div>
 
                 <!-- RIGHT: Live Preview -->
-                <div class="glass bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col">
+                <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col">
                     <div class="px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Live Preview</span>
+                        <span class="text-xs font-semibold text-gray-400">Live Preview</span>
                         <div class="flex items-center gap-2">
                             <span class="w-2 h-2 rounded-full" :class="previewLoading ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'"></span>
-                            <span class="text-[10px] text-gray-400" x-text="previewLoading ? 'Loading...' : 'Ready'"></span>
+                            <span class="text-xs text-gray-400" x-text="previewLoading ? 'Loading...' : 'Ready'"></span>
                         </div>
                     </div>
                     <div class="flex-1 overflow-auto bg-gray-100 dark:bg-gray-950 p-6">

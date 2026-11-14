@@ -1,10 +1,10 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-black text-2xl text-gray-800 dark:text-gray-100 leading-tight">
+            <h2 class="font-semibold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
                 {{ __('System User Management') }}
             </h2>
-            <a href="{{ route('users.create') }}" class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-2xl font-bold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-lg shadow-indigo-500/30">
+            <a href="{{ route('users.create') }}" class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-xl font-bold text-xs text-white  hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 Add New Staff
             </a>
@@ -13,19 +13,19 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-3xl border border-gray-100 dark:border-gray-700">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-xl border border-gray-100 dark:border-gray-700">
                 <div class="p-8">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="border-b border-gray-100 dark:border-gray-700">
-                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">#</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">User Profile</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Role</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Login Devices</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Last Active</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Actions</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 ">#</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 ">User Profile</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400  text-center">Role</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400  text-center">Status</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400  text-center">Login Devices</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400  text-center">Last Active</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400  text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
@@ -53,7 +53,7 @@
                                                 'sales' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
                                             ];
                                         @endphp
-                                        <span class="px-3 py-1 text-[10px] font-black uppercase tracking-tighter rounded-full {{ $roleClasses[$user->role] ?? 'bg-gray-100 text-gray-600' }}">
+                                        <span class="px-3 py-1 text-xs rounded-full {{ $roleClasses[$user->role] ?? 'bg-gray-100 text-gray-600' }}">
                                             {{ $user->role }}
                                         </span>
                                     </td>

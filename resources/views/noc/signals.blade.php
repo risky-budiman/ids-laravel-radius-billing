@@ -40,7 +40,7 @@
                 <button 
                     @click="syncSignals()"
                     :disabled="isRunning"
-                    class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-200 dark:shadow-none"
+                    class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-200 dark:shadow-none"
                 >
                     <template x-if="isRunning">
                         <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -57,7 +57,7 @@
     <div class="py-6">
         <div class="max-w-7xl mx-auto">
             @if($customers->isEmpty())
-                <div class="bg-white dark:bg-gray-800 rounded-3xl p-16 text-center border border-gray-100 dark:border-gray-700 shadow-sm">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-16 text-center border border-gray-100 dark:border-gray-700 shadow-sm">
                     <div class="inline-flex p-6 bg-rose-50 dark:bg-rose-900/20 rounded-full mb-6">
                         <svg class="w-16 h-16 text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
@@ -65,17 +65,17 @@
                     <p class="text-gray-500 dark:text-gray-400 mt-2 max-w-md mx-auto">Daftarkan ONU pelanggan terlebih dahulu agar sistem dapat memantau sinyal optik mereka.</p>
                 </div>
             @else
-                <div class="glass bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div class="card overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
                             <thead>
                                 <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
-                                    <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Customer</th>
-                                    <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">OLT Source</th>
-                                    <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">ONU Index</th>
-                                    <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">RX Power (OLT)</th>
-                                    <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
-                                    <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Action</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400">Customer</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400">OLT Source</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400">ONU Index</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400">RX Power (OLT)</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400">Status</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400 text-right">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -89,14 +89,14 @@
                                         $displayPower = $rxPower ? $rxPower . ' dBm' : 'N/A';
                                         
                                         if ($rxPower === null) $colorClass = 'text-gray-400';
-                                        elseif ($rxPower < -27) $colorClass = 'text-rose-500 font-black animate-pulse';
+                                        elseif ($rxPower < -27) $colorClass = 'text-rose-500 font-semibold animate-pulse';
                                         elseif ($rxPower < -24) $colorClass = 'text-amber-500 font-bold';
                                     @endphp
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                         <td class="px-8 py-5">
                                             <div>
                                                 <p class="font-bold text-gray-900 dark:text-white">{{ $customer->name }}</p>
-                                                <p class="text-[10px] text-gray-500 font-mono">{{ $customer->username }}</p>
+                                                <p class="text-xs text-gray-500 font-mono">{{ $customer->username }}</p>
                                             </div>
                                         </td>
                                         <td class="px-8 py-5">
@@ -109,19 +109,19 @@
                                             <div class="flex flex-col">
                                                 <span class="text-lg font-mono {{ $colorClass }}">{{ $displayPower }}</span>
                                                 @if($cache)
-                                                    <span class="text-[9px] text-gray-400">Polled: {{ $cache->last_polled_at->diffForHumans() }}</span>
+                                                    <span class="text-xs text-gray-400">Polled: {{ $cache->last_polled_at->diffForHumans() }}</span>
                                                 @endif
                                             </div>
                                         </td>
                                         <td class="px-8 py-5">
                                             @if($status == 'online')
-                                                <span class="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded text-[10px] font-bold">ONLINE</span>
+                                                <span class="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded text-xs font-bold">ONLINE</span>
                                             @elseif($status == 'dying-gasp')
-                                                <span class="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded text-[10px] font-bold">DYING GASP</span>
+                                                <span class="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded text-xs font-bold">DYING GASP</span>
                                             @elseif($status == 'los')
-                                                <span class="px-2 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded text-[10px] font-bold">LOS (CUT)</span>
+                                                <span class="px-2 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded text-xs font-bold">LOS (CUT)</span>
                                             @else
-                                                <span class="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-400 rounded text-[10px] font-bold uppercase">{{ $status }}</span>
+                                                <span class="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-400 rounded text-xs">{{ $status }}</span>
                                             @endif
                                         </td>
                                         <td class="px-8 py-5 text-right">

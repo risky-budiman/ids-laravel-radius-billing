@@ -28,13 +28,13 @@
             </div>
             @endif
 
-            <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <form action="{{ route('bank-transactions.process-transfer') }}" method="POST" class="p-8">
                     @csrf
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         <!-- From Account -->
-                        <div class="p-6 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
+                        <div class="p-6 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700">
                             <label for="from_account_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center">
                                 <span class="p-1.5 bg-red-100 text-red-600 rounded-lg mr-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -53,7 +53,7 @@
                         </div>
 
                         <!-- To Account -->
-                        <div class="p-6 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
+                        <div class="p-6 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700">
                             <label for="to_account_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center">
                                 <span class="p-1.5 bg-emerald-100 text-emerald-600 rounded-lg mr-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -77,7 +77,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                     <span class="text-gray-500">Rp</span>
                                 </div>
-                                <input type="text" id="display_amount" placeholder="0,00" class="w-full pl-12 border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-lg font-bold" oninput="formatCurrency(this, 'amount')" onblur="finalizeCurrency(this, 'amount')">
+                                <input type="text" id="display_amount" placeholder="0,00" class="w-full pl-12 border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-lg font-bold" oninput="formatCurrency(this, 'amount')" onblur="finalizeCurrency(this, 'amount')">
                                 <input type="hidden" id="amount" name="amount" value="{{ old('amount') }}">
                             </div>
                             @error('amount') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
@@ -97,7 +97,7 @@
                     </div>
 
                     <div class="flex justify-end pt-6 border-t border-gray-100 dark:border-gray-700">
-                        <button type="submit" class="inline-flex items-center px-10 py-4 bg-indigo-600 border border-transparent rounded-2xl font-bold text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 transition ease-in-out duration-150 shadow-lg shadow-indigo-500/30">
+                        <button type="submit" class="inline-flex items-center px-10 py-4 bg-indigo-600 border border-transparent rounded-xl font-bold text-white  hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 transition ease-in-out duration-150 shadow-sm">
                             Eksekusi Transfer
                             <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                         </button>

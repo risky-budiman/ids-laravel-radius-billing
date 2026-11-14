@@ -4,7 +4,7 @@
             <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
                 {{ __('Inventory: Suppliers') }}
             </h2>
-            <button onclick="document.getElementById('addSupplierModal').classList.remove('hidden')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20">
+            <button onclick="document.getElementById('addSupplierModal').classList.remove('hidden')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">
                 + Add Supplier
             </button>
         </div>
@@ -16,7 +16,7 @@
         </div>
     @endif
 
-    <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div class="card overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
@@ -37,7 +37,7 @@
                             </td>
                             <td class="px-6 py-4">
                                 <span class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $supplier->name }}</span>
-                                <p class="text-[10px] text-gray-400 mt-0.5 truncate max-w-xs">{{ $supplier->address }}</p>
+                                <p class="text-xs text-gray-400 mt-0.5 truncate max-w-xs">{{ $supplier->address }}</p>
                             </td>
                             <td class="px-6 py-4">
                                 <span class="text-xs text-gray-600 dark:text-gray-400">{{ $supplier->contact_person ?? '-' }}</span>
@@ -48,9 +48,9 @@
                             </td>
                             <td class="px-6 py-4">
                                 @if($supplier->is_active)
-                                    <span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-lg uppercase">Active</span>
+                                    <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-lg">Active</span>
                                 @else
-                                    <span class="px-2 py-1 bg-gray-100 text-gray-400 text-[10px] font-bold rounded-lg uppercase">Inactive</span>
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-400 text-xs font-bold rounded-lg">Inactive</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4">
@@ -80,7 +80,7 @@
 
     <!-- Modal Add Supplier -->
     <div id="addSupplierModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="glass bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-lg border border-white/20 overflow-hidden transform transition-all">
+        <div class="glass bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-lg border border-white/20 overflow-hidden transform transition-all">
             <div class="bg-indigo-600 px-6 py-4 text-white">
                 <h3 class="font-bold text-lg">Add New Supplier</h3>
             </div>
@@ -112,7 +112,7 @@
                 </div>
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="document.getElementById('addSupplierModal').classList.add('hidden')" class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">Cancel</button>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/20">Save Supplier</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-sm">Save Supplier</button>
                 </div>
             </form>
         </div>

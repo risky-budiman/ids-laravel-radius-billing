@@ -4,7 +4,7 @@
             <a href="{{ route('purchase-orders.index') }}" class="text-gray-400 hover:text-indigo-600 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             </a>
-            <h2 class="font-black text-2xl text-gray-900 dark:text-white tracking-tight">
+            <h2 class="font-semibold text-2xl text-gray-900 dark:text-white tracking-tight">
                 Create Purchase Order
             </h2>
         </div>
@@ -14,7 +14,7 @@
         <form action="{{ route('purchase-orders.store') }}" method="POST" class="space-y-6">
             @csrf
             
-            <div class="glass bg-white dark:bg-gray-800 rounded-[2rem] p-8 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div class="glass bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-100 dark:border-gray-700">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-6">PO Details</h3>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -35,7 +35,7 @@
                 </div>
             </div>
 
-            <div class="glass bg-white dark:bg-gray-800 rounded-[2rem] p-8 shadow-sm border border-gray-100 dark:border-gray-700" x-data="{ items: [{id: Date.now(), inventory_item_id: '', quantity: 1, unit_price: 0}] }">
+            <div class="glass bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-100 dark:border-gray-700" x-data="{ items: [{id: Date.now(), inventory_item_id: '', quantity: 1, unit_price: 0}] }">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-lg font-bold text-gray-900 dark:text-white">Items</h3>
                     <button type="button" @click="items.push({id: Date.now(), inventory_item_id: '', quantity: 1, unit_price: 0})" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-bold transition-colors">
@@ -72,7 +72,7 @@
                 <a href="{{ route('purchase-orders.index') }}" class="px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
                     Cancel
                 </a>
-                <button type="submit" class="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/30">
+                <button type="submit" class="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-sm">
                     Save & Receive
                 </button>
             </div>

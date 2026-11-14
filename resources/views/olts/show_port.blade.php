@@ -13,7 +13,7 @@
                 </div>
             </div>
             <div class="flex space-x-2">
-                <button @click="window.dispatchEvent(new CustomEvent('sync-onu-live'))" class="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30 flex items-center">
+                <button @click="window.dispatchEvent(new CustomEvent('sync-onu-live'))" class="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm flex items-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                     <span>Sync Live Data</span>
                 </button>
@@ -24,29 +24,29 @@
     <div class="space-y-6" x-data="onuPortManager()">
         <!-- Port Summary Card -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
                 <span class="block text-xs text-gray-400 uppercase font-bold mb-1">Status</span>
                 <div class="flex items-center">
                     <div class="w-3 h-3 rounded-full {{ $port->status == 'active' ? 'bg-green-500' : 'bg-gray-300' }} mr-2"></div>
                     <span class="font-bold text-gray-900 dark:text-white">{{ strtoupper($port->status) }}</span>
                 </div>
             </div>
-            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
                 <span class="block text-xs text-gray-400 uppercase font-bold mb-1">Registered ONUs</span>
                 <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400" x-text="onus.length"></span>
             </div>
-            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
                 <span class="block text-xs text-gray-400 uppercase font-bold mb-1">Board Type</span>
                 <span class="font-bold text-gray-800 dark:text-gray-200">{{ $olt->olt_type }}</span>
             </div>
-            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
                 <span class="block text-xs text-gray-400 uppercase font-bold mb-1">VLAN Tag</span>
                 <span class="font-bold text-gray-800 dark:text-gray-200">100 (Default)</span>
             </div>
         </div>
 
         <!-- ONU List Table -->
-        <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
             <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                 <h3 class="font-bold text-gray-900 dark:text-white">Registered ONUs on this Port</h3>
                 
@@ -99,7 +99,7 @@
                                     x-text="onu.reason || '-'">
                                 </td>
                                 <td class="p-4">
-                                    <span class="px-3 py-1 text-[10px] font-bold rounded-full uppercase"
+                                    <span class="px-3 py-1 text-xs font-bold rounded-full"
                                           :class="['working', 'ready', 'online'].includes((onu.status || '').toLowerCase()) 
                                             ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
                                             : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'"
@@ -141,7 +141,7 @@
              style="display: none;">
             <div class="flex items-center justify-center min-h-screen px-4">
                 <div class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75" @click="showDetail = false"></div>
-                <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-lg w-full overflow-hidden border border-gray-100 dark:border-gray-700">
+                <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-sm max-w-lg w-full overflow-hidden border border-gray-100 dark:border-gray-700">
                     <div class="px-6 py-4 bg-indigo-600 flex justify-between items-center text-white">
                         <h3 class="font-bold">ONU Detailed Diagnostics</h3>
                         <button @click="showDetail = false" class="text-white hover:text-gray-200 text-lg font-bold">&times;</button>
@@ -151,37 +151,37 @@
                             <div class="space-y-4">
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
-                                        <span class="text-[10px] uppercase font-bold text-gray-400 block mb-1">ONU Name</span>
+                                        <span class="text-xs font-bold text-gray-400 block mb-1">ONU Name</span>
                                         <span class="text-base font-bold text-indigo-600 dark:text-indigo-400" x-text="selectedOnu.name"></span>
                                     </div>
                                     <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
-                                        <span class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Description</span>
+                                        <span class="text-xs font-bold text-gray-400 block mb-1">Description</span>
                                         <span class="text-base font-bold text-gray-900 dark:text-white" x-text="selectedOnu.description || '-'"></span>
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <span class="text-[10px] uppercase font-bold text-gray-400 block">Serial / MAC</span>
+                                        <span class="text-xs font-bold text-gray-400 block">Serial / MAC</span>
                                         <span class="font-bold text-gray-900 dark:text-white font-mono text-sm" x-text="selectedOnu.sn"></span>
                                     </div>
                                     <div>
-                                        <span class="text-[10px] uppercase font-bold text-gray-400 block">Status</span>
+                                        <span class="text-xs font-bold text-gray-400 block">Status</span>
                                         <span class="font-bold uppercase text-xs" :class="['working', 'ready', 'online'].includes((selectedOnu.status || '').toLowerCase()) ? 'text-green-500' : 'text-red-500'" x-text="selectedOnu.status"></span>
                                     </div>
                                     <div>
-                                        <span class="text-[10px] uppercase font-bold text-gray-400 block">Signal</span>
+                                        <span class="text-xs font-bold text-gray-400 block">Signal</span>
                                         <span class="font-bold text-gray-900 dark:text-white" x-text="selectedOnu.signal === 'LOST' || selectedOnu.signal === 'N/A' ? 'No Signal' : selectedOnu.signal + ' dBm'"></span>
                                     </div>
                                     <div>
-                                        <span class="text-[10px] uppercase font-bold text-gray-400 block">Last Reason</span>
+                                        <span class="text-xs font-bold text-gray-400 block">Last Reason</span>
                                         <span class="font-bold text-gray-900 dark:text-white text-xs" x-text="selectedOnu.reason || '-'"></span>
                                     </div>
                                     <div>
-                                        <span class="text-[10px] uppercase font-bold text-gray-400 block">Register Time</span>
+                                        <span class="text-xs font-bold text-gray-400 block">Register Time</span>
                                         <span class="font-bold text-gray-900 dark:text-white text-xs font-mono" x-text="selectedOnu.reg_time || '-'"></span>
                                     </div>
                                     <div>
-                                        <span class="text-[10px] uppercase font-bold text-gray-400 block">Type</span>
+                                        <span class="text-xs font-bold text-gray-400 block">Type</span>
                                         <span class="font-bold text-gray-900 dark:text-white text-xs" x-text="selectedOnu.type"></span>
                                     </div>
                                 </div>

@@ -7,7 +7,7 @@
                     <span>/</span>
                     <span class="text-indigo-500 dark:text-indigo-400">ACS Servers</span>
                 </div>
-                <h2 class="font-black text-3xl text-gray-800 dark:text-gray-100 tracking-tight leading-none">
+                <h2 class="font-semibold text-3xl text-gray-800 dark:text-gray-100 tracking-tight leading-none">
                     {{ __('GenieACS Servers') }}
                 </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">Manage server endpoints and credentials for automatic remote management protocol connections</p>
@@ -17,14 +17,14 @@
 
     <div class="max-w-7xl mx-auto space-y-6">
         @if(session('success'))
-            <div class="p-4 bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-900 text-green-700 dark:text-green-400 rounded-2xl flex items-center gap-3 text-sm font-semibold">
+            <div class="p-4 bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-900 text-green-700 dark:text-green-400 rounded-xl flex items-center gap-3 text-sm font-semibold">
                 <svg class="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                 <p>{{ session('success') }}</p>
             </div>
         @endif
 
         @if($errors->any())
-            <div class="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900 text-rose-700 dark:text-rose-400 rounded-2xl flex flex-col gap-1 text-sm font-semibold">
+            <div class="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900 text-rose-700 dark:text-rose-400 rounded-xl flex flex-col gap-1 text-sm font-semibold">
                 <div class="flex items-center gap-2 mb-1">
                     <svg class="w-5 h-5 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                     <span>Please correct the following errors:</span>
@@ -40,7 +40,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Add Server Form -->
             <div class="lg:col-span-1">
-                <div class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none overflow-hidden">
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none overflow-hidden">
                     <div class="bg-gray-50/50 dark:bg-gray-900/30 px-6 py-4 border-b border-gray-100 dark:border-gray-700/50">
                         <h3 class="font-extrabold text-sm text-gray-800 dark:text-gray-100 uppercase tracking-wide">Add New Server</h3>
                     </div>
@@ -48,18 +48,18 @@
                         @csrf
                         <div>
                             <x-input-label for="name" value="Server Name" class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2" />
-                            <input id="name" name="name" type="text" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-2xl text-sm outline-none transition-all dark:text-gray-200" placeholder="e.g. GenieACS Pusat" required />
+                            <input id="name" name="name" type="text" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm outline-none transition-all dark:text-gray-200" placeholder="e.g. GenieACS Pusat" required />
                         </div>
 
                         <div>
                             <x-input-label for="url" value="API URL Endpoint" class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2" />
-                            <input id="url" name="url" type="url" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-2xl text-sm outline-none transition-all dark:text-gray-200" placeholder="http://10.0.0.1:7557" required />
-                            <p class="mt-1.5 text-[10px] text-gray-400 dark:text-gray-500 font-medium">Include port if necessary (default GenieACS is 7557)</p>
+                            <input id="url" name="url" type="url" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm outline-none transition-all dark:text-gray-200" placeholder="http://10.0.0.1:7557" required />
+                            <p class="mt-1.5 text-xs text-gray-400 dark:text-gray-500 font-medium">Include port if necessary (default GenieACS is 7557)</p>
                         </div>
 
                         <div>
                             <x-input-label for="description" value="Description / Notes" class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2" />
-                            <textarea id="description" name="description" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-2xl text-sm outline-none transition-all dark:text-gray-200" placeholder="Location or notes..." rows="3"></textarea>
+                            <textarea id="description" name="description" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm outline-none transition-all dark:text-gray-200" placeholder="Location or notes..." rows="3"></textarea>
                         </div>
 
                         <div class="flex items-center gap-2 pt-1">
@@ -68,7 +68,7 @@
                         </div>
 
                         <div class="pt-2">
-                            <button type="submit" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-xs transition-all shadow-md shadow-indigo-500/10 active:scale-95 flex items-center justify-center gap-2">
+                            <button type="submit" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition-all shadow-md shadow-indigo-500/10  flex items-center justify-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
                                 Save Server Connection
                             </button>
@@ -79,7 +79,7 @@
 
             <!-- Server List Table -->
             <div class="lg:col-span-2">
-                <div class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none overflow-hidden">
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left whitespace-nowrap border-collapse">
                             <thead>
@@ -97,7 +97,7 @@
                                             <div class="flex flex-col">
                                                 <span class="text-sm font-extrabold text-gray-800 dark:text-gray-200">{{ $server->name }}</span>
                                                 @if($server->description)
-                                                    <span class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{{ $server->description }}</span>
+                                                    <span class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{{ $server->description }}</span>
                                                 @endif
                                             </div>
                                         </td>
@@ -108,12 +108,12 @@
                                         </td>
                                         <td class="px-6 py-4.5">
                                             @if($server->is_active)
-                                                <span class="px-2.5 py-1 bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 rounded-lg text-[10px] font-extrabold uppercase border border-green-100/20 flex items-center gap-1.5 w-fit">
+                                                <span class="px-2.5 py-1 bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 rounded-lg text-xs font-extrabold border border-green-100/20 flex items-center gap-1.5 w-fit">
                                                     <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
                                                     Active
                                                 </span>
                                             @else
-                                                <span class="px-2.5 py-1 bg-gray-50 dark:bg-gray-900 text-gray-400 rounded-lg text-[10px] font-extrabold uppercase border border-gray-100/30 flex items-center gap-1.5 w-fit">
+                                                <span class="px-2.5 py-1 bg-gray-50 dark:bg-gray-900 text-gray-400 rounded-lg text-xs font-extrabold border border-gray-100/30 flex items-center gap-1.5 w-fit">
                                                     <span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
                                                     Inactive
                                                 </span>
@@ -124,7 +124,7 @@
                                                 <form action="{{ route('acs-servers.destroy', $server->id) }}" method="POST" onsubmit="return confirm('Delete this server connection details?');">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="px-4 py-2 text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 font-bold bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-950/40 rounded-xl border border-rose-100/30 dark:border-rose-900/30 transition-all active:scale-95">
+                                                    <button type="submit" class="px-4 py-2 text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 font-bold bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-950/40 rounded-xl border border-rose-100/30 dark:border-rose-900/30 transition-all ">
                                                         Delete
                                                     </button>
                                                 </form>

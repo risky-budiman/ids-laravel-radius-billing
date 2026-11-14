@@ -5,7 +5,7 @@
                 {{ __('Inventory Audit: Item Outflows') }}
             </h2>
             <div class="flex space-x-3">
-                <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-2xl text-sm font-bold transition-all flex items-center shadow-lg shadow-indigo-600/20">
+                <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center shadow-sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                     Cetak Laporan Formal
                 </button>
@@ -168,23 +168,23 @@
     <div class="print:hidden space-y-6">
         <!-- Summary Cards (App UI Style) -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center space-x-4">
-                <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center font-black">
+            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center space-x-4">
+                <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-semibold">
                     {{ $outflows->total() }}
                 </div>
                 <div>
-                    <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Total Record</p>
+                    <p class="text-xs text-gray-400 font-semibold tracking-widest">Total Record</p>
                     <p class="text-sm font-bold text-gray-600 dark:text-gray-300">Riwayat Keluar</p>
                 </div>
             </div>
         </div>
 
         <!-- Table View (App UI Style) -->
-        <div class="glass bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="card overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left whitespace-nowrap">
                     <thead>
-                        <tr class="bg-gray-50/50 dark:bg-gray-900/50 text-gray-400 text-[10px] uppercase tracking-widest font-black border-b border-gray-100 dark:border-gray-700">
+                        <tr class="bg-gray-50/50 dark:bg-gray-900/50 text-gray-400 text-xs font-semibold border-b border-gray-100 dark:border-gray-700">
                             <th class="px-8 py-5">#</th>
                             <th class="px-8 py-5">Timestamp</th>
                             <th class="px-8 py-5">Product</th>
@@ -201,17 +201,17 @@
                                 </td>
                                 <td class="px-8 py-5">
                                     <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $flow->created_at->format('d M Y') }}</p>
-                                    <p class="text-[10px] text-gray-400 font-medium">{{ $flow->created_at->format('H:i') }}</p>
+                                    <p class="text-xs text-gray-400 font-medium">{{ $flow->created_at->format('H:i') }}</p>
                                 </td>
                                 <td class="px-8 py-5">
                                     <p class="text-sm font-bold text-gray-700 dark:text-gray-300">{{ $flow->item->name }}</p>
                                 </td>
-                                <td class="px-8 py-5 text-center font-black text-rose-500">
+                                <td class="px-8 py-5 text-center font-semibold text-rose-500">
                                     -{{ number_format($flow->quantity, 0) }}
                                 </td>
                                 <td class="px-8 py-5">
                                     <p class="text-xs font-bold text-gray-600">{{ $flow->customer ? 'Activation' : 'Technical' }}</p>
-                                    <p class="text-[10px] text-gray-400">{{ $flow->reference }}</p>
+                                    <p class="text-xs text-gray-400">{{ $flow->reference }}</p>
                                 </td>
                                 <td class="px-8 py-5 text-xs text-gray-500">
                                     {{ $flow->user->name }}

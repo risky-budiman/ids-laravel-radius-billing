@@ -21,9 +21,9 @@
                 <!-- Left Column: Main Config -->
                 <div class="lg:col-span-2 space-y-8">
                     <!-- Section: General Information -->
-                    <div class="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-700/50">
+                    <div class="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-xl p-8 shadow-sm border border-gray-100 dark:border-gray-700/50">
                         <div class="flex items-center mb-6">
-                            <div class="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl mr-4 text-indigo-600 dark:text-indigo-400">
+                            <div class="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl mr-4 text-indigo-600 dark:text-indigo-400">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </div>
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">General Information</h3>
@@ -40,15 +40,15 @@
                             </div>
                             <div class="md:col-span-2">
                                 <x-input-label for="description" :value="__('Public Description')" />
-                                <textarea id="description" name="description" rows="3" class="mt-1 block w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900/50 rounded-2xl focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 dark:text-gray-300 transition-all" placeholder="Tell your customers about this plan...">{{ $package->description }}</textarea>
+                                <textarea id="description" name="description" rows="3" class="mt-1 block w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900/50 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 dark:text-gray-300 transition-all" placeholder="Tell your customers about this plan...">{{ $package->description }}</textarea>
                             </div>
                         </div>
                     </div>
 
                     <!-- Section: Bandwidth Profile -->
-                    <div class="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-700/50">
+                    <div class="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-xl p-8 shadow-sm border border-gray-100 dark:border-gray-700/50">
                         <div class="flex items-center mb-6">
-                            <div class="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-2xl mr-4 text-blue-600 dark:text-blue-400">
+                            <div class="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl mr-4 text-blue-600 dark:text-blue-400">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             </div>
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Bandwidth Profile</h3>
@@ -56,8 +56,8 @@
 
                         <div class="space-y-8">
                             <!-- Basic Speed -->
-                            <div class="bg-gray-50 dark:bg-gray-900/40 p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
-                                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-4">Base Speed (Rx/Tx)</span>
+                            <div class="bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
+                                <span class="text-xs font-bold text-gray-400  block mb-4">Base Speed (Rx/Tx)</span>
                                 <div class="grid grid-cols-2 gap-6">
                                     <div class="relative">
                                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -116,7 +116,7 @@
                 <!-- Right Column: Sidebar (Pricing, FUP, Save) -->
                 <div class="space-y-8">
                     <!-- Section: Pricing -->
-                    <div class="bg-indigo-600 rounded-3xl p-8 text-white shadow-lg shadow-indigo-500/20">
+                    <div class="bg-indigo-600 rounded-xl p-8 text-white shadow-sm">
                         <div class="flex items-center mb-6">
                             <div class="p-2 bg-white/10 rounded-xl mr-3">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -125,14 +125,14 @@
                         </div>
                         <div class="relative">
                             <span class="absolute left-0 top-1/2 -translate-y-1/2 text-indigo-300 font-bold text-lg ml-4">Rp</span>
-                            <input type="number" name="price" required value="{{ (int)$package->price }}" class="block w-full bg-white/10 border-none rounded-2xl py-4 pl-12 text-2xl font-black placeholder:text-indigo-300 focus:ring-2 focus:ring-white/30 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="0">
+                            <input type="number" name="price" required value="{{ (int)$package->price }}" class="block w-full bg-white/10 border-none rounded-xl py-4 pl-12 text-2xl font-semibold placeholder:text-indigo-300 focus:ring-2 focus:ring-white/30 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="0">
                         </div>
                         <p class="text-xs text-indigo-200 mt-4 leading-relaxed">Tax calculations and prorata will be applied based on customer settings.</p>
                     </div>
 
                     <!-- Section: FUP Policy -->
                     @if(get_setting('enable_fup_module') == '1')
-                    <div class="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-700/50">
+                    <div class="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-xl p-8 shadow-sm border border-gray-100 dark:border-gray-700/50">
                         <div class="flex items-center justify-between mb-6">
                             <div class="flex items-center">
                                 <div class="p-2 bg-amber-50 dark:bg-amber-900/30 rounded-xl mr-3 text-amber-600">
@@ -161,7 +161,7 @@
 
                     <!-- Submit Button -->
                     <div class="pt-4">
-                        <button type="submit" class="w-full bg-gray-900 dark:bg-indigo-600 hover:bg-black dark:hover:bg-indigo-700 text-white font-bold py-4 rounded-3xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]">
+                        <button type="submit" class="w-full bg-gray-900 dark:bg-indigo-600 hover:bg-black dark:hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-sm transition-all ] ]">
                             Update Service Plan
                         </button>
                     </div>

@@ -12,7 +12,7 @@
             </div>
         @endif
 
-        <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="card overflow-hidden">
             <form action="{{ route('settings.company.update') }}" method="POST" enctype="multipart/form-data" class="p-8">
                 @csrf
 
@@ -24,7 +24,7 @@
                         <div class="md:col-span-1">
                             <div class="flex flex-col items-center">
                                 <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-center w-full">Current Logo</p>
-                                <div class="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-900/50">
+                                <div class="w-32 h-32 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-900/50">
                                     @if(get_setting('company_logo'))
                                         <img src="{{ asset('storage/' . get_setting('company_logo')) }}" alt="Logo" class="max-w-full max-h-full object-contain p-2">
                                     @else

@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-6">
-        <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead>
@@ -32,10 +32,10 @@
                                     <div class="font-bold text-gray-900 dark:text-white">{{ $wd->partner->name }}</div>
                                 </td>
                             @endif
-                            <td class="px-6 py-4 font-black text-gray-900 dark:text-white">Rp {{ number_format($wd->amount, 0, ',', '.') }}</td>
+                            <td class="px-6 py-4 font-semibold text-gray-900 dark:text-white">Rp {{ number_format($wd->amount, 0, ',', '.') }}</td>
                             <td class="px-6 py-4">
                                 <div class="text-xs text-gray-700 dark:text-gray-300">{{ $wd->bank_name }} - {{ $wd->bank_account_number }}</div>
-                                <div class="text-[10px] text-gray-500">{{ $wd->bank_account_name }}</div>
+                                <div class="text-xs text-gray-500">{{ $wd->bank_account_name }}</div>
                             </td>
                             <td class="px-6 py-4 text-center">
                                 @php
@@ -46,7 +46,7 @@
                                         'rejected' => 'bg-rose-50 text-rose-600',
                                     ];
                                 @endphp
-                                <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase {{ $colors[$wd->status] ?? 'bg-gray-100' }}">
+                                <span class="px-3 py-1 rounded-full text-xs {{ $colors[$wd->status] ?? 'bg-gray-100' }}">
                                     {{ $wd->status }}
                                 </span>
                             </td>

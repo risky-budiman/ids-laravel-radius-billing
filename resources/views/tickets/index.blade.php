@@ -41,7 +41,7 @@
                             <span class="text-xs font-bold text-slate-800 dark:text-slate-100">{{ $recap['overall']['percentage'] }}%</span>
                         </div>
                         <div>
-                            <span class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Efisiensi Tim</span>
+                            <span class="block text-xs font-bold text-gray-500 dark:text-gray-400">Total Efisiensi Tim</span>
                             <span class="block text-sm font-semibold text-slate-800 dark:text-slate-100 mt-0.5">
                                 {{ $recap['overall']['resolved'] + $recap['overall']['closed'] }} dari {{ $recap['overall']['total'] }} Selesai
                             </span>
@@ -75,7 +75,7 @@
                                 @endif
                             </div>
                             
-                            <div class="grid grid-cols-2 gap-2 text-[10px]">
+                            <div class="grid grid-cols-2 gap-2 text-xs">
                                 <div class="bg-emerald-50/50 dark:bg-emerald-950/20 p-2 rounded-xl border border-emerald-100/50 dark:border-emerald-900/30 flex justify-between items-center">
                                     <span class="text-gray-500 dark:text-gray-400 font-medium">Selesai</span>
                                     <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">{{ $recap['aktivasi']['resolved'] + $recap['aktivasi']['closed'] }}</span>
@@ -128,7 +128,7 @@
                                 @endif
                             </div>
                             
-                            <div class="grid grid-cols-2 gap-2 text-[10px]">
+                            <div class="grid grid-cols-2 gap-2 text-xs">
                                 <div class="bg-emerald-50/50 dark:bg-emerald-950/20 p-2 rounded-xl border border-emerald-100/50 dark:border-emerald-900/30 flex justify-between items-center">
                                     <span class="text-gray-500 dark:text-gray-400 font-medium">Selesai</span>
                                     <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">{{ $recap['gangguan']['resolved'] + $recap['gangguan']['closed'] }}</span>
@@ -181,7 +181,7 @@
                                 @endif
                             </div>
                             
-                            <div class="grid grid-cols-2 gap-2 text-[10px]">
+                            <div class="grid grid-cols-2 gap-2 text-xs">
                                 <div class="bg-emerald-50/50 dark:bg-emerald-950/20 p-2 rounded-xl border border-emerald-100/50 dark:border-emerald-900/30 flex justify-between items-center">
                                     <span class="text-gray-500 dark:text-gray-400 font-medium">Selesai</span>
                                     <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">{{ $recap['dismantle']['resolved'] + $recap['dismantle']['closed'] }}</span>

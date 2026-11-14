@@ -11,15 +11,15 @@
         </div>
     </x-slot>
 
-    <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+    <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-50 dark:bg-gray-900/50">
-                        <th class="p-6 text-xs font-bold text-gray-500 uppercase tracking-widest">Tanggal & Waktu</th>
-                        <th class="p-6 text-xs font-bold text-gray-500 uppercase tracking-widest">Pelanggan / Sumber</th>
-                        <th class="p-6 text-xs font-bold text-gray-500 uppercase tracking-widest">Nomor Invoice</th>
-                        <th class="p-6 text-xs font-bold text-gray-500 uppercase tracking-widest text-right">Nominal Insentif</th>
+                        <th class="p-6 text-xs font-bold text-gray-500 ">Tanggal & Waktu</th>
+                        <th class="p-6 text-xs font-bold text-gray-500 ">Pelanggan / Sumber</th>
+                        <th class="p-6 text-xs font-bold text-gray-500 ">Nomor Invoice</th>
+                        <th class="p-6 text-xs font-bold text-gray-500  text-right">Nominal Insentif</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -27,17 +27,17 @@
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-colors">
                         <td class="p-6 text-sm text-gray-500">
                             {{ $c->created_at->format('d M Y') }}
-                            <div class="text-[10px] text-gray-400">{{ $c->created_at->format('H:i:s') }}</div>
+                            <div class="text-xs text-gray-400">{{ $c->created_at->format('H:i:s') }}</div>
                         </td>
                         <td class="p-6">
                             <div class="font-bold text-gray-900 dark:text-white">{{ $c->customer->name ?? 'Deleted' }}</div>
-                            <div class="text-[10px] text-gray-500 uppercase font-mono">{{ $c->customer->customer_code ?? '' }}</div>
+                            <div class="text-xs text-gray-500 font-mono">{{ $c->customer->customer_code ?? '' }}</div>
                         </td>
                         <td class="p-6 font-mono text-sm text-indigo-600 dark:text-indigo-400 font-bold">
                             {{ $c->invoice->invoice_number ?? '-' }}
                         </td>
                         <td class="p-6 text-right">
-                            <span class="text-lg font-black text-emerald-600">+ Rp {{ number_format($c->commission_amount, 0, ',', '.') }}</span>
+                            <span class="text-lg font-semibold text-emerald-600">+ Rp {{ number_format($c->commission_amount, 0, ',', '.') }}</span>
                         </td>
                     </tr>
                     @empty

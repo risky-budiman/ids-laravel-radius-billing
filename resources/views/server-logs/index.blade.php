@@ -22,7 +22,7 @@
                 <form action="{{ route('server-logs.clear') }}" method="POST" onsubmit="return confirm('Are you sure you want to clear the server log? This action cannot be undone.');">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-sm shadow-rose-500/30">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-xl font-bold text-xs  transition-all shadow-sm shadow-rose-500/30">
                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         Clear Syslog
                     </button>
@@ -34,25 +34,25 @@
     <div class="space-y-6" x-data="systemUpdater()">
         <!-- Alerts -->
         @if(session('success'))
-            <div class="p-4 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-emerald-800 dark:text-emerald-200 flex items-center shadow-sm">
+            <div class="p-4 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-200 flex items-center shadow-sm">
                 <svg class="w-5 h-5 mr-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                 <span>{{ session('success') }}</span>
             </div>
         @endif
 
         @if(session('error'))
-            <div class="p-4 bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-2xl text-rose-800 dark:text-rose-200 flex items-center shadow-sm">
+            <div class="p-4 bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-xl text-rose-800 dark:text-rose-200 flex items-center shadow-sm">
                 <svg class="w-5 h-5 mr-3 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 <span>{{ session('error') }}</span>
             </div>
         @endif
 
         <!-- MikroTik-Style System Package & Auto-Upgrade Card -->
-        <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
             <!-- Header bar -->
-            <div class="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="px-6 py-4 bg-slate-900 text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div class="flex items-center space-x-3">
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-wider bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 font-mono">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 font-mono">
                         System Package
                     </span>
                     <span class="font-bold text-sm tracking-wide">RouterOS-Style Auto Upgrade</span>
@@ -68,23 +68,23 @@
                 <!-- Info Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <!-- Installed Version -->
-                    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
-                        <span class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Installed Version</span>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
+                        <span class="block text-xs text-gray-400 mb-1">Installed Version</span>
                         <div class="flex items-baseline space-x-2">
-                            <span class="text-xl font-black text-gray-900 dark:text-white font-mono" x-text="'v' + currentVersion">v{{ app_version() }}</span>
+                            <span class="text-xl font-semibold text-gray-900 dark:text-white font-mono" x-text="'v' + currentVersion">v{{ app_version() }}</span>
                             <span class="text-xs text-gray-500 font-mono" x-text="'(' + currentCommit + ')'"></span>
                         </div>
                     </div>
 
                     <!-- Latest Available Version -->
-                    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
-                        <span class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Latest on Remote</span>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
+                        <span class="block text-xs text-gray-400 mb-1">Latest on Remote</span>
                         <div class="flex items-baseline space-x-2">
                             <template x-if="isChecking">
                                 <span class="text-sm font-bold text-indigo-600 animate-pulse">Checking remote...</span>
                             </template>
                             <template x-if="!isChecking">
-                                <span class="text-xl font-black font-mono" :class="isUpdateAvailable ? 'text-amber-500' : 'text-emerald-500'" x-text="remoteCommit ? (isUpdateAvailable ? 'Update Ready' : 'Up to Date') : 'Unknown'">
+                                <span class="text-xl font-semibold font-mono" :class="isUpdateAvailable ? 'text-amber-500' : 'text-emerald-500'" x-text="remoteCommit ? (isUpdateAvailable ? 'Update Ready' : 'Up to Date') : 'Unknown'">
                                     Up to Date
                                 </span>
                             </template>
@@ -92,8 +92,8 @@
                     </div>
 
                     <!-- Status -->
-                    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
-                        <span class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Upgrade Status</span>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
+                        <span class="block text-xs text-gray-400 mb-1">Upgrade Status</span>
                         <div class="flex items-center space-x-2 mt-1">
                             <div class="w-2.5 h-2.5 rounded-full" :class="isUpdateAvailable ? 'bg-amber-500 animate-ping' : 'bg-emerald-500'"></div>
                             <span class="text-xs font-bold font-mono" :class="isUpdateAvailable ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'" x-text="statusMessage">
@@ -103,8 +103,8 @@
                     </div>
 
                     <!-- Environment -->
-                    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
-                        <span class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Runtime Environment</span>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
+                        <span class="block text-xs text-gray-400 mb-1">Runtime Environment</span>
                         <span class="text-xs font-mono font-bold text-gray-700 dark:text-gray-300 block truncate">
                             PHP {{ phpversion() }} • Laravel {{ app()->version() }}
                         </span>
@@ -123,7 +123,7 @@
                         </button>
 
                         <!-- Download & Install / Update Now Button -->
-                        <button @click="startUpdate()" :disabled="isChecking || isUpdating" class="w-full sm:w-auto px-6 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-lg flex items-center justify-center disabled:opacity-50"
+                        <button @click="startUpdate()" :disabled="isChecking || isUpdating" class="w-full sm:w-auto px-6 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-xl transition-all shadow-lg flex items-center justify-center disabled:opacity-50"
                                 :class="isUpdateAvailable ? 'bg-amber-500 hover:bg-amber-600 text-slate-900 shadow-amber-500/30 animate-pulse' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/30'">
                             <svg class="w-4 h-4 mr-2" :class="{'animate-spin': isUpdating}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -142,8 +142,8 @@
                 </div>
 
                 <!-- Expandable Commits List -->
-                <div x-show="showCommits" x-collapse class="mt-4 p-4 bg-gray-900 text-gray-300 rounded-2xl border border-gray-800 text-xs font-mono space-y-1.5 overflow-x-auto">
-                    <span class="block text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-2">Recent Commits / What's New:</span>
+                <div x-show="showCommits" x-collapse class="mt-4 p-4 bg-gray-900 text-gray-300 rounded-xl border border-gray-800 text-xs font-mono space-y-1.5 overflow-x-auto">
+                    <span class="block text-xs text-gray-500 font-bold tracking-wider mb-2">Recent Commits / What's New:</span>
                     <template x-for="commit in newCommits" :key="commit">
                         <div class="flex items-center space-x-2 text-emerald-400">
                             <span>•</span>
@@ -155,7 +155,7 @@
         </div>
 
         <!-- Live Server Log Terminal Card -->
-        <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
             <!-- Terminal Header -->
             <div class="bg-gray-900 px-6 py-3 border-b border-gray-800 flex justify-between items-center text-white">
                 <div class="flex items-center space-x-3">
@@ -187,7 +187,7 @@
 
         <!-- Update Execution Modal with Real-time Terminal -->
         <div x-show="showModal" class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/80 backdrop-blur-sm flex items-center justify-center p-4" style="display: none;">
-            <div class="relative bg-gray-900 text-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border border-gray-800">
+            <div class="relative bg-gray-900 text-white rounded-xl shadow-sm max-w-2xl w-full overflow-hidden border border-gray-800">
                 <!-- Modal Header -->
                 <div class="px-6 py-4 bg-gray-800/80 border-b border-gray-700 flex justify-between items-center">
                     <div class="flex items-center space-x-3">
@@ -201,7 +201,7 @@
 
                 <!-- Modal Body (Terminal Output) -->
                 <div class="p-6 space-y-4">
-                    <div class="bg-black/80 rounded-2xl p-4 border border-gray-800 font-mono text-xs text-green-400 overflow-y-auto max-h-80 leading-relaxed whitespace-pre-wrap" id="update-terminal" x-text="updateOutput || 'Initializing upgrade process...'"></div>
+                    <div class="bg-black/80 rounded-xl p-4 border border-gray-800 font-mono text-xs text-green-400 overflow-y-auto max-h-80 leading-relaxed whitespace-pre-wrap" id="update-terminal" x-text="updateOutput || 'Initializing upgrade process...'"></div>
 
                     <div class="flex justify-between items-center pt-2">
                         <template x-if="isUpdating">
@@ -212,7 +212,7 @@
                         </template>
 
                         <template x-if="!isUpdating">
-                            <button @click="showModal = false; window.location.reload();" class="ml-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/30 transition-all">
+                            <button @click="showModal = false; window.location.reload();" class="ml-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-sm transition-all">
                                 Done (Reload Dashboard)
                             </button>
                         </template>

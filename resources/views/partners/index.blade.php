@@ -7,7 +7,7 @@
                 </h2>
                 <p class="text-sm text-gray-500 mt-1">Manage local agents and track their performance.</p>
             </div>
-            <a href="{{ route('partners.create') }}" class="inline-flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-2xl transition-all shadow-lg shadow-indigo-200 dark:shadow-none transform hover:-translate-y-0.5">
+            <a href="{{ route('partners.create') }}" class="inline-flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-indigo-200 dark:shadow-none transform ">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                 Add New Partner
             </a>
@@ -17,28 +17,28 @@
     <div class="py-6">
         <!-- Stats Summary -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
+            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
                 <p class="text-sm font-medium text-gray-500">Total Partners</p>
-                <p class="text-2xl font-black text-gray-900 dark:text-white mt-1">{{ $partners->total() }}</p>
+                <p class="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{{ $partners->total() }}</p>
             </div>
-            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm text-indigo-600">
+            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm text-indigo-600">
                 <p class="text-sm font-medium text-gray-500">Active Commissions</p>
-                <p class="text-2xl font-black mt-1">Rp {{ number_format(\App\Models\PartnerCommission::where('status', 'earned')->sum('amount'), 0, ',', '.') }}</p>
+                <p class="text-2xl font-semibold mt-1">Rp {{ number_format(\App\Models\PartnerCommission::where('status', 'earned')->sum('amount'), 0, ',', '.') }}</p>
             </div>
             <div class="md:col-span-2">
-                <a href="{{ route('partners.withdrawals') }}" class="glass bg-indigo-600 hover:bg-indigo-700 p-6 rounded-3xl border border-indigo-500 shadow-lg shadow-indigo-200 dark:shadow-none flex items-center justify-between group transition-all">
+                <a href="{{ route('partners.withdrawals') }}" class="glass bg-indigo-600 hover:bg-indigo-700 p-6 rounded-xl border border-indigo-500 shadow-lg shadow-indigo-200 dark:shadow-none flex items-center justify-between group transition-all">
                     <div>
                         <p class="text-sm font-medium text-white/80">Pending Withdrawals</p>
-                        <p class="text-2xl font-black text-white mt-1">{{ \App\Models\PartnerWithdrawal::where('status', 'pending')->count() }} Requests</p>
+                        <p class="text-2xl font-semibold text-white mt-1">{{ \App\Models\PartnerWithdrawal::where('status', 'pending')->count() }} Requests</p>
                     </div>
-                    <div class="p-3 bg-white/20 rounded-2xl text-white group-hover:scale-110 transition-transform">
+                    <div class="p-3 bg-white/20 rounded-xl text-white group- transition-transform">
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     </div>
                 </a>
             </div>
         </div>
 
-        <div class="glass bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
@@ -77,7 +77,7 @@
                                 <div class="text-sm font-bold text-indigo-600 dark:text-indigo-400">
                                     {{ number_format($partner->commission_rate, 0) }}{{ $partner->commission_type === 'percentage' ? '%' : '' }}
                                 </div>
-                                <div class="text-[10px] text-gray-400 uppercase tracking-tighter">{{ $partner->commission_type }}</div>
+                                <div class="text-xs text-gray-400">{{ $partner->commission_type }}</div>
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end space-x-2">

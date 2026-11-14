@@ -18,7 +18,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         @foreach($olts as $olt)
-            <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col h-full hover:shadow-md transition-all duration-300">
+            <div class="glass bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col h-full hover:shadow-md transition-all duration-300">
                 <div class="flex justify-between items-start mb-4">
                     <div class="flex items-center">
                         <div class="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl mr-4 text-indigo-600 dark:text-indigo-400">
@@ -82,8 +82,8 @@
         @endforeach
 
         @if($olts->isEmpty())
-            <div class="col-span-full glass bg-white dark:bg-gray-800 rounded-2xl p-12 text-center">
-                <div class="inline-flex p-4 bg-gray-50 dark:bg-gray-700/50 rounded-2xl mb-4">
+            <div class="col-span-full glass bg-white dark:bg-gray-800 rounded-xl p-12 text-center">
+                <div class="inline-flex p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl mb-4">
                     <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">No OLT devices found</h3>

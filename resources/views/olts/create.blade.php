@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="max-w-4xl mx-auto">
-        <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="card overflow-hidden">
             <form action="{{ route('olts.store') }}" method="POST" class="p-8">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -120,7 +120,7 @@
 
                 <div class="mt-10 flex justify-end space-x-4 border-t border-gray-100 dark:border-gray-700 pt-6">
                     <a href="{{ route('olts.index') }}" class="px-6 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 transition-all">Cancel</a>
-                    <button type="submit" class="px-10 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-all">Save OLT Device</button>
+                    <button type="submit" class="px-10 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-sm transition-all">Save OLT Device</button>
                 </div>
             </form>
         </div>

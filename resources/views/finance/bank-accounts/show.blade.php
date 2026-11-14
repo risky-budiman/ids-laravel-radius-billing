@@ -14,9 +14,9 @@
                     </p>
                 </div>
             </div>
-            <div class="bg-emerald-50 dark:bg-emerald-900/20 px-6 py-3 rounded-2xl border border-emerald-100 dark:border-emerald-800/50">
+            <div class="bg-emerald-50 dark:bg-emerald-900/20 px-6 py-3 rounded-xl border border-emerald-100 dark:border-emerald-800/50">
                 <p class="text-xs text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mb-1">Saldo Saat Ini</p>
-                <p class="text-2xl font-black text-emerald-700 dark:text-emerald-300 tabular-nums">Rp {{ number_format($bankAccount->balance, 0, ',', '.') }}</p>
+                <p class="text-2xl font-semibold text-emerald-700 dark:text-emerald-300 tabular-nums">Rp {{ number_format($bankAccount->balance, 0, ',', '.') }}</p>
             </div>
         </div>
     </x-slot>
@@ -24,7 +24,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             
-            <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div class="p-6 border-b border-gray-100 dark:border-gray-700">
                     <h3 class="font-bold text-lg text-gray-900 dark:text-white">Riwayat Transaksi</h3>
                 </div>
@@ -77,7 +77,7 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
-                                    <span class="text-[10px] font-bold uppercase tracking-wider {{ $transaction->created_by ? 'text-gray-600 dark:text-gray-400' : 'text-indigo-500' }}">
+                                    <span class="text-xs {{ $transaction->created_by ? 'text-gray-600 dark:text-gray-400' : 'text-indigo-500' }}">
                                         {{ $transaction->creator->name ?? 'System' }}
                                     </span>
                                 </td>

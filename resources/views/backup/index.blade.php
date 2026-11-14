@@ -3,7 +3,7 @@
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
                 <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-100 leading-tight flex items-center gap-3">
-                    <span class="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                    <span class="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
                     </span>
                     {{ __('Backup & Restore Database') }}
@@ -54,21 +54,21 @@
 
         <!-- Flash Notifications -->
         @if(session('success'))
-            <div class="flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
+            <div class="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <div class="text-sm font-medium">{{ session('success') }}</div>
             </div>
         @endif
 
         @if(session('error'))
-            <div class="flex items-center gap-3 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400">
+            <div class="flex items-center gap-3 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <div class="text-sm font-medium">{{ session('error') }}</div>
             </div>
         @endif
 
         @if(isset($errors) && $errors->any())
-            <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 space-y-1 text-sm">
+            <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 space-y-1 text-sm">
                 <p class="font-bold">Terjadi kesalahan validasi:</p>
                 <ul class="list-disc list-inside space-y-0.5">
                     @foreach($errors->all() as $err)
@@ -108,7 +108,7 @@
             <form action="{{ route('backup.store') }}" method="POST">
                 @csrf
 
-                <div class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 md:p-8 space-y-6">
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 md:p-8 space-y-6">
                     <div class="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-gray-100 dark:border-gray-700 gap-4">
                         <div>
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white">Pilih Data yang Ingin Dicadangkan</h3>
@@ -127,7 +127,7 @@
                     <!-- Modules Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                         @foreach($modules as $key => $module)
-                            <div class="relative p-5 rounded-2xl border border-gray-200 dark:border-gray-700/80 hover:border-emerald-400 dark:hover:border-emerald-500 transition-all bg-gray-50/70 dark:bg-gray-900/40 flex flex-col justify-between">
+                            <div class="relative p-5 rounded-xl border border-gray-200 dark:border-gray-700/80 hover:border-emerald-400 dark:hover:border-emerald-500 transition-all bg-gray-50/70 dark:bg-gray-900/40 flex flex-col justify-between">
                                 <label class="flex items-start gap-3.5 cursor-pointer select-none">
                                     <input type="checkbox" name="modules[]" value="{{ $key }}" class="module-checkbox mt-1 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 h-4 w-4 shrink-0" checked>
                                     <div class="min-w-0 flex-1 space-y-1.5">
@@ -171,7 +171,7 @@
                     </div>
 
                     <!-- Security Alert -->
-                    <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs flex items-start gap-3">
+                    <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs flex items-start gap-3">
                         <svg class="w-5 h-5 flex-shrink-0 text-amber-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         <div>
                             <span class="font-bold">Keamanan Terjamin (.bak):</span> Berkas tidak berisi teks SQL telanjang sehingga struktur tabel dan data tidak dapat dibaca langsung oleh publik jika berkas terpapar. Seluruh muatan dienkripsi menggunakan AES-256 dan dilindungi di direktori penyimpanan privat.
@@ -190,7 +190,7 @@
 
         <!-- TAB 2: LOCAL BACKUPS HISTORY -->
         <div x-show="activeTab === 'history'" class="space-y-6">
-            <div class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                 <div class="p-6 md:p-8 pb-4 border-b border-gray-100 dark:border-gray-700">
                     <h3 class="text-lg font-bold text-gray-900 dark:text-white">Daftar Cadangan Tersimpan di Server</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
@@ -224,7 +224,7 @@
                                     <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
                                          <td class="px-6 py-4">
                                              <div class="flex items-center gap-2">
-                                                 <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                                 <span class="px-2 py-0.5 text-xs rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                                                      {{ $item['extension'] ?? 'BAK' }}
                                                  </span>
                                                  <span class="font-semibold text-gray-900 dark:text-white">{{ $item['filename'] }}</span>
@@ -284,7 +284,7 @@
                 @csrf
                 <input type="hidden" name="restore_source" value="upload">
 
-                <div class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 md:p-8 space-y-6">
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 md:p-8 space-y-6">
                     <div>
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white">Unggah dan Pulihkan Berkas Cadangan (.bak)</h3>
                         <p class="text-sm text-gray-500 dark:text-gray-400">
@@ -297,7 +297,7 @@
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             Pilih File Cadangan (.bak)
                         </label>
-                        <div class="relative border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-emerald-400 rounded-2xl p-8 text-center bg-gray-50/50 dark:bg-gray-900/30 transition-all">
+                        <div class="relative border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-emerald-400 rounded-xl p-8 text-center bg-gray-50/50 dark:bg-gray-900/30 transition-all">
                             <input type="file" name="backup_file" accept=".bak" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
                             <div class="flex flex-col items-center justify-center pointer-events-none">
                                 <svg class="w-10 h-10 text-emerald-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
@@ -327,7 +327,7 @@
                     </div>
 
                     <!-- Confirmation Warning -->
-                    <div class="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-800 dark:text-rose-300 space-y-3">
+                    <div class="p-5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-800 dark:text-rose-300 space-y-3">
                         <div class="flex items-center gap-2 font-bold text-sm">
                             <svg class="w-5 h-5 flex-shrink-0 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                             Peringatan Pemulihan Database
@@ -357,14 +357,14 @@
                 <div x-show="restoreModalOpen" @click="restoreModalOpen = false" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"></div>
                 <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-                <div x-show="restoreModalOpen" class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100 dark:border-gray-700 p-6 md:p-8">
+                <div x-show="restoreModalOpen" class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-sm transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100 dark:border-gray-700 p-6 md:p-8">
                     <form action="{{ route('backup.restore') }}" method="POST">
                         @csrf
                         <input type="hidden" name="restore_source" value="local">
                         <input type="hidden" name="local_filename" :value="restoreFilename">
 
                         <div class="flex items-center gap-3 mb-4">
-                            <div class="p-3 bg-amber-500/10 text-amber-600 rounded-2xl">
+                            <div class="p-3 bg-amber-500/10 text-amber-600 rounded-xl">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                             </div>
                             <div>
@@ -374,7 +374,7 @@
                         </div>
 
                         <div class="space-y-4 my-4">
-                            <div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/50 space-y-2 text-xs">
+                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-900/50 space-y-2 text-xs">
                                 <div class="flex justify-between">
                                     <span class="text-gray-400">File Cadangan:</span>
                                     <span class="font-mono font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[240px]" x-text="restoreFileDisplay"></span>
