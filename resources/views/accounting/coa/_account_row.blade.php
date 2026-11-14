@@ -1,7 +1,7 @@
 @props(['account', 'groupedAccounts', 'depth' => 0, 'types'])
 
 <tr class="{{ $depth == 0 ? 'bg-indigo-50/10 dark:bg-indigo-900/5' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50' }} transition-colors">
-    <td class="px-6 py-4 font-mono text-sm {{ $depth == 0 ? 'font-black text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400' }}" style="padding-left: {{ 1.5 + ($depth * 1.5) }}rem">
+    <td class="px-6 py-4 font-mono text-sm {{ $depth == 0 ? 'font-semibold text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400' }}" style="padding-left: {{ 1.5 + ($depth * 1.5) }}rem">
         {{ $account->code }}
     </td>
     <td class="px-6 py-4 {{ $depth == 0 ? 'font-bold text-gray-900 dark:text-white uppercase' : 'font-semibold text-gray-700 dark:text-gray-300' }}">
@@ -9,7 +9,7 @@
     </td>
     <td class="px-6 py-4">
         @if($depth == 0)
-            <span class="px-2 py-1 text-[10px] font-bold rounded-lg bg-{{ $types[$account->type]['color'] ?? 'gray' }}-50 text-{{ $types[$account->type]['color'] ?? 'gray' }}-600 uppercase">
+            <span class="px-2 py-1 text-xs font-bold rounded-lg bg-{{ $types[$account->type]['color'] ?? 'gray' }}-50 text-{{ $types[$account->type]['color'] ?? 'gray' }}-600 uppercase">
                 {{ $account->type }}
             </span>
         @else

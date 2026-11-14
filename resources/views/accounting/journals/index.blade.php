@@ -1,23 +1,22 @@
 <x-app-layout>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
         
         [x-cloak] { display: none !important; }
 
         .journal-container {
-            font-family: 'Outfit', sans-serif;
+            font-family: inherit;
         }
 
         .glass-card {
-            background-color: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.06);
+            background-color: #ffffff;
+            
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06);
         }
         
         .dark .glass-card {
-            background-color: rgba(17, 24, 39, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background-color: #0f172a;
+            border: 1px solid #1e293b;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
         }
 
@@ -115,7 +114,7 @@
         }
     </style>
 
-    <div class="journal-container py-8 px-4 sm:px-6 lg:px-8"
+    <div class="journal-container"
          x-data="{ 
             selectedIds: [],
             selectAll: false,
@@ -150,12 +149,9 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6">
             <div>
                 <div class="flex items-center gap-3">
-                    <h2 class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                        General <span class="text-indigo-600">Ledger</span>
-                    </h2>
-                    <span class="px-3 py-1 text-xs font-black uppercase tracking-wider rounded-xl bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/40">
+                    <h2 class="page-title">
                         Jurnal Umum
-                    </span>
+                    </h2>
                 </div>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">
                     Pencatatan akuntansi otomatis (Invoice, Pembayaran, Bank) & manual entry.
@@ -163,7 +159,7 @@
             </div>
             
             <div class="flex items-center space-x-3">
-                <a href="{{ route('accounting.journals.create') }}" class="inline-flex items-center px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-2xl shadow-lg shadow-indigo-600/30 transition-all transform hover:-translate-y-0.5 active:scale-95">
+                <a href="{{ route('accounting.journals.create') }}" class="inline-flex items-center px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-sm transition-all transform">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     Buat Jurnal Baru
                 </a>
@@ -172,7 +168,7 @@
 
         <!-- Orphaned Journals Notification Banner -->
         @if($orphanedCount > 0 && request('type') !== 'orphaned')
-        <div class="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+        <div class="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-800/50 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -194,14 +190,14 @@
         @endif
 
         <!-- Advanced Filter & Search Card -->
-        <div class="glass-card rounded-[2rem] p-6 mb-8 border border-gray-200/50 dark:border-gray-700/50 shadow-sm relative overflow-hidden">
+        <div class="glass-card rounded-xl p-6 mb-8 border border-gray-200/50 dark:border-gray-700/50 shadow-sm relative overflow-hidden">
             <div class="absolute -right-10 -top-10 w-48 h-48 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
             <form method="GET" action="{{ route('accounting.journals.index') }}" class="relative z-10 space-y-4">
                 <!-- Baris 1: Pencarian Kode Billing & Nama Billing -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                        <label class="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                             Kode Billing / No. Referensi
                         </label>
                         <div class="relative">
@@ -214,7 +210,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                        <label class="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                             Nama Billing / Pelanggan
                         </label>
                         <div class="relative">
@@ -227,7 +223,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                        <label class="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                             Pencarian Umum (Deskripsi / Akun)
                         </label>
                         <div class="relative">
@@ -243,7 +239,7 @@
                 <!-- Baris 2: Filter Tipe, Akun, Tanggal, Per Page -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 pt-2">
                     <div>
-                        <label class="block text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                        <label class="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                             Tipe Jurnal
                         </label>
                         <select name="type" class="w-full py-2.5 px-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900/60 text-xs focus:ring-2 focus:ring-indigo-500 font-medium">
@@ -257,7 +253,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                        <label class="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                             Filter Akun
                         </label>
                         <select name="account_id" class="w-full py-2.5 px-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900/60 text-xs focus:ring-2 focus:ring-indigo-500 font-medium">
@@ -271,7 +267,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                        <label class="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                             Dari Tanggal
                         </label>
                         <input type="date" name="date_from" value="{{ request('date_from') }}" 
@@ -279,7 +275,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                        <label class="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                             Sampai Tanggal
                         </label>
                         <input type="date" name="date_to" value="{{ request('date_to') }}" 
@@ -287,7 +283,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                        <label class="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                             Per Halaman
                         </label>
                         <select name="per_page" class="w-full py-2.5 px-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900/60 text-xs focus:ring-2 focus:ring-indigo-500 font-medium">
@@ -324,7 +320,7 @@
         </div>
 
         <!-- Table Container -->
-        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
@@ -402,7 +398,7 @@
                             <!-- Deskripsi & Input By -->
                             <td class="px-5 py-4 text-xs text-gray-700 dark:text-gray-300">
                                 <div class="font-medium max-w-md break-words">{{ $journal->description }}</div>
-                                <div class="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                                <div class="text-xs text-gray-400 mt-1 flex items-center gap-1">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                                     <span>Input: {{ $journal->creator->name ?? 'System' }}</span>
                                     <span>•</span>
@@ -416,7 +412,7 @@
                                     @foreach($journal->items as $item)
                                     <div class="flex justify-between items-center text-xs">
                                         <span class="{{ $item->credit > 0 ? 'ml-4 text-gray-500 dark:text-gray-400' : 'font-semibold text-gray-800 dark:text-gray-200' }}">
-                                            <span class="font-mono text-[10px] text-gray-400">{{ $item->account->code ?? '-' }}</span> {{ $item->account->name ?? 'N/A' }}
+                                            <span class="font-mono text-xs text-gray-400">{{ $item->account->code ?? '-' }}</span> {{ $item->account->name ?? 'N/A' }}
                                         </span>
                                         <span class="font-mono text-[11px] {{ $item->debit > 0 ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-emerald-600 dark:text-emerald-400 font-bold' }}">
                                             {{ $item->debit > 0 ? 'Dr' : 'Cr' }}
@@ -458,7 +454,7 @@
                         <tr>
                             <td colspan="8" class="px-6 py-16 text-center text-gray-500 dark:text-gray-400">
                                 <div class="flex flex-col items-center justify-center">
-                                    <div class="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 mb-3">
+                                    <div class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 mb-3">
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                     </div>
                                     <p class="text-sm font-bold text-gray-700 dark:text-gray-300">Tidak ada jurnal ditemukan</p>

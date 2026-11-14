@@ -18,7 +18,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <!-- Sidebar: Header Info -->
                     <div class="lg:col-span-1 space-y-6">
-                        <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
                             <h3 class="font-bold text-gray-900 dark:text-white mb-4">Informasi Utama</h3>
                             
                             <div class="space-y-4">
@@ -35,7 +35,7 @@
                         </div>
 
                         <!-- Status Balance Card -->
-                        <div :class="isBalanced ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-800' : 'bg-rose-50 border-rose-100 dark:bg-rose-900/10 dark:border-rose-800'" class="rounded-3xl p-6 border transition-colors">
+                        <div :class="isBalanced ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-800' : 'bg-rose-50 border-rose-100 dark:bg-rose-900/10 dark:border-rose-800'" class="rounded-xl p-6 border transition-colors">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 :class="isBalanced ? 'text-emerald-900 dark:text-emerald-400' : 'text-rose-900 dark:text-rose-400'" class="font-bold">Status Balance</h3>
                                 <template x-if="isBalanced">
@@ -54,21 +54,21 @@
                                     <span class="text-gray-500">Total Kredit:</span>
                                     <span class="font-mono font-bold" x-text="formatCurrency(totalCredit)"></span>
                                 </div>
-                                <div class="pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between font-black">
+                                <div class="pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between font-semibold">
                                     <span>Selisih:</span>
                                     <span :class="difference === 0 ? 'text-emerald-600' : 'text-rose-600'" x-text="formatCurrency(difference)"></span>
                                 </div>
                             </div>
                         </div>
 
-                        <button type="submit" :disabled="!isBalanced || items.length < 2" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-black rounded-3xl shadow-xl shadow-indigo-500/20 transition-all transform active:scale-95">
+                        <button type="submit" :disabled="!isBalanced || items.length < 2" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-sm transition-all transform ">
                             POSTING JURNAL
                         </button>
                     </div>
 
                     <!-- Main Content: Journal Lines -->
                     <div class="lg:col-span-2">
-                        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                             <table class="w-full text-left">
                                 <thead>
                                     <tr class="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">

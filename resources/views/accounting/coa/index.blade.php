@@ -40,7 +40,7 @@
                 @endphp
 
                 @foreach($types as $key => $data)
-                <div class="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
                     <div class="flex items-center space-x-3 mb-3">
                         <div class="p-2 bg-{{ $data['color'] }}-50 dark:bg-{{ $data['color'] }}-900/20 rounded-xl">
                             <svg class="w-5 h-5 text-{{ $data['color'] }}-600 dark:text-{{ $data['color'] }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $data['icon'] }}"></path></svg>
@@ -48,13 +48,13 @@
                         <span class="text-sm font-bold text-gray-900 dark:text-white">{{ $data['label'] }}</span>
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400">Total Akun</p>
-                    <h4 class="text-xl font-black text-gray-900 dark:text-white">{{ \App\Models\ChartOfAccount::where('type', $key)->count() }}</h4>
+                    <h4 class="text-xl font-semibold text-gray-900 dark:text-white">{{ \App\Models\ChartOfAccount::where('type', $key)->count() }}</h4>
                 </div>
                 @endforeach
             </div>
 
             <!-- CoA Table Card -->
-            <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div class="p-6 border-b border-gray-50 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
                     <h3 class="font-bold text-gray-900 dark:text-white flex items-center">
                         <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
@@ -92,7 +92,7 @@
     <x-modal name="add-account" focusable>
         <form method="post" action="{{ route('accounting.coa.store') }}" class="p-8">
             @csrf
-            <h2 class="text-xl font-black text-gray-900 dark:text-white mb-6">Tambah Akun Baru</h2>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Tambah Akun Baru</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -135,7 +135,7 @@
 
             <div class="mt-8 flex justify-end space-x-3">
                 <button type="button" @click="$dispatch('close')" class="px-6 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Batal</button>
-                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/20">Simpan Akun</button>
+                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm">Simpan Akun</button>
             </div>
         </form>
     </x-modal>
@@ -145,7 +145,7 @@
         <form method="post" :action="`{{ route('accounting.coa.index') }}/${editAccount.id}`" class="p-8">
             @csrf
             @method('PUT')
-            <h2 class="text-xl font-black text-gray-900 dark:text-white mb-6">Edit Akun</h2>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Edit Akun</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -187,7 +187,7 @@
 
             <div class="mt-8 flex justify-end space-x-3">
                 <button type="button" @click="$dispatch('close')" class="px-6 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Batal</button>
-                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/20">Simpan Perubahan</button>
+                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm">Simpan Perubahan</button>
             </div>
         </form>
     </x-modal>
@@ -198,7 +198,7 @@
             @csrf
             @method('DELETE')
             
-            <h2 class="text-xl font-black text-gray-900 dark:text-white mb-4">Hapus Akun?</h2>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Hapus Akun?</h2>
             
             <p class="text-gray-600 dark:text-gray-400 mb-6">
                 Apakah Anda yakin ingin menghapus akun <span class="font-bold text-gray-900 dark:text-white" x-text="`${deleteAccount.code} - ${deleteAccount.name}`"></span>? 
@@ -207,7 +207,7 @@
 
             <div class="flex justify-end space-x-3">
                 <button type="button" @click="$dispatch('close')" class="px-6 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Batal</button>
-                <button type="submit" class="px-6 py-2 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 transition-colors shadow-lg shadow-rose-500/20">Hapus Sekarang</button>
+                <button type="submit" class="px-6 py-2 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 transition-colors shadow-sm">Hapus Sekarang</button>
             </div>
         </form>
         </x-modal>

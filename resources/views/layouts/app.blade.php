@@ -51,6 +51,8 @@
             }
             .dark .page-header h1, .dark .page-header h2 { color: #fff; }
             .page-header p { font-size: 0.875rem; }
+            /* Tombol aksi di header halaman tidak terpotong ke dua baris */
+            .page-header a[class*="px-"], .page-header button, .page-header .btn, .page-header [class^="btn-"] { white-space: nowrap; }
         </style>
     </head>
     @php

@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('code', '429')
+@section('title', 'Terlalu banyak percobaan')
+@section('message', 'Demi keamanan, permintaan dari perangkat Anda dibatasi sementara. Tunggu sekitar satu menit lalu coba lagi.')
+@section('icon', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z')
