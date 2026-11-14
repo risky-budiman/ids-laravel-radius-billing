@@ -60,12 +60,23 @@ class GenerateCustomerInvoice implements ShouldQueue
                 $subtotal = $customer->package->price;
                 $notes = 'Tagihan pemakaian periode ' . $startDate->translatedFormat('F Y');
             }
+        } elseif ($customer->billing_method === 'renewal') {
+            // Perpanjangan 30 hari mulai dari akhir masa aktif sekarang; jatuh tempo = masa aktif habis.
+            $startDate = ($customer->expired_at ?? $nextDate)->copy()->startOfDay();
+            $endDate = $startDate->copy()->addDays(29)->endOfDay();
+            $subtotal = $customer->package->price;
+            $notes = 'Perpanjangan masa aktif ' . $startDate->format('d/m/Y') . ' s/d ' . $endDate->format('d/m/Y');
         } else {
             $startDate = $nextDate->copy();
             $endDate = $startDate->copy()->addMonth()->subDay();
             $subtotal = $customer->package->price;
             $notes = 'Tagihan otomatis skema ' . ucfirst($customer->billing_method);
         }
+
+        // Renewal: jadwal (expired_at) baru maju saat invoice DIBAYAR (InvoiceService::markAsPaid).
+        // Memajukannya saat invoice terbit berarti masa aktif bertambah tanpa pembayaran.
+        $isRenewal = $customer->billing_method === 'renewal';
+        $dueDate = $isRenewal ? $startDate->copy() : ($customer->billing_due_date ?? $startDate->copy()->addDays(7));
 
         // Customer Discount Calculation
         $discountType = $customer->discount_type;
@@ -88,7 +99,9 @@ class GenerateCustomerInvoice implements ShouldQueue
 
         if ($existingInvoice) {
             Log::info("Invoice for {$customer->username} period {$startDate->toDateString()} already exists (#{$existingInvoice->invoice_number}), skipping generation.");
-            $customer->syncBillingDates();
+            if (! $isRenewal) {
+                $customer->syncBillingDates();
+            }
             return;
         }
 
@@ -122,7 +135,7 @@ class GenerateCustomerInvoice implements ShouldQueue
             'tax_id' => $tax?->id,
             'tax_amount' => $taxAmount,
             'status' => 'unpaid',
-            'due_date' => $customer->billing_due_date,
+            'due_date' => $dueDate,
             'notes' => $notes,
         ]);
 
@@ -135,8 +148,10 @@ class GenerateCustomerInvoice implements ShouldQueue
             Log::error("Auto-journal failed for BILL-{$invoice->invoice_number}: " . $e->getMessage());
         }
 
-        // Update next billing schedule
-        $customer->syncBillingDates();
+        // Update next billing schedule (renewal: setelah dibayar, lihat di atas)
+        if (! $isRenewal) {
+            $customer->syncBillingDates();
+        }
 
         // Send WhatsApp Notification via Queued Job with Anti-Ban Delay
         if (!empty($customer->phone)) {

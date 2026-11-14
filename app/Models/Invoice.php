@@ -42,6 +42,24 @@ class Invoice extends Model
         'tax_amount' => 'decimal:2',
     ];
 
+    /**
+     * Tagihan langganan (bulanan/renewal) — bukan pembelian booster (INV-BOOST-*) dan bukan
+     * biaya instalasi (INV-INST*, ditangani customer:check-grace-period).
+     */
+    public function scopeRecurringBill($query)
+    {
+        return $query->where('invoice_number', 'not like', 'INV-BOOST-%')
+            ->where('invoice_number', 'not like', 'INV-INST%');
+    }
+
+    /** Tagihan langganan yang belum dibayar dan sudah lewat jatuh tempo. */
+    public function scopeOverdueRecurring($query, $today = null)
+    {
+        return $query->recurringBill()
+            ->where('status', 'unpaid')
+            ->whereDate('due_date', '<', ($today ?? now())->toDateString());
+    }
+
     public function customer()
     {
         return $this->belongsTo(Customer::class);

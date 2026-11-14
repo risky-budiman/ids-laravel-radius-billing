@@ -71,52 +71,31 @@ class ProcessAutomatedBilling extends Command
     {
         $this->info("Checking for customers needing suspension...");
         $accumulatedDelay = 0;
+        $today = now()->toDateString();
 
-        // 1. Postpaid Suspension (Overdue Unpaid Invoices)
-        $postpaidOverdue = Customer::where('is_active', true)
-            ->where('billing_type', 'postpaid')
-            ->whereNotNull('billing_due_date')
-            ->where('billing_due_date', '<', now()->toDateString())
-            ->whereHas('invoices', function($q) {
-                $q->where('status', 'unpaid');
+        // Isolir berdasarkan jatuh tempo INVOICE yang belum dibayar, bukan customers.billing_due_date.
+        // billing_due_date sudah dimajukan ke siklus berikutnya saat invoice diterbitkan, sehingga
+        // perbandingan lama ("billing_due_date < hari ini") tidak pernah terpenuhi selama invoice
+        // terus terbit tiap bulan — pelanggan yang tidak membayar tidak pernah diisolir.
+        $overdue = Customer::where('is_active', true)
+            ->where('status', Customer::STATUS_ACTIVE)
+            ->where(function ($q) use ($today) {
+                $q->whereHas('invoices', fn ($i) => $i->overdueRecurring())
+                  // Renewal: masa aktif habis walau invoice belum/tidak terbit.
+                  ->orWhere(fn ($r) => $r->where('billing_type', 'prepaid')
+                      ->where('billing_method', 'renewal')
+                      ->whereNotNull('expired_at')
+                      ->whereDate('expired_at', '<', $today));
             })
             ->get();
 
-        foreach ($postpaidOverdue as $customer) {
-            $this->dispatchSuspensionJob($customer, "Tagihan Pasca Bayar belum lunas melewati jatuh tempo.", $accumulatedDelay);
-            if (!empty($customer->phone)) {
-                $accumulatedDelay += \App\Services\WhatsAppService::getRandomDelay();
-            }
-        }
-
-        // 2. Prepaid Fixed Suspension
-        $prepaidFixedOverdue = Customer::where('is_active', true)
-            ->where('billing_type', 'prepaid')
-            ->where('billing_method', 'fixed')
-            ->whereNotNull('billing_due_date')
-            ->where('billing_due_date', '<', now()->toDateString())
-            ->whereHas('invoices', function($q) {
-                $q->where('status', 'unpaid');
-            })
-            ->get();
-            
-        foreach ($prepaidFixedOverdue as $customer) {
-            $this->dispatchSuspensionJob($customer, "Tagihan Prabayar Fixed belum lunas atau masa aktif habis.", $accumulatedDelay);
-            if (!empty($customer->phone)) {
-                $accumulatedDelay += \App\Services\WhatsAppService::getRandomDelay();
-            }
-        }
-
-        // 3. Prepaid Renewal Suspension
-        $prepaidRenewalOverdue = Customer::where('is_active', true)
-            ->where('billing_type', 'prepaid')
-            ->where('billing_method', 'renewal')
-            ->whereNotNull('expired_at')
-            ->where('expired_at', '<', now()->toDateString())
-            ->get();
-
-        foreach ($prepaidRenewalOverdue as $customer) {
-            $this->dispatchSuspensionJob($customer, "Masa aktif Prabayar (Renewal) telah habis.", $accumulatedDelay);
+        foreach ($overdue as $customer) {
+            $reason = match (true) {
+                $customer->billing_type === 'prepaid' && $customer->billing_method === 'renewal' => 'Masa aktif Prabayar (Renewal) telah habis.',
+                $customer->billing_type === 'prepaid' => 'Tagihan Prabayar Fixed belum lunas atau masa aktif habis.',
+                default => 'Tagihan Pasca Bayar belum lunas melewati jatuh tempo.',
+            };
+            $this->dispatchSuspensionJob($customer, $reason, $accumulatedDelay);
             if (!empty($customer->phone)) {
                 $accumulatedDelay += \App\Services\WhatsAppService::getRandomDelay();
             }

@@ -43,6 +43,15 @@ class CalculateDepreciation extends Command
 
                 if ($monthlyDepreciation <= 0) continue;
 
+                // Aman dijalankan berulang: satu jurnal penyusutan per aset per bulan.
+                $alreadyPosted = Journal::where('reference', 'Depresiasi Aset: ' . $asset->asset_code)
+                    ->whereDate('date', $journalDate)
+                    ->exists();
+                if ($alreadyPosted) {
+                    $this->line("Skip {$asset->name}: penyusutan bulan ini sudah dijurnal.");
+                    continue;
+                }
+
                 $journal = Journal::create([
                     'journal_number' => 'DEP-' . strtoupper(uniqid()),
                     'date' => $journalDate,
