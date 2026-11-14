@@ -300,6 +300,9 @@
                             this.currentCommit = data.new_commit;
                             this.isUpdateAvailable = false;
                             this.statusMessage = 'System is up to date';
+                        } else {
+                            // mis. butuh ./update.sh (composer/npm) atau migrasi gagal
+                            this.statusMessage = data.message || 'Update gagal — lihat log.';
                         }
                     })
                     .catch(err => {

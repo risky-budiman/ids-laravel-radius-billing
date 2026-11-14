@@ -66,16 +66,22 @@ class SystemUpdateController extends Controller
             }
         }
 
+        $cliFiles = $isUpdateAvailable ? $this->filesNeedingCli($branch) : [];
+
         return response()->json([
             'success'              => true,
+            'requires_cli'         => (bool) $cliFiles,
+            'cli_files'            => $cliFiles,
             'current_version'      => $currentVersion,
             'current_commit'       => $currentCommit,
             'remote_commit'        => $remoteCommit,
             'branch'               => $branch,
             'is_update_available'  => $isUpdateAvailable,
             'new_commits'          => $newCommits,
-            'status_message'       => $isUpdateAvailable 
-                ? "New update available! (Remote commit: {$remoteCommit})" 
+            'status_message'       => $isUpdateAvailable
+                ? ($cliFiles
+                    ? "Update tersedia ({$remoteCommit}), tetapi mengubah dependensi/aset — jalankan ./update.sh di server (SSH)."
+                    : "New update available! (Remote commit: {$remoteCommit})")
                 : "System is up to date (commit {$currentCommit}).",
             'checked_at'           => now()->format('H:i:s'),
         ]);
@@ -89,6 +95,24 @@ class SystemUpdateController extends Controller
         $startTime = microtime(true);
         $logs = [];
         $branch = $this->runCommand('git -c safe.directory=* rev-parse --abbrev-ref HEAD') ?: 'main';
+        if ($branch === 'HEAD' || ! preg_match('/^[A-Za-z0-9._\/-]+$/', $branch)) {
+            return response()->json(['success' => false, 'message' => "Branch tidak valid untuk update otomatis ({$branch}). Jalankan ./update.sh di server."], 422);
+        }
+
+        // Update dari web tidak menjalankan composer/npm (tidak ada izin & waktu request terbatas).
+        // Bila versi baru mengubah dependensi atau aset, menerapkannya dari sini membuat situs
+        // error 500 (library hilang) atau tampil rusak (CSS/JS basi) — arahkan ke update.sh.
+        $this->runCommand("git -c safe.directory=* fetch origin {$branch} 2>&1");
+        if ($cliFiles = $this->filesNeedingCli($branch)) {
+            Log::warning('Web update ditolak: perubahan membutuhkan composer/npm.', ['files' => $cliFiles]);
+
+            return response()->json([
+                'success' => false,
+                'requires_cli' => true,
+                'message' => 'Update ini mengubah dependensi/aset (' . implode(', ', array_slice($cliFiles, 0, 5)) . (count($cliFiles) > 5 ? ', …' : '')
+                    . '). Jalankan ./update.sh di server lewat SSH agar composer install & npm run build ikut dijalankan.',
+            ], 409);
+        }
 
         $logs[] = "🚀 [1/5] Initiating System Update on branch '{$branch}'...";
 
@@ -99,11 +123,16 @@ class SystemUpdateController extends Controller
 
         // Step 2: Database Migration
         $logs[] = "🗄️ [3/5] Running database migrations...";
+        $migrationError = null;
         try {
-            Artisan::call('migrate', ['--force' => true]);
+            $exit = Artisan::call('migrate', ['--force' => true]);
             $logs[] = trim(Artisan::output()) ?: "Database schema is up to date.";
+            if ($exit !== 0) {
+                $migrationError = 'migrate exit code ' . $exit;
+            }
         } catch (\Throwable $e) {
-            $logs[] = "Migration note: " . $e->getMessage();
+            $migrationError = $e->getMessage();
+            $logs[] = "❌ Migration FAILED: " . $e->getMessage();
         }
 
         // Step 3: Refresh Changelog
@@ -145,6 +174,17 @@ class SystemUpdateController extends Controller
         $newCommit = $newCommitLong ? substr(trim($newCommitLong), 0, 7) : 'unknown';
 
         $logs[] = "--------------------------------------------------------";
+        if ($migrationError) {
+            $logs[] = "❌ UPDATE SELESAI DENGAN ERROR: migrasi database gagal. Periksa log & jalankan php artisan migrate di server.";
+            Log::error("Web update {$newCommit}: migrasi gagal — {$migrationError}");
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Kode sudah diperbarui, tetapi migrasi database GAGAL: ' . $migrationError,
+                'new_commit' => $newCommit,
+                'logs' => implode(PHP_EOL, $logs),
+            ], 500);
+        }
         $logs[] = "✅ SYSTEM UPDATE COMPLETED in {$duration}s!";
         $logs[] = "📦 Active Version: {$newVersion} (commit {$newCommit})";
 
@@ -158,6 +198,19 @@ class SystemUpdateController extends Controller
             'duration'    => $duration,
             'logs'        => implode("\n", $logs),
         ]);
+    }
+
+    /**
+     * File yang berubah antara HEAD dan origin/{branch} yang membutuhkan composer/npm.
+     */
+    protected function filesNeedingCli(string $branch): array
+    {
+        $diff = $this->runCommand("git -c safe.directory=* diff --name-only HEAD origin/{$branch}") ?? '';
+        $patterns = '#^(composer\.(json|lock)|package(-lock)?\.json|vite\.config\.js|tailwind\.config\.js|postcss\.config\.js|resources/(css|js)/)#';
+
+        $files = preg_split('/\R/', $diff) ?: [];
+
+        return array_values(array_filter(array_map('trim', $files), fn ($f) => $f !== '' && preg_match($patterns, $f)));
     }
 
     /**
