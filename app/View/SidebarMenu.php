@@ -140,13 +140,14 @@ class SidebarMenu
         if ($isAdministrator) {
             $sections[] = ['label' => 'Settings & Security', 'items' => [
                 self::link('Manage Staff', 'users.index', 'user-cog', ['users.*']),
+                self::link('Pengaturan Isolir', 'settings.isolation', 'shield-check', ['settings.isolation*']),
                 self::group('Data Master', 'globe', [
                     self::link('Regional Data', 'locations.regions'),
                     self::link('STO Data', 'locations.stos'),
                     self::link('STB Data', 'locations.stbs'),
                     self::link('ODC Data', 'locations.odcs'),
                     self::link('ODP Data', 'locations.odps'),
-                    self::link('System Settings', 'settings.index', null, ['settings.*']),
+                    self::link('System Settings', 'settings.index', null, ['settings.index', 'settings.update', 'settings.company*']),
                 ]),
                 self::group('Integrations', 'puzzle', [
                     self::link('Payment Gateways', 'integrations.payment'),

@@ -33,6 +33,8 @@ class CustomerObserver
      */
     public function updated(Customer $customer): void
     {
+        $this->syncIsolation($customer);
+
         // Trigger dismantle ticket if status changes to waiting_dismantle
         if ($customer->isDirty('status') && $customer->status === Customer::STATUS_WAITING_DISMANTLE) {
             \App\Models\Ticket::create([
@@ -43,6 +45,41 @@ class CustomerObserver
                 'subject' => 'Dismantle Perangkat: ' . $customer->name,
                 'description' => 'Penarikan perangkat untuk pelanggan: ' . $customer->name . ' (' . $customer->username . ')',
             ]);
+        }
+    }
+
+    /**
+     * Isolir RADIUS mengikuti status pelanggan, dari jalur mana pun status diubah
+     * (billing otomatis, masa tenggang instalasi, manual, API, pembayaran).
+     *  - menjadi suspended            -> pindah ke grup ISOLIR + IP isolir
+     *  - suspended -> active          -> pulihkan grup paket & IP asli, putus sesi agar IP normal
+     *  - suspended -> dismantled/batal-> lepas IP isolir (akun RADIUS dihapus alur dismantle)
+     *  - suspended -> waiting_dismantle tetap terisolir
+     */
+    private function syncIsolation(Customer $customer): void
+    {
+        if (! $customer->wasChanged('status')) {
+            return;
+        }
+
+        $isolation = app(\App\Services\IsolationService::class);
+        $from = $customer->getOriginal('status');
+        $to = $customer->status;
+
+        try {
+            if ($to === Customer::STATUS_SUSPENDED) {
+                $isolation->isolate($customer);
+            } elseif ($from === Customer::STATUS_SUSPENDED && $to === Customer::STATUS_ACTIVE) {
+                if ($isolation->isIsolated($customer)) {
+                    $isolation->release($customer);
+                    app(\App\Services\CustomerLifecycleService::class)->disconnectSessions((string) $customer->username);
+                }
+            } elseif (in_array($to, [Customer::STATUS_DISMANTLED, Customer::STATUS_CANCELED], true)) {
+                $isolation->release($customer, restoreRadius: false);
+            }
+        } catch (\Throwable $e) {
+            // Status pelanggan tetap tersimpan; kegagalan RADIUS dicatat untuk ditindaklanjuti.
+            \Illuminate\Support\Facades\Log::error("Sinkron isolir {$customer->username} ({$from} -> {$to}) gagal: " . $e->getMessage());
         }
     }
 

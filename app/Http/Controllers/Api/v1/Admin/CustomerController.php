@@ -363,6 +363,11 @@ class CustomerController extends Controller
             }
         });
 
+        // Pelanggan terisolir tetap di grup ISOLIR walau paketnya diganti.
+        if ($customer->fresh()->status === Customer::STATUS_SUSPENDED) {
+            app(\App\Services\IsolationService::class)->isolate($customer->fresh());
+        }
+
         return response()->json([
             'message' => 'Data pelanggan berhasil diperbarui',
         ]);

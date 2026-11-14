@@ -37,6 +37,11 @@ Route::middleware(['auth:web,customer', 'role:customer,administrator,admin,tekni
 });
 
 
+// Halaman isolir (tujuan redirect MikroTik untuk pelanggan terisolir)
+Route::get('/isolir', \App\Http\Controllers\IsolationPageController::class)
+    ->middleware('throttle:60,1')
+    ->name('isolation.page');
+
 // Public Customer Portal & Dynamic Payment Link
 Route::get('/pay/{invoice}', [\App\Http\Controllers\PortalController::class, 'pay'])
     ->middleware('throttle:60,1')
@@ -364,6 +369,8 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::resource('acs-servers', \App\Http\Controllers\AcsServerController::class)->except(['show']);
         Route::get('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'index'])->name('settings.company');
         Route::post('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'update'])->name('settings.company.update');
+        Route::get('settings/isolation', [\App\Http\Controllers\IsolationSettingsController::class, 'index'])->name('settings.isolation');
+        Route::post('settings/isolation', [\App\Http\Controllers\IsolationSettingsController::class, 'update'])->name('settings.isolation.update');
 
         // Invoice Template Builder
         Route::resource('invoice-templates', \App\Http\Controllers\InvoiceTemplateController::class);

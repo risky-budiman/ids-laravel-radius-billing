@@ -648,7 +648,10 @@ class CustomerImportService
                             'longitude' => $lng,
                         ]);
 
-                        if ($existing->is_active) {
+                        // Hanya isi jadwal tagihan bila belum ada. syncBillingDates() MEMAJUKAN jadwal,
+                        // jadi memanggilnya setiap import ulang menggeser jatuh tempo sebulan
+                        // (dan menambah masa aktif renewal 30 hari) tanpa pembayaran.
+                        if ($existing->is_active && ! $existing->billing_next_date) {
                             $existing->syncBillingDates();
                         }
 
@@ -662,6 +665,11 @@ class CustomerImportService
                             ['username' => $username],
                             ['groupname' => $matchedPackage->name, 'priority' => 1]
                         );
+
+                        // Pelanggan terisolir tetap di grup ISOLIR
+                        if ($existing->status === \App\Models\Customer::STATUS_SUSPENDED) {
+                            app(\App\Services\IsolationService::class)->isolate($existing->fresh());
+                        }
                     });
 
                     $updatedCount++;

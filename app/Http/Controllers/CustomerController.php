@@ -471,6 +471,11 @@ class CustomerController extends Controller
             ]);
         });
 
+        // Sinkron di atas menulis ulang grup paket; pelanggan terisolir harus tetap di grup ISOLIR.
+        if ($customer->fresh()->status === Customer::STATUS_SUSPENDED) {
+            app(\App\Services\IsolationService::class)->isolate($customer->fresh());
+        }
+
         // 5. Trigger RADIUS CoA Disconnect if suspended or package changed
         $isPackageChanged = $customer->wasChanged('package_id');
         
