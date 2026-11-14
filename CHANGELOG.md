@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.5.71] - 2026-11-14
+- fix(security): make payment webhooks fail-closed ([87c7d2a])
+- fix(security): restrict admin API to staff tokens and per-role groups ([c63fa31])
+- feat(ui): restyle invoices, tickets and subscribers list pages ([fbc7516])
+- feat(ui): redesign dashboard with clean card layout ([ea49987])
+- feat(ui): redesign app shell with shared design system ([24a57fc])
+- fix(auth): fix foreign key constraint on activity log during customer portal login ([c6fdd4c])
+- feat(whatsapp): implement anti-ban staggered delay and rate limiting for invoice and broadcast messaging ([fb53694])
+- fix(portal): make invoice portal branding and company details fully dynamic (v1.5.62) ([550b181])
+- fix(whatsapp): map id_pelanggan to real customer_code instead of pppoe username ([19fff77])
+- fix(payment): register universal pay and portal routes, and resolve dynamic payment links in whatsapp notifications ([4fd1d0a])
+- feat(whatsapp): add single delete, bulk delete, and message detail modal ([eed7b7a])
+- fix(invoice): prevent duplicate invoice number collision with unique collision-proof generator and duplicate period check ([bf098a7])
+- fix(security): resolve mixed content not secure by trusting proxies, forcing https scheme, and upgrading insecure requests ([078889c])
+- feat(olt): separate onu name and desc, add last reason from alarm history ([120ab94])
+- fix(view): extract alpine component to script block to prevent html attribute tag break ([975ca5e])
+
+
+
 ## [v1.5.70] - 2026-11-14
 - fix(security): restrict admin API to staff tokens and per-role groups ([c63fa31])
 - feat(ui): restyle invoices, tickets and subscribers list pages ([fbc7516])

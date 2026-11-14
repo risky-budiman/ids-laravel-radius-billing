@@ -36,15 +36,19 @@ Route::middleware(['auth:web,customer', 'role:customer,administrator,admin,tekni
 
 
 // Public Customer Portal & Dynamic Payment Link
-Route::get('/pay/{invoice}', [\App\Http\Controllers\PortalController::class, 'pay'])->name('portal.pay');
+Route::get('/pay/{invoice}', [\App\Http\Controllers\PortalController::class, 'pay'])
+    ->middleware('throttle:60,1')
+    ->name('portal.pay');
 Route::get('/portal', function () {
     return redirect()->route('customer.login');
 })->name('portal.home');
 
 Route::get('/portal/invoice/{invoice}', [\App\Http\Controllers\PortalController::class, 'showInvoice'])
+    ->middleware('throttle:60,1')
     ->name('portal.invoice');
 
 Route::get('/portal/invoice/{invoice}/pay', [\App\Http\Controllers\InvoiceController::class, 'pay'])
+    ->middleware(['signed', 'throttle:20,1'])
     ->name('portal.invoice.pay');
 
 Route::post('/webhooks/midtrans', [\App\Http\Controllers\PaymentWebhookController::class, 'midtrans'])->name('webhooks.midtrans');
