@@ -204,15 +204,35 @@ class CustomerController extends Controller
         if (auth()->user()->isMitra() && $customer->partner_id !== auth()->id()) {
             abort(403);
         }
-        $customer->load('package');
-        
+        $customer->load(['package', 'odc', 'odp']);
+
         // Fetch recent session history from RADIUS
         $sessions = \App\Models\Radius\RadAcct::where('username', $customer->username)
             ->orderBy('acctstarttime', 'desc')
             ->limit(50)
             ->get();
 
-        return view('customers.show', compact('customer', 'sessions'));
+        // Riwayat tagihan (tab Billing)
+        $invoices = $customer->invoices()->latest()->limit(24)->get();
+        $unpaidTotal = $customer->invoices()->where('status', 'unpaid')->sum('amount');
+
+        // Perangkat & material terpasang
+        $modem = \App\Models\InventoryStock::where('customer_id', $customer->id)
+            ->where('status', 'installed')
+            ->with('item')
+            ->first();
+        $materials = \App\Models\InventoryMovement::where('customer_id', $customer->id)
+            ->where('type', 'out')
+            ->with('item')
+            ->get()
+            ->reject(fn ($m) => $modem && $m->inventory_item_id == $modem->inventory_item_id);
+
+        // Password PPPoE hanya untuk admin & teknisi (konsisten dengan daftar pelanggan)
+        $pppoePassword = (auth()->user()->isAdmin() || auth()->user()->isTeknisi())
+            ? \App\Models\Radius\RadCheck::where('username', $customer->username)->value('value')
+            : null;
+
+        return view('customers.show', compact('customer', 'sessions', 'invoices', 'unpaidTotal', 'modem', 'materials', 'pppoePassword'));
     }
 
     public function create(Request $request)

@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.5.77] - 2026-11-14
+- feat(print): global print system and redesigned accounting reports ([eccd032])
+- feat(invoice): modern custom template engine and correct thermal size ([024a741])
+- feat(ui): redesign admin login and invoice print page ([59feac7])
+- feat(ui): redesign customer portal, login and public invoice page ([e02ec73])
+- fix(security): harden RADIUS CoA, login rate limits and debug routes ([57219ef])
+- fix(security): stop invoice enumeration on the public payment portal ([1f1ac37])
+- fix(security): make payment webhooks fail-closed ([87c7d2a])
+- fix(security): restrict admin API to staff tokens and per-role groups ([c63fa31])
+- feat(ui): restyle invoices, tickets and subscribers list pages ([fbc7516])
+- feat(ui): redesign dashboard with clean card layout ([ea49987])
+- feat(ui): redesign app shell with shared design system ([24a57fc])
+- fix(auth): fix foreign key constraint on activity log during customer portal login ([c6fdd4c])
+- feat(whatsapp): implement anti-ban staggered delay and rate limiting for invoice and broadcast messaging ([fb53694])
+- fix(portal): make invoice portal branding and company details fully dynamic (v1.5.62) ([550b181])
+- fix(whatsapp): map id_pelanggan to real customer_code instead of pppoe username ([19fff77])
+
+
+
 ## [v1.5.76] - 2026-11-14
 - feat(invoice): modern custom template engine and correct thermal size ([024a741])
 - feat(ui): redesign admin login and invoice print page ([59feac7])
