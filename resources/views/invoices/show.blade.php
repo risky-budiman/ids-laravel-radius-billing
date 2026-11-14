@@ -1,484 +1,384 @@
+@php
+    $companyName = get_setting('company_name', config('app.name'));
+    $companyAddress = get_setting('company_address', '');
+    $companyPhone = get_setting('company_phone', '');
+    $companyEmail = get_setting('company_email', '');
+    $companyWebsite = get_setting('company_website', '');
+    $companyTaxId = get_setting('company_tax_id', '');
+    $companyLogo = get_setting('company_logo');
+    $footerNote = get_setting('invoice_footer_note', 'Terima kasih telah menggunakan layanan kami.');
+    $hasCustom = !empty($customA4Html);
+    $hasCustomThermal = !empty($customThermalHtml ?? null);
+
+    $customer = $invoice->customer;
+    $customerCode = $customer ? ($customer->customer_code ?: $customer->username) : '-';
+    $isPaid = $invoice->status === 'paid';
+    $isOverdue = ! $isPaid && $invoice->due_date && $invoice->due_date->isPast();
+    $subtotal = $invoice->subtotal ?: $invoice->amount;
+    $d = fn ($date, $fmt = 'd M Y') => $date ? $date->locale('id')->translatedFormat($fmt) : '-';
+    $n = fn ($v) => number_format((float) $v, 0, ',', '.');
+    $period = ($invoice->period_start || $invoice->period_end)
+        ? $d($invoice->period_start) . ' – ' . $d($invoice->period_end)
+        : ($invoice->billing_period ?: '-');
+    $discountLabel = $invoice->discount_type === 'percentage'
+        ? 'Diskon (' . rtrim(rtrim(number_format((float) $invoice->discount_value, 2, ',', '.'), '0'), ',') . '%)'
+        : 'Diskon';
+    $taxLabel = $invoice->tax ? trim(($invoice->tax->name ?? 'PPN') . (isset($invoice->tax->rate) ? ' ' . rtrim(rtrim(number_format((float) $invoice->tax->rate, 2, ',', '.'), '0'), ',') . '%' : '')) : 'Pajak';
+    $payUrl = url('/pay/' . $invoice->invoice_number);
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $invoice->invoice_number }} — Invoice</title>
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
+    <title>{{ $invoice->invoice_number }} · Invoice {{ $companyName }}</title>
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+    {{-- Halaman ini sengaja tidak memuat CSS aplikasi agar template custom (Invoice Builder) tampil apa adanya. --}}
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background: #f1f5f9;
-            color: #333;
-        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #f1f5f9; color: #0f172a; -webkit-font-smoothing: antialiased; }
+        [x-cloak] { display: none !important; }
 
-        /* Toolbar - only visible on screen */
-        .toolbar {
-            background: #fff;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 12px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-        }
-        .toolbar-actions { display: flex; align-items: center; gap: 8px; }
-        .toolbar .btn {
-            display: inline-flex;
-            align-items: center;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: all 0.15s;
-            text-decoration: none;
-        }
-        .btn-back { background: #f1f5f9; color: #475569; }
-        .btn-back:hover { background: #e2e8f0; }
-        .btn-thermal { background: #1e293b; color: #fff; }
-        .btn-thermal:hover { background: #0f172a; }
-        .btn-a4 { background: #4f46e5; color: #fff; }
-        .btn-a4:hover { background: #4338ca; }
-        .btn-template { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
-        .btn-template:hover { background: #fef3c7; }
-        .btn svg { width: 16px; height: 16px; margin-right: 6px; }
-        .toolbar-title {
-            font-size: 13px;
-            color: #94a3b8;
-            font-weight: 500;
-        }
-        .toolbar-title strong { color: #334155; }
-
-        /* Dropdown */
+        /* ---------- Toolbar ---------- */
+        .toolbar { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+                   padding: 10px 20px; background: rgba(255,255,255,.92); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; }
+        .toolbar-title { font-size: 14px; color: #475569; min-width: 0; }
+        .toolbar-title strong { color: #0f172a; font-weight: 600; }
+        .toolbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 8px; font: 500 13px/1 'Inter', sans-serif;
+               cursor: pointer; text-decoration: none; border: 1px solid transparent; transition: background-color .15s, border-color .15s; white-space: nowrap; }
+        .btn svg { width: 16px; height: 16px; }
+        .btn-ghost { color: #475569; background: transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #0f172a; }
+        .btn-outline { color: #334155; background: #fff; border-color: #cbd5e1; }
+        .btn-outline:hover { background: #f8fafc; }
+        .btn-primary { color: #fff; background: #4f46e5; }
+        .btn-primary:hover { background: #4338ca; }
         .dropdown { position: relative; }
-        .dropdown-menu {
-            position: absolute;
-            right: 0;
-            top: 100%;
-            margin-top: 6px;
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            width: 220px;
-            z-index: 50;
-            overflow: hidden;
-        }
-        .dropdown-item {
-            display: block;
-            width: 100%;
-            padding: 10px 16px;
-            font-size: 13px;
-            color: #475569;
-            text-align: left;
-            border: none;
-            background: none;
-            cursor: pointer;
-            transition: background 0.1s;
-            text-decoration: none;
-        }
-        .dropdown-item:hover { background: #f8fafc; }
-        .dropdown-item.active { color: #4f46e5; font-weight: 700; }
-        .dropdown-sep { border-top: 1px solid #f1f5f9; }
+        .dropdown-menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 210px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+                         box-shadow: 0 12px 32px -12px rgba(15,23,42,.25); padding: 4px; z-index: 60; }
+        .dropdown-item { display: flex; width: 100%; align-items: center; gap: 8px; padding: 8px 10px; font: 400 13px 'Inter', sans-serif; color: #334155;
+                         background: none; border: 0; border-radius: 6px; cursor: pointer; text-decoration: none; text-align: left; }
+        .dropdown-item:hover { background: #f1f5f9; }
+        .dropdown-item.active { color: #4f46e5; font-weight: 600; }
+        .dropdown-sep { border-top: 1px solid #f1f5f9; margin: 4px 0; }
 
-        /* Paper Container */
-        .paper-wrapper {
-            display: flex;
-            justify-content: center;
-            padding: 40px 20px 60px;
-            min-height: calc(100vh - 60px);
-        }
-        .paper {
-            background: #fff;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-            width: 210mm;
-            min-height: 280mm;
-            padding: 15mm 18mm;
-            position: relative;
-            color: #333;
-        }
+        /* ---------- Kertas A4 ---------- */
+        .paper-wrapper { display: flex; justify-content: center; padding: 32px 16px 64px; }
+        .paper { position: relative; background: #fff; width: 210mm; min-height: 297mm; padding: 16mm 18mm; box-shadow: 0 1px 3px rgba(15,23,42,.06), 0 12px 40px -12px rgba(15,23,42,.18); }
+        @media (max-width: 860px) { .paper { width: 100%; min-height: auto; padding: 24px; } }
 
-        /* Invoice Typography */
-        .inv-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
-        .inv-header-left img { max-height: 56px; object-fit: contain; margin-bottom: 10px; }
-        .inv-company-name { font-size: 22px; font-weight: 800; color: #1e293b; margin-bottom: 6px; }
-        .inv-company-info { font-size: 12px; color: #64748b; line-height: 1.6; }
-        .inv-title { font-size: 36px; font-weight: 800; color: #cbd5e1; letter-spacing: 6px; text-align: right; }
-        .inv-number { font-size: 15px; font-weight: 700; color: #1e293b; text-align: right; margin-top: 6px; }
-        .inv-status {
-            display: inline-block;
-            padding: 4px 14px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .inv-status-paid { background: #dcfce7; color: #166534; }
-        .inv-status-unpaid { background: #fee2e2; color: #991b1b; }
+        .inv { position: relative; z-index: 1; font-size: 13px; line-height: 1.55; color: #334155; }
+        .inv-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+        .inv-brand img { max-height: 52px; max-width: 200px; object-fit: contain; display: block; margin-bottom: 10px; }
+        .inv-brand-name { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .inv-brand-info { font-size: 12px; color: #64748b; }
+        .inv-heading { text-align: right; }
+        .inv-heading h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -.02em; color: #0f172a; }
+        .inv-heading .no { margin-top: 2px; font-size: 13px; color: #64748b; font-variant-numeric: tabular-nums; }
+        .badge { display: inline-block; margin-top: 10px; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+        .badge-paid { background: #dcfce7; color: #166534; }
+        .badge-unpaid { background: #fef3c7; color: #92400e; }
+        .badge-overdue { background: #fee2e2; color: #991b1b; }
 
-        .inv-divider { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }
+        .inv-meta { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; margin: 32px 0 28px; padding: 18px 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; }
+        .lbl { font-size: 11px; font-weight: 500; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+        .cust-name { font-size: 15px; font-weight: 600; color: #0f172a; }
+        .muted { color: #64748b; }
+        .meta-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        .meta-table td { padding: 2px 0; vertical-align: top; }
+        .meta-table td:first-child { color: #64748b; padding-right: 12px; white-space: nowrap; }
+        .meta-table td:last-child { text-align: right; font-weight: 500; color: #0f172a; white-space: nowrap; }
+        .text-danger { color: #b91c1c !important; }
 
-        .inv-info { display: flex; justify-content: space-between; margin-bottom: 28px; }
-        .inv-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-        .inv-customer-name { font-size: 16px; font-weight: 700; color: #1e293b; }
-        .inv-customer-detail { font-size: 12px; color: #64748b; margin-top: 3px; }
-        .inv-meta-table { font-size: 12px; }
-        .inv-meta-table td { padding: 3px 0; }
-        .inv-meta-label { color: #94a3b8; padding-right: 16px; }
-        .inv-meta-value { font-weight: 700; color: #1e293b; }
+        .items { width: 100%; border-collapse: collapse; }
+        .items th { padding: 10px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #64748b; text-align: left; border-bottom: 1px solid #cbd5e1; }
+        .items td { padding: 14px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+        .items .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .item-name { font-weight: 600; color: #0f172a; }
+        .item-desc { font-size: 12px; color: #94a3b8; margin-top: 2px; }
 
-        /* Items Table */
-        .inv-table { width: 100%; border-collapse: collapse; margin: 24px 0; }
-        .inv-table thead tr {
-            border-top: 2px solid #1e293b;
-            border-bottom: 2px solid #1e293b;
-        }
-        .inv-table th {
-            padding: 10px 12px;
-            text-align: left;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #1e293b;
-            letter-spacing: 0.5px;
-        }
-        .inv-table td { padding: 14px 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-        .inv-item-name { font-weight: 700; color: #1e293b; }
-        .inv-item-desc { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+        .totals { display: flex; justify-content: flex-end; margin-top: 16px; }
+        .totals-box { width: 290px; }
+        .t-row { display: flex; justify-content: space-between; padding: 6px 0; font-variant-numeric: tabular-nums; }
+        .t-row span:first-child { color: #64748b; }
+        .t-row.discount span { color: #047857; }
+        .t-grand { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; padding: 12px 14px; border-radius: 8px; background: #0f172a; color: #fff; font-variant-numeric: tabular-nums; }
+        .t-grand span:first-child { font-size: 12px; color: #cbd5e1; }
+        .t-grand span:last-child { font-size: 18px; font-weight: 700; }
+        .terbilang { margin-top: 8px; font-size: 11.5px; font-style: italic; color: #64748b; text-align: right; }
 
-        /* Totals */
-        .inv-totals { display: flex; justify-content: flex-end; margin: 12px 0 32px; }
-        .inv-totals-box { width: 260px; }
-        .inv-total-row { display: flex; justify-content: space-between; padding: 7px 0; font-size: 13px; border-bottom: 1px solid #f1f5f9; }
-        .inv-total-row span:first-child { color: #64748b; }
-        .inv-total-row span:last-child { font-weight: 600; color: #1e293b; }
-        .inv-grand-total {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px;
-            background: #f8fafc;
-            border-radius: 6px;
-            margin-top: 8px;
-            font-size: 15px;
-            font-weight: 800;
-            color: #1e293b;
-        }
+        .pay-box { margin-top: 28px; padding: 14px 16px; border: 1px dashed #c7d2fe; border-radius: 10px; background: #eef2ff; font-size: 12.5px; color: #3730a3; }
+        .pay-box a { color: #3730a3; font-weight: 600; word-break: break-all; }
+        .paid-box { margin-top: 28px; padding: 14px 16px; border-radius: 10px; background: #f0fdf4; border: 1px solid #bbf7d0; font-size: 12.5px; color: #166534; }
 
-        .inv-footer { border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 32px; }
-        .inv-footer-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-        .inv-footer-text { font-size: 12px; color: #64748b; white-space: pre-line; line-height: 1.6; }
+        .inv-foot { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; gap: 24px; font-size: 12px; color: #64748b; }
+        .inv-foot p { margin: 0; white-space: pre-line; }
 
-        /* Watermark */
-        .inv-watermark {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-            opacity: 0.04;
-            z-index: 0;
-        }
-        .inv-watermark span {
-            font-size: 140px;
-            font-weight: 900;
-            color: #10b981;
-            transform: rotate(-30deg);
-            letter-spacing: 12px;
-        }
+        .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 0; }
+        .watermark span { font-size: 120px; font-weight: 800; color: #16a34a; opacity: .05; transform: rotate(-24deg); letter-spacing: .1em; }
 
-        /* Thermal */
-        #thermal-print-area {
-            display: none;
-            font-family: monospace;
-            width: 80mm;
-            color: #000;
-            background: #fff;
-            padding: 5mm;
-            font-size: 12px;
-            margin: 0 auto;
-        }
-        #thermal-print-area .dashed-line { border-bottom: 1px dashed #000; margin: 8px 0; }
+        /* ---------- Struk thermal 80mm ---------- */
+        #thermal-print-area { display: none; width: 80mm; margin: 0 auto; padding: 4mm; background: #fff; color: #000;
+                              font-family: 'Courier New', ui-monospace, monospace; font-size: 11.5px; line-height: 1.45; }
+        #thermal-print-area .c { text-align: center; }
+        #thermal-print-area .hr { border-top: 1px dashed #000; margin: 6px 0; }
+        #thermal-print-area table { width: 100%; border-collapse: collapse; }
+        #thermal-print-area td { padding: 1px 0; vertical-align: top; }
+        #thermal-print-area td.r { text-align: right; white-space: nowrap; }
 
-        /* ============ PRINT STYLES ============ */
+        /* ---------- Cetak ---------- */
         @media print {
-            html, body {
-                background: #fff !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
+            html, body { background: #fff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             .toolbar { display: none !important; }
-            .paper-wrapper {
-                padding: 0 !important;
-                min-height: auto !important;
-                display: block !important;
-            }
-
-            /* A4 Print */
-            body.printing-a4 .paper {
-                box-shadow: none !important;
-                width: 100% !important;
-                min-height: auto !important;
-                padding: 8mm 12mm !important;
-                margin: 0 !important;
-            }
+            .paper-wrapper { padding: 0 !important; display: block !important; }
+            body.printing-a4 .paper { box-shadow: none !important; width: 100% !important; min-height: auto !important; padding: 10mm 12mm !important; }
             body.printing-a4 #thermal-print-area { display: none !important; }
-
-            /* Thermal Print */
             body.printing-thermal .paper-wrapper { display: none !important; }
-            body.printing-thermal #thermal-print-area {
-                display: block !important;
-                width: 80mm;
-                margin: 0;
-                padding: 5mm;
-            }
-
-            /* Remove browser headers/footers (URL, date, page number) */
-            @page {
-                margin: 0;
-                size: A4;
-            }
+            body.printing-thermal #thermal-print-area { display: block !important; margin: 0; }
         }
     </style>
+    {{-- Ukuran kertas diganti sesuai mode cetak (A4 atau gulungan 80mm) --}}
+    <style id="page-size">@page { size: A4; margin: 0; }</style>
 </head>
 <body>
-    @php
-        $companyName = get_setting('company_name', config('app.name'));
-        $companyAddress = get_setting('company_address', '');
-        $companyPhone = get_setting('company_phone', '');
-        $companyEmail = get_setting('company_email', '');
-        $companyLogo = get_setting('company_logo');
-        $footerNote = get_setting('invoice_footer_note', 'Thank you for your business!');
-        $hasCustom = !empty($customA4Html);
-    @endphp
-
-    <!-- Toolbar -->
+    {{-- Toolbar --}}
     <div class="toolbar" x-data="{ templateMode: '{{ $hasCustom ? 'custom' : 'default' }}', dropOpen: false }">
         <div class="toolbar-title">
-            <strong>{{ $invoice->invoice_number }}</strong> &mdash; {{ $invoice->customer->name ?? 'Customer' }}
+            <strong>{{ $invoice->invoice_number }}</strong> · {{ $customer->name ?? 'Pelanggan' }}
         </div>
         <div class="toolbar-actions">
-            <a href="{{ route('invoices.index') }}" class="btn btn-back">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            <a href="{{ route('invoices.index') }}" class="btn btn-ghost">
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 Kembali
             </a>
 
-            <!-- Template Switcher -->
             <div class="dropdown">
-                <button class="btn btn-template" @click="dropOpen = !dropOpen">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z"></path></svg>
-                    <span x-text="templateMode === 'custom' ? 'Custom' : 'Bawaan'"></span>
-                    <svg style="margin-left:4px;margin-right:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                <button type="button" class="btn btn-outline" @click="dropOpen = !dropOpen">
+                    Template: <span x-text="templateMode === 'custom' ? 'Custom' : 'Bawaan'"></span>
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
-                <div class="dropdown-menu" x-show="dropOpen" @click.away="dropOpen = false" x-transition style="display:none;">
-                    <button class="dropdown-item" :class="templateMode === 'default' && 'active'"
-                        @click="templateMode='default'; dropOpen=false; 
-                               if(document.getElementById('customA4Area')) document.getElementById('customA4Area').style.display='none'; 
-                               document.getElementById('defaultA4Area').style.display='block';">
-                        📄 Template Bawaan
+                <div class="dropdown-menu" x-show="dropOpen" x-cloak @click.outside="dropOpen = false">
+                    <button type="button" class="dropdown-item" :class="templateMode === 'default' && 'active'"
+                            @click="templateMode = 'default'; dropOpen = false;
+                                    document.getElementById('customA4Area')?.style.setProperty('display', 'none');
+                                    document.getElementById('defaultA4Area').style.display = 'block';">
+                        Template bawaan
                     </button>
                     @if($hasCustom)
-                    <button class="dropdown-item" :class="templateMode === 'custom' && 'active'"
-                        @click="templateMode='custom'; dropOpen=false; 
-                               document.getElementById('defaultA4Area').style.display='none'; 
-                               document.getElementById('customA4Area').style.display='block';">
-                        🎨 Template Custom
-                    </button>
+                        <button type="button" class="dropdown-item" :class="templateMode === 'custom' && 'active'"
+                                @click="templateMode = 'custom'; dropOpen = false;
+                                        document.getElementById('defaultA4Area').style.display = 'none';
+                                        document.getElementById('customA4Area').style.display = 'block';">
+                            Template custom
+                        </button>
                     @endif
                     <div class="dropdown-sep"></div>
-                    <a href="{{ route('invoice-templates.index') }}" class="dropdown-item">⚙️ Kelola Template...</a>
+                    <a href="{{ route('invoice-templates.index') }}" class="dropdown-item">Kelola template…</a>
                 </div>
             </div>
 
-            <button onclick="printInvoice('thermal')" class="btn btn-thermal">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            <button type="button" onclick="printInvoice('thermal')" class="btn btn-outline">
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
                 Struk 80mm
             </button>
-            <button onclick="printInvoice('a4')" class="btn btn-a4">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            <button type="button" onclick="printInvoice('a4')" class="btn btn-primary">
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                 Cetak A4
             </button>
         </div>
     </div>
 
-    <!-- Paper -->
     <div class="paper-wrapper">
-        <!-- Custom Template -->
+        {{-- Template custom (Invoice Builder) --}}
         @if($hasCustom)
-        <div id="customA4Area" class="paper">
-            {!! $customA4Html !!}
-        </div>
+            <div id="customA4Area" class="paper">
+                {!! $customA4Html !!}
+            </div>
         @endif
 
-        <!-- Default Built-in Template -->
+        {{-- Template bawaan --}}
         <div id="defaultA4Area" class="paper" style="{{ $hasCustom ? 'display:none;' : '' }}">
-            @if($invoice->status == 'paid')
-            <div class="inv-watermark"><span>PAID</span></div>
+            @if($isPaid)
+                <div class="watermark"><span>LUNAS</span></div>
             @endif
 
-            <!-- Header -->
-            <div class="inv-header">
-                <div class="inv-header-left">
-                    @if($companyLogo)
-                        <img src="{{ asset('storage/' . $companyLogo) }}" alt="{{ $companyName }}">
-                    @else
-                        <div class="inv-company-name">{{ $companyName }}</div>
-                    @endif
-                    @if($companyAddress || $companyPhone || $companyEmail)
-                    <div class="inv-company-info">
-                        @if($companyAddress){{ $companyAddress }}@endif
-                        @if($companyPhone || $companyEmail)<br>{{ $companyPhone }}@if($companyPhone && $companyEmail) | @endif{{ $companyEmail }}@endif
+            <div class="inv">
+                <div class="inv-top">
+                    <div class="inv-brand">
+                        @if($companyLogo)
+                            <img src="{{ asset('storage/' . $companyLogo) }}" alt="{{ $companyName }}">
+                        @endif
+                        <div class="inv-brand-name">{{ $companyName }}</div>
+                        <div class="inv-brand-info">
+                            @if($companyAddress){{ $companyAddress }}<br>@endif
+                            {{ collect([$companyPhone, $companyEmail, $companyWebsite])->filter()->implode(' · ') }}
+                            @if($companyTaxId)<br>NPWP {{ $companyTaxId }}@endif
+                        </div>
                     </div>
-                    @endif
-                </div>
-                <div>
-                    <div class="inv-title">INVOICE</div>
-                    <div class="inv-number">{{ $invoice->invoice_number }}</div>
-                    <div style="text-align:right; margin-top:8px;">
-                        <span class="inv-status {{ $invoice->status == 'paid' ? 'inv-status-paid' : 'inv-status-unpaid' }}">
-                            {{ $invoice->status }}
-                        </span>
+                    <div class="inv-heading">
+                        <h1>Invoice</h1>
+                        <div class="no">{{ $invoice->invoice_number }}</div>
+                        @if($isPaid)
+                            <span class="badge badge-paid">Lunas</span>
+                        @elseif($isOverdue)
+                            <span class="badge badge-overdue">Lewat jatuh tempo</span>
+                        @else
+                            <span class="badge badge-unpaid">Belum dibayar</span>
+                        @endif
                     </div>
                 </div>
-            </div>
 
-            <hr class="inv-divider">
-
-            <!-- Info -->
-            <div class="inv-info">
-                <div>
-                    <div class="inv-label">Billed To</div>
-                    <div class="inv-customer-name">{{ $invoice->customer->name ?? 'Unknown Customer' }}</div>
-                    <div class="inv-customer-detail">{{ $invoice->customer->address ?? '-' }}</div>
-                    <div class="inv-customer-detail">{{ $invoice->customer->phone ?? '-' }}</div>
-                </div>
-                <div style="text-align:right;">
-                    <table class="inv-meta-table" style="margin-left:auto;">
-                        <tr><td class="inv-meta-label">Invoice Date:</td><td class="inv-meta-value">{{ $invoice->created_at->format('d M Y') }}</td></tr>
-                        <tr><td class="inv-meta-label">Due Date:</td><td class="inv-meta-value">{{ $invoice->due_date->format('d M Y') }}</td></tr>
-                        <tr><td class="inv-meta-label">Billing Period:</td><td class="inv-meta-value">{{ $invoice->period_start->format('d M Y') }} — {{ $invoice->period_end->format('d M Y') }}</td></tr>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Items -->
-            <table class="inv-table">
-                <thead>
-                    <tr>
-                        <th style="width:5%">No</th>
-                        <th style="width:55%">Description</th>
-                        <th style="width:15%;text-align:center;">Qty</th>
-                        <th style="width:25%;text-align:right;">Amount (Rp)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td style="text-align:center;">1</td>
-                        <td>
-                            <div class="inv-item-name">Internet Service Subscription ({{ $invoice->billing_period }})</div>
-                            @if($invoice->notes)
-                                <div class="inv-item-desc">{{ $invoice->notes }}</div>
+                <div class="inv-meta">
+                    <div>
+                        <div class="lbl">Ditagihkan kepada</div>
+                        <div class="cust-name">{{ $customer->name ?? 'Pelanggan' }}</div>
+                        <div class="muted">ID Pelanggan: {{ $customerCode }}</div>
+                        @if($customer?->address)<div class="muted">{{ $customer->address }}</div>@endif
+                        @if($customer?->phone)<div class="muted">{{ $customer->phone }}</div>@endif
+                    </div>
+                    <div>
+                        <div class="lbl">Detail invoice</div>
+                        <table class="meta-table">
+                            <tr><td>Tanggal terbit</td><td>{{ $d($invoice->created_at, 'd F Y') }}</td></tr>
+                            <tr><td>Jatuh tempo</td><td class="{{ $isOverdue ? 'text-danger' : '' }}">{{ $d($invoice->due_date, 'd F Y') }}</td></tr>
+                            <tr><td>Periode layanan</td><td>{{ $period }}</td></tr>
+                            @if($isPaid && $invoice->paid_at)
+                                <tr><td>Tanggal bayar</td><td>{{ $d($invoice->paid_at, 'd F Y') }}</td></tr>
                             @endif
-                        </td>
-                        <td style="text-align:center;">1</td>
-                        <td style="text-align:right;font-weight:600;">{{ number_format($invoice->subtotal, 0, ',', '.') }}</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <!-- Totals -->
-            <div class="inv-totals">
-                <div class="inv-totals-box">
-                    <div class="inv-total-row">
-                        <span>Subtotal</span>
-                        <span>{{ number_format($invoice->subtotal, 0, ',', '.') }}</span>
-                    </div>
-                    @if($invoice->discount_amount > 0)
-                    <div class="inv-total-row" style="color:#059669;">
-                        <span>Diskon ({{ $invoice->discount_type === 'percentage' ? rtrim(rtrim(number_format($invoice->discount_value, 2), '0'), '.') . '%' : 'Khusus' }})</span>
-                        <span style="color:#059669;">- Rp {{ number_format($invoice->discount_amount, 0, ',', '.') }}</span>
-                    </div>
-                    @endif
-                    @if($invoice->tax_id)
-                    <div class="inv-total-row">
-                        <span>Tax ({{ $invoice->tax->name ?? 'PPN' }} {{ $invoice->tax->rate ?? 0 }}%)</span>
-                        <span>{{ number_format($invoice->tax_amount, 0, ',', '.') }}</span>
-                    </div>
-                    @endif
-                    <div class="inv-grand-total">
-                        <span>Total Due</span>
-                        <span>Rp {{ number_format($invoice->amount, 0, ',', '.') }}</span>
+                        </table>
                     </div>
                 </div>
-            </div>
 
-            <!-- Footer -->
-            @if($footerNote)
-            <div class="inv-footer">
-                <div class="inv-footer-label">Notes & Terms</div>
-                <div class="inv-footer-text">{{ $footerNote }}</div>
+                <table class="items">
+                    <thead>
+                        <tr>
+                            <th style="width:6%">No</th>
+                            <th>Deskripsi</th>
+                            <th class="num" style="width:10%">Qty</th>
+                            <th class="num" style="width:24%">Jumlah (Rp)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>
+                                <div class="item-name">Layanan Internet{{ $customer?->package ? ' – ' . $customer->package->name : '' }}</div>
+                                <div class="item-desc">
+                                    {{ $invoice->billing_period ? 'Berlangganan ' . $invoice->billing_period : 'Biaya berlangganan' }}{{ ($invoice->period_start || $invoice->period_end) ? ' · ' . $period : '' }}
+                                </div>
+                                @if($invoice->notes)
+                                    <div class="item-desc">{{ $invoice->notes }}</div>
+                                @endif
+                            </td>
+                            <td class="num">1</td>
+                            <td class="num">{{ $n($subtotal) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="totals">
+                    <div class="totals-box">
+                        <div class="t-row"><span>Subtotal</span><span>{{ $n($subtotal) }}</span></div>
+                        @if((float) $invoice->discount_amount > 0)
+                            <div class="t-row discount"><span>{{ $discountLabel }}</span><span>−{{ $n($invoice->discount_amount) }}</span></div>
+                        @endif
+                        @if((float) $invoice->tax_amount > 0)
+                            <div class="t-row"><span>{{ $taxLabel }}</span><span>{{ $n($invoice->tax_amount) }}</span></div>
+                        @endif
+                        <div class="t-grand"><span>Total</span><span>Rp {{ $n($invoice->amount) }}</span></div>
+                        <div class="terbilang">{{ ucfirst(\App\Services\AccountingService::terbilang($invoice->amount)) }} rupiah</div>
+                    </div>
+                </div>
+
+                @if($isPaid)
+                    <div class="paid-box">Pembayaran telah diterima{{ $invoice->paid_at ? ' pada ' . $d($invoice->paid_at, 'd F Y, H:i') : '' }}. Terima kasih.</div>
+                @else
+                    <div class="pay-box">
+                        Bayar online sebelum {{ $d($invoice->due_date, 'd F Y') }} melalui:<br>
+                        <a href="{{ $payUrl }}">{{ $payUrl }}</a>
+                    </div>
+                @endif
+
+                <div class="inv-foot">
+                    <div>
+                        @if($footerNote)
+                            <div class="lbl">Catatan</div>
+                            <p>{{ $footerNote }}</p>
+                        @endif
+                    </div>
+                    <p style="text-align:right; white-space:nowrap;">Dokumen elektronik,<br>sah tanpa tanda tangan.</p>
+                </div>
             </div>
-            @endif
         </div>
     </div>
 
-    <!-- Thermal Print Area -->
+    {{-- Struk thermal 80mm --}}
     <div id="thermal-print-area">
-        <div style="text-align:center; margin-bottom:10px;">
-            <h2 style="margin:0; font-size:14px; text-transform:uppercase;">{{ $companyName }}</h2>
-            <p style="margin:2px 0; font-size:10px;">{{ $companyAddress }}</p>
-            <p style="margin:2px 0; font-size:10px;">{{ $companyPhone }}</p>
-        </div>
-        <div class="dashed-line"></div>
-        <div style="margin-bottom:10px; font-size:11px;">
-            <p style="margin:2px 0;"><strong>INV:</strong> {{ $invoice->invoice_number }}</p>
-            <p style="margin:2px 0;"><strong>TGL:</strong> {{ $invoice->created_at->format('d/m/Y H:i') }}</p>
-            <p style="margin:2px 0;"><strong>JTH TEMPO:</strong> {{ $invoice->due_date->format('d/m/Y') }}</p>
-            <p style="margin:2px 0;"><strong>STATUS:</strong> {{ strtoupper($invoice->status) }}</p>
-        </div>
-        <div class="dashed-line"></div>
-        <div style="margin-bottom:10px; font-size:11px;">
-            <p style="margin:2px 0;"><strong>CUST:</strong> {{ $invoice->customer->name ?? 'Unknown' }}</p>
-            <p style="margin:2px 0;"><strong>PERIODE:</strong> {{ $invoice->period_start->format('d/m/y') }} - {{ $invoice->period_end->format('d/m/y') }}</p>
-        </div>
-        <div class="dashed-line"></div>
-        <table style="width:100%; font-size:11px; margin-bottom:10px;">
-            <tr><td colspan="2" style="padding-bottom:4px;">Internet Service ({{ $invoice->billing_period }})</td></tr>
-            <tr><td>Subtotal</td><td style="text-align:right;">{{ number_format($invoice->subtotal, 0, ',', '.') }}</td></tr>
-            @if($invoice->tax_id)
-            <tr><td>Tax ({{ $invoice->tax->rate ?? 0 }}%)</td><td style="text-align:right;">{{ number_format($invoice->tax_amount, 0, ',', '.') }}</td></tr>
+        @if($hasCustomThermal)
+            {!! $customThermalHtml !!}
+        @else
+            <div class="c">
+                <strong style="font-size:13px;">{{ mb_strtoupper($companyName) }}</strong><br>
+                @if($companyAddress){{ $companyAddress }}<br>@endif
+                @if($companyPhone){{ $companyPhone }}@endif
+            </div>
+            <div class="hr"></div>
+            <table>
+                <tr><td>No</td><td class="r">{{ $invoice->invoice_number }}</td></tr>
+                <tr><td>Tanggal</td><td class="r">{{ $invoice->created_at->format('d/m/Y H:i') }}</td></tr>
+                <tr><td>Jatuh tempo</td><td class="r">{{ $invoice->due_date?->format('d/m/Y') ?? '-' }}</td></tr>
+                <tr><td>Status</td><td class="r">{{ $isPaid ? 'LUNAS' : 'BELUM BAYAR' }}</td></tr>
+            </table>
+            <div class="hr"></div>
+            <table>
+                <tr><td>Pelanggan</td><td class="r">{{ \Illuminate\Support\Str::limit($customer->name ?? '-', 20) }}</td></tr>
+                <tr><td>ID</td><td class="r">{{ $customerCode }}</td></tr>
+                <tr><td>Periode</td><td class="r">{{ ($invoice->period_start || $invoice->period_end) ? ($invoice->period_start?->format('d/m/y') ?? '-') . '-' . ($invoice->period_end?->format('d/m/y') ?? '-') : ($invoice->billing_period ?: '-') }}</td></tr>
+            </table>
+            <div class="hr"></div>
+            <table>
+                <tr><td colspan="2">Internet {{ $customer?->package?->name ?? '' }}</td></tr>
+                <tr><td>Subtotal</td><td class="r">{{ $n($subtotal) }}</td></tr>
+                @if((float) $invoice->discount_amount > 0)
+                    <tr><td>{{ $discountLabel }}</td><td class="r">-{{ $n($invoice->discount_amount) }}</td></tr>
+                @endif
+                @if((float) $invoice->tax_amount > 0)
+                    <tr><td>{{ $taxLabel }}</td><td class="r">{{ $n($invoice->tax_amount) }}</td></tr>
+                @endif
+            </table>
+            <div class="hr"></div>
+            <table style="font-size:13px; font-weight:bold;">
+                <tr><td>TOTAL</td><td class="r">Rp {{ $n($invoice->amount) }}</td></tr>
+            </table>
+            <div class="hr"></div>
+            @if(! $isPaid)
+                <div class="c" style="font-size:10.5px;">Bayar online:<br>{{ $payUrl }}</div>
+                <div class="hr"></div>
             @endif
-        </table>
-        <div class="dashed-line"></div>
-        <table style="width:100%; font-size:12px; font-weight:bold;">
-            <tr><td>TOTAL</td><td style="text-align:right;">Rp {{ number_format($invoice->amount, 0, ',', '.') }}</td></tr>
-        </table>
-        <div class="dashed-line"></div>
-        @if($footerNote)
-        <div style="text-align:center; font-size:10px; margin-top:15px; white-space:pre-line;">{{ $footerNote }}</div>
+            @if($footerNote)
+                <div class="c" style="font-size:10.5px; white-space:pre-line;">{{ $footerNote }}</div>
+            @endif
+            <div class="c" style="font-size:9.5px; margin-top:6px;">Dicetak {{ now()->format('d/m/Y H:i') }}</div>
         @endif
-        <div style="text-align:center; font-size:9px; margin-top:10px; opacity:0.7;">Printed: {{ now()->format('d/m/Y H:i') }}</div>
     </div>
 
     <script>
         function printInvoice(format) {
+            // Ganti ukuran kertas: A4 untuk invoice, gulungan 80mm untuk struk thermal.
+            document.getElementById('page-size').textContent = format === 'thermal'
+                ? '@page { size: 80mm auto; margin: 0; }'
+                : '@page { size: A4; margin: 0; }';
             document.body.classList.remove('printing-a4', 'printing-thermal');
             document.body.classList.add(format === 'thermal' ? 'printing-thermal' : 'printing-a4');
             window.print();
-            setTimeout(() => document.body.classList.remove('printing-a4', 'printing-thermal'), 1000);
+            setTimeout(() => {
+                document.body.classList.remove('printing-a4', 'printing-thermal');
+                document.getElementById('page-size').textContent = '@page { size: A4; margin: 0; }';
+            }, 1000);
         }
     </script>
 </body>
