@@ -58,9 +58,18 @@ class DatabaseDumpService
         ];
 
         // Password lewat variabel lingkungan, bukan argumen (tidak terlihat di daftar proses)
-        $result = Process::timeout(3600)
-            ->env(['MYSQL_PWD' => (string) ($cfg['password'] ?? '')])
-            ->run($command);
+        $env = ['MYSQL_PWD' => (string) ($cfg['password'] ?? '')];
+
+        // Windows: tanpa SystemRoot, Winsock gagal dimuat -> "Can't create TCP/IP socket (10106)".
+        // `php artisan serve` membuang SystemRoot (daftar terusannya memakai "SYSTEMROOT",
+        // dicocokkan peka huruf besar-kecil), sehingga tombol backup di web gagal.
+        if (PHP_OS_FAMILY === 'Windows') {
+            $root = getenv('SystemRoot') ?: getenv('SYSTEMROOT') ?: ($_SERVER['SystemRoot'] ?? $_SERVER['SYSTEMROOT'] ?? 'C:\\Windows');
+            $env['SystemRoot'] = $root;
+            $env['WINDIR'] = getenv('WINDIR') ?: $root;
+        }
+
+        $result = Process::timeout(3600)->env($env)->run($command);
 
         if (! $result->successful() || ! File::exists($sqlPath) || File::size($sqlPath) === 0) {
             File::delete($sqlPath);
