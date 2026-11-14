@@ -54,10 +54,7 @@ class ProcessCustomerSuspension implements ShouldQueue
         ]);
 
         // CoA Disconnect if possible
-        $nas = Nas::first();
-        if ($nas) {
-            $coaService->disconnect($nas->nasname, $nas->secret, $customer->username);
-        }
+        app(\App\Services\CustomerLifecycleService::class)->disconnectSessions($customer->username);
 
         // Send WA Notification via Queued Job with Anti-Ban Delay
         if (!empty($customer->phone)) {

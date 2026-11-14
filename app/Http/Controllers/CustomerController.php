@@ -84,7 +84,7 @@ class CustomerController extends Controller
     /**
      * Handle bulk actions for selected customers
      */
-    public function bulkAction(Request $request)
+    public function bulkAction(Request $request, \App\Services\CustomerLifecycleService $lifecycle)
     {
         $action = $request->input('action');
         $ids = $request->input('ids', []);
@@ -92,80 +92,21 @@ class CustomerController extends Controller
         if (empty($ids) || empty($action)) {
             return redirect()->back()->with('error', 'Silakan pilih pelanggan dan aksi yang ingin dilakukan.');
         }
-
-        $customers = Customer::whereIn('id', $ids)->get();
-        $count = 0;
-
-        switch ($action) {
-            case 'activate':
-                abort_if(auth()->user()->isSales(), 403, 'Unauthorized');
-                foreach ($customers as $customer) {
-                    if (in_array($customer->status, [Customer::STATUS_NEW, Customer::STATUS_WAITING_ACTIVATION])) {
-                        $customer->update([
-                            'is_active' => true,
-                            'status' => Customer::STATUS_ACTIVE,
-                            'activated_at' => now(),
-                        ]);
-                        $customer->syncBillingDates();
-                        
-                        // Sync status in radius if needed
-                        $nas = \App\Models\Radius\Nas::first();
-                        if ($nas) {
-                            app(\App\Services\RadiusCoAService::class)->disconnect($nas->nasname, $nas->secret, $customer->username);
-                        }
-
-                        $count++;
-                    }
-                }
-                $message = "$count pelanggan berhasil diaktifkan secara massal.";
-                break;
-
-            case 'suspend':
-                abort_if(auth()->user()->isSales(), 403, 'Unauthorized');
-                foreach ($customers as $customer) {
-                    if ($customer->is_active) {
-                        $customer->update([
-                            'is_active' => false,
-                            'status' => Customer::STATUS_SUSPENDED,
-                        ]);
-                        
-                        // CoA Disconnect
-                        $nas = \App\Models\Radius\Nas::first();
-                        if ($nas) {
-                            app(\App\Services\RadiusCoAService::class)->disconnect($nas->nasname, $nas->secret, $customer->username);
-                        }
-
-                        $count++;
-                    }
-                }
-                $message = "$count pelanggan berhasil di-suspend secara massal.";
-                break;
-
-            case 'dismantle':
-                abort_if(auth()->user()->isSales(), 403, 'Unauthorized');
-                foreach ($customers as $customer) {
-                    if ($customer->status !== Customer::STATUS_WAITING_DISMANTLE && $customer->status !== Customer::STATUS_DISMANTLED) {
-                        $customer->update([
-                            'status' => Customer::STATUS_WAITING_DISMANTLE,
-                        ]);
-                        $count++;
-                    }
-                }
-                $message = "$count pelanggan berhasil diajukan dismantle secara massal.";
-                break;
-
-            case 'delete':
-                abort_if(!auth()->user()->isAdmin(), 403, 'Unauthorized');
-                foreach ($customers as $customer) {
-                    $customer->delete();
-                    $count++;
-                }
-                $message = "$count pelanggan berhasil dihapus secara massal.";
-                break;
-
-            default:
-                return redirect()->back()->with('error', 'Aksi tidak dikenal.');
+        if (! in_array($action, \App\Services\CustomerLifecycleService::BULK_ACTIONS, true)) {
+            return redirect()->back()->with('error', 'Aksi tidak dikenal.');
         }
+
+        // Hak akses: sales tidak boleh mengubah status; hapus hanya admin.
+        abort_if($action === 'delete' ? ! auth()->user()->isAdmin() : auth()->user()->isSales(), 403, 'Unauthorized');
+
+        $count = $lifecycle->bulk($action, Customer::whereIn('id', $ids)->get());
+
+        $message = match ($action) {
+            'activate' => "$count pelanggan berhasil diaktifkan secara massal.",
+            'suspend' => "$count pelanggan berhasil di-suspend secara massal.",
+            'dismantle' => "$count pelanggan berhasil diajukan dismantle secara massal.",
+            'delete' => "$count pelanggan berhasil dihapus secara massal.",
+        };
 
         return redirect()->back()->with('success', $message);
     }
@@ -535,11 +476,8 @@ class CustomerController extends Controller
         
         if (($oldStatus && !$isActive) || $isPackageChanged || ($oldUsername !== $newUsername)) {
             try {
-                $nas = Nas::first(); 
-                if ($nas) {
-                    $coaService = new \App\Services\RadiusCoAService();
-                    $coaService->disconnect($nas->nasipaddress, $nas->secret, $newUsername);
-                }
+                // Sesi yang sedang berjalan masih memakai username LAMA bila username diganti
+                app(\App\Services\CustomerLifecycleService::class)->disconnectSessions($oldUsername ?: $newUsername);
             } catch (\Exception $e) {
                 \Log::warning("CoA Disconnect failed: " . $e->getMessage());
             }
@@ -564,41 +502,14 @@ class CustomerController extends Controller
         return redirect()->route('customers.show', $customer)->with('success', 'Subscriber and RADIUS records updated successfully. OLT changes queued.');
     }
 
-    public function destroy(Customer $customer)
+    public function destroy(Customer $customer, \App\Services\CustomerLifecycleService $lifecycle)
     {
         abort_if(!auth()->user()->isAdmin(), 403, 'Unauthorized: Only administrators can delete subscriber records.');
 
-        // Backup OLT info for deprovisioning job
-        $oltId = $customer->olt_id;
-        $onuIndex = $customer->onu_index;
-        $onuSn = $customer->onu_sn;
+        // Bersihkan akun RADIUS, putus sesi aktif, hapus ONU dari OLT (lihat CustomerLifecycleService)
+        $lifecycle->delete($customer);
 
-        DB::transaction(function () use ($customer) {
-            // Delete RADIUS records first to prevent orphaned records if delete fails
-            RadCheck::where('username', $customer->username)->delete();
-            RadUserGroup::where('username', $customer->username)->delete();
-            
-            // Delete Billing Customer
-            $customer->delete();
-        });
-
-        // 2. Trigger RADIUS CoA Disconnect to kick active sessions
-        try {
-            $nas = Nas::first(); 
-            if ($nas) {
-                $coaService = new \App\Services\RadiusCoAService();
-                $coaService->disconnect($nas->nasipaddress, $nas->secret, $customer->username);
-            }
-        } catch (\Exception $e) {
-            \Log::warning("CoA Disconnect failed during customer deletion: " . $e->getMessage());
-        }
-
-        // 3. Trigger OLT Deprovisioning
-        if ($oltId && $onuIndex) {
-            \App\Jobs\DeprovisionOnuJob::dispatch($oltId, $onuIndex, $onuSn);
-        }
-
-        return redirect()->route('customers.index')->with('success', 'Subscriber deleted successfully.');
+        return redirect()->route('customers.index')->with('success', 'Pelanggan berhasil dihapus.');
     }
 
     public function resetFup(Customer $customer)
@@ -621,11 +532,7 @@ class CustomerController extends Controller
 
             // Trigger Disconnect so they get normal speed back
             try {
-                $nas = \App\Models\Radius\Nas::first();
-                if ($nas) {
-                    $coaService = new \App\Services\RadiusCoAService();
-                    $coaService->disconnect($nas->nasipaddress, $nas->secret, $customer->username);
-                }
+                app(\App\Services\CustomerLifecycleService::class)->disconnectSessions($customer->username);
             } catch (\Exception $e) {
                 \Log::warning("CoA Disconnect failed: " . $e->getMessage());
             }

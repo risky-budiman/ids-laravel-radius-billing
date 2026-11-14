@@ -110,11 +110,7 @@ class DashboardController extends Controller
             ]);
 
         try {
-            $nas = \App\Models\Radius\Nas::first();
-            if ($nas) {
-                $coa = new \App\Services\RadiusCoAService();
-                $coa->disconnect($nas->nasipaddress, $nas->secret, $customer->username);
-            }
+            app(\App\Services\CustomerLifecycleService::class)->disconnectSessions($customer->username);
         } catch (\Exception $e) {
             \Log::warning("CoA failed after booster purchase: " . $e->getMessage());
         }

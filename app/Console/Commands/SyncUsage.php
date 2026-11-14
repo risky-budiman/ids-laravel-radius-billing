@@ -78,9 +78,13 @@ class SyncUsage extends Command
                 ->where('attribute', 'Mikrotik-Rate-Limit')
                 ->first();
 
-            if ($currentReply && $currentReply->value !== $fupSpeed) {
-                // Update kecepatan ke profil FUP
-                $currentReply->update(['value' => $fupSpeed]);
+            if (! $currentReply || $currentReply->value !== $fupSpeed) {
+                // Kecepatan normal biasanya dari grup paket (radgroupreply), jadi baris
+                // radreply per user sering belum ada: buat override FUP bila perlu.
+                RadReply::updateOrCreate(
+                    ['username' => $customer->username, 'attribute' => 'Mikrotik-Rate-Limit'],
+                    ['op' => ':=', 'value' => $fupSpeed]
+                );
                 
                 // Putus koneksi agar router meminta profil baru (CoA / Disconnect)
                 $this->disconnectUser($customer->username);
@@ -106,23 +110,7 @@ class SyncUsage extends Command
 
     protected function disconnectUser($username)
     {
-        // Putuskan sesi aktif agar profil kecepatan baru langsung berlaku.
-        // NAS dicari dari sesi aktif pelanggan (radacct.nasipaddress = nas.nasname),
-        // sehingga benar untuk setup dengan lebih dari satu router.
-        try {
-            $coa = app(\App\Services\RadiusCoAService::class);
-            $sessions = RadAcct::online()->where('username', $username)->get();
-
-            foreach ($sessions as $session) {
-                $nas = \App\Models\Radius\Nas::where('nasname', $session->nasipaddress)->first();
-                if ($nas) {
-                    $coa->disconnect($nas->nasname, (string) $nas->secret, (string) $username, $session->acctsessionid);
-                } else {
-                    Log::warning("FUP disconnect: NAS {$session->nasipaddress} untuk {$username} tidak terdaftar.");
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error("Failed to send disconnect request for {$username}: " . $e->getMessage());
-        }
+        // Putuskan sesi aktif agar profil kecepatan baru langsung berlaku (mendukung banyak NAS).
+        app(\App\Services\CustomerLifecycleService::class)->disconnectSessions((string) $username);
     }
 }

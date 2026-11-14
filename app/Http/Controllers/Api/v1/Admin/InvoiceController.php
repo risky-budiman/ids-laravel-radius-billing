@@ -216,8 +216,13 @@ class InvoiceController extends Controller
     /**
      * Mark single invoice as paid.
      */
-    public function pay(Request $request, $id)
+    public function pay(Request $request, $id, \App\Services\InvoiceService $invoiceService)
     {
+        $request->validate([
+            'payment_method' => 'nullable|string|max:50',
+            'bank_account_id' => 'nullable|integer|exists:bank_accounts,id',
+        ]);
+
         $invoice = Invoice::findOrFail($id);
 
         if ($invoice->status === 'paid') {
@@ -226,37 +231,10 @@ class InvoiceController extends Controller
             ], 422);
         }
 
-        $paymentMethod = $request->input('payment_method', 'cash');
-
-        DB::transaction(function () use ($invoice, $paymentMethod) {
-            $invoice->update([
-                'status' => 'paid',
-                'paid_at' => now(),
-                'payment_method' => $paymentMethod,
-            ]);
-
-            // Activate customer if suspended
-            $customer = $invoice->customer;
-            if ($customer) {
-                if (!$customer->is_active || $customer->status === Customer::STATUS_SUSPENDED) {
-                    $customer->update([
-                        'is_active' => true,
-                        'status' => Customer::STATUS_ACTIVE,
-                    ]);
-                }
-                $customer->syncBillingDates();
-            }
-
-            // Record in accounting
-            try {
-                $bankAccount = BankAccount::where('is_active', true)->first();
-                if ($bankAccount) {
-                    app(AccountingService::class)->recordInvoicePayment($invoice, $bankAccount);
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Failed auto-journal for payment: ' . $e->getMessage());
-            }
-        });
+        // Jalur yang sama dengan web & webhook: mutasi kas/bank, jurnal, aktivasi booster,
+        // reaktivasi pelanggan, komisi mitra & sales.
+        $invoiceService->markAsPaid($invoice, $request->input('bank_account_id'));
+        $invoice->update(['payment_method' => $request->input('payment_method', 'cash')]);
 
         return response()->json([
             'message' => "Tagihan #{$invoice->invoice_number} berhasil ditandai Lunas.",
@@ -266,51 +244,27 @@ class InvoiceController extends Controller
     /**
      * Bulk Mark Paid.
      */
-    public function bulkMarkPaid(Request $request)
+    public function bulkMarkPaid(Request $request, \App\Services\InvoiceService $invoiceService)
     {
         $request->validate([
             'ids' => 'required|array|min:1',
             'ids.*' => 'integer|exists:invoices,id',
-            'payment_method' => 'nullable|string',
+            'payment_method' => 'nullable|string|max:50',
+            'bank_account_id' => 'nullable|integer|exists:bank_accounts,id',
         ]);
 
-        $ids = $request->input('ids');
-        $paymentMethod = $request->input('payment_method', 'cash');
-        $invoices = Invoice::whereIn('id', $ids)->where('status', '!=', 'paid')->get();
+        $invoices = Invoice::whereIn('id', $request->input('ids'))->where('status', '!=', 'paid')->get();
         $count = 0;
-        $bankAccount = BankAccount::where('is_active', true)->first();
 
         foreach ($invoices as $invoice) {
-            DB::transaction(function () use ($invoice, $paymentMethod, $bankAccount, &$count) {
-                $invoice->update([
-                    'status' => 'paid',
-                    'paid_at' => now(),
-                    'payment_method' => $paymentMethod,
-                ]);
-
-                $customer = $invoice->customer;
-                if ($customer) {
-                    if (!$customer->is_active || $customer->status === Customer::STATUS_SUSPENDED) {
-                        $customer->update([
-                            'is_active' => true,
-                            'status' => Customer::STATUS_ACTIVE,
-                        ]);
-                    }
-                    $customer->syncBillingDates();
-                }
-
-                if ($bankAccount) {
-                    try {
-                        app(AccountingService::class)->recordInvoicePayment($invoice, $bankAccount);
-                    } catch (\Throwable $e) {}
-                }
-
-                $count++;
-            });
+            $invoiceService->markAsPaid($invoice, $request->input('bank_account_id'));
+            $invoice->update(['payment_method' => $request->input('payment_method', 'cash')]);
+            $count++;
         }
 
         return response()->json([
             'message' => "$count tagihan berhasil ditandai Lunas.",
+            'processed' => $count,
         ]);
     }
 

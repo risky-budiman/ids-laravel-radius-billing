@@ -371,23 +371,14 @@ class CustomerController extends Controller
     /**
      * Delete customer.
      */
-    public function destroy($id)
+    public function destroy($id, \App\Services\CustomerLifecycleService $lifecycle)
     {
-        $customer = Customer::findOrFail($id);
+        // Sama dengan web: hanya admin/administrator (route juga membatasi)
+        if (! $this->user()->isAdmin()) {
+            return response()->json(['message' => 'Anda tidak memiliki akses untuk menghapus pelanggan.'], 403);
+        }
 
-        DB::transaction(function () use ($customer) {
-            // Remove from RADIUS
-            RadCheck::where('username', $customer->username)->delete();
-            RadUserGroup::where('username', $customer->username)->delete();
-
-            // Kick active session
-            $nas = Nas::first();
-            if ($nas) {
-                app(RadiusCoAService::class)->disconnect($nas->nasname, $nas->secret, $customer->username);
-            }
-
-            $customer->delete();
-        });
+        $lifecycle->delete(Customer::findOrFail($id));
 
         return response()->json([
             'message' => 'Pelanggan berhasil dihapus',
@@ -397,65 +388,33 @@ class CustomerController extends Controller
     /**
      * Bulk Action on Customers.
      */
-    public function bulkAction(Request $request)
+    public function bulkAction(Request $request, \App\Services\CustomerLifecycleService $lifecycle)
     {
         $request->validate([
-            'action' => 'required|in:activate,suspend,dismantle,delete',
+            'action' => 'required|in:' . implode(',', \App\Services\CustomerLifecycleService::BULK_ACTIONS),
             'ids' => 'required|array|min:1',
             'ids.*' => 'integer|exists:customers,id',
         ]);
 
         $action = $request->input('action');
-        $ids = $request->input('ids');
-        $customers = Customer::whereIn('id', $ids)->get();
-        $count = 0;
-        $nas = Nas::first();
 
-        foreach ($customers as $customer) {
-            switch ($action) {
-                case 'activate':
-                    $customer->update([
-                        'is_active' => true,
-                        'status' => Customer::STATUS_ACTIVE,
-                        'activated_at' => now(),
-                    ]);
-                    $customer->syncBillingDates();
-                    $count++;
-                    break;
-
-                case 'suspend':
-                    $customer->update([
-                        'is_active' => false,
-                        'status' => Customer::STATUS_SUSPENDED,
-                    ]);
-                    if ($nas) {
-                        app(RadiusCoAService::class)->disconnect($nas->nasname, $nas->secret, $customer->username);
-                    }
-                    $count++;
-                    break;
-
-                case 'dismantle':
-                    $customer->update([
-                        'status' => Customer::STATUS_WAITING_DISMANTLE,
-                    ]);
-                    $count++;
-                    break;
-
-                case 'delete':
-                    RadCheck::where('username', $customer->username)->delete();
-                    RadUserGroup::where('username', $customer->username)->delete();
-                    if ($nas) {
-                        app(RadiusCoAService::class)->disconnect($nas->nasname, $nas->secret, $customer->username);
-                    }
-                    $customer->delete();
-                    $count++;
-                    break;
-            }
+        // Hak akses sama dengan web: sales tidak boleh mengubah status; hapus hanya admin.
+        $denied = $action === 'delete' ? ! $this->user()->isAdmin() : $this->user()->isSales();
+        if ($denied) {
+            return response()->json(['message' => 'Anda tidak memiliki akses untuk aksi ini.'], 403);
         }
+
+        $count = $lifecycle->bulk($action, Customer::whereIn('id', $request->input('ids'))->get());
 
         return response()->json([
             'message' => "$count pelanggan berhasil diproses.",
+            'processed' => $count,
         ]);
+    }
+
+    private function user(): \App\Models\User
+    {
+        return request()->user();
     }
 
     /**
@@ -471,10 +430,7 @@ class CustomerController extends Controller
         ]);
 
         // Kick session to re-apply high-speed profile
-        $nas = Nas::first();
-        if ($nas) {
-            app(RadiusCoAService::class)->disconnect($nas->nasname, $nas->secret, $customer->username);
-        }
+        app(\App\Services\CustomerLifecycleService::class)->disconnectSessions($customer->username);
 
         return response()->json([
             'message' => "FUP pelanggan {$customer->name} berhasil direset.",

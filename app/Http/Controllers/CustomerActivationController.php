@@ -308,11 +308,7 @@ class CustomerActivationController extends Controller
                 
                 // Kick active session via CoA
                 try {
-                    $nas = \App\Models\Radius\Nas::first();
-                    if ($nas) {
-                        $coa = new \App\Services\RadiusCoAService();
-                        $coa->disconnect($nas->nasipaddress, $nas->secret, $customer->username);
-                    }
+                    app(\App\Services\CustomerLifecycleService::class)->disconnectSessions($customer->username);
                 } catch (\Exception $e) {
                     \Log::warning("CoA disconnect failed during dismantle: " . $e->getMessage());
                 }

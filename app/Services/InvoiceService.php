@@ -55,11 +55,7 @@ class InvoiceService
                             ]);
 
                         // Send CoA Disconnect
-                        $nas = \App\Models\Radius\Nas::first();
-                        if ($nas) {
-                            $coa = new \App\Services\RadiusCoAService();
-                            $coa->disconnect($nas->nasname, $nas->secret, $invoice->customer->username);
-                        }
+                        app(\App\Services\CustomerLifecycleService::class)->disconnectSessions($invoice->customer->username);
                         Log::info("Booster purchase {$purchaseId} activated via payment webhook for {$invoice->customer->username}");
                     }
                 } catch (\Throwable $e) {
