@@ -106,17 +106,20 @@ class SyncUsage extends Command
 
     protected function disconnectUser($username)
     {
-        // Mencoba memutuskan user melalui radclient (Radius Disconnect)
-        // Membutuhkan paket freeradius-utils di server
+        // Putuskan sesi aktif agar profil kecepatan baru langsung berlaku.
+        // NAS dicari dari sesi aktif pelanggan (radacct.nasipaddress = nas.nasname),
+        // sehingga benar untuk setup dengan lebih dari satu router.
         try {
-            $nas = \DB::table('nas')->first(); // Ambil NAS pertama sebagai gateway CoA
-            if ($nas) {
-                $secret = $nas->secret;
-                $nasIp = $nas->nasipaddress;
-                
-                // Command: echo "User-Name=xxx" | radclient -x nas_ip:1700 disconnect secret
-                $command = "echo \"User-Name={$username}\" | radclient -x {$nasIp}:1700 disconnect {$secret}";
-                shell_exec($command);
+            $coa = app(\App\Services\RadiusCoAService::class);
+            $sessions = RadAcct::online()->where('username', $username)->get();
+
+            foreach ($sessions as $session) {
+                $nas = \App\Models\Radius\Nas::where('nasname', $session->nasipaddress)->first();
+                if ($nas) {
+                    $coa->disconnect($nas->nasname, (string) $nas->secret, (string) $username, $session->acctsessionid);
+                } else {
+                    Log::warning("FUP disconnect: NAS {$session->nasipaddress} untuk {$username} tidak terdaftar.");
+                }
             }
         } catch (\Exception $e) {
             Log::error("Failed to send disconnect request for {$username}: " . $e->getMessage());

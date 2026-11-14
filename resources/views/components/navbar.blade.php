@@ -203,7 +203,10 @@
                     if (typeof window.playNotificationChime === 'function') window.playNotificationChime();
                 },
                 testRealtime() {
-                    fetch('{{ route('admin.test-realtime') }}').then(r => r.json()).catch(e => console.error('Test error:', e));
+                    fetch('{{ route('admin.test-realtime') }}', {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+                    }).then(r => r.json()).catch(e => console.error('Test error:', e));
                 },
                 markAllRead() {
                     fetch('{{ route('api.notifications.read') }}', {

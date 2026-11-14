@@ -25,7 +25,7 @@ use App\Http\Controllers\Api\v1\Admin\GenieAcsController as AdminGenieAcsControl
 
 // Customer Mobile API Routes
 Route::prefix('v1/customer')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 
     // Protected Routes
     Route::middleware('auth:sanctum')->group(function () {
@@ -62,7 +62,7 @@ Route::prefix('v1/customer')->group(function () {
 // ============================================================
 Route::prefix('v1/admin')->name('api.admin.')->group(function () {
     // Public: Login
-    Route::post('/login', [AdminAuthController::class, 'login']);
+    Route::post('/login', [AdminAuthController::class, 'login'])->middleware('throttle:10,1');
 
     // Protected: semua route admin wajib token Sanctum milik STAF yang aktif.
     // Batasan role per kelompok disamakan dengan route web (routes/web.php).

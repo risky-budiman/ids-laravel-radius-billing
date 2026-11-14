@@ -11,7 +11,9 @@ Route::get('/', function() {
 });
 
 Route::get('/login', [\App\Http\Controllers\CustomerPortal\LoginController::class, 'showLoginForm'])->name('customer.login');
-Route::post('/login-client', [\App\Http\Controllers\CustomerPortal\LoginController::class, 'login'])->name('customer.login.post');
+Route::post('/login-client', [\App\Http\Controllers\CustomerPortal\LoginController::class, 'login'])
+    ->middleware('throttle:10,1')
+    ->name('customer.login.post');
 Route::post('/logout-client', [\App\Http\Controllers\CustomerPortal\LoginController::class, 'logout'])->name('customer.logout');
 
 
@@ -63,7 +65,8 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
     Route::get('/', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     // Test Realtime WebSocket & Notification Route
-    Route::get('test-realtime', function () {
+    // Uji notifikasi WebSocket (tombol "Tes" di panel notifikasi) — administrator saja.
+    Route::post('test-realtime', function () {
         $ticket = \App\Models\Ticket::latest()->first() ?? new \App\Models\Ticket([
             'id' => 999,
             'ticket_number' => 'TT/TEST/' . now()->format('His'),
@@ -82,7 +85,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
             'ticket' => $ticket->ticket_number ?? 'TEST',
             'time' => now()->toTimeString(),
         ]);
-    })->name('admin.test-realtime');
+    })->middleware('role:administrator')->name('admin.test-realtime');
 
     // RADIUS Session Management
     Route::post('radius/disconnect-all', [\App\Http\Controllers\Admin\RadiusController::class, 'disconnectAll'])->name('radius.disconnect-all');
@@ -424,5 +427,3 @@ Route::prefix('admin')->group(function () {
 });
 
 Route::get('/diagnostic', [\App\Http\Controllers\DiagnosticController::class, 'index'])->middleware(['auth:web', 'role:administrator']);
-
-Route::get('/test-ping', function() { return 'PONG'; });
