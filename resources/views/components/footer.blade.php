@@ -1,12 +1,11 @@
-<footer class="mt-auto">
-    <div class="px-6 py-4 border-t border-gray-200/60 dark:border-gray-800/60 text-center sm:text-left sm:flex sm:items-center sm:justify-between text-sm text-gray-500 dark:text-gray-500 transition-colors">
-        <div>
-            &copy; {{ date('Y') }} {{ get_setting('company_name', 'By Rizki Budiman') }} By Rizki Budiman. All rights reserved.
-        </div>
-        <div class="mt-2 sm:mt-0 flex items-center justify-center space-x-4">
-            <!-- <a href="#" class="hover:text-gray-800 dark:hover:text-gray-300 transition-colors">Support</a> -->
-            <a href="{{ route('docs.index') }}" target="_blank" class="hover:text-gray-800 dark:hover:text-gray-300 transition-colors">Documentation</a>
-            <span class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-gray-400 font-mono">v{{ \App\Models\Changelog::latestVersion() }}</span>
+<footer class="mt-auto border-t border-surface-200 dark:border-surface-800">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 py-4 text-xs text-surface-500 dark:text-surface-400">
+        <p>&copy; {{ date('Y') }} {{ get_setting('company_name', 'Radius ISP') }} · Developed by Rizki Budiman</p>
+        <div class="flex items-center gap-4">
+            @if(Route::has('docs.index'))
+                <a href="{{ route('docs.index') }}" target="_blank" rel="noopener" class="hover:text-surface-800 dark:hover:text-surface-200 transition-colors">Dokumentasi</a>
+            @endif
+            <span class="badge-gray font-mono">v{{ \App\Models\Changelog::latestVersion() }}</span>
         </div>
     </div>
 </footer>

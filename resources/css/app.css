@@ -1,3 +1,169 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+@layer base {
+    html {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        @apply font-sans antialiased text-surface-900 dark:text-surface-100;
+        font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
+    /* Scrollbar tipis dan netral */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+        background-color: rgb(148 163 184 / 0.45);
+        border-radius: 9999px;
+        border: 2px solid transparent;
+        background-clip: content-box;
+    }
+    .dark ::-webkit-scrollbar-thumb { background-color: rgb(71 85 105 / 0.6); }
+}
+
+/* ==========================================================================
+   Komponen UI bersama
+   Dipakai bertahap oleh halaman-halaman: .card, .btn, .input, .badge, .table
+   ========================================================================== */
+@layer components {
+    /* Kompatibilitas: kelas lama `.glass` dipakai di banyak halaman. */
+    .glass {
+        @apply bg-white/80 dark:bg-surface-900/70 backdrop-blur-xl border border-surface-200/70 dark:border-white/5;
+    }
+
+    /* ---- Card ---- */
+    .card {
+        @apply bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-xl shadow-card;
+    }
+    .card-header {
+        @apply flex items-center justify-between gap-4 px-5 py-4 border-b border-surface-200 dark:border-surface-800;
+    }
+    .card-title {
+        @apply text-sm font-semibold text-surface-900 dark:text-white;
+    }
+    .card-body {
+        @apply p-5;
+    }
+
+    /* ---- Page header ---- */
+    .page-title {
+        @apply text-xl font-semibold tracking-tight text-surface-900 dark:text-white;
+    }
+    .page-subtitle {
+        @apply mt-1 text-sm text-surface-500 dark:text-surface-400;
+    }
+
+    /* ---- Button ---- */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 h-9 px-3.5 rounded-lg text-sm font-medium whitespace-nowrap
+               transition-colors duration-150 select-none
+               focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2
+               focus-visible:ring-offset-white dark:focus-visible:ring-offset-surface-950
+               disabled:opacity-50 disabled:pointer-events-none;
+    }
+    .btn-primary {
+        @apply btn bg-primary-600 text-white shadow-sm hover:bg-primary-700 active:bg-primary-800;
+    }
+    .btn-secondary {
+        @apply btn bg-white text-surface-700 border border-surface-300 shadow-sm hover:bg-surface-50
+               dark:bg-surface-800 dark:text-surface-200 dark:border-surface-700 dark:hover:bg-surface-700;
+    }
+    .btn-ghost {
+        @apply btn text-surface-600 hover:bg-surface-100 hover:text-surface-900
+               dark:text-surface-300 dark:hover:bg-surface-800 dark:hover:text-white;
+    }
+    .btn-danger {
+        @apply btn bg-rose-600 text-white shadow-sm hover:bg-rose-700 active:bg-rose-800 focus-visible:ring-rose-500;
+    }
+    .btn-success {
+        @apply btn bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 active:bg-emerald-800 focus-visible:ring-emerald-500;
+    }
+
+    /* Modifier ukuran harus didefinisikan SETELAH varian agar padding/tinggi tidak tertimpa. */
+    .btn-sm { @apply h-8 px-3 text-xs; }
+    .btn-lg { @apply h-11 px-5 text-sm; }
+    .btn-icon { @apply h-9 w-9 px-0; }
+
+    /* ---- Form ---- */
+    .label {
+        @apply block mb-1.5 text-sm font-medium text-surface-700 dark:text-surface-300;
+    }
+    .input {
+        @apply block w-full h-10 px-3 rounded-lg text-sm bg-white text-surface-900 placeholder-surface-400
+               border border-surface-300 shadow-sm transition-colors
+               focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 focus:outline-none
+               dark:bg-surface-900 dark:text-surface-100 dark:border-surface-700 dark:placeholder-surface-500
+               dark:focus:border-primary-500
+               disabled:bg-surface-100 disabled:text-surface-500 dark:disabled:bg-surface-800;
+    }
+    textarea.input { @apply h-auto py-2; }
+    select.input { @apply pr-9; }
+    .input-error {
+        @apply border-rose-500 focus:border-rose-500 focus:ring-rose-500/20;
+    }
+    .help-text {
+        @apply mt-1.5 text-xs text-surface-500 dark:text-surface-400;
+    }
+
+    /* ---- Badge ---- */
+    .badge {
+        @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium ring-1 ring-inset;
+    }
+    .badge-gray    { @apply badge bg-surface-50 text-surface-600 ring-surface-500/20 dark:bg-surface-400/10 dark:text-surface-300 dark:ring-surface-400/20; }
+    .badge-primary { @apply badge bg-primary-50 text-primary-700 ring-primary-600/20 dark:bg-primary-400/10 dark:text-primary-300 dark:ring-primary-400/30; }
+    .badge-success { @apply badge bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/30; }
+    .badge-warning { @apply badge bg-amber-50 text-amber-800 ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/30; }
+    .badge-danger  { @apply badge bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-400/10 dark:text-rose-300 dark:ring-rose-400/30; }
+    .badge-info    { @apply badge bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-400/10 dark:text-sky-300 dark:ring-sky-400/30; }
+
+    /* ---- Table ---- */
+    .table {
+        @apply w-full text-sm text-left;
+    }
+    .table thead th {
+        @apply px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400
+               bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800;
+    }
+    .table tbody td {
+        @apply px-4 py-3 text-surface-700 dark:text-surface-300 border-b border-surface-100 dark:border-surface-800;
+    }
+    .table tbody tr:last-child td { @apply border-b-0; }
+    .table tbody tr { @apply transition-colors hover:bg-surface-50/70 dark:hover:bg-surface-800/40; }
+
+    /* ---- Navigasi sidebar ---- */
+    .nav-section {
+        @apply px-3 pt-5 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500;
+    }
+    .nav-item {
+        @apply flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-surface-600 dark:text-surface-400
+               transition-colors duration-150
+               hover:bg-surface-100 hover:text-surface-900 dark:hover:bg-surface-800/70 dark:hover:text-white;
+    }
+    .nav-item-active {
+        @apply bg-primary-50 text-primary-700 hover:bg-primary-50 hover:text-primary-700
+               dark:bg-primary-500/10 dark:text-primary-300 dark:hover:bg-primary-500/10 dark:hover:text-primary-300;
+    }
+    .nav-icon {
+        @apply w-[18px] h-[18px] shrink-0 text-surface-400 transition-colors dark:text-surface-500;
+    }
+    .nav-item:hover .nav-icon { @apply text-surface-600 dark:text-surface-300; }
+    .nav-item-active .nav-icon,
+    .nav-item-active:hover .nav-icon { @apply text-primary-600 dark:text-primary-400; }
+    .nav-subitem {
+        @apply block px-3 py-1.5 rounded-md text-[13px] text-surface-500 dark:text-surface-400 transition-colors
+               hover:text-surface-900 hover:bg-surface-100 dark:hover:text-white dark:hover:bg-surface-800/70;
+    }
+    .nav-subitem-active {
+        @apply text-primary-700 font-medium bg-primary-50/70 dark:text-primary-300 dark:bg-primary-500/10;
+    }
+}

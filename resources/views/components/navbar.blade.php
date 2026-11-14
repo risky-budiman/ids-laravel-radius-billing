@@ -1,87 +1,92 @@
-<!-- Navbar -->
-<header class="sticky top-0 z-20 glass border-b border-gray-200/50 dark:border-gray-800/50 backdrop-blur-xl">
-    <div class="flex items-center justify-between px-6 py-4">
-        
-        <!-- Left Side: Hamburger & Search -->
-        @php 
-            $isPortal = request()->is('client*') || request()->routeIs('customer.*');
-            $user = auth('customer')->user() ?: auth('web')->user(); 
-        @endphp
-        
-        <div class="flex items-center space-x-4" x-data="{ 
+@php
+    $isPortal = request()->is('client*') || request()->routeIs('customer.*');
+    $user = auth('customer')->user() ?: auth('web')->user();
+    $initials = collect(preg_split('/\s+/', trim($user->name ?? 'U')))->filter()->take(2)
+        ->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('');
+    $isAdministratorUser = $user instanceof \App\Models\User && $user->isAdministrator();
+@endphp
+
+<header class="sticky top-0 z-20 h-16 shrink-0 bg-white/85 dark:bg-surface-900/85 backdrop-blur-md border-b border-surface-200 dark:border-surface-800">
+    <div class="flex items-center justify-between gap-3 h-full px-4 sm:px-6">
+
+        {{-- Kiri: menu mobile & pencarian --}}
+        <div class="flex items-center gap-2 flex-1 min-w-0" x-data="{
             searchQuery: '',
             searchResults: [],
             isSearching: false,
             mobileSearchOpen: false,
+            _ctrl: null,
             search() {
-                if (this.searchQuery.length < 2) {
-                    this.searchResults = [];
-                    return;
-                }
+                const q = this.searchQuery.trim();
+                if (q.length < 2) { this.searchResults = []; return; }
                 this.isSearching = true;
-                fetch(`/api/search?q=${this.searchQuery}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        this.searchResults = data;
-                        this.isSearching = false;
-                    });
-            }
-        }" @click.away="searchQuery = ''; mobileSearchOpen = false">
-            <button @click="sidebarOpen = true" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none lg:hidden">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
-            </button>
+                if (this._ctrl) this._ctrl.abort();
+                this._ctrl = new AbortController();
+                fetch('{{ route('api.search') }}?q=' + encodeURIComponent(q), {
+                    headers: { 'Accept': 'application/json' },
+                    signal: this._ctrl.signal,
+                })
+                    .then(res => res.ok ? res.json() : [])
+                    .then(data => { this.searchResults = Array.isArray(data) ? data : []; this.isSearching = false; })
+                    .catch(e => { if (e.name !== 'AbortError') { this.searchResults = []; this.isSearching = false; } });
+            },
+            close() { this.searchQuery = ''; this.searchResults = []; this.mobileSearchOpen = false; },
+            focusSearch() { this.mobileSearchOpen = true; this.$nextTick(() => this.$refs.searchInput.focus()); }
+        }" @click.outside="close()" @keydown.window.ctrl.k.prevent="focusSearch()" @keydown.window.meta.k.prevent="focusSearch()">
 
-            @if(!$isPortal)
-            <!-- Mobile Search Toggle -->
-            <button @click="mobileSearchOpen = !mobileSearchOpen" class="sm:hidden text-gray-500 dark:text-gray-400 focus:outline-none">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            </button>
+            @unless($isPortal)
+                <button type="button" @click="sidebarOpen = true" class="btn-ghost btn-icon lg:hidden" aria-label="Buka menu">
+                    <x-icon name="menu" class="w-5 h-5" />
+                </button>
 
-            <div class="relative" :class="mobileSearchOpen ? 'fixed inset-x-0 top-16 px-6 py-4 bg-white dark:bg-gray-800 z-50 shadow-xl sm:static sm:p-0 sm:bg-transparent sm:shadow-none block' : 'hidden sm:block'">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 sm:pl-3" :class="mobileSearchOpen ? 'pl-9' : ''">
-                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" x-show="!isSearching" viewBox="0 0 24 24" fill="none"><path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                    <svg class="animate-spin h-5 w-5 text-indigo-600 dark:text-indigo-400" x-show="isSearching" style="display: none;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                </span>
-                <input type="text" 
-                       x-model="searchQuery" 
-                       @input.debounce.300ms="search"
-                       class="w-full py-2 pl-10 pr-4 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all sm:w-64 lg:w-80" 
-                       placeholder="Search everything...">
+                <button type="button" @click="focusSearch()" class="btn-ghost btn-icon sm:hidden" aria-label="Cari">
+                    <x-icon name="search" class="w-5 h-5" />
+                </button>
 
-                <!-- Search Results Dropdown -->
-                <div x-show="searchQuery.length >= 2" 
-                     x-transition 
-                     class="absolute top-full left-0 w-full mt-2 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50"
-                     style="display: none;">
-                    
-                    <div class="max-h-96 overflow-y-auto">
-                        <template x-if="searchResults.length === 0 && !isSearching">
-                            <div class="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">No results found for "<span x-text="searchQuery" class="font-bold"></span>"</div>
-                        </template>
+                <div class="relative w-full max-w-md hidden sm:block"
+                     :class="mobileSearchOpen && '!block fixed inset-x-0 top-16 px-4 py-3 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800 shadow-elevated z-50 max-w-none sm:static sm:p-0 sm:bg-transparent sm:border-0 sm:shadow-none sm:max-w-md'">
+                    <div class="relative">
+                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-surface-400">
+                            <x-icon name="search" class="w-4 h-4" x-show="!isSearching" />
+                            <svg x-show="isSearching" x-cloak class="w-4 h-4 animate-spin text-primary-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        </span>
+                        <input type="search" x-ref="searchInput" x-model="searchQuery" @input.debounce.300ms="search" @keydown.escape="close()"
+                               class="input !h-9 pl-9 pr-16 bg-surface-50 dark:bg-surface-800/60 border-surface-200 dark:border-surface-700 shadow-none"
+                               placeholder="Cari pelanggan, invoice, tiket…" autocomplete="off" aria-label="Pencarian global">
+                        <kbd class="hidden sm:flex pointer-events-none absolute inset-y-0 right-2 my-auto h-5 items-center rounded border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 px-1.5 font-sans text-[10px] font-medium text-surface-400">Ctrl K</kbd>
+                    </div>
 
-                        <template x-for="result in searchResults" :key="result.url">
-                            <a :href="result.url" class="flex items-center px-4 py-3 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors border-b last:border-0 border-gray-100 dark:border-gray-700">
-                                <div class="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 mr-3">
-                                    <template x-if="result.icon === 'user'"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></template>
-                                    <template x-if="result.icon === 'bill'"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></template>
-                                    <template x-if="result.icon === 'ticket'"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg></template>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-0.5" x-text="result.type"></p>
-                                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100" x-text="result.title"></p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400" x-text="result.subtitle"></p>
-                                </div>
-                            </a>
-                        </template>
+                    {{-- Hasil pencarian --}}
+                    <div x-show="searchQuery.trim().length >= 2" x-cloak x-transition.opacity.duration.150ms
+                         class="absolute left-4 right-4 sm:left-0 sm:right-0 mt-2 card shadow-elevated overflow-hidden z-50">
+                        <div class="max-h-96 overflow-y-auto py-1">
+                            <template x-if="searchResults.length === 0 && !isSearching">
+                                <p class="px-4 py-6 text-center text-sm text-surface-500 dark:text-surface-400">
+                                    Tidak ada hasil untuk “<span class="font-medium text-surface-700 dark:text-surface-200" x-text="searchQuery"></span>”
+                                </p>
+                            </template>
+                            <template x-for="result in searchResults" :key="result.url">
+                                <a :href="result.url" class="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-50 dark:hover:bg-surface-800/60 transition-colors">
+                                    <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-800 text-surface-500 dark:text-surface-400 shrink-0">
+                                        <template x-if="result.icon === 'user'"><x-icon name="user" class="w-4 h-4" /></template>
+                                        <template x-if="result.icon === 'bill'"><x-icon name="document" class="w-4 h-4" /></template>
+                                        <template x-if="result.icon === 'ticket'"><x-icon name="ticket" class="w-4 h-4" /></template>
+                                    </span>
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block text-sm font-medium text-surface-900 dark:text-white truncate" x-text="result.title"></span>
+                                        <span class="block text-xs text-surface-500 dark:text-surface-400 truncate" x-text="result.subtitle"></span>
+                                    </span>
+                                    <span class="badge-gray shrink-0" x-text="result.type"></span>
+                                </a>
+                            </template>
+                        </div>
                     </div>
                 </div>
-            </div>
-            @endif
+            @endunless
         </div>
 
-        @php $user = auth('customer')->user() ?: auth('web')->user(); @endphp
-        <!-- Right Side: Theme Switcher, Notifs, Profile -->
-        <div class="flex items-center space-x-5" x-data="{ 
+        {{-- Kanan: tema, notifikasi, profil --}}
+        <div class="flex items-center gap-1 sm:gap-2" x-data="{
                 theme: localStorage.getItem('theme') || 'system',
                 themeMenuOpen: false,
                 setTheme(val) {
@@ -95,39 +100,31 @@
                     this.themeMenuOpen = false;
                 }
             }">
-            
-            <!-- Theme Switcher Dropdown -->
-            <div class="relative">
-                <button @click="themeMenuOpen = !themeMenuOpen" @click.away="themeMenuOpen = false" class="p-2 text-gray-500 rounded-full hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors focus:outline-none">
-                    <!-- Sun Icon (Light Mode) -->
-                    <svg x-show="theme === 'light'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    <!-- Moon Icon (Dark Mode) -->
-                    <svg x-show="theme === 'dark'" style="display: none;" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-                    <!-- Monitor Icon (System) -->
-                    <svg x-show="theme === 'system'" style="display: none;" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                </button>
 
-                <!-- Theme Menu -->
-                <div x-show="themeMenuOpen" x-transition class="absolute right-0 z-20 w-36 py-2 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700" style="display: none;">
-                    <a href="#" @click.prevent="setTheme('light')" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" :class="theme === 'light' ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : ''">
-                        <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg> Light
-                    </a>
-                    <a href="#" @click.prevent="setTheme('dark')" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" :class="theme === 'dark' ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : ''">
-                        <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg> Dark
-                    </a>
-                    <a href="#" @click.prevent="setTheme('system')" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" :class="theme === 'system' ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : ''">
-                        <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg> System
-                    </a>
+            {{-- Tema --}}
+            <div class="relative">
+                <button type="button" @click="themeMenuOpen = !themeMenuOpen" @click.outside="themeMenuOpen = false" class="btn-ghost btn-icon" aria-label="Ganti tema">
+                    <x-icon name="sun" class="w-5 h-5" x-show="theme === 'light'" />
+                    <x-icon name="moon" class="w-5 h-5" x-show="theme === 'dark'" x-cloak />
+                    <x-icon name="monitor" class="w-5 h-5" x-show="theme === 'system'" x-cloak />
+                </button>
+                <div x-show="themeMenuOpen" x-cloak x-transition.opacity.duration.150ms class="absolute right-0 z-30 w-36 mt-2 p-1 card shadow-elevated">
+                    @foreach(['light' => ['sun', 'Terang'], 'dark' => ['moon', 'Gelap'], 'system' => ['monitor', 'Sistem']] as $val => [$ico, $lbl])
+                        <button type="button" @click="setTheme('{{ $val }}')"
+                                class="flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-md text-sm text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800"
+                                :class="theme === '{{ $val }}' && '!text-primary-600 dark:!text-primary-400 font-medium'">
+                            <x-icon :name="$ico" class="w-4 h-4" /> {{ $lbl }}
+                        </button>
+                    @endforeach
                 </div>
             </div>
 
-            @if(!$isPortal)
-            <!-- Notifications -->
-            <div class="relative" x-data="{ 
+            @unless($isPortal)
+            {{-- Notifikasi --}}
+            <div class="relative" x-data="{
                 notifications: {},
                 unreadCount: 0,
                 isOpen: false,
-                toastMessage: null,
                 lastAlertTime: 0,
                 needPermission: ('Notification' in window && Notification.permission !== 'granted'),
                 requestSoundPermission() {
@@ -137,45 +134,32 @@
                         window.playNotificationChime();
                     }
                     if ('Notification' in window) {
-                        Notification.requestPermission().then(perm => {
-                            this.needPermission = (perm !== 'granted');
-                        });
+                        Notification.requestPermission().then(perm => { this.needPermission = (perm !== 'granted'); });
                     }
                 },
                 showToast(msg) {
-                    if (msg && typeof window.showGlobalToast === 'function') {
-                        window.showGlobalToast(msg);
-                    }
+                    if (msg && typeof window.showGlobalToast === 'function') window.showGlobalToast(msg);
                 },
                 triggerAlert(msg) {
                     const now = Date.now();
-                    // Debounce: cegah notifikasi ganda dalam jeda 1.5 detik
-                    if (now - this.lastAlertTime < 1500) {
-                        return;
-                    }
+                    if (now - this.lastAlertTime < 1500) return; // cegah notifikasi ganda
                     this.lastAlertTime = now;
                     this.fetchNotifications();
                     if (msg) {
                         this.showToast(msg);
-
-                        // Native OS Desktop Notification (Sama seperti Facebook & PWA: Selalu Berdering via Sistem OS)
                         if ('Notification' in window && Notification.permission === 'granted') {
-                            const notifTitle = 'Billing IDS - Notifikasi';
+                            const notifTitle = '{{ addslashes(get_setting('company_name', 'Radius ISP')) }} - Notifikasi';
                             const notifOptions = {
                                 body: msg,
                                 icon: '{{ asset('favicon.png') }}',
                                 badge: '{{ asset('favicon.png') }}',
                                 tag: 'ticket-notif-' + Date.now(),
                                 renotify: true,
-                                silent: false // Memastikan Windows membunyikan nada dering OS
+                                silent: false
                             };
-
                             if ('serviceWorker' in navigator) {
-                                navigator.serviceWorker.ready.then(reg => {
-                                    reg.showNotification(notifTitle, notifOptions);
-                                }).catch(() => {
-                                    try { new Notification(notifTitle, notifOptions); } catch(e) {}
-                                });
+                                navigator.serviceWorker.ready.then(reg => reg.showNotification(notifTitle, notifOptions))
+                                    .catch(() => { try { new Notification(notifTitle, notifOptions); } catch(e) {} });
                             } else {
                                 try { new Notification(notifTitle, notifOptions); } catch(e) {}
                             }
@@ -185,11 +169,7 @@
                     }
                 },
                 fetchNotifications() {
-                    fetch('{{ route('api.notifications') }}', {
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    })
+                    fetch('{{ route('api.notifications') }}', { headers: { 'Accept': 'application/json' } })
                         .then(res => res.json())
                         .then(data => {
                             this.notifications = data;
@@ -199,146 +179,96 @@
                 },
                 initWebSocket() {
                     const setup = () => {
-                        if (!window.Echo) {
-                            setTimeout(setup, 300);
-                            return;
-                        }
+                        if (!window.Echo) { setTimeout(setup, 300); return; }
                         const userId = {{ auth()->id() ?? 'null' }};
                         if (!userId) return;
-
-                        console.log('🔌 [WebSocket] Subscribing to channels for user ID:', userId);
-
-                        // 1. Private User Notifications
                         window.Echo.private(`App.Models.User.${userId}`)
-                            .notification((notification) => {
-                                console.log('🔔 [WebSocket] Received Notification:', notification);
-                                this.triggerAlert(notification.message || 'Notifikasi Baru');
-                            });
-
-                        // 2. Admin Tickets Channel
+                            .notification((notification) => this.triggerAlert(notification.message || 'Notifikasi Baru'));
                         window.Echo.private('admin.tickets')
                             .listen('.ticket.created', (e) => {
-                                console.log('🎫 [WebSocket] Ticket Created:', e);
                                 const num = e.ticket ? e.ticket.ticket_number : '';
                                 const sub = e.ticket ? e.ticket.subject : 'Tiket Baru';
-                                this.triggerAlert(`🎫 Tiket Baru: #${num} - ${sub}`);
+                                this.triggerAlert(`Tiket baru #${num} — ${sub}`);
                             })
                             .listen('.ticket.reply.created', (e) => {
-                                console.log('💬 [WebSocket] Ticket Reply:', e);
                                 const num = e.reply ? e.reply.ticket_number : '';
                                 const msg = e.reply ? e.reply.message : 'Balasan Baru';
-                                this.triggerAlert(`💬 Balasan Tiket #${num}: ${msg}`);
+                                this.triggerAlert(`Balasan tiket #${num}: ${msg}`);
                             })
-                            .listen('.ticket.updated', (e) => {
-                                console.log('⚙️ [WebSocket] Ticket Updated:', e);
-                                this.fetchNotifications();
-                            });
+                            .listen('.ticket.updated', () => this.fetchNotifications());
                     };
-
                     setup();
                 },
                 playNotificationSound() {
-                    if (typeof window.playNotificationChime === 'function') {
-                        window.playNotificationChime();
-                    }
+                    if (typeof window.playNotificationChime === 'function') window.playNotificationChime();
                 },
                 testRealtime() {
-                    fetch('{{ route('admin.test-realtime') }}')
-                        .then(r => r.json())
-                        .then(d => {
-                            console.log('⚡ Test realtime response:', d);
-                        })
-                        .catch(e => console.error('Test error:', e));
+                    fetch('{{ route('admin.test-realtime') }}').then(r => r.json()).catch(e => console.error('Test error:', e));
                 },
                 markAllRead() {
                     fetch('{{ route('api.notifications.read') }}', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                        }
-                    }).then(() => {
-                        this.notifications = {};
-                        this.unreadCount = 0;
-                        this.isOpen = false;
-                    });
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+                    }).then(() => { this.notifications = {}; this.unreadCount = 0; this.isOpen = false; });
                 },
                 markAsRead(id) {
                     fetch('{{ route('api.notifications.read') }}', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                        },
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
                         body: JSON.stringify({ id: id })
-                    }).then(() => {
-                        this.fetchNotifications();
-                    });
+                    }).then(() => this.fetchNotifications());
                 }
-            }" x-init="fetchNotifications(); initWebSocket(); document.addEventListener('click', () => { if(window._notifAudioCtx && window._notifAudioCtx.state === 'suspended') window._notifAudioCtx.resume(); }, { once: true })">
-                <button @click="isOpen = !isOpen" class="p-2 text-gray-500 rounded-full hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors relative focus:outline-none">
-                    <span x-show="unreadCount > 0" class="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full ring-2 ring-white dark:ring-gray-900 flex items-center justify-center" x-text="unreadCount"></span>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+            }" x-init="fetchNotifications(); initWebSocket();">
+                <button type="button" @click="isOpen = !isOpen" class="btn-ghost btn-icon relative" aria-label="Notifikasi">
+                    <x-icon name="bell" class="w-5 h-5" />
+                    <span x-show="unreadCount > 0" x-cloak x-text="unreadCount > 99 ? '99+' : unreadCount"
+                          class="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-semibold leading-4 text-center ring-2 ring-white dark:ring-surface-900"></span>
                 </button>
 
-                <!-- Notifications Dropdown -->
-                <div x-show="isOpen" 
-                     @click.away="isOpen = false"
-                     x-transition 
-                     class="absolute right-0 mt-2 w-80 sm:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50 py-2"
-                     style="display: none;">
-                    
-                    <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                        <span class="font-bold text-sm text-gray-900 dark:text-gray-100">Notifications</span>
-                        <div class="flex items-center space-x-2">
-                            <button type="button" @click.stop="testRealtime" title="Kirim notifikasi tes langsung" class="text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 font-bold transition-colors">⚡ Tes Live</button>
-                            <button type="button" @click="markAllRead" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">Mark all as read</button>
+                <div x-show="isOpen" x-cloak @click.outside="isOpen = false" x-transition.opacity.duration.150ms
+                     class="absolute right-0 mt-2 w-80 sm:w-96 max-w-[calc(100vw-2rem)] card shadow-elevated overflow-hidden z-50">
+                    <div class="flex items-center justify-between px-4 py-3 border-b border-surface-200 dark:border-surface-800">
+                        <p class="text-sm font-semibold text-surface-900 dark:text-white">Notifikasi</p>
+                        <div class="flex items-center gap-1">
+                            @if($isAdministratorUser)
+                                <button type="button" @click.stop="testRealtime" class="btn-ghost btn-sm !h-7" title="Kirim notifikasi uji">Tes</button>
+                            @endif
+                            <button type="button" @click="markAllRead" class="btn-ghost btn-sm !h-7 !text-primary-600 dark:!text-primary-400">Tandai semua dibaca</button>
                         </div>
                     </div>
 
-                    <!-- Permission Prompt Banner -->
-                    <div x-show="needPermission" class="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800/40 px-4 py-2.5 flex items-center justify-between text-xs transition-all">
-                        <span class="text-amber-800 dark:text-amber-300 font-medium text-[11px] flex items-center">
-                            <span class="mr-1.5">🔔</span> Izinkan suara & notifikasi desktop
-                        </span>
-                        <button type="button" @click.stop="requestSoundPermission" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold shadow-sm transition-colors text-[10px]">
-                            Aktifkan
-                        </button>
+                    <div x-show="needPermission" x-cloak class="flex items-center justify-between gap-3 px-4 py-2.5 bg-amber-50 dark:bg-amber-500/10 border-b border-amber-200/70 dark:border-amber-500/20">
+                        <span class="text-xs text-amber-800 dark:text-amber-300">Aktifkan suara & notifikasi desktop</span>
+                        <button type="button" @click.stop="requestSoundPermission" class="btn btn-sm !h-7 bg-amber-500 text-white hover:bg-amber-600">Aktifkan</button>
                     </div>
 
                     <div class="max-h-96 overflow-y-auto">
-                        <template x-if="unreadCount === 0">
-                            <div class="p-8 text-center">
-                                <div class="w-12 h-12 bg-gray-100 dark:bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                        <template x-if="unreadCount === 0 && Object.keys(notifications).length === 0">
+                            <div class="px-6 py-10 text-center">
+                                <div class="w-10 h-10 mx-auto mb-3 rounded-full bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-400">
+                                    <x-icon name="inbox" class="w-5 h-5" />
                                 </div>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">All caught up!</p>
+                                <p class="text-sm font-medium text-surface-700 dark:text-surface-200">Semua sudah dibaca</p>
+                                <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5">Notifikasi baru akan muncul di sini.</p>
                             </div>
                         </template>
 
                         <template x-for="(items, group) in notifications" :key="group">
                             <div>
-                                <div class="bg-gray-50 dark:bg-gray-900/50 px-4 py-1.5 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest border-y border-gray-100 dark:border-gray-700" x-text="group"></div>
+                                <div class="px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50" x-text="group"></div>
                                 <template x-for="notif in items" :key="notif.id">
-                                    <div @click="if(notif.data.url) { markAsRead(notif.id); window.location.href = notif.data.url; }" 
-                                         class="flex items-start px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors border-b last:border-0 border-gray-100 dark:border-gray-700 relative group/item cursor-pointer"
-                                         :class="notif.read_at ? 'opacity-60 bg-gray-50/30' : ''">
-                                        <div class="flex-1">
-                                            <p class="text-xs text-gray-900 dark:text-gray-100 font-medium" :class="notif.read_at ? 'text-gray-400' : 'text-gray-900 dark:text-gray-100'" x-text="notif.data.message"></p>
-                                            <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1" x-text="new Date(notif.created_at).toLocaleString()"></p>
+                                    <div @click="if(notif.data.url) { markAsRead(notif.id); window.location.href = notif.data.url; }"
+                                         class="flex items-start gap-3 px-4 py-3 border-b last:border-0 border-surface-100 dark:border-surface-800 hover:bg-surface-50 dark:hover:bg-surface-800/40 cursor-pointer transition-colors">
+                                        <span class="mt-1.5 w-2 h-2 rounded-full shrink-0" :class="notif.read_at ? 'bg-transparent' : 'bg-primary-500'"></span>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm leading-snug" :class="notif.read_at ? 'text-surface-500 dark:text-surface-400' : 'text-surface-900 dark:text-surface-100'" x-text="notif.data.message"></p>
+                                            <p class="text-xs text-surface-400 mt-1" x-text="new Date(notif.created_at).toLocaleString('id-ID')"></p>
                                         </div>
-                                        <div class="ml-2 flex items-center">
-                                            <template x-if="!notif.read_at">
-                                                <button @click.stop="markAsRead(notif.id)" class="p-1 text-gray-400 dark:text-gray-500 hover:text-indigo-600 transition-colors" title="Tandai sudah dibaca">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                                </button>
-                                            </template>
-                                            <template x-if="notif.read_at">
-                                                <span class="p-1 text-indigo-600 dark:text-indigo-400" title="Sudah dibaca">
-                                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 13l4 4L18 3" /><path d="M8 17l4 4L22 7" /></svg>
-                                                </span>
-                                            </template>
-                                        </div>
+                                        <template x-if="!notif.read_at">
+                                            <button type="button" @click.stop="markAsRead(notif.id)" class="p-1 rounded text-surface-400 hover:text-primary-600" title="Tandai sudah dibaca">
+                                                <x-icon name="check" class="w-4 h-4" />
+                                            </button>
+                                        </template>
                                     </div>
                                 </template>
                             </div>
@@ -346,38 +276,45 @@
                     </div>
                 </div>
             </div>
+            @endunless
 
-            @endif
+            <div class="hidden sm:block w-px h-6 mx-1 bg-surface-200 dark:bg-surface-800"></div>
 
-            <!-- User Menu -->
-            <x-dropdown align="right" width="48">
+            {{-- Profil --}}
+            <x-dropdown align="right" width="56">
                 <x-slot name="trigger">
-                    <button class="flex items-center space-x-2 focus:outline-none">
-                        <img class="w-9 h-9 rounded-full object-cover border-2 border-indigo-500/20" src="https://ui-avatars.com/api/?name={{ urlencode($user->name ?? 'User') }}&color=4F46E5&background=EEF2FF" alt="Avatar">
-                        <span class="hidden text-sm font-medium text-gray-700 dark:text-gray-300 md:block">{{ $user->name ?? 'User' }}</span>
-                        <svg class="hidden w-4 h-4 text-gray-500 dark:text-gray-400 md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <button type="button" class="flex items-center gap-2 rounded-lg p-1 pr-2 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors">
+                        <span class="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center text-xs font-semibold">{{ $initials ?: 'U' }}</span>
+                        <span class="hidden md:block text-sm font-medium text-surface-700 dark:text-surface-200 max-w-[10rem] truncate">{{ $user->name ?? 'User' }}</span>
+                        <x-icon name="chevron-down" class="hidden md:block w-4 h-4 text-surface-400" />
                     </button>
                 </x-slot>
 
                 <x-slot name="content">
-                    @if(!$isPortal)
-                    <x-dropdown-link :href="route('profile.edit')">
-                        {{ __('Profile') }}
-                    </x-dropdown-link>
-                    
-                    <x-dropdown-link :href="route('settings.company')">
-                        {{ __('Company Profile & Settings') }}
-                    </x-dropdown-link>
-                    @endif
-
-                    <!-- Authentication -->
-                    <form method="POST" action="{{ $user && $user->isCustomer() ? route('customer.logout') : route('logout') }}">
-                        @csrf
-                        <x-dropdown-link :href="$user && $user->isCustomer() ? route('customer.logout') : route('logout')"
-                                onclick="event.preventDefault(); this.closest('form').submit();">
-                            {{ __('Log Out') }}
-                        </x-dropdown-link>
-                    </form>
+                    <div class="px-4 py-3 border-b border-surface-200 dark:border-surface-800">
+                        <p class="text-sm font-medium text-surface-900 dark:text-white truncate">{{ $user->name ?? 'User' }}</p>
+                        <p class="text-xs text-surface-500 dark:text-surface-400 truncate">{{ $user->email ?? $user->customer_code ?? '' }}</p>
+                    </div>
+                    <div class="py-1">
+                        @unless($isPortal)
+                            <x-dropdown-link :href="route('profile.edit')">
+                                <x-icon name="user" class="w-4 h-4 text-surface-400" /> Profil Saya
+                            </x-dropdown-link>
+                            @if($isAdministratorUser)
+                                <x-dropdown-link :href="route('settings.company')">
+                                    <x-icon name="office" class="w-4 h-4 text-surface-400" /> Profil Perusahaan
+                                </x-dropdown-link>
+                            @endif
+                        @endunless
+                    </div>
+                    <div class="py-1 border-t border-surface-200 dark:border-surface-800">
+                        <form method="POST" action="{{ $user && $user->isCustomer() ? route('customer.logout') : route('logout') }}">
+                            @csrf
+                            <button type="submit" class="flex items-center gap-2.5 w-full px-4 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
+                                <x-icon name="logout" class="w-4 h-4" /> Keluar
+                            </button>
+                        </form>
+                    </div>
                 </x-slot>
             </x-dropdown>
         </div>
