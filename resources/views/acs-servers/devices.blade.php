@@ -64,7 +64,7 @@
                 </div>
                 
                 <!-- Server Selector -->
-                <div class="relative w-full md:w-64">
+                <div class="relative w-full md:w-64 md:shrink-0">
                     <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                     </div>
@@ -75,13 +75,10 @@
                             </option>
                         @endforeach
                     </select>
-                    <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
                 </div>
                 
                 <!-- Limit Selector -->
-                <div class="relative w-full md:w-36">
+                <div class="relative w-full md:w-44 md:shrink-0">
                     <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </div>
@@ -91,9 +88,6 @@
                         <option value="50" {{ request('limit') == 50 ? 'selected' : '' }}>50 / Page</option>
                         <option value="100" {{ request('limit') == 100 ? 'selected' : '' }}>100 / Page</option>
                     </select>
-                    <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
                 </div>
 
                 <!-- Submit Button -->
