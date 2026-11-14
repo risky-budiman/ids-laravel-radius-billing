@@ -44,15 +44,14 @@ class PaymentWebhookController extends Controller
         }
 
         // Verify Signature (Recommended for Security)
-        $gateway = \App\Models\Gateway::where('provider', 'midtrans')->first();
-        if ($gateway && isset($gateway->credentials['server_key'])) {
-            $serverKey = $gateway->credentials['server_key'];
-            $computedSignature = hash("sha512", $orderId . $statusCode . $grossAmount . $serverKey);
-            
-            if ($computedSignature !== $signatureKey) {
-                Log::error('Invalid Midtrans Signature for Order ID: ' . $orderId);
-                return response()->json(['message' => 'Invalid signature'], 403);
-            }
+        $serverKey = $this->gatewayCredential('midtrans', 'server_key');
+        if (! $serverKey) {
+            return $this->rejectUnconfigured('midtrans');
+        }
+        $computedSignature = hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
+        if (! hash_equals($computedSignature, (string) $signatureKey)) {
+            Log::error('Invalid Midtrans Signature for Order ID: ' . $orderId);
+            return response()->json(['message' => 'Invalid signature'], 403);
         }
 
         // Handle Status
@@ -98,13 +97,13 @@ class PaymentWebhookController extends Controller
         }
 
         // Verify Callback Token (Security)
-        $gateway = \App\Models\Gateway::where('provider', 'xendit')->first();
-        if ($gateway && isset($gateway->credentials['callback_token'])) {
-            $token = $gateway->credentials['callback_token'];
-            if ($request->header('x-callback-token') !== $token) {
-                Log::error('Invalid Xendit Callback Token');
-                return response()->json(['message' => 'Invalid token'], 403);
-            }
+        $token = $this->gatewayCredential('xendit', 'callback_token');
+        if (! $token) {
+            return $this->rejectUnconfigured('xendit');
+        }
+        if (! hash_equals($token, (string) $request->header('x-callback-token'))) {
+            Log::error('Invalid Xendit Callback Token');
+            return response()->json(['message' => 'Invalid token'], 403);
         }
 
         // Extract Invoice Number from Order ID
@@ -164,18 +163,18 @@ class PaymentWebhookController extends Controller
         }
 
         // Verify Signature
-        $gateway = \App\Models\Gateway::where('provider', 'duitku')->first();
-        if ($gateway && isset($gateway->credentials['api_key'])) {
-            $apiKey = $gateway->credentials['api_key'];
-            
-            // Duitku v2 uses SHA256, legacy uses MD5. Let's support both.
-            $computedSha256 = hash('sha256', $merchantCode . $amount . $merchantOrderId . $apiKey);
-            $computedMd5 = md5($merchantCode . $amount . $merchantOrderId . $apiKey);
+        $apiKey = $this->gatewayCredential('duitku', 'api_key');
+        if (! $apiKey) {
+            return $this->rejectUnconfigured('duitku');
+        }
 
-            if ($signature !== $computedSha256 && $signature !== $computedMd5) {
-                Log::error('Invalid Duitku Signature');
-                return response()->json(['message' => 'Invalid signature'], 403);
-            }
+        // Duitku v2 uses SHA256, legacy uses MD5. Let's support both.
+        $computedSha256 = hash('sha256', $merchantCode . $amount . $merchantOrderId . $apiKey);
+        $computedMd5 = md5($merchantCode . $amount . $merchantOrderId . $apiKey);
+
+        if (! hash_equals($computedSha256, (string) $signature) && ! hash_equals($computedMd5, (string) $signature)) {
+            Log::error('Invalid Duitku Signature');
+            return response()->json(['message' => 'Invalid signature'], 403);
         }
 
         // Extract Invoice Number from merchantOrderId
@@ -228,19 +227,17 @@ class PaymentWebhookController extends Controller
             return response()->json(['message' => 'Invalid payload format'], 400);
         }
 
-        // Verify Moota Webhook Signature (Optional security)
-        $signature = $request->header('Signature') ?? $request->header('x-moota-signature');
-        $gateway = \App\Models\Gateway::where('provider', 'moota')->first();
-        if ($gateway && isset($gateway->credentials['api_token']) && $signature) {
-            $token = $gateway->credentials['api_token'];
-            $computedSignature = hash_hmac('sha256', $request->getContent(), $token);
-            
-            // Allow exact match or standard header comparison
-            if ($signature !== $computedSignature) {
-                Log::warning('Moota Webhook signature mismatch.');
-                // Note: Keep warning instead of hard 403 to prevent breaking active integrations 
-                // in case the user resets token or has configuration typos, but enforce in strict mode.
-            }
+        // Verifikasi signature Moota (wajib): HMAC-SHA256 dari raw body memakai secret token webhook.
+        $secret = $this->gatewayCredential('moota', 'webhook_secret')
+            ?? $this->gatewayCredential('moota', 'api_token'); // kompatibilitas konfigurasi lama
+        if (! $secret) {
+            return $this->rejectUnconfigured('moota');
+        }
+        $signature = (string) ($request->header('Signature') ?? $request->header('x-moota-signature') ?? '');
+        $computedSignature = hash_hmac('sha256', $request->getContent(), $secret);
+        if ($signature === '' || ! hash_equals($computedSignature, $signature)) {
+            Log::warning('Moota webhook ditolak: signature tidak valid atau tidak ada.', ['ip' => $request->ip()]);
+            return response()->json(['message' => 'Invalid signature'], 403);
         }
 
         foreach ($payload as $mutation) {
@@ -298,5 +295,29 @@ class PaymentWebhookController extends Controller
         }
 
         return response()->json(['message' => 'OK']);
+    }
+
+    /**
+     * Ambil kredensial gateway. Null bila gateway/kredensial belum dikonfigurasi.
+     */
+    protected function gatewayCredential(string $provider, string $key): ?string
+    {
+        $gateway = \App\Models\Gateway::where('provider', $provider)->first();
+        if (! $gateway) {
+            return null;
+        }
+        $value = $gateway->credentials[$key] ?? null;
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    /**
+     * Fail-closed: webhook tanpa kredensial verifikasi tidak boleh mengubah status pembayaran.
+     */
+    protected function rejectUnconfigured(string $provider)
+    {
+        Log::error("Webhook {$provider} ditolak: kredensial verifikasi gateway belum diisi.");
+
+        return response()->json(['message' => 'Gateway not configured'], 403);
     }
 }

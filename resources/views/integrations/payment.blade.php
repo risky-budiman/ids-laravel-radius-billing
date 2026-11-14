@@ -236,6 +236,11 @@
                         <x-input-label value="Bank ID (Optional/Default)" />
                         <x-text-input name="credentials[bank_id]" value="{{ $mo->credentials['bank_id'] ?? '' }}" class="mt-1 w-full" />
                     </div>
+                    <div>
+                        <x-input-label value="Webhook Secret Token (wajib)" />
+                        <x-text-input name="credentials[webhook_secret]" value="{{ $mo->credentials['webhook_secret'] ?? '' }}" class="mt-1 w-full" type="password" autocomplete="off" />
+                        <p class="help-text">Isi sama persis dengan <em>Secret Token</em> pada pengaturan webhook di dashboard Moota. Webhook tanpa signature yang valid akan ditolak. Bila kosong, API Token dipakai sebagai secret (konfigurasi lama).</p>
+                    </div>
                     <div class="mt-4 p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-xl space-y-2">
                         <span class="block text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Moota Webhook URL</span>
                         <div class="flex rounded-md shadow-sm">
