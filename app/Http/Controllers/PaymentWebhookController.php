@@ -56,6 +56,9 @@ class PaymentWebhookController extends Controller
 
         // Handle Status
         if (in_array($transactionStatus, ['settlement', 'capture'])) {
+            if ($held = $this->holdIfUnderpaid($invoice, $grossAmount, 'Midtrans', $orderId)) {
+                return $held;
+            }
             if ($invoice->status !== 'paid') {
                 try {
                     $pgAccount = BankAccount::where('bank_name', 'MIDTRANS')->first();
@@ -119,6 +122,9 @@ class PaymentWebhookController extends Controller
 
         // Handle Status
         if (in_array($status, ['PAID', 'SETTLED'])) {
+            if ($held = $this->holdIfUnderpaid($invoice, $payload['paid_amount'] ?? $payload['amount'] ?? null, 'Xendit', $orderId)) {
+                return $held;
+            }
             if ($invoice->status !== 'paid') {
                 try {
                     $pgAccount = BankAccount::where('bank_name', 'XENDIT')->first();
@@ -190,6 +196,9 @@ class PaymentWebhookController extends Controller
 
         // Handle Status (00 = success)
         if ($resultCode === '00') {
+            if ($held = $this->holdIfUnderpaid($invoice, $amount, 'Duitku', $merchantOrderId)) {
+                return $held;
+            }
             if ($invoice->status !== 'paid') {
                 try {
                     $pgAccount = BankAccount::where('bank_name', 'DUITKU')->first();
@@ -309,6 +318,32 @@ class PaymentWebhookController extends Controller
         $value = $gateway->credentials[$key] ?? null;
 
         return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    /**
+     * Pembayaran gateway yang kurang dari tagihan tidak boleh melunasi invoice (mis. nominal invoice
+     * dinaikkan setelah link bayar dibuat, atau nominal tidak dikirim). Invoice ditahan untuk dicek
+     * manual; balasan 200 agar gateway tidak terus mengirim ulang.
+     */
+    protected function holdIfUnderpaid(Invoice $invoice, mixed $paid, string $provider, string $reference)
+    {
+        if ($invoice->status === 'paid') {
+            return null;
+        }
+
+        $paidAmount = is_numeric($paid) ? round((float) $paid, 2) : null;
+        $due = round((float) $invoice->amount, 2);
+        if ($paidAmount !== null && $paidAmount + 0.5 >= $due) {
+            return null;
+        }
+
+        $shown = $paidAmount === null ? 'tanpa nominal' : 'Rp ' . number_format($paidAmount, 0, ',', '.');
+        $note = "[{$provider} {$reference}] Pembayaran {$shown} kurang dari tagihan Rp " . number_format($due, 0, ',', '.')
+            . ' — tidak dilunasi otomatis, perlu dicek.';
+        Log::warning("Webhook {$provider}: {$invoice->invoice_number} {$note}");
+        $invoice->forceFill(['notes' => trim(($invoice->notes ? $invoice->notes . PHP_EOL : '') . $note)])->save();
+
+        return response()->json(['message' => 'Amount mismatch, held for review']);
     }
 
     /**

@@ -27,8 +27,15 @@ class InvoiceService
      */
     public function markAsPaid(Invoice $invoice, $bankAccountId = null)
     {
-        return DB::transaction(function() use ($invoice, $bankAccountId) {
-            if ($invoice->status === 'paid') return $invoice;
+        return DB::transaction(function() use (&$invoice, $bankAccountId) {
+            // Kunci baris & baca ulang status dari database. Objek di memori bisa basi: webhook yang
+            // dikirim ulang bersamaan, atau webhook + kasir, sama-sama melihat "unpaid" lalu mencatat
+            // mutasi kas, jurnal & komisi dua kali.
+            $locked = Invoice::whereKey($invoice->getKey())->lockForUpdate()->first();
+            if (! $locked || $locked->status === 'paid') {
+                return $locked ?? $invoice;
+            }
+            $invoice = $locked;
 
             $invoice->update([
                 'status' => 'paid',
