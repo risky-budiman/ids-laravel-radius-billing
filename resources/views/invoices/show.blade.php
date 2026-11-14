@@ -367,10 +367,20 @@
     </div>
 
     <script>
+        function thermalPageCss() {
+            // @page tidak menerima tinggi "auto", jadi tinggi struk diukur lalu dikonversi ke mm.
+            const el = document.getElementById('thermal-print-area');
+            const prev = el.style.display;
+            el.style.display = 'block';
+            const heightMm = Math.ceil(el.scrollHeight * 25.4 / 96) + 6;
+            el.style.display = prev;
+            return '@page { size: 80mm ' + heightMm + 'mm; margin: 0; }';
+        }
+
         function printInvoice(format) {
-            // Ganti ukuran kertas: A4 untuk invoice, gulungan 80mm untuk struk thermal.
+            // Ganti ukuran kertas: A4 untuk invoice, gulungan 80mm (tinggi sesuai isi) untuk struk thermal.
             document.getElementById('page-size').textContent = format === 'thermal'
-                ? '@page { size: 80mm auto; margin: 0; }'
+                ? thermalPageCss()
                 : '@page { size: A4; margin: 0; }';
             document.body.classList.remove('printing-a4', 'printing-thermal');
             document.body.classList.add(format === 'thermal' ? 'printing-thermal' : 'printing-a4');
