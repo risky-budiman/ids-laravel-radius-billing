@@ -45,6 +45,34 @@ class AppShellRenderTest extends TestCase
         }
     }
 
+    public static function dashboardRoles(): array
+    {
+        return [
+            // role, harus terlihat, tidak boleh terlihat
+            'administrator' => ['administrator', ['Laba Rugi Bulan Ini', 'Generate tagihan', 'Semua log'], []],
+            'admin' => ['admin', ['Laba Rugi Bulan Ini', 'Generate tagihan'], ['Semua log']],
+            'kasir' => ['kasir', ['Generate tagihan', 'Buat invoice'], ['Laba Rugi Bulan Ini', 'Tambah pelanggan', 'Tiket &amp; gangguan']],
+            'teknisi' => ['teknisi', ['Tambah pelanggan', 'Pengguna online'], ['Generate tagihan', 'Laba Rugi Bulan Ini']],
+            'sales' => ['sales', ['Tambah pelanggan'], ['Generate tagihan', 'Pengguna online', 'Laba Rugi Bulan Ini']],
+        ];
+    }
+
+    #[DataProvider('dashboardRoles')]
+    public function test_dashboard_renders_with_role_based_actions(string $role, array $visible, array $hidden): void
+    {
+        $user = User::factory()->create(['role' => $role, 'is_active' => true]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertOk();
+        foreach ($visible as $text) {
+            $response->assertSee($text, false);
+        }
+        foreach ($hidden as $text) {
+            $response->assertDontSee($text, false);
+        }
+    }
+
     public function test_company_settings_link_only_for_administrator(): void
     {
         $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);

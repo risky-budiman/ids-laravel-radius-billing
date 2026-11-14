@@ -131,10 +131,14 @@ class DashboardController extends Controller
             ->get();
 
         // Hourly traffic for the last 24 hours (for chart)
+        // Ekspresi jam per driver (MySQL: HOUR(); SQLite dipakai di test)
+        $hourExpr = (new RadAcct)->getConnection()->getDriverName() === 'sqlite'
+            ? "CAST(strftime('%H', acctstarttime) AS INTEGER)"
+            : 'HOUR(acctstarttime)';
         $hourlyTraffic = RadAcct::where('acctstarttime', '>=', now()->subHours(24))
-            ->selectRaw('HOUR(acctstarttime) as hour, COUNT(*) as sessions, SUM(acctinputoctets) as upload, SUM(acctoutputoctets) as download')
-            ->groupByRaw('HOUR(acctstarttime)')
-            ->orderByRaw('HOUR(acctstarttime)')
+            ->selectRaw("{$hourExpr} as hour, COUNT(*) as sessions, SUM(acctinputoctets) as upload, SUM(acctoutputoctets) as download")
+            ->groupByRaw($hourExpr)
+            ->orderByRaw($hourExpr)
             ->get()
             ->keyBy('hour');
 

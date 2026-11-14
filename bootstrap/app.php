@@ -61,8 +61,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 return back()->with('error', $friendlyMessage);
             }
 
-            // Untuk web request biasa, hindari menampilkan pesan mentah SQL syntax di production
-            if (!$request->expectsJson() && !app()->isLocal()) {
+            // Untuk pengiriman form, kembalikan ke halaman sebelumnya dengan pesan ramah.
+            // Untuk GET (membuka halaman) jangan redirect: back() bisa berputar-putar
+            // (halaman error -> / -> dashboard -> error ...). Biarkan halaman 500 tampil & error tercatat di log.
+            if (!$request->expectsJson() && !app()->isLocal() && !$request->isMethod('GET')) {
                 return back()->with('error', 'Terjadi kesalahan pada database saat memproses data.');
             }
         });

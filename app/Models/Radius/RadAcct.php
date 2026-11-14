@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class RadAcct extends Model
 {
-    protected $connection = 'mysql'; // Sesuaikan jika database radius berbeda
+    // Memakai koneksi default (sama seperti model Radius lainnya). Sebelumnya di-hardcode 'mysql',
+    // yang identik di produksi (DB_CONNECTION=mysql) tetapi membuat test SQLite gagal.
     protected $table = 'radacct';
     protected $primaryKey = 'radacctid';
     public $timestamps = false;

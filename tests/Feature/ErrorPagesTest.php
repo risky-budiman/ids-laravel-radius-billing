@@ -18,6 +18,24 @@ class ErrorPagesTest extends TestCase
         $this->assertStringNotContainsString('cdn.tailwindcss.com', $res->getContent());
     }
 
+    public function test_database_error_on_page_load_shows_500_instead_of_redirect_loop(): void
+    {
+        \Illuminate\Support\Facades\Route::middleware('web')->get('/__uji-db-error', fn () => \Illuminate\Support\Facades\DB::select('select fungsi_tidak_ada()'));
+
+        $this->get('/__uji-db-error')
+            ->assertStatus(500)
+            ->assertSee('Terjadi kesalahan pada server');
+    }
+
+    public function test_database_error_on_form_submit_returns_back_with_message(): void
+    {
+        \Illuminate\Support\Facades\Route::middleware('web')->post('/__uji-db-error', fn () => \Illuminate\Support\Facades\DB::select('select fungsi_tidak_ada()'));
+
+        $this->from('/asal')->post('/__uji-db-error')
+            ->assertRedirect('/asal')
+            ->assertSessionHas('error');
+    }
+
     public function test_403_for_staff_without_permission_links_to_admin_dashboard(): void
     {
         $kasir = User::factory()->create(['role' => 'kasir', 'is_active' => true]);

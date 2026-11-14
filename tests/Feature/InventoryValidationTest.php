@@ -27,10 +27,15 @@ class InventoryValidationTest extends TestCase
         ]);
 
         // Create Necessary CoA for Accounting Service (Correct Types: asset, liability, equity, income, expense)
-        ChartOfAccount::create(['code' => '1104', 'name' => 'Persediaan Barang', 'type' => 'asset']);
-        ChartOfAccount::create(['code' => '1101', 'name' => 'Kas Utama', 'type' => 'asset']);
-        ChartOfAccount::create(['code' => '4101', 'name' => 'Pendapatan Internet', 'type' => 'income']);
-        ChartOfAccount::create(['code' => '1103', 'name' => 'Piutang', 'type' => 'asset']);
+        // Bagan akun standar sudah diisi oleh migration; pastikan saja akun yang dibutuhkan ada.
+        foreach ([
+            ['1105', 'Persediaan Barang', 'asset'],
+            ['1101', 'Kas Tunai', 'asset'],
+            ['4101', 'Pendapatan Internet', 'income'],
+            ['1103', 'Piutang', 'asset'],
+        ] as [$code, $name, $type]) {
+            ChartOfAccount::firstOrCreate(['code' => $code], ['name' => $name, 'type' => $type]);
+        }
 
         $this->category = InventoryCategory::create(['name' => 'Test Category']);
     }

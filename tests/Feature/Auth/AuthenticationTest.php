@@ -10,45 +10,58 @@ class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function staff(array $attrs = []): User
+    {
+        return User::factory()->create(array_merge(['role' => 'administrator', 'is_active' => true], $attrs));
+    }
+
     public function test_login_screen_can_be_rendered(): void
     {
-        $response = $this->get('/login');
-
-        $response->assertStatus(200);
+        $this->get(route('login'))->assertOk()->assertSee('Masuk ke panel admin');
     }
 
     public function test_users_can_authenticate_using_the_login_screen(): void
     {
-        $user = User::factory()->create();
+        $user = $this->staff();
 
-        $response = $this->post('/login', [
-            'email' => $user->email,
+        $response = $this->post(route('login'), [
+            'login' => $user->email,
             'password' => 'password',
         ]);
 
-        $this->assertAuthenticated();
+        $this->assertAuthenticatedAs($user);
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
-        $user = User::factory()->create();
+        $user = $this->staff();
 
-        $this->post('/login', [
-            'email' => $user->email,
+        $this->post(route('login'), [
+            'login' => $user->email,
             'password' => 'wrong-password',
         ]);
 
         $this->assertGuest();
     }
 
+    public function test_failed_login_keeps_the_entered_username(): void
+    {
+        $user = $this->staff();
+
+        $this->from(route('login'))->post(route('login'), ['login' => $user->email, 'password' => 'salah'])
+            ->assertRedirect(route('login'));
+
+        $this->get(route('login'))->assertSee('value="' . $user->email . '"', false);
+    }
+
     public function test_users_can_logout(): void
     {
-        $user = User::factory()->create();
+        $user = $this->staff();
 
-        $response = $this->actingAs($user)->post('/logout');
+        $response = $this->actingAs($user)->post(route('logout'));
 
         $this->assertGuest();
-        $response->assertRedirect('/');
+        $response->assertRedirect('/admin');
     }
 }
