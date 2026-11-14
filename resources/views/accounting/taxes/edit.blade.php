@@ -30,7 +30,7 @@
 
                     <div>
                         <x-input-label value="Akun Akuntansi Terkait" />
-                        <select name="chart_of_account_id" required class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                        <select name="chart_of_account_id" required class="mt-1 input">
                             @foreach($accounts as $account)
                                 <option value="{{ $account->id }}" {{ $tax->chart_of_account_id == $account->id ? 'selected' : '' }}>{{ $account->code }} - {{ $account->name }}</option>
                             @endforeach

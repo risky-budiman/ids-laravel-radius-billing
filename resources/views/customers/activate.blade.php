@@ -1,19 +1,19 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
-            {{ __('Customer Activation Wizard') }}
+            Aktivasi Pelanggan
         </h2>
     </x-slot>
 
     <div class="max-w-4xl mx-auto">
-        <div class="glass bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="card overflow-hidden">
             <div class="bg-indigo-600 px-8 py-6 text-white flex justify-between items-center">
                 <div>
                     <h3 class="font-bold text-lg">Proses Aktivasi: {{ $customer->name }}</h3>
                     <p class="text-indigo-100 text-xs mt-1">Lengkapi data pemasangan perangkat untuk mengaktifkan pelanggan.</p>
                 </div>
                 <div class="text-right">
-                    <p class="text-[10px] uppercase font-black tracking-widest opacity-70">Customer ID</p>
+                    <p class="text-xs font-semibold tracking-widest opacity-70">Customer ID</p>
                     <p class="font-mono font-bold">{{ $customer->customer_code }}</p>
                 </div>
             </div>
@@ -28,10 +28,10 @@
                         <h4 class="font-bold text-gray-900 dark:text-gray-100">OLT Provisioning (Zero Touch)</h4>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-indigo-50/30 dark:bg-indigo-900/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-800">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
                         <div>
                             <x-input-label for="olt_id" :value="__('Source OLT')" />
-                            <select id="olt_id" name="olt_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                            <select id="olt_id" name="olt_id" class="mt-1 input">
                                 <option value="">-- Manual Configuration (No OLT) --</option>
                                 @foreach($olts as $olt)
                                     <option value="{{ $olt->id }}" {{ old('olt_id', $customer->olt_id) == $olt->id ? 'selected' : '' }}>{{ $olt->name }} ({{ $olt->ip_address }})</option>
@@ -42,32 +42,32 @@
                         <div>
                             <x-input-label for="activated_at" :value="__('Activation Date')" />
                             <x-text-input id="activated_at" name="activated_at" type="date" class="mt-1 block w-full" :value="old('activated_at', date('Y-m-d'))" />
-                            <p class="text-[9px] text-indigo-500 mt-1 italic font-bold uppercase">Tanggal layanan mulai aktif (Prorata akan dihitung dari sini).</p>
+                            <p class="text-xs text-indigo-500 mt-1 italic">Tanggal layanan mulai aktif (Prorata akan dihitung dari sini).</p>
                         </div>
 
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <x-input-label for="onu_sn" :value="__('ONU Serial Number')" />
                                 <div class="flex items-center space-x-2">
-                                    <span id="sn-sync-badge" class="hidden text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">
+                                    <span id="sn-sync-badge" class="hidden text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
                                         Synced with Inventory
                                     </span>
                                     <x-barcode-scanner targetInputId="onu_sn" />
                                 </div>
                             </div>
                             <x-text-input id="onu_sn" name="onu_sn" type="text" class="mt-1 block w-full font-mono uppercase" :value="old('onu_sn', $customer->onu_sn)" placeholder="e.g. ZTEGC000..." />
-                            <p class="text-[9px] text-gray-400 mt-1 italic">Dapat diisi manual atau otomatis dari pilihan stok di bawah.</p>
+                            <p class="text-xs text-gray-400 mt-1 italic">Dapat diisi manual atau otomatis dari pilihan stok di bawah.</p>
                         </div>
 
                         <div>
                             <x-input-label for="onu_index" :value="__('ONU Index (Position)')" />
                             <x-text-input id="onu_index" name="onu_index" type="text" class="mt-1 block w-full font-mono" :value="old('onu_index', $customer->onu_index)" placeholder=".shelf.slot.port.id" />
-                            <p class="text-[9px] text-gray-400 mt-1 italic">Example: .1.1.1.1</p>
+                            <p class="text-xs text-gray-400 mt-1 italic">Example: .1.1.1.1</p>
                         </div>
 
                         <div>
                             <x-input-label for="onu_type" :value="__('ONU Type/Model')" />
-                            <select id="onu_type" name="onu_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                            <select id="onu_type" name="onu_type" class="mt-1 input">
                                 <option value="ZTE F660" {{ old('onu_type', $customer->onu_type) == 'ZTE F660' ? 'selected' : '' }}>ZTE F660</option>
                                 <option value="ZTE F609" {{ old('onu_type', $customer->onu_type) == 'ZTE F609' ? 'selected' : '' }}>ZTE F609</option>
                                 <option value="HG6243C" {{ old('onu_type', $customer->onu_type) == 'HG6243C' ? 'selected' : '' }}>HG6243C (FiberHome)</option>
@@ -87,7 +87,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <x-input-label value="Pilih Perangkat (Opsional)" />
-                            <select name="modem_stock_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                            <select name="modem_stock_id" class="mt-1 input">
                                 <option value="">-- Lewati / Tanpa Perangkat --</option>
                                 @foreach($serialItems as $item)
                                     <optgroup label="{{ $item->name }}">
@@ -99,7 +99,7 @@
                                     </optgroup>
                                 @endforeach
                             </select>
-                            <p class="text-[10px] text-gray-400 mt-2 italic">Hanya menampilkan modem dengan status 'Ready' di gudang.</p>
+                            <p class="text-xs text-surface-400 mt-2 italic">Hanya menampilkan modem dengan status 'Ready' di gudang.</p>
                         </div>
                     </div>
                 </div>
@@ -118,10 +118,10 @@
 
                     <div class="space-y-3">
                         <template x-for="(consumable, index) in consumables" :key="index">
-                            <div class="grid grid-cols-12 gap-4 items-end bg-gray-50/50 dark:bg-gray-900/30 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+                            <div class="grid grid-cols-12 gap-4 items-end bg-surface-50/60 dark:bg-surface-800/30 p-4 rounded-xl border border-surface-200 dark:border-surface-800">
                                 <div class="col-span-12 md:col-span-7">
                                     <x-input-label value="Pilih Material" />
-                                    <select :name="'consumables['+index+'][item_id]'" required class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm p-2">
+                                    <select :name="'consumables['+index+'][item_id]'" required class="mt-1 input">
                                         <option value="">-- Pilih --</option>
                                         @foreach($consumableItems as $item)
                                             <option value="{{ $item->id }}">{{ $item->name }} (Stok: {{ $item->stock_count }} {{ $item->unit }})</option>
@@ -139,7 +139,7 @@
                                 </div>
                             </div>
                         </template>
-                        <div x-show="consumables.length === 0" class="text-center py-8 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
+                        <div x-show="consumables.length === 0" class="text-center py-8 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-xl">
                             <p class="text-xs text-gray-400 italic font-medium">Klik tombol tambah material untuk mencatat kabel atau konektor yang terpakai.</p>
                         </div>
                     </div>
@@ -152,10 +152,10 @@
                         <h4 class="font-bold text-gray-900 dark:text-gray-100">Pemetaan Infrastruktur Fisik (ODC/ODP)</h4>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-emerald-50/30 dark:bg-emerald-900/10 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
                         <div>
                             <x-input-label for="odc_id" :value="__('ODC Cabinet')" />
-                            <select id="odc_id" name="odc_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                            <select id="odc_id" name="odc_id" class="mt-1 input">
                                 <option value="">-- Pilih ODC --</option>
                                 @foreach($odcs as $odc)
                                     <option value="{{ $odc->id }}" {{ old('odc_id', $customer->odc_id) == $odc->id ? 'selected' : '' }}>{{ $odc->id }} - {{ $odc->name }}</option>
@@ -165,7 +165,7 @@
 
                         <div>
                             <x-input-label for="odp_id" :value="__('ODP Box')" />
-                            <select id="odp_id" name="odp_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                            <select id="odp_id" name="odp_id" class="mt-1 input">
                                 <option value="">-- Pilih ODP --</option>
                                 @foreach($odps as $odp)
                                     <option value="{{ $odp->id }}" data-odc-id="{{ $odp->odc_id }}" {{ old('odp_id', $customer->odp_id) == $odp->id ? 'selected' : '' }}>{{ $odp->id }} - {{ $odp->name }}</option>
@@ -200,20 +200,20 @@
                         <h4 class="font-bold text-gray-900 dark:text-gray-100">Dokumentasi KYC & Foto Perangkat</h4>
                     </div>
                     
-                    <div class="bg-amber-50/30 dark:bg-amber-900/10 p-6 rounded-2xl border border-amber-100 dark:border-amber-800">
+                    <div class="bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                             <div>
                                 <x-input-label for="identity_photo" :value="__('Foto KTP/Identitas')" />
-                                <input type="file" id="identity_photo" name="identity_photo" class="mt-1 block w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-100 file:text-amber-700" accept="image/*">
+                                <input type="file" id="identity_photo" name="identity_photo" class="mt-1 block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-100 file:text-amber-700" accept="image/*">
                             </div>
                             <div>
                                 <x-input-label for="house_photo" :value="__('Foto Rumah/Lokasi')" />
-                                <input type="file" id="house_photo" name="house_photo" class="mt-1 block w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-100 file:text-amber-700" accept="image/*">
+                                <input type="file" id="house_photo" name="house_photo" class="mt-1 block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-100 file:text-amber-700" accept="image/*">
                             </div>
                             <div class="space-y-3">
                                 <x-input-label for="cpe_photo" :value="__('Foto Fisik Modem (Harus Terlihat SN)')" />
                                 <div class="flex items-center space-x-4">
-                                    <input type="file" id="cpe_photo" name="cpe_photo" class="mt-1 block w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-100 file:text-amber-700" accept="image/*" @change="previewImage($event, 'cpe-preview')">
+                                    <input type="file" id="cpe_photo" name="cpe_photo" class="mt-1 block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-100 file:text-amber-700" accept="image/*" @change="previewImage($event, 'cpe-preview')">
                                     <div id="cpe-preview-container" class="hidden">
                                         <img id="cpe-preview" class="h-16 w-16 object-cover rounded-lg border-2 border-amber-200 shadow-sm">
                                     </div>
@@ -221,9 +221,9 @@
                                 <div class="mt-2 p-2 bg-amber-100/50 rounded-lg border border-amber-200 flex flex-col space-y-2">
                                     <div class="flex items-center">
                                         <svg id="ocr-status-icon" class="w-4 h-4 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        <p id="ocr-status-text" class="text-[10px] text-amber-800 font-medium italic">Menunggu upload foto untuk verifikasi SN...</p>
+                                        <p id="ocr-status-text" class="text-xs text-amber-800 font-medium italic">Menunggu upload foto untuk verifikasi SN...</p>
                                     </div>
-                                    <div id="ocr-result-container" class="hidden text-[10px] bg-white/50 p-2 rounded border border-amber-200/50">
+                                    <div id="ocr-result-container" class="hidden text-xs bg-white/50 p-2 rounded border border-amber-200/50">
                                         <span class="font-bold text-gray-700">Terdeteksi di Foto:</span>
                                         <span id="ocr-detected-sn" class="font-mono text-indigo-600 bg-indigo-50 px-1 rounded ml-1 tracking-wider">NONE</span>
                                     </div>
@@ -234,7 +234,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <x-input-label for="region_code" :value="__('Region')" />
-                                <select id="region_code" name="region_code" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm" required>
+                                <select id="region_code" name="region_code" class="mt-1 input" required>
                                     <option value="">-- Pilih --</option>
                                     @foreach($regions as $r)
                                         <option value="{{ $r->code }}" data-id="{{ $r->id }}" {{ old('region_code', $customer->region_code) == $r->code ? 'selected' : '' }}>[{{ $r->code }}] {{ $r->name }}</option>
@@ -243,7 +243,7 @@
                             </div>
                             <div>
                                 <x-input-label for="sto_code" :value="__('STO')" />
-                                <select id="sto_code" name="sto_code" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm" required>
+                                <select id="sto_code" name="sto_code" class="mt-1 input" required>
                                     <option value="">-- Pilih --</option>
                                     @foreach($stos as $s)
                                         <option value="{{ $s->code }}" data-id="{{ $s->id }}" data-region-id="{{ $s->region_id }}" class="hidden" {{ old('sto_code', $customer->sto_code) == $s->code ? 'selected' : '' }}>[{{ $s->code }}] {{ $s->name }}</option>
@@ -252,7 +252,7 @@
                             </div>
                             <div>
                                 <x-input-label for="stb_code" :value="__('STB')" />
-                                <select id="stb_code" name="stb_code" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm" required>
+                                <select id="stb_code" name="stb_code" class="mt-1 input" required>
                                     <option value="">-- Pilih --</option>
                                     @foreach($stbs as $t)
                                         <option value="{{ $t->code }}" data-sto-id="{{ $t->sto_id }}" class="hidden" {{ old('stb_code', $customer->stb_code) == $t->code ? 'selected' : '' }}>[{{ $t->code }}] {{ $t->name }}</option>
@@ -270,13 +270,13 @@
                             <div class="w-1.5 h-6 bg-rose-500 rounded-full"></div>
                             <h4 class="font-bold text-gray-900 dark:text-gray-100">Koordinat Pemasangan (GPS)</h4>
                         </div>
-                        <button type="button" id="locate-me" class="hidden text-[10px] bg-rose-50 text-rose-600 px-3 py-1 rounded-lg font-bold uppercase hover:bg-rose-100 transition-colors">
+                        <button type="button" id="locate-me" class="hidden text-xs bg-rose-50 text-rose-600 px-3 py-1 rounded-lg hover:bg-rose-100 transition-colors">
                             Deteksi Lokasi Saya
                         </button>
                     </div>
 
-                    <div class="bg-rose-50/30 dark:bg-rose-900/10 p-6 rounded-2xl border border-rose-100 dark:border-rose-800">
-                        <div class="border-2 border-white dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm mb-4">
+                    <div class="bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
+                        <div class="border-2 border-white dark:border-gray-800 rounded-xl overflow-hidden shadow-sm mb-4">
                             <div id="map-picker" style="height: 200px; width: 100%;"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-6">
@@ -299,17 +299,17 @@
                         <h4 class="font-bold text-gray-900 dark:text-gray-100">Pembayaran Instalasi</h4>
                     </div>
                     
-                    <div class="bg-indigo-50/50 dark:bg-indigo-900/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/30">
+                    <div class="bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
                         <div class="flex items-center justify-between mb-6">
                             <span class="text-sm font-medium text-indigo-800 dark:text-indigo-300">Biaya Instalasi Terutang:</span>
-                            <span class="text-2xl font-black text-indigo-900 dark:text-indigo-100">Rp {{ number_format($customer->installation_fee, 2, ',', '.') }}</span>
+                            <span class="text-2xl font-semibold text-indigo-900 dark:text-indigo-100">Rp {{ number_format($customer->installation_fee, 2, ',', '.') }}</span>
                         </div>
 
                         @if($customer->installation_fee > 0)
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <x-input-label value="Metode Pembayaran" />
-                                <select name="payment_method" x-model="payment_method" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                                <select name="payment_method" x-model="payment_method" class="mt-1 input">
                                     <option value="cash">Tunai (Cash)</option>
                                     <option value="transfer">Transfer Manual</option>
                                     <option value="pg">Payment Gateway</option>
@@ -318,7 +318,7 @@
 
                             <div x-show="payment_method === 'transfer' || payment_method === 'cash'">
                                 <x-input-label value="Pilih Rekening Tujuan (Bank/Kas)" />
-                                <select name="bank_account_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                                <select name="bank_account_id" class="mt-1 input">
                                     <option value="">-- Pilih Rekening --</option>
                                     @foreach(\App\Models\BankAccount::where('type', '!=', 'payment_gateway')->where('is_active', true)->get() as $acc)
                                         <option value="{{ $acc->id }}">{{ $acc->bank_name }} - {{ $acc->account_name }}</option>
@@ -345,7 +345,7 @@
 
                 <div class="flex justify-end pt-6 space-x-3">
                     <a href="{{ route('customers.index') }}" class="px-6 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">Cancel</a>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-3 rounded-2xl text-sm font-bold shadow-xl shadow-indigo-600/20 transition-all transform hover:-translate-y-0.5">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-3 rounded-xl text-sm font-bold shadow-sm transition-all transform hover:-translate-y-0.5">
                         Aktifkan Pelanggan & Simpan Inventaris
                     </button>
                 </div>
@@ -359,7 +359,7 @@
 
     @push('scripts')
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
     <script>
         function previewImage(event, previewId) {
             const input = event.target;
@@ -389,7 +389,7 @@
             const selectedSn = document.getElementById('onu_sn').value;
 
             statusText.innerText = 'Memindai Serial Number dari foto (OCR)...';
-            statusText.className = 'text-[10px] text-indigo-600 font-bold animate-pulse';
+            statusText.className = 'text-xs text-indigo-600 font-bold animate-pulse';
             statusIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>';
             statusIcon.classList.add('animate-spin');
 
@@ -424,13 +424,13 @@
 
                 if (foundSn && selectedSn && foundSn.includes(selectedSn.toUpperCase())) {
                     statusText.innerText = 'Verifikasi Berhasil: SN di foto cocok dengan Inventory!';
-                    statusText.className = 'text-[10px] text-green-600 font-bold';
+                    statusText.className = 'text-xs text-green-600 font-bold';
                     statusIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
                     statusIcon.className = 'w-4 h-4 text-green-500 mr-2';
                     detectedSnSpan.innerText = foundSn;
                 } else {
                     statusText.innerText = 'Peringatan: SN di foto tidak terdeteksi cocok. Mohon cek manual!';
-                    statusText.className = 'text-[10px] text-red-600 font-bold';
+                    statusText.className = 'text-xs text-red-600 font-bold';
                     statusIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>';
                     statusIcon.className = 'w-4 h-4 text-red-500 mr-2';
                     detectedSnSpan.innerText = foundSn || 'Tidak terbaca';
@@ -439,7 +439,7 @@
             } catch (err) {
                 console.error("OCR Error:", err);
                 statusText.innerText = 'Gagal memproses OCR. Gunakan verifikasi manual.';
-                statusText.className = 'text-[10px] text-gray-500 italic';
+                statusText.className = 'text-xs text-surface-500 dark:text-surface-400';
                 statusIcon.classList.remove('animate-spin');
             }
         }

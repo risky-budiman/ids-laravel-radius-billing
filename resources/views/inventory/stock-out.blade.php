@@ -69,7 +69,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <x-input-label value="Barang / Item" />
-                        <select name="inventory_item_id" x-model="selectedItem" @change="updateItem()" required class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                        <select name="inventory_item_id" x-model="selectedItem" @change="updateItem()" required class="mt-1 input">
                             <option value="">Pilih Barang</option>
                             @foreach($items as $item)
                                 <option value="{{ $item->id }}">{{ $item->name }} (Stok: {{ $item->stock_count }} {{ $item->unit }})</option>
@@ -78,7 +78,7 @@
                     </div>
                     <div>
                         <x-input-label value="Tujuan Pengeluaran" />
-                        <select name="type" required class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                        <select name="type" required class="mt-1 input">
                             <option value="infrastructure">Infrastruktur Umum</option>
                             <option value="new_line">Pembangunan Jalur Baru</option>
                             <option value="maintenance">Maintenance / Perbaikan</option>
@@ -131,7 +131,7 @@
 
                 <div>
                     <x-input-label value="Catatan Tambahan" />
-                    <textarea name="notes" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl shadow-sm text-sm" rows="2"></textarea>
+                    <textarea name="notes" class="mt-1 input" rows="2"></textarea>
                 </div>
 
                 <div class="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-700">

@@ -40,7 +40,7 @@
                         <div>
                             <x-input-label for="bank_account_id" :value="__('Pay From Account')" />
                             @php $bankAccounts = \App\Models\BankAccount::where('is_active', true)->get(); @endphp
-                            <select id="bank_account_id" name="bank_account_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" required>
+                            <select id="bank_account_id" name="bank_account_id" class="mt-1 input" required>
                                 @foreach($bankAccounts as $ba)
                                     <option value="{{ $ba->id }}">[{{ $ba->bank_name }}] {{ $ba->account_name }} - Rp {{ number_format($ba->balance, 0) }}</option>
                                 @endforeach

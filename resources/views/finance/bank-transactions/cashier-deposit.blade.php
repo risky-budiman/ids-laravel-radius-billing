@@ -48,7 +48,7 @@
                         <!-- From Account -->
                         <div class="p-6 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
                             <label for="from_account_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">Kasir (Sumber Dana)</label>
-                            <select id="from_account_id" name="from_account_id" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500" required onchange="updateBalanceInfo(this)">
+                            <select id="from_account_id" name="from_account_id" class="input" required onchange="updateBalanceInfo(this)">
                                 <option value="">Pilih Kas Anda</option>
                                 @foreach($myAccounts as $account)
                                 <option value="{{ $account->id }}" data-balance="{{ $account->balance }}" {{ old('from_account_id') == $account->id ? 'selected' : '' }}>
@@ -62,7 +62,7 @@
                         <!-- To Account -->
                         <div class="p-6 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
                             <label for="to_account_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">Rekening Perusahaan (Tujuan)</label>
-                            <select id="to_account_id" name="to_account_id" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                            <select id="to_account_id" name="to_account_id" class="input" required>
                                 <option value="">Pilih Rekening Tujuan</option>
                                 @foreach($companyAccounts as $account)
                                 <option value="{{ $account->id }}" {{ old('to_account_id') == $account->id ? 'selected' : '' }}>
@@ -90,7 +90,7 @@
 
                         <div class="col-span-full">
                             <label for="description" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Keterangan (Opsional)</label>
-                            <textarea id="description" name="description" rows="2" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500">{{ old('description') }}</textarea>
+                            <textarea id="description" name="description" rows="2" class="input">{{ old('description') }}</textarea>
                         </div>
                     </div>
 

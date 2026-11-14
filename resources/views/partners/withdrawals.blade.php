@@ -67,7 +67,7 @@
                                         <div class="space-y-4">
                                             <div>
                                                 <x-input-label for="status" value="Action" />
-                                                <select name="status" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                                <select name="status" class="mt-1 input">
                                                     <option value="paid">Pay Now (Confirm & Journal)</option>
                                                     <option value="approved">Approve (Pending Payment)</option>
                                                     <option value="rejected">Reject</option>
@@ -76,7 +76,7 @@
 
                                             <div>
                                                 <x-input-label for="bank_account_id" value="Source Fund Account (If Paid)" />
-                                                <select name="bank_account_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                                <select name="bank_account_id" class="mt-1 input">
                                                     @foreach(\App\Models\BankAccount::where('is_active', true)->get() as $acc)
                                                         <option value="{{ $acc->id }}">{{ $acc->bank_name }} - {{ $acc->account_name }}</option>
                                                     @endforeach
@@ -85,7 +85,7 @@
 
                                             <div>
                                                 <x-input-label for="notes" value="Notes" />
-                                                <textarea name="notes" rows="2" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"></textarea>
+                                                <textarea name="notes" rows="2" class="mt-1 input"></textarea>
                                             </div>
                                         </div>
 

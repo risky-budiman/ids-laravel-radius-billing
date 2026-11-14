@@ -26,7 +26,7 @@
 
                         <div class="col-span-full md:col-span-1">
                             <label for="type" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Tipe Rekening</label>
-                            <select id="type" name="type" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500" required>
+                            <select id="type" name="type" class="input" required>
                                 <option value="bank" {{ old('type', $bankAccount->type) == 'bank' ? 'selected' : '' }}>Bank Konvensional</option>
                                 <option value="cash" {{ old('type', $bankAccount->type) == 'cash' ? 'selected' : '' }}>Uang Tunai / Kas</option>
                                 <option value="payment_gateway" {{ old('type', $bankAccount->type) == 'payment_gateway' ? 'selected' : '' }}>Payment Gateway</option>
@@ -37,7 +37,7 @@
 
                         <div class="col-span-full md:col-span-1">
                             <label for="user_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Penanggung Jawab / Staff (Opsional)</label>
-                            <select id="user_id" name="user_id" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                            <select id="user_id" name="user_id" class="input">
                                 <option value="">Tanpa Staff (Akun Utama/Kantor)</option>
                                 @foreach($users as $user)
                                 <option value="{{ $user->id }}" {{ old('user_id', $bankAccount->user_id) == $user->id ? 'selected' : '' }}>{{ $user->name }} ({{ $user->role }})</option>
@@ -61,7 +61,7 @@
 
                         <div class="col-span-full md:col-span-1">
                             <label for="chart_of_account_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Link ke Akun Perkiraan (CoA)</label>
-                            <select id="chart_of_account_id" name="chart_of_account_id" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                            <select id="chart_of_account_id" name="chart_of_account_id" class="input">
                                 <option value="">Pilih Akun (Otomatis: 1102 Bank)</option>
                                 @foreach($accounts as $coa)
                                 <option value="{{ $coa->id }}" {{ old('chart_of_account_id', $bankAccount->chart_of_account_id) == $coa->id ? 'selected' : '' }}>{{ $coa->code }} - {{ $coa->name }}</option>
@@ -73,7 +73,7 @@
 
                         <div class="col-span-full md:col-span-1">
                             <label for="is_active" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Status Rekening</label>
-                            <select id="is_active" name="is_active" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500" required>
+                            <select id="is_active" name="is_active" class="input" required>
                                 <option value="1" {{ old('is_active', $bankAccount->is_active) == 1 ? 'selected' : '' }}>Aktif</option>
                                 <option value="0" {{ old('is_active', $bankAccount->is_active) == 0 ? 'selected' : '' }}>Nonaktif</option>
                             </select>
@@ -82,7 +82,7 @@
 
                         <div class="col-span-full">
                             <label for="description" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Keterangan (Opsional)</label>
-                            <textarea id="description" name="description" rows="3" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500">{{ old('description', $bankAccount->description) }}</textarea>
+                            <textarea id="description" name="description" rows="3" class="input">{{ old('description', $bankAccount->description) }}</textarea>
                             @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>

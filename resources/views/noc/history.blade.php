@@ -85,7 +85,7 @@
     </div>
 
     @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script>
         const ctx = document.getElementById('signalChart').getContext('2d');
         const data = @json($logs->map(fn($l) => ['t' => $l->created_at->format('Y-m-d H:i'), 'v' => $l->rx_power]));

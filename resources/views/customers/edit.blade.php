@@ -1,18 +1,18 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
-            {{ __('Edit Subscriber: ') }} <span class="text-indigo-600 dark:text-indigo-400">{{ $customer->username }}</span>
+            Edit Pelanggan <span class="text-surface-500 dark:text-surface-400 font-normal">· {{ $customer->name }}</span>
         </h2>
     </x-slot>
 
-    <div class="glass max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div class="card max-w-4xl mx-auto overflow-hidden">
         <form action="{{ route('customers.update', $customer) }}" method="POST" enctype="multipart/form-data" class="p-8">
             @csrf
             @method('PUT')
 
 
             <!-- Section: RADIUS Auth -->
-            <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700 bg-slate-50/30 dark:bg-slate-900/10 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
+            <div class="mb-6 p-5 sm:p-6 rounded-xl border border-surface-200 dark:border-surface-800">
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center">
                     <svg class="w-5 h-5 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                     Network Access (RADIUS)
@@ -33,7 +33,7 @@
                     <div>
                         <div class="flex justify-between items-end mb-1">
                             <x-input-label for="password" :value="__('Network Password')" />
-                            <button type="button" id="regen_password" class="text-indigo-600 text-[10px] font-black uppercase hover:text-indigo-800 transition-colors flex items-center">
+                            <button type="button" id="regen_password" class="text-indigo-600 text-xs hover:text-indigo-800 transition-colors flex items-center">
                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                                 Regenerate
                             </button>
@@ -45,7 +45,7 @@
             </div>
 
             <!-- Section: Subscriber Profile -->
-            <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700 bg-blue-50/30 dark:bg-blue-900/10 p-6 rounded-2xl border border-blue-100 dark:border-blue-800">
+            <div class="mb-6 p-5 sm:p-6 rounded-xl border border-surface-200 dark:border-surface-800">
                 <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-4 flex items-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                     Subscriber Personal Profile
@@ -54,7 +54,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
                         <x-input-label for="customer_type" :value="__('Customer Priority Type')" />
-                        <select id="customer_type" name="customer_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:border-blue-500 rounded-md shadow-sm" required>
+                        <select id="customer_type" name="customer_type" class="mt-1 input" required>
                             <option value="personal" {{ old('customer_type', $customer->customer_type) == 'personal' ? 'selected' : '' }}>Personal / Residential</option>
                             <option value="corporate" {{ old('customer_type', $customer->customer_type) == 'corporate' ? 'selected' : '' }}>Corporate / Business</option>
                             <option value="vip" {{ old('customer_type', $customer->customer_type) == 'vip' ? 'selected' : '' }}>VIP / High Priority</option>
@@ -83,14 +83,14 @@
 
                     <div class="md:col-span-2">
                         <x-input-label for="address" :value="__('Installation Address')" />
-                        <textarea id="address" name="address" rows="2" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-blue-500 rounded-md shadow-sm">{{ old('address', $customer->address) }}</textarea>
+                        <textarea id="address" name="address" rows="2" class="mt-1 input">{{ old('address', $customer->address) }}</textarea>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <x-input-label for="region_code" :value="__('Region')" />
-                        <select id="region_code" name="region_code" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:border-blue-500 rounded-md shadow-sm" required>
+                        <select id="region_code" name="region_code" class="mt-1 input" required>
                             <option value="">-- Select Region --</option>
                             @foreach($regions as $r)
                                 <option value="{{ $r->code }}" data-id="{{ $r->id }}" {{ old('region_code', $customer->region_code) == $r->code ? 'selected' : '' }}>[{{ $r->code }}] {{ $r->name }}</option>
@@ -99,7 +99,7 @@
                     </div>
                     <div>
                         <x-input-label for="sto_code" :value="__('STO')" />
-                        <select id="sto_code" name="sto_code" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:border-blue-500 rounded-md shadow-sm disabled:opacity-50" required>
+                        <select id="sto_code" name="sto_code" class="mt-1 input" required>
                             <option value="">-- Select STO --</option>
                             @foreach($stos as $s)
                                 <option value="{{ $s->code }}" data-id="{{ $s->id }}" data-region-id="{{ $s->region_id }}" class="hidden" {{ old('sto_code', $customer->sto_code) == $s->code ? 'selected' : '' }}>[{{ $s->code }}] {{ $s->name }}</option>
@@ -108,7 +108,7 @@
                     </div>
                     <div>
                         <x-input-label for="stb_code" :value="__('STB')" />
-                        <select id="stb_code" name="stb_code" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:border-blue-500 rounded-md shadow-sm disabled:opacity-50" required>
+                        <select id="stb_code" name="stb_code" class="mt-1 input" required>
                             <option value="">-- Select STB --</option>
                             @foreach($stbs as $t)
                                 <option value="{{ $t->code }}" data-sto-id="{{ $t->sto_id }}" class="hidden" {{ old('stb_code', $customer->stb_code) == $t->code ? 'selected' : '' }}>[{{ $t->code }}] {{ $t->name }}</option>
@@ -126,7 +126,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <x-input-label for="billing_type" :value="__('Billing Type')" />
-                        <select id="billing_type" name="billing_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" required>
+                        <select id="billing_type" name="billing_type" class="mt-1 input" required>
                             <option value="postpaid" {{ old('billing_type', $customer->billing_type) == 'postpaid' ? 'selected' : '' }}>Pasca Bayar (Postpaid)</option>
                             <option value="prepaid" {{ old('billing_type', $customer->billing_type) == 'prepaid' ? 'selected' : '' }}>Prabayar (Prepaid)</option>
                         </select>
@@ -135,7 +135,7 @@
 
                     <div>
                         <x-input-label for="billing_method" :value="__('Billing Method')" />
-                        <select id="billing_method" name="billing_method" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" required>
+                        <select id="billing_method" name="billing_method" class="mt-1 input" required>
                             <!-- Options will be populated by JS -->
                         </select>
                         <x-input-error class="mt-2" :messages="$errors->get('billing_method')" />
@@ -145,12 +145,12 @@
                         <div>
                             <x-input-label for="billing_day" :value="__('Generate Bill Day (1-28)')" />
                             <x-text-input id="billing_day" name="billing_day" type="number" min="1" max="28" class="mt-1 block w-full" :value="old('billing_day', $customer->billing_day ?? 1)" />
-                            <p class="mt-1 text-[10px] text-gray-500 italic">Day of the month to generate invoice (Default: 1st)</p>
+                            <p class="mt-1 text-xs text-surface-500 dark:text-surface-400">Day of the month to generate invoice (Default: 1st)</p>
                         </div>
                         <div>
                             <x-input-label for="billing_due_day" :value="__('Due Date Day (1-28)')" />
                             <x-text-input id="billing_due_day" name="billing_due_day" type="number" min="1" max="28" class="mt-1 block w-full" :value="old('billing_due_day', $customer->billing_due_day ?? 20)" />
-                            <p class="mt-1 text-[10px] text-gray-500 italic">Day of the month to suspend if unpaid (Default: 20th)</p>
+                            <p class="mt-1 text-xs text-surface-500 dark:text-surface-400">Day of the month to suspend if unpaid (Default: 20th)</p>
                         </div>
                     </div>
                 </div>
@@ -158,7 +158,7 @@
 
             <!-- Section: Partner & Reseller -->
             @if(get_setting('enable_partner_module') == '1' && auth()->user()->isAdmin())
-            <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700 bg-indigo-50/20 dark:bg-indigo-900/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-800">
+            <div class="mb-6 p-5 sm:p-6 rounded-xl border border-surface-200 dark:border-surface-800">
                 <h3 class="text-lg font-semibold text-indigo-900 dark:text-indigo-100 mb-4 flex items-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     Partner & Reseller Referral
@@ -167,7 +167,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="md:col-span-1">
                         <x-input-label for="partner_id" :value="__('Select Partner')" />
-                        <select id="partner_id" name="partner_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm">
+                        <select id="partner_id" name="partner_id" class="mt-1 input">
                             <option value="">-- No Partner (Direct) --</option>
                             @foreach($partners as $p)
                                 <option value="{{ $p->id }}" {{ old('partner_id', $customer->partner_id) == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
@@ -182,7 +182,7 @@
 
                     <div class="md:col-span-1">
                         <x-input-label for="commission_type" :value="__('Override Rate Type')" />
-                        <select id="commission_type" name="commission_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm">
+                        <select id="commission_type" name="commission_type" class="mt-1 input">
                             <option value="">-- Use Partner Default --</option>
                             <option value="percentage" {{ old('commission_type', $customer->commission_type) == 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
                             <option value="fixed" {{ old('commission_type', $customer->commission_type) == 'fixed' ? 'selected' : '' }}>Fixed Amount</option>
@@ -194,7 +194,7 @@
             
             <!-- Section: Internal Sales Referral -->
             @if(get_setting('enable_sales_commission_module') == '1' && auth()->user()->isAdmin())
-            <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700 bg-emerald-50/20 dark:bg-emerald-900/10 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+            <div class="mb-6 p-5 sm:p-6 rounded-xl border border-surface-200 dark:border-surface-800">
                 <h3 class="text-lg font-semibold text-emerald-900 dark:text-emerald-100 mb-4 flex items-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m.599-1H11.401M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     Internal Sales Referral (Staff)
@@ -203,24 +203,24 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="md:col-span-1">
                         <x-input-label for="sales_id" :value="__('Select Sales Staff')" />
-                        <select id="sales_id" name="sales_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-emerald-500 rounded-md shadow-sm">
+                        <select id="sales_id" name="sales_id" class="mt-1 input">
                             <option value="">-- No Sales (Direct / Walk-in) --</option>
                             @foreach($sales as $s)
                                 <option value="{{ $s->id }}" {{ old('sales_id', $customer->sales_id) == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
                             @endforeach
                         </select>
-                        <p class="mt-1 text-[10px] text-gray-500 italic">Assign this customer to a sales staff for incentive tracking.</p>
+                        <p class="mt-1 text-xs text-surface-500 dark:text-surface-400">Assign this customer to a sales staff for incentive tracking.</p>
                     </div>
 
                     <div class="md:col-span-1">
                         <x-input-label for="sales_commission_rate" :value="__('Override Incentive Rate')" />
                         <x-text-input id="sales_commission_rate" name="sales_commission_rate" type="number" step="0.01" class="mt-1 block w-full" :value="old('sales_commission_rate', $customer->sales_commission_rate)" placeholder="Optional override" />
-                        <p class="mt-1 text-[10px] text-gray-500 italic">Leave empty to use global default rate.</p>
+                        <p class="mt-1 text-xs text-surface-500 dark:text-surface-400">Leave empty to use global default rate.</p>
                     </div>
 
                     <div class="md:col-span-1">
                         <x-input-label for="sales_commission_type" :value="__('Override Rate Type')" />
-                        <select id="sales_commission_type" name="sales_commission_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-emerald-500 rounded-md shadow-sm">
+                        <select id="sales_commission_type" name="sales_commission_type" class="mt-1 input">
                             <option value="">-- Use Global Default --</option>
                             <option value="percentage" {{ old('sales_commission_type', $customer->sales_commission_type) == 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
                             <option value="fixed" {{ old('sales_commission_type', $customer->sales_commission_type) == 'fixed' ? 'selected' : '' }}>Fixed Amount</option>
@@ -237,7 +237,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <x-input-label for="package_id" :value="__('Internet Package')" />
-                        <select id="package_id" name="package_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" required>
+                        <select id="package_id" name="package_id" class="mt-1 input" required>
                             <option value="">-- Select Package --</option>
                             @foreach($packages as $package)
                                 <option value="{{ $package->id }}" {{ old('package_id', $customer->package_id) == $package->id ? 'selected' : '' }}>
@@ -259,11 +259,11 @@
             <!-- Section: Discount Settings -->
             <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Diskon Khusus Pelanggan</h3>
-                <div class="bg-emerald-50/40 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-2xl p-6">
+                <div class="bg-surface-50/60 dark:bg-surface-800/30 border border-surface-200 dark:border-surface-800 rounded-xl p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <x-input-label for="discount_type" :value="__('Tipe Diskon')" />
-                            <select id="discount_type" name="discount_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-emerald-500 rounded-md shadow-sm">
+                            <select id="discount_type" name="discount_type" class="mt-1 input">
                                 <option value="">-- Tanpa Diskon --</option>
                                 <option value="fixed" {{ old('discount_type', $customer->discount_type) == 'fixed' ? 'selected' : '' }}>Nominal Tetap (Rp)</option>
                                 <option value="percentage" {{ old('discount_type', $customer->discount_type) == 'percentage' ? 'selected' : '' }}>Persentase (%)</option>
@@ -282,11 +282,11 @@
             <!-- Section: Taxation Settings -->
             <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Taxation Settings</h3>
-                <div class="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-2xl p-6">
+                <div class="bg-surface-50/60 dark:bg-surface-800/30 border border-surface-200 dark:border-surface-800 rounded-xl p-6">
                     <div class="flex items-center">
                         <input type="checkbox" id="use_tax" name="use_tax" value="1" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 h-5 w-5" {{ old('use_tax', $customer->use_tax) ? 'checked' : '' }}>
                         <div class="ml-4">
-                            <label for="use_tax" class="text-sm font-black text-gray-900 dark:text-gray-100 uppercase tracking-widest cursor-pointer">Kenakan Pajak (PPN)</label>
+                            <label for="use_tax" class="text-sm font-semibold text-gray-900 dark:text-gray-100  cursor-pointer">Kenakan Pajak (PPN)</label>
                             <p class="text-xs text-gray-500 mt-1">Jika diaktifkan, tagihan bulanan pelanggan ini akan ditambah PPN (11%).</p>
                         </div>
                     </div>
@@ -296,7 +296,7 @@
                 <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <x-input-label for="is_active" :value="__('Account Status')" />
-                        <select id="is_active" name="is_active" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm disabled:opacity-50" {{ auth()->user()->isSales() ? 'disabled' : '' }}>
+                        <select id="is_active" name="is_active" class="mt-1 input" {{ auth()->user()->isSales() ? 'disabled' : '' }}>
                             <option value="1" {{ old('is_active', $customer->is_active) == '1' ? 'selected' : '' }}>Active</option>
                             <option value="0" {{ old('is_active', $customer->is_active) == '0' ? 'selected' : '' }}>Suspended</option>
                         </select>
@@ -312,7 +312,7 @@
                             <input type="text" id="display_installation_fee" placeholder="0,00" class="block w-full pl-10 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" oninput="formatCurrency(this, 'installation_fee')" onblur="finalizeCurrency(this, 'installation_fee')">
                             <input type="hidden" id="installation_fee" name="installation_fee" value="{{ old('installation_fee', $customer->installation_fee) }}">
                         </div>
-                        <p class="mt-1 text-[10px] text-gray-500 italic">Biaya pemasangan awal.</p>
+                        <p class="mt-1 text-xs text-surface-500 dark:text-surface-400">Biaya pemasangan awal.</p>
                         <x-input-error class="mt-2" :messages="$errors->get('installation_fee')" />
                     </div>
                 </div>

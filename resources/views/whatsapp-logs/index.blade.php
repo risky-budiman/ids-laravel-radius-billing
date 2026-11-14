@@ -86,10 +86,10 @@
                 <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <form action="{{ route('whatsapp-logs.index') }}" method="GET" class="flex flex-col sm:flex-row gap-3 w-full">
                         <div class="flex-1">
-                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nomor telepon atau isi pesan..." class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nomor telepon atau isi pesan..." class="input">
                         </div>
                         <div class="w-full sm:w-48">
-                            <select name="status" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500" onchange="this.form.submit()">
+                            <select name="status" class="input" onchange="this.form.submit()">
                                 <option value="">Semua Status</option>
                                 <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Waiting (Antrean)</option>
                                 <option value="sent" {{ request('status') === 'sent' ? 'selected' : '' }}>Terkirim</option>

@@ -18,7 +18,7 @@
                             <!-- Customer Selection -->
                             <div>
                                 <x-input-label for="customer_id" :value="__('Subscriber / Customer')" />
-                                <select id="customer_id" name="customer_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200">
+                                <select id="customer_id" name="customer_id" class="mt-1 input">
                                     <option value="">-- No Customer (Internal Ticket) --</option>
                                     @foreach($customers as $customer)
                                         <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
@@ -40,7 +40,7 @@
                                 <!-- Priority -->
                                 <div>
                                     <x-input-label for="priority" :value="__('Priority')" />
-                                    <select id="priority" name="priority" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-xl shadow-sm">
+                                    <select id="priority" name="priority" class="mt-1 input">
                                         <option value="low" {{ old('priority') == 'low' ? 'selected' : '' }}>Low</option>
                                         <option value="medium" {{ old('priority', 'medium') == 'medium' ? 'selected' : '' }}>Medium</option>
                                         <option value="high" {{ old('priority') == 'high' ? 'selected' : '' }}>High</option>
@@ -52,7 +52,7 @@
                                 <!-- Assignee -->
                                 <div>
                                     <x-input-label for="assigned_to" :value="__('Assign to Staff')" />
-                                    <select id="assigned_to" name="assigned_to" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-xl shadow-sm">
+                                    <select id="assigned_to" name="assigned_to" class="mt-1 input">
                                         <option value="">-- Unassigned --</option>
                                         @foreach($users as $user)
                                             <option value="{{ $user->id }}" {{ old('assigned_to') == $user->id ? 'selected' : '' }}>
@@ -67,7 +67,7 @@
                             <!-- Description -->
                             <div>
                                 <x-input-label for="description" :value="__('Detailed Description')" />
-                                <textarea id="description" name="description" rows="5" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200" required placeholder="Describe the activation details, error reports, or dismantle reasons...">{{ old('description') }}</textarea>
+                                <textarea id="description" name="description" rows="5" class="mt-1 input" required placeholder="Describe the activation details, error reports, or dismantle reasons...">{{ old('description') }}</textarea>
                                 <x-input-error :messages="$errors->get('description')" class="mt-2" />
                             </div>
 

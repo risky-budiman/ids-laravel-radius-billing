@@ -19,13 +19,13 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <div class="col-span-full md:col-span-1">
                             <label for="bank_name" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Nama Bank / Kas</label>
-                            <input type="text" id="bank_name" name="bank_name" value="{{ old('bank_name') }}" placeholder="Contoh: BCA, Kas Kecil, Midtrans" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500" required>
+                            <input type="text" id="bank_name" name="bank_name" value="{{ old('bank_name') }}" placeholder="Contoh: BCA, Kas Kecil, Midtrans" class="input" required>
                             @error('bank_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="col-span-full md:col-span-1">
                             <label for="type" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Tipe Rekening</label>
-                            <select id="type" name="type" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500" required>
+                            <select id="type" name="type" class="input" required>
                                 <option value="bank">Bank Konvensional</option>
                                 <option value="cash">Uang Tunai / Kas</option>
                                 <option value="payment_gateway">Payment Gateway</option>
@@ -36,7 +36,7 @@
 
                         <div class="col-span-full md:col-span-1">
                             <label for="user_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Penanggung Jawab / Staff (Opsional)</label>
-                            <select id="user_id" name="user_id" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                            <select id="user_id" name="user_id" class="input">
                                 <option value="">Tanpa Staff (Akun Utama/Kantor)</option>
                                 @foreach($users as $user)
                                 <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>{{ $user->name }} ({{ $user->role }})</option>
@@ -48,19 +48,19 @@
 
                         <div class="col-span-full md:col-span-1">
                             <label for="account_name" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Atas Nama</label>
-                            <input type="text" id="account_name" name="account_name" value="{{ old('account_name') }}" placeholder="Contoh: PT ISP Maju" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500" required>
+                            <input type="text" id="account_name" name="account_name" value="{{ old('account_name') }}" placeholder="Contoh: PT ISP Maju" class="input" required>
                             @error('account_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="col-span-full md:col-span-1">
                             <label for="account_number" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Nomor Rekening</label>
-                            <input type="text" id="account_number" name="account_number" value="{{ old('account_number') }}" placeholder="Hanya angka" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500" oninput="this.value = this.value.replace(/\D/g, '')">
+                            <input type="text" id="account_number" name="account_number" value="{{ old('account_number') }}" placeholder="Hanya angka" class="input" oninput="this.value = this.value.replace(/\D/g, '')">
                             @error('account_number') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="col-span-full md:col-span-1">
                             <label for="chart_of_account_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Link ke Akun Perkiraan (CoA)</label>
-                            <select id="chart_of_account_id" name="chart_of_account_id" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                            <select id="chart_of_account_id" name="chart_of_account_id" class="input">
                                 <option value="">Pilih Akun (Otomatis: 1102 Bank)</option>
                                 @foreach($accounts as $coa)
                                 <option value="{{ $coa->id }}" {{ old('chart_of_account_id') == $coa->id ? 'selected' : '' }}>{{ $coa->code }} - {{ $coa->name }}</option>
@@ -85,7 +85,7 @@
 
                         <div class="col-span-full">
                             <label for="description" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Keterangan (Opsional)</label>
-                            <textarea id="description" name="description" rows="3" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500">{{ old('description') }}</textarea>
+                            <textarea id="description" name="description" rows="3" class="input">{{ old('description') }}</textarea>
                             @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>

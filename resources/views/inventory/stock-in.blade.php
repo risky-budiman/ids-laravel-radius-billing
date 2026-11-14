@@ -47,7 +47,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <x-input-label value="Product / Item" />
-                        <select name="inventory_item_id" required @change="updateProduct" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                        <select name="inventory_item_id" required @change="updateProduct" class="mt-1 input">
                             <option value="">Pilih Barang</option>
                             @foreach($items as $item)
                                 <option value="{{ $item->id }}" data-serial="{{ $item->track_serial }}">{{ $item->name }} ({{ $item->sku }})</option>
@@ -62,7 +62,7 @@
                         
                         <div x-show="isExisting" x-transition class="mt-4">
                             <x-input-label value="Pilih Pelanggan" />
-                            <select name="customer_id" :required="isExisting" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                            <select name="customer_id" :required="isExisting" class="mt-1 input">
                                 <option value="">Pilih Pelanggan</option>
                                 @foreach($customers as $customer)
                                     <option value="{{ $customer->id }}">{{ $customer->name }} ({{ $customer->customer_code }})</option>
@@ -75,7 +75,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <x-input-label value="Supplier (Vendor) / Pengadaan" />
-                        <select name="supplier_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                        <select name="supplier_id" class="mt-1 input">
                             <option value="">Pilih Supplier</option>
                             @foreach($suppliers as $supplier)
                                 <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
@@ -95,7 +95,7 @@
                     </div>
                     <div>
                         <x-input-label value="Pajak Pembelian (Tax Input)" />
-                        <select name="tax_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm text-sm">
+                        <select name="tax_id" class="mt-1 input">
                             <option value="">Tanpa Pajak</option>
                             @foreach(\App\Models\Tax::where('is_active', true)->get() as $tax)
                                 <option value="{{ $tax->id }}">{{ $tax->name }} ({{ $tax->rate }}%)</option>
@@ -132,7 +132,7 @@
                         <template x-for="i in (parseInt(quantity) || 0)" :key="i">
                             <div class="animate-in fade-in slide-in-from-top-2 duration-300">
                                 <label class="text-[9px] text-gray-400 font-bold ml-1">SN Unit <span x-text="i"></span></label>
-                                <input type="text" name="serials[]" required class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm text-xs p-2 uppercase" placeholder="Enter SN...">
+                                <input type="text" name="serials[]" required class="uppercase input" placeholder="Enter SN...">
                             </div>
                         </template>
                     </div>
@@ -140,7 +140,7 @@
 
                 <div>
                     <x-input-label value="Notes" />
-                    <textarea name="notes" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl shadow-sm text-sm" rows="2"></textarea>
+                    <textarea name="notes" class="mt-1 input" rows="2"></textarea>
                 </div>
 
                 <div class="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-700">

@@ -24,7 +24,7 @@
                 <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <x-input-label for="billing_duration" :value="__('Pilihan Durasi')" />
-                        <select id="billing_duration" name="billing_period" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm">
+                        <select id="billing_duration" name="billing_period" class="mt-1 input">
                             @for ($i = 1; $i <= 12; $i++)
                                 @php $val = $i . " Month" . ($i > 1 ? "s" : ""); @endphp
                                 <option value="{{ $val }}" data-months="{{ $i }}" {{ $invoice->billing_period == $val ? 'selected' : '' }}>
@@ -138,7 +138,7 @@
                 </div>
                 <div class="md:col-span-2">
                     <x-input-label for="notes" :value="__('Additional Info (Keterangan)')" />
-                    <textarea id="notes" name="notes" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" rows="3" placeholder="Contoh: Biaya Instalasi, Denda, dll">{{ $invoice->notes }}</textarea>
+                    <textarea id="notes" name="notes" class="mt-1 input" rows="3" placeholder="Contoh: Biaya Instalasi, Denda, dll">{{ $invoice->notes }}</textarea>
                 </div>
             </div>
             <div class="flex items-center justify-end pt-4 border-t border-gray-200 dark:border-gray-700">

@@ -41,7 +41,7 @@
                                 </span>
                                 Sumber Saldo (Dari)
                             </label>
-                            <select id="from_account_id" name="from_account_id" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-red-500 focus:ring-red-500" required onchange="updateBalanceInfo('from', this)">
+                            <select id="from_account_id" name="from_account_id" class="input" required onchange="updateBalanceInfo('from', this)">
                                 <option value="">Pilih Rekening Asal</option>
                                 @foreach($accounts as $account)
                                 <option value="{{ $account->id }}" data-balance="{{ $account->balance }}" {{ old('from_account_id') == $account->id ? 'selected' : '' }}>
@@ -60,7 +60,7 @@
                                 </span>
                                 Tujuan Saldo (Ke)
                             </label>
-                            <select id="to_account_id" name="to_account_id" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500" required onchange="updateBalanceInfo('to', this)">
+                            <select id="to_account_id" name="to_account_id" class="input" required onchange="updateBalanceInfo('to', this)">
                                 <option value="">Pilih Rekening Tujuan</option>
                                 @foreach($accounts as $account)
                                 <option value="{{ $account->id }}" data-balance="{{ $account->balance }}" {{ old('to_account_id') == $account->id ? 'selected' : '' }}>
@@ -91,7 +91,7 @@
 
                         <div class="col-span-full">
                             <label for="description" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Keterangan Transfer</label>
-                            <textarea id="description" name="description" rows="2" placeholder="Misal: Penambahan modal kas kecil" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('description') }}</textarea>
+                            <textarea id="description" name="description" rows="2" placeholder="Misal: Penambahan modal kas kecil" class="input">{{ old('description') }}</textarea>
                             @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>

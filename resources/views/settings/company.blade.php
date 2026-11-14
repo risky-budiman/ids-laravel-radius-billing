@@ -69,7 +69,7 @@
 
                         <div>
                             <x-input-label for="company_address" :value="__('Company Address')" />
-                            <textarea id="company_address" name="company_address" rows="3" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm">{{ old('company_address', get_setting('company_address')) }}</textarea>
+                            <textarea id="company_address" name="company_address" rows="3" class="mt-1 input">{{ old('company_address', get_setting('company_address')) }}</textarea>
                             <x-input-error class="mt-2" :messages="$errors->get('company_address')" />
                         </div>
                     </div>
@@ -85,7 +85,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
                             <x-input-label for="invoice_format" :value="__('Default Print Format')" />
-                            <select id="invoice_format" name="invoice_format" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm">
+                            <select id="invoice_format" name="invoice_format" class="mt-1 input">
                                 <option value="A4" {{ get_setting('invoice_format', 'A4') == 'A4' ? 'selected' : '' }}>A4 / Letter (Standar Kantor)</option>
                                 <option value="Thermal" {{ get_setting('invoice_format') == 'Thermal' ? 'selected' : '' }}>Thermal / Struk (80mm)</option>
                             </select>
@@ -95,7 +95,7 @@
 
                     <div>
                         <x-input-label for="invoice_footer_note" :value="__('Invoice Footer Note (Terms / Thanks)')" />
-                        <textarea id="invoice_footer_note" name="invoice_footer_note" rows="3" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" placeholder="Contoh: Terima kasih atas kepercayaan Anda. Pembayaran harap ditransfer ke rekening BCA 123456 a.n PT XYZ.">{{ old('invoice_footer_note', get_setting('invoice_footer_note')) }}</textarea>
+                        <textarea id="invoice_footer_note" name="invoice_footer_note" rows="3" class="mt-1 input" placeholder="Contoh: Terima kasih atas kepercayaan Anda. Pembayaran harap ditransfer ke rekening BCA 123456 a.n PT XYZ.">{{ old('invoice_footer_note', get_setting('invoice_footer_note')) }}</textarea>
                         <p class="mt-1 text-[11px] text-gray-500">Pesan ini akan ditampilkan di bagian bawah setiap faktur yang dicetak.</p>
                         <x-input-error class="mt-2" :messages="$errors->get('invoice_footer_note')" />
                     </div>

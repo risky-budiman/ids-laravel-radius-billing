@@ -2,18 +2,18 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Ticket Details') }}: {{ $ticket->ticket_number }}
+                Detail Tiket <span class="font-mono text-surface-500 dark:text-surface-400 font-normal">{{ $ticket->ticket_number }}</span>
             </h2>
-            <div class="flex space-x-2">
-                <a href="{{ route('tickets.edit', $ticket) }}" class="inline-flex items-center px-4 py-2 bg-amber-500 border border-transparent rounded-xl font-semibold text-xs text-white uppercase tracking-widest hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                    Edit Ticket
+            <div class="flex items-center gap-2">
+                <a href="{{ route(\'tickets.edit\', $ticket) }}" class="btn-secondary">
+                    Edit tiket
                 </a>
                 @if(auth()->user()->isAdministrator())
                     <form action="{{ route('tickets.destroy', $ticket) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tiket ini beserta seluruh riwayat chat secara permanen?');" class="inline">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-rose-600 border border-transparent rounded-xl font-semibold text-xs text-white uppercase tracking-widest hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-lg shadow-rose-500/30">
-                            Delete Ticket
+                        <button type="submit" class="btn-ghost !text-rose-600 hover:!bg-rose-50 dark:hover:!bg-rose-500/10">
+                            Hapus
                         </button>
                     </form>
                 @endif
@@ -26,7 +26,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Main Ticket Content -->
                 <div class="lg:col-span-2 space-y-6">
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-2xl border border-gray-200 dark:border-gray-700">
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-xl border border-gray-200 dark:border-gray-700">
                         <div class="p-8">
                             <div class="flex justify-between items-start mb-6">
                                 <div>
@@ -53,7 +53,7 @@
                                             {{ str_replace('_', ' ', strtoupper($ticket->status)) }}
                                         </span>
                                         @if($ticket->isOverdue())
-                                            <span class="px-3 py-1 text-xs font-black rounded-full bg-rose-600 text-white animate-pulse shadow-lg shadow-rose-500/50">
+                                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-rose-600 text-white animate-pulse shadow-sm">
                                                 OVERDUE (SLA > 24H)
                                             </span>
                                         @endif
@@ -65,8 +65,8 @@
                                 </div>
                             </div>
 
-                            <div class="prose dark:prose-invert max-w-none mb-8 bg-gray-50 dark:bg-gray-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
-                                <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Description</h4>
+                            <div class="prose dark:prose-invert max-w-none mb-8 bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
+                                <h4 class="text-sm font-bold text-gray-400  mb-4">Description</h4>
                                 <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ $ticket->description }}</p>
                                 
                                 @if($ticket->attachment)
@@ -80,8 +80,8 @@
                             </div>
 
                             @if($ticket->resolution_notes)
-                                <div class="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/50 mb-8">
-                                    <h4 class="text-sm font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-4">Resolution Notes</h4>
+                                <div class="bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800 mb-8">
+                                    <h4 class="text-sm font-bold text-indigo-600 dark:text-indigo-400  mb-4">Resolution Notes</h4>
                                     <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ $ticket->resolution_notes }}</p>
                                 </div>
                             @endif
@@ -127,15 +127,15 @@
                                         div.className = 'flex space-x-4 transition-all duration-300';
                                         div.innerHTML = `
                                             <div class='flex-shrink-0'>
-                                                <div class='w-10 h-10 rounded-2xl ${bgClass} flex items-center justify-center font-bold'>
+                                                <div class='w-10 h-10 rounded-xl ${bgClass} flex items-center justify-center font-bold'>
                                                     ${initial}
                                                 </div>
                                             </div>
                                             <div class='flex-1'>
-                                                <div class='${cardBg} p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm'>
+                                                <div class='${cardBg} p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm'>
                                                     <div class='flex justify-between items-center mb-3'>
                                                         <span class='font-bold text-gray-900 dark:text-white'>${reply.user_name}</span>
-                                                        <span class='text-[10px] text-gray-400 uppercase'>${reply.created_at}</span>
+                                                        <span class='text-xs text-gray-400'>${reply.created_at}</span>
                                                     </div>
                                                     <p class='text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap'>${reply.message}</p>
                                                     ${attachmentHtml}
@@ -156,17 +156,17 @@
                                     @forelse($ticket->replies as $reply)
                                         <div class="flex space-x-4">
                                             <div class="flex-shrink-0">
-                                                <div class="w-10 h-10 rounded-2xl {{ $reply->user_id ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' }} flex items-center justify-center font-bold">
+                                                <div class="w-10 h-10 rounded-xl {{ $reply->user_id ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' }} flex items-center justify-center font-bold">
                                                     {{ $reply->user_id ? substr($reply->user->name, 0, 1) : substr($ticket->customer->name, 0, 1) }}
                                                 </div>
                                             </div>
                                             <div class="flex-1">
-                                                <div class="{{ $reply->user_id ? 'bg-white dark:bg-gray-800/50' : 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800' }} p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                                                <div class="{{ $reply->user_id ? 'bg-white dark:bg-gray-800/50' : 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800' }} p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
                                                     <div class="flex justify-between items-center mb-3">
                                                         <span class="font-bold text-gray-900 dark:text-white">
                                                             {{ $reply->user_id ? $reply->user->name : $ticket->customer->name . ' (Pelanggan)' }}
                                                         </span>
-                                                        <span class="text-[10px] text-gray-400 uppercase">{{ $reply->created_at->diffForHumans() }}</span>
+                                                        <span class="text-xs text-gray-400">{{ $reply->created_at->diffForHumans() }}</span>
                                                     </div>
                                                     <p class="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">{{ $reply->message }}</p>
                                                     
@@ -187,11 +187,11 @@
                                 </div>
 
                                 <!-- Reply Form -->
-                                <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-xl">
+                                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-xl">
                                     <form action="{{ route('tickets.reply', $ticket) }}" method="POST" enctype="multipart/form-data">
                                         @csrf
                                         <div class="space-y-4">
-                                            <textarea name="message" rows="4" class="block w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-2xl text-sm transition-all" placeholder="Add a comment or update..." required></textarea>
+                                            <textarea name="message" rows="4" class="block w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl text-sm transition-all" placeholder="Add a comment or update..." required></textarea>
                                             
                                             <div class="flex items-center justify-between">
                                                 <div class="relative">
@@ -215,7 +215,7 @@
 
                 <!-- Ticket Sidebar / Meta Info -->
                 <div class="space-y-6">
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-2xl border border-gray-200 dark:border-gray-700">
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-xl border border-gray-200 dark:border-gray-700">
                         <div class="p-6">
                             <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-6">Information</h4>
                             
@@ -226,7 +226,7 @@
                                         <p class="mt-1 font-semibold text-gray-900 dark:text-white">{{ $ticket->customer->name }}</p>
                                         <div class="flex items-center space-x-2 mt-1">
                                             <p class="text-sm text-gray-500 italic">{{ $ticket->customer->username }}</p>
-                                            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 uppercase tracking-tighter">
+                                            <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                                                 {{ str_replace('_', ' ', $ticket->customer->status) }}
                                             </span>
                                         </div>
@@ -247,7 +247,7 @@
                                                 'urgent' => 'bg-rose-600',
                                             ];
                                         @endphp
-                                        <div class="px-3 py-1 rounded-full {{ $priorityColors[$ticket->priority] }} text-white text-[10px] font-black uppercase shadow-sm">
+                                        <div class="px-3 py-1 rounded-full {{ $priorityColors[$ticket->priority] }} text-white text-xs shadow-sm">
                                             {{ $ticket->priority }}
                                         </span>
                                     </div>
@@ -278,7 +278,7 @@
                     </div>
 
                     <!-- Quick Actions -->
-                    <div class="bg-gray-900 text-white overflow-hidden shadow-sm sm:rounded-2xl border border-gray-800 p-6">
+                    <div class="bg-gray-900 text-white overflow-hidden shadow-sm sm:rounded-xl border border-gray-800 p-6">
                         <h4 class="text-lg font-bold mb-4">Quick Update</h4>
                         <form action="{{ route('tickets.update', $ticket) }}" method="POST">
                             @csrf

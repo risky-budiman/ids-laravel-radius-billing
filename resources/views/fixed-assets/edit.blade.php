@@ -36,7 +36,7 @@
 
                     <div>
                         <x-input-label for="status" value="Status" />
-                        <select name="status" id="status" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" required>
+                        <select name="status" id="status" class="mt-1 input" required>
                             <option value="active" {{ $fixedAsset->status === 'active' ? 'selected' : '' }}>Active</option>
                             <option value="disposed" {{ $fixedAsset->status === 'disposed' ? 'selected' : '' }}>Disposed / Sold</option>
                         </select>
@@ -44,7 +44,7 @@
 
                     <div class="md:col-span-2">
                         <x-input-label for="description" value="Notes" />
-                        <textarea id="description" name="description" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" rows="3">{{ $fixedAsset->description }}</textarea>
+                        <textarea id="description" name="description" class="mt-1 input" rows="3">{{ $fixedAsset->description }}</textarea>
                     </div>
                 </div>
             </div>

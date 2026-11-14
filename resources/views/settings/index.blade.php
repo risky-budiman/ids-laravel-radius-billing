@@ -95,7 +95,7 @@
 
                             <div class="md:col-span-2">
                                 <x-input-label for="company_address" :value="__('Office Address')" />
-                                <textarea id="company_address" name="company_address" rows="3" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ $settings['company_address']->value ?? '' }}</textarea>
+                                <textarea id="company_address" name="company_address" rows="3" class="mt-1 input">{{ $settings['company_address']->value ?? '' }}</textarea>
                             </div>
 
                         <div class="md:col-span-2 mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
@@ -124,7 +124,7 @@
                                         </div>
                                         <div>
                                             <x-input-label for="commission_type" :value="__('Type')" />
-                                            <select name="commission_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm text-xs">
+                                            <select name="commission_type" class="mt-1 input">
                                                 <option value="percentage" {{ ($settings['commission_type']->value ?? 'percentage') == 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
                                                 <option value="fixed" {{ ($settings['commission_type']->value ?? 'percentage') == 'fixed' ? 'selected' : '' }}>Fixed Amount</option>
                                             </select>
@@ -167,7 +167,7 @@
                                         </div>
                                         <div>
                                             <x-input-label for="default_sales_commission_type" :value="__('Type')" />
-                                            <select name="default_sales_commission_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm text-xs">
+                                            <select name="default_sales_commission_type" class="mt-1 input">
                                                 <option value="percentage" {{ ($settings['default_sales_commission_type']->value ?? 'percentage') == 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
                                                 <option value="fixed" {{ ($settings['default_sales_commission_type']->value ?? 'percentage') == 'fixed' ? 'selected' : '' }}>Fixed Amount</option>
                                             </select>

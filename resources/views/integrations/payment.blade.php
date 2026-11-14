@@ -33,7 +33,7 @@
                     
                     <div>
                         <x-input-label value="Environment" />
-                        <select name="credentials[environment]" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-md shadow-sm">
+                        <select name="credentials[environment]" class="mt-1 input">
                             <option value="sandbox" {{ ($m->credentials['environment'] ?? '') == 'sandbox' ? 'selected' : '' }}>Sandbox (Test)</option>
                             <option value="production" {{ ($m->credentials['environment'] ?? '') == 'production' ? 'selected' : '' }}>Production (Live)</option>
                         </select>
@@ -181,7 +181,7 @@
                     
                     <div>
                         <x-input-label value="Environment" />
-                        <select name="credentials[environment]" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-md shadow-sm">
+                        <select name="credentials[environment]" class="mt-1 input">
                             <option value="sandbox" {{ ($d->credentials['environment'] ?? '') == 'sandbox' ? 'selected' : '' }}>Sandbox (Test)</option>
                             <option value="production" {{ ($d->credentials['environment'] ?? '') == 'production' ? 'selected' : '' }}>Production (Live)</option>
                         </select>

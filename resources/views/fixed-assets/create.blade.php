@@ -59,7 +59,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2">
                         <x-input-label for="asset_account_id" value="Asset Account (Debit)" />
-                        <select name="asset_account_id" id="asset_account_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" required>
+                        <select name="asset_account_id" id="asset_account_id" class="mt-1 input" required>
                             <option value="">Select Asset Account (e.g. 1210 - Peralatan Kantor)...</option>
                             @foreach($accounts as $account)
                                 @if($account->type === 'asset')
@@ -71,7 +71,7 @@
 
                     <div>
                         <x-input-label for="depreciation_account_id" value="Depreciation Expense Account" />
-                        <select name="depreciation_account_id" id="depreciation_account_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" required>
+                        <select name="depreciation_account_id" id="depreciation_account_id" class="mt-1 input" required>
                             <option value="">Select Expense Account (e.g. 6xxx)...</option>
                             @foreach($accounts as $account)
                                 @if($account->type === 'expense')
@@ -83,7 +83,7 @@
 
                     <div>
                         <x-input-label for="accumulated_account_id" value="Accumulated Depreciation Account" />
-                        <select name="accumulated_account_id" id="accumulated_account_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" required>
+                        <select name="accumulated_account_id" id="accumulated_account_id" class="mt-1 input" required>
                             <option value="">Select Contra-Asset Account...</option>
                             @foreach($accounts as $account)
                                 @if($account->type === 'asset' || $account->type === 'liability')

@@ -107,7 +107,7 @@
                     </div>
                     <div>
                         <x-input-label value="Address" />
-                        <textarea name="address" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl shadow-sm text-sm" rows="3"></textarea>
+                        <textarea name="address" class="mt-1 input" rows="3"></textarea>
                     </div>
                 </div>
                 <div class="flex justify-end space-x-3 pt-4">

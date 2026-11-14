@@ -47,7 +47,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         <div class="col-span-full">
                             <label for="bank_account_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Pilih Rekening Tujuan (Penerima)</label>
-                            <select id="bank_account_id" name="bank_account_id" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500" required onchange="updateBalanceInfo(this)">
+                            <select id="bank_account_id" name="bank_account_id" class="input" required onchange="updateBalanceInfo(this)">
                                 <option value="">Pilih Rekening Tujuan</option>
                                 @foreach($accounts as $account)
                                 <option value="{{ $account->id }}" data-balance="{{ $account->balance }}" {{ old('bank_account_id') == $account->id ? 'selected' : '' }}>
@@ -63,7 +63,7 @@
 
                         <div class="col-span-full">
                             <label for="chart_of_account_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Kategori Pemasukan (Buku Besar)</label>
-                            <select id="chart_of_account_id" name="chart_of_account_id" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                            <select id="chart_of_account_id" name="chart_of_account_id" class="input" required>
                                 <option value="">Pilih Kategori Akun</option>
                                 @foreach($categories as $coa)
                                 <option value="{{ $coa->id }}" {{ old('chart_of_account_id') == $coa->id ? 'selected' : '' }}>
@@ -95,13 +95,13 @@
 
                         <div class="col-span-full">
                             <label for="description" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Sumber / Keterangan</label>
-                            <input type="text" id="description" name="description" value="{{ old('description') }}" placeholder="Contoh: Suntikan Modal Owner, Jual Router Bekas, Refund Belanja" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                            <input type="text" id="description" name="description" value="{{ old('description') }}" placeholder="Contoh: Suntikan Modal Owner, Jual Router Bekas, Refund Belanja" class="input" required>
                             @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="col-span-full">
                             <label for="reference_number" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Nomor Referensi (Opsional)</label>
-                            <input type="text" id="reference_number" name="reference_number" value="{{ old('reference_number') }}" placeholder="Contoh: REF-999" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <input type="text" id="reference_number" name="reference_number" value="{{ old('reference_number') }}" placeholder="Contoh: REF-999" class="input">
                             @error('reference_number') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>

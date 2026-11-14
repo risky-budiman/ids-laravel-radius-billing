@@ -183,7 +183,7 @@
 
             <div class="mb-6">
                 <x-input-label for="type" value="Category" class="font-bold text-xs uppercase text-gray-500 mb-2" />
-                <select id="type" name="type" class="block w-full border-gray-300 rounded-lg focus:ring-indigo-500">
+                <select id="type" name="type" class="input">
                     <option value="feature">✨ New Feature</option>
                     <option value="fix">🐛 Bug Fix</option>
                     <option value="security">🛡️ Security Patch</option>
@@ -192,7 +192,7 @@
 
             <div class="mb-8">
                 <x-input-label for="description" value="Details (One per line)" class="font-bold text-xs uppercase text-gray-500 mb-2" />
-                <textarea id="description" name="description" rows="5" class="block w-full border-gray-300 rounded-lg focus:ring-indigo-500" placeholder="List the changes here..." required></textarea>
+                <textarea id="description" name="description" rows="5" class="input" placeholder="List the changes here..." required></textarea>
             </div>
 
             <div class="flex justify-end space-x-3">

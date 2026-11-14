@@ -56,7 +56,7 @@
                             </div>
                             <div>
                                 <x-input-label for="commission_type" :value="__('Rate Type')" />
-                                <select id="commission_type" name="commission_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                <select id="commission_type" name="commission_type" class="mt-1 input">
                                     <option value="percentage" {{ old('commission_type', get_setting('default_commission_type')) === 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
                                     <option value="fixed" {{ old('commission_type') === 'fixed' ? 'selected' : '' }}>Fixed Amount</option>
                                 </select>

@@ -97,7 +97,7 @@
 
                         <div class="col-span-full">
                             <label for="chart_of_account_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Kategori Akun (Buku Besar)</label>
-                            <select id="chart_of_account_id" name="chart_of_account_id" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl shadow-sm focus:border-amber-500 focus:ring-amber-500">
+                            <select id="chart_of_account_id" name="chart_of_account_id" class="input">
                                 <option value="">— Tanpa Kategori —</option>
                                 @foreach($categories as $coa)
                                 <option value="{{ $coa->id }}" @selected(old('chart_of_account_id', $bankTransaction->chart_of_account_id) == $coa->id)>

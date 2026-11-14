@@ -62,7 +62,7 @@
                             <div class="space-y-4">
                                 <div>
                                     <label for="region_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Region</label>
-                                    <select id="region_code" name="region_code" class="block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-xl shadow-sm">
+                                    <select id="region_code" name="region_code" class="input">
                                         <option value="">-- Semua Region --</option>
                                         @foreach($regions as $r)
                                             <option value="{{ $r->code }}" data-id="{{ $r->id }}" {{ old('region_code') == $r->code ? 'selected' : '' }}>[{{ $r->code }}] {{ $r->name }}</option>
@@ -72,7 +72,7 @@
 
                                 <div>
                                     <label for="sto_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">STO</label>
-                                    <select id="sto_code" name="sto_code" class="block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-xl shadow-sm disabled:opacity-50" disabled>
+                                    <select id="sto_code" name="sto_code" class="input" disabled>
                                         <option value="">-- Semua STO --</option>
                                         @foreach($stos as $s)
                                             <option value="{{ $s->code }}" data-id="{{ $s->id }}" data-region-id="{{ $s->region_id }}" class="hidden" {{ old('sto_code') == $s->code ? 'selected' : '' }}>[{{ $s->code }}] {{ $s->name }}</option>
@@ -82,7 +82,7 @@
 
                                 <div>
                                     <label for="stb_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">STB</label>
-                                    <select id="stb_code" name="stb_code" class="block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-xl shadow-sm disabled:opacity-50" disabled>
+                                    <select id="stb_code" name="stb_code" class="input" disabled>
                                         <option value="">-- Semua STB --</option>
                                         @foreach($stbs as $t)
                                             <option value="{{ $t->code }}" data-sto-id="{{ $t->sto_id }}" class="hidden" {{ old('stb_code') == $t->code ? 'selected' : '' }}>[{{ $t->code }}] {{ $t->name }}</option>
@@ -92,7 +92,7 @@
 
                                 <div>
                                     <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status Pelanggan</label>
-                                    <select id="status" name="status" class="block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-xl shadow-sm">
+                                    <select id="status" name="status" class="input">
                                         <option value="">-- Semua Status --</option>
                                         <option value="active">Active (Aktif)</option>
                                         <option value="suspended">Suspended (Isolir)</option>
@@ -116,7 +116,7 @@
 
                             <div>
                                 <label for="template_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pilih Template</label>
-                                <select id="template_id" name="template_id" class="block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-xl shadow-sm" required>
+                                <select id="template_id" name="template_id" class="input" required>
                                     <option value="">-- Pilih Template --</option>
                                     @foreach($templates as $tmp)
                                         <option value="{{ $tmp->id }}" data-message="{{ $tmp->message }}">{{ $tmp->name }}</option>
