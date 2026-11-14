@@ -7,7 +7,6 @@ use App\Models\Ticket;
 use App\Models\TicketReply;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Notifications\TicketCreatedNotification;
 
 class TicketController extends Controller
 {
@@ -65,15 +64,7 @@ class TicketController extends Controller
             'attachment' => $attachmentPath,
         ]);
 
-        // Send notification to admins/technicians
-        try {
-            $staff = \App\Models\User::whereIn('role', ['administrator', 'admin', 'teknisi'])->get();
-            foreach ($staff as $admin) {
-                $admin->notify(new TicketCreatedNotification($ticket));
-            }
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Failed to send TicketCreatedNotification (Web CustomerPortal) for ticket #' . $ticket->id . ': ' . $e->getMessage());
-        }
+        // Notifikasi staf & WhatsApp grup dikirim oleh event model Ticket::created.
 
         return redirect()->route('customer.tickets.index')->with('success', 'Tiket gangguan berhasil dikirim. Tim kami akan segera menindaklanjutinya.');
     }

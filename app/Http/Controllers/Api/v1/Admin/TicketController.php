@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\Customer;
 use App\Models\User;
+use App\Services\TicketService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
 class TicketController extends Controller
@@ -143,8 +145,9 @@ class TicketController extends Controller
     {
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
-            'type' => 'required|in:gangguan,aktivasi,dismantle,relokasi,maintenance',
-            'priority' => 'required|in:low,medium,high,urgent',
+            // Hanya tipe yang ada di enum kolom tickets.type (relokasi/maintenance = error 500 di MySQL).
+            'type' => ['required', Rule::in(TicketService::TYPES)],
+            'priority' => ['required', Rule::in(TicketService::PRIORITIES)],
             'subject' => 'required|string|max:255',
             'description' => 'required|string',
             'assigned_to' => 'nullable|exists:users,id',
@@ -169,16 +172,20 @@ class TicketController extends Controller
         $ticket = Ticket::findOrFail($id);
 
         $validated = $request->validate([
-            'type' => 'nullable|in:gangguan,aktivasi,dismantle,relokasi,maintenance',
-            'priority' => 'nullable|in:low,medium,high,urgent',
-            'status' => 'nullable|in:open,in_progress,resolved,closed,canceled',
+            'type' => ['nullable', Rule::in(TicketService::TYPES)],
+            'priority' => ['nullable', Rule::in(TicketService::PRIORITIES)],
+            'status' => ['nullable', Rule::in(TicketService::STATUSES)],
             'subject' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'resolution_notes' => 'nullable|string',
             'assigned_to' => 'nullable|exists:users,id',
         ]);
 
-        $ticket->update(array_filter($validated, fn ($val) => !is_null($val)));
+        try {
+            app(TicketService::class)->update($ticket, array_filter($validated, fn ($val) => !is_null($val)));
+        } catch (\DomainException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
 
         return response()->json([
             'message' => 'Tiket berhasil diperbarui',
@@ -238,10 +245,14 @@ class TicketController extends Controller
     {
         $ticket = Ticket::findOrFail($id);
 
-        $ticket->update([
-            'status' => 'closed',
-            'resolution_notes' => $request->input('resolution_notes', 'Ditutup oleh ' . $request->user()->name),
-        ]);
+        try {
+            app(TicketService::class)->update($ticket, [
+                'status' => 'closed',
+                'resolution_notes' => $request->input('resolution_notes', 'Ditutup oleh ' . $request->user()->name),
+            ]);
+        } catch (\DomainException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
 
         return response()->json([
             'message' => "Tiket #{$ticket->ticket_number} berhasil ditutup.",
@@ -251,8 +262,13 @@ class TicketController extends Controller
     /**
      * Delete ticket.
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
+        // Sama dengan web: hanya administrator yang boleh menghapus tiket.
+        if (! $request->user()->isAdministrator()) {
+            return response()->json(['message' => 'Hanya administrator yang dapat menghapus tiket.'], 403);
+        }
+
         $ticket = Ticket::findOrFail($id);
         $ticket->delete();
 

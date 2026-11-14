@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\TicketService;
 use Illuminate\Http\Request;
 
 class TicketController extends Controller
@@ -79,11 +80,8 @@ class TicketController extends Controller
             'assigned_to' => 'nullable|exists:users,id',
         ]);
 
+        // Notifikasi staf & WhatsApp grup dikirim oleh event model Ticket::created.
         $ticket = \App\Models\Ticket::create($validated);
-
-        // Notify targeted staff (Admin & Technicians)
-        $staff = \App\Models\User::whereIn('role', ['administrator', 'admin', 'teknisi'])->get();
-        \Illuminate\Support\Facades\Notification::send($staff, new \App\Notifications\TicketCreatedNotification($ticket));
 
         return redirect()->route('tickets.index', ['type' => $ticket->type])
             ->with('success', 'Ticket created successfully.');
@@ -116,39 +114,12 @@ class TicketController extends Controller
             'assigned_to' => 'nullable|exists:users,id',
         ]);
 
-        // 8.1. Prevent manual closing of Activation/Dismantle tickets
-        if (in_array($ticket->type, ['aktivasi', 'dismantle']) && in_array($request->status, ['closed', 'resolved'])) {
-            $wizardType = ($ticket->type === 'aktivasi') ? 'Aktivasi' : 'Dismantle';
-            return redirect()->back()
-                ->with('error', "Tiket $wizardType hanya dapat diselesaikan melalui Wizard $wizardType Pelanggan agar integritas data Billing & Inventory terjaga.");
-        }
-
-        $ticket->update($validated);
-
-        // Sync with Customer Status (Expert Logic)
-        if ($ticket->customer) {
-            $customer = $ticket->customer;
-            
-            if ($ticket->status === 'closed' || $ticket->status === 'resolved') {
-                if ($ticket->type === 'aktivasi') {
-                    $customer->update([
-                        'status' => \App\Models\Customer::STATUS_ACTIVE,
-                        'is_active' => true
-                    ]);
-                } elseif ($ticket->type === 'dismantle') {
-                    $customer->update([
-                        'status' => \App\Models\Customer::STATUS_DISMANTLED,
-                        'is_active' => false
-                    ]);
-                }
-            } elseif ($ticket->status === 'canceled') {
-                if ($ticket->type === 'aktivasi') {
-                    $customer->update(['status' => \App\Models\Customer::STATUS_CANCELED]);
-                } elseif ($ticket->type === 'dismantle') {
-                    // If dismantle is canceled, customer probably stays active
-                    $customer->update(['status' => \App\Models\Customer::STATUS_ACTIVE]);
-                }
-            }
+        // Tiket Aktivasi/Dismantle hanya bisa diselesaikan lewat wizard; pembatalan
+        // menyinkronkan status pelanggan. Aturan yang sama dipakai API admin.
+        try {
+            app(TicketService::class)->update($ticket, $validated);
+        } catch (\DomainException $e) {
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
 
         return redirect()->route('tickets.show', $ticket)
