@@ -54,6 +54,10 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    // Proxy yang boleh menentukan IP klien lewat X-Forwarded-For (dipasang di AppServiceProvider).
+    // Default nginx lokal. Cloudflare / load balancer: isi rentang IP-nya (dipisah koma) atau '*'.
+    'trusted_proxies' => env('TRUSTED_PROXIES', '127.0.0.1,::1'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

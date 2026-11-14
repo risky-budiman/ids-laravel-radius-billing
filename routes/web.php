@@ -433,6 +433,8 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::get('/', [\App\Http\Controllers\BackupController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\BackupController::class, 'store'])->name('store');
         Route::get('/download/{filename}', [\App\Http\Controllers\BackupController::class, 'download'])->name('download');
+        Route::post('/database', [\App\Http\Controllers\BackupController::class, 'runDatabaseDump'])->name('database.run');
+        Route::get('/database/{file}', [\App\Http\Controllers\BackupController::class, 'downloadDatabaseDump'])->name('database.download')->where('file', '[A-Za-z0-9_.\-]+');
         Route::delete('/{filename}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('destroy');
         Route::post('/inspect', [\App\Http\Controllers\BackupController::class, 'inspect'])->name('inspect');
         Route::post('/restore', [\App\Http\Controllers\BackupController::class, 'restore'])->name('restore');

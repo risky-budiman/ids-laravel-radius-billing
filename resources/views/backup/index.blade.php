@@ -67,6 +67,72 @@
             </div>
         @endif
 
+        {{-- Backup database penuh otomatis (harian) --}}
+        @php
+            $lastAt = $dbStatus['at'] ? \Carbon\Carbon::parse($dbStatus['at']) : null;
+            $stale = ! $lastAt || $lastAt->lt(now()->subHours(36));
+            $failed = $dbStatus['status'] === 'failed';
+            $dbName = config('database.connections.' . config('database.default') . '.database');
+        @endphp
+        <section class="card overflow-hidden">
+            <div class="card-header flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h3 class="card-title">Backup database otomatis (harian 02:30)</h3>
+                    <p class="text-xs text-surface-500 dark:text-surface-400">Seluruh tabel dalam format SQL standar (.sql.gz) — bisa dipulihkan dengan MySQL biasa walau server & file .env hilang. Disimpan 7 harian + 1 per bulan selama 6 bulan.</p>
+                </div>
+                <form method="POST" action="{{ route('backup.database.run') }}" onsubmit="this.querySelector('button').disabled = true; this.querySelector('button').innerText = 'Memproses…'">
+                    @csrf
+                    <button type="submit" class="btn-primary btn-sm">Backup sekarang</button>
+                </form>
+            </div>
+            <div class="card-body space-y-4">
+                <div @class([
+                    'rounded-lg border px-4 py-3 text-sm',
+                    'border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-200' => $failed,
+                    'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200' => ! $failed && $stale,
+                    'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200' => ! $failed && ! $stale,
+                ])>
+                    @if(! $lastAt)
+                        <strong>Belum pernah berjalan.</strong> Pastikan cron <span class="font-mono">schedule:run</span> aktif di server, atau klik "Backup sekarang".
+                    @elseif($failed)
+                        <strong>Backup terakhir GAGAL</strong> ({{ $lastAt->locale('id')->diffForHumans() }}): {{ $dbStatus['message'] }}
+                    @elseif($stale)
+                        <strong>Backup terakhir sudah {{ $lastAt->locale('id')->diffForHumans() }}.</strong> Periksa cron <span class="font-mono">schedule:run</span> di server. Terakhir: {{ $dbStatus['message'] }}
+                    @else
+                        <strong>Backup terakhir berhasil</strong> {{ $lastAt->locale('id')->diffForHumans() }} — {{ $dbStatus['message'] }}
+                    @endif
+                    @if(! $dbStatus['remote'])
+                        <span class="block mt-1 text-xs opacity-80">Salinan di luar server belum diatur (BACKUP_REMOTE_DISK). Bila disk server rusak, backup ikut hilang — unduh berkala atau atur salinan ke S3/SFTP.</span>
+                    @endif
+                </div>
+
+                @if(count($dbDumps))
+                    <div class="overflow-x-auto rounded-lg border border-surface-200 dark:border-surface-700">
+                        <table class="table">
+                            <thead><tr><th>File</th><th>Waktu</th><th class="text-right">Ukuran</th><th></th></tr></thead>
+                            <tbody>
+                                @foreach($dbDumps as $d)
+                                    <tr>
+                                        <td class="font-mono text-xs">{{ $d['file'] }}</td>
+                                        <td class="text-xs whitespace-nowrap">{{ date('d/m/Y H:i', $d['time']) }}</td>
+                                        <td class="amount text-xs">{{ number_format($d['size'] / 1048576, 2, ',', '.') }} MB</td>
+                                        <td class="text-right"><a href="{{ route('backup.database.download', $d['file']) }}" class="btn-ghost btn-sm">Unduh</a></td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+
+                <details class="text-xs text-surface-500 dark:text-surface-400">
+                    <summary class="cursor-pointer font-medium text-surface-700 dark:text-surface-300">Cara memulihkan backup database penuh</summary>
+<pre class="mt-2 overflow-x-auto bg-surface-100 dark:bg-surface-800 text-surface-800 dark:text-surface-200 p-3 rounded-lg font-mono"># Di server (database tujuan sebaiknya kosong / baru):
+gunzip &lt; db_{{ $dbName }}_YYYY-MM-DD_HHMMSS.sql.gz | mysql -u USER -p {{ $dbName }}
+php artisan optimize:clear</pre>
+                </details>
+            </div>
+        </section>
+
         @if(isset($errors) && $errors->any())
             <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 space-y-1 text-sm">
                 <p class="font-bold">Terjadi kesalahan validasi:</p>

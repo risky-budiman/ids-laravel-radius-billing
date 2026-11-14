@@ -44,5 +44,11 @@ return [
         'token' => env('GITHUB_TOKEN', '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'),
     ],
 
+
+    // WhatsApp gateway self-hosted (WhatsAppService::sendViaSelfHosted)
+    'wa_gateway' => [
+        'url' => env('WA_GATEWAY_URL', 'http://localhost:3100/api'),
+        'key' => env('WA_GATEWAY_KEY'),
+    ],
 ];
 

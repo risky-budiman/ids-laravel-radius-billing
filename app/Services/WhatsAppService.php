@@ -163,8 +163,10 @@ class WhatsAppService
 
     protected function sendViaSelfHosted($target, $message)
     {
-        $url = env('WA_GATEWAY_URL', 'http://localhost:3100/api');
-        $token = env('WA_GATEWAY_KEY', 'dev-wa-gateway-key-2026');
+        // Lewat config (bukan env()): setelah config:cache, env() di luar config/ selalu memberi default
+        // sehingga kunci gateway di .env diabaikan dan pengiriman WhatsApp gagal diam-diam.
+        $url = (string) config('services.wa_gateway.url');
+        $token = (string) config('services.wa_gateway.key');
 
         try {
             $response = Http::timeout(10)

@@ -24,8 +24,45 @@ class BackupController extends Controller
     {
         $modules = $this->backupService->getModules();
         $localBackups = $this->backupService->listLocalBackups();
+        $dbDumps = app(\App\Services\DatabaseDumpService::class)->list();
+        $dbStatus = [
+            'status' => get_setting('backup_last_status'),
+            'message' => get_setting('backup_last_message'),
+            'at' => get_setting('backup_last_at'),
+            'remote' => (string) config('backup.remote_disk', ''),
+        ];
 
-        return view('backup.index', compact('modules', 'localBackups'));
+        return view('backup.index', compact('modules', 'localBackups', 'dbDumps', 'dbStatus'));
+    }
+
+    /** Jalankan backup database penuh sekarang (sama dengan jadwal harian). */
+    public function runDatabaseDump()
+    {
+        $exit = \Illuminate\Support\Facades\Artisan::call('app:backup-database');
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'backup_database_run',
+            'description' => 'Menjalankan backup database penuh: ' . get_setting('backup_last_message'),
+        ]);
+
+        return redirect()->route('backup.index')->with($exit === 0 ? 'success' : 'error',
+            ($exit === 0 ? 'Backup database selesai: ' : 'Backup database gagal: ') . get_setting('backup_last_message'));
+    }
+
+    /** Unduh file backup database penuh (.sql.gz). */
+    public function downloadDatabaseDump(string $file)
+    {
+        $path = app(\App\Services\DatabaseDumpService::class)->path($file);
+        if (! $path) {
+            return redirect()->route('backup.index')->with('error', 'File backup database tidak ditemukan.');
+        }
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'backup_downloaded',
+            'description' => "Mengunduh backup database penuh: {$file}",
+        ]);
+
+        return response()->download($path, $file, ['Content-Type' => 'application/gzip']);
     }
 
     /**

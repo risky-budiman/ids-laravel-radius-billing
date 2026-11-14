@@ -66,6 +66,7 @@ class BackupService
                     'radusergroup',
                     'radacct',
                     'radpostauth',
+                    'customer_isolations',
                 ]
             ],
             'accounting' => [
@@ -150,6 +151,7 @@ class BackupService
                 'tables' => [
                     'settings',
                     'users',
+                    'activity_logs',
                 ]
             ],
         ];

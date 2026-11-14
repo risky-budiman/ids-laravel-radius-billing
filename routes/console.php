@@ -9,6 +9,8 @@ Artisan::command('inspire', function () {
 
 use Illuminate\Support\Facades\Schedule;
 Schedule::command('app:process-billing')->dailyAt('00:01');
+// Backup database harian (.sql.gz, rotasi 7 harian + 6 bulanan) — lihat DatabaseDumpService
+Schedule::command('app:backup-database')->dailyAt('02:30')->withoutOverlapping(120);
 Schedule::command('customer:check-grace-period')->everyMinute();
 
 // FUP & Quota Management

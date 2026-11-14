@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.5.98] - 2026-11-15
+- fix(accounting): cash flow double-counted split journals; Excel export was a placeholder ([8137b1c])
+- fix(update): web updater refuses releases that need composer/npm; reports failed migrations ([f72affe])
+- fix(security): login brute-force limit could be bypassed via X-Forwarded-For ([cb4dccc])
+- fix(payments): no double-recorded payments; underpaid gateway callbacks held ([ab841d5])
+- fix(isolir): RADIUS group is internal; PPP profile optional and auto-created ([9dd076f])
+- feat(isolir): payment bypass list and MikroTik script filled from system data ([b3b925c])
+- feat(isolir): RADIUS isolation with configurable isolation IP allocation ([bea7dd4])
+- fix(billing): overdue customers were never suspended; renewal invoices failed ([1697e16])
+- fix(finance): statement balances follow mutations; atomic balance updates ([ef994c4])
+- feat(reports): monthly/yearly ticket recap and bank statement (rekening koran) ([8b783b6])
+- refactor(tickets): shared rules for web and API; stop duplicate notifications ([f557971])
+- fix(billing): paying arrears no longer reactivates dismantled customers ([01c386c])
+- fix(ui): remove duplicate select chevrons and duplicate plus signs ([cc06e2c])
+- refactor: single lifecycle/payment path for web and API; fix FUP ([6ef3fe9])
+- test: make the full suite green (118 passing) and add CI ([3e6084c])
+
+
+
 ## [v1.5.97] - 2026-11-15
 - fix(update): web updater refuses releases that need composer/npm; reports failed migrations ([f72affe])
 - fix(security): login brute-force limit could be bypassed via X-Forwarded-For ([cb4dccc])
