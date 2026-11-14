@@ -230,48 +230,73 @@ class ReportController extends Controller
         $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
 
-        // Get all journal items related to Cash/Bank accounts (Code 1001 and its children like 1101, 1102)
+        return view('accounting.reports.cash-flow', $this->computeCashFlow($startDate, $endDate) + compact('startDate', 'endDate'));
+    }
+
+    /**
+     * Arus kas metode langsung dari jurnal akun Kas & Bank (1001 dan turunannya).
+     *
+     * Setiap baris kas diklasifikasikan per AKUN LAWAN dengan nominal akun lawan itu sendiri
+     * (sebelumnya nominal kas penuh dijumlahkan untuk setiap akun lawan, sehingga jurnal yang
+     * dipecah — mis. pendapatan + PPN — terhitung ganda). Arus yang tidak masuk kategori mana pun
+     * ditampilkan sebagai "lainnya" agar saldo awal + arus = saldo akhir sebenarnya.
+     */
+    private function computeCashFlow(string $startDate, string $endDate): array
+    {
         $cashAccounts = ChartOfAccount::where('code', '1001')
-            ->orWhere('parent_id', function($query) {
+            ->orWhere('parent_id', function ($query) {
                 $query->select('id')->from('chart_of_accounts')->where('code', '1001');
             })
             ->pluck('id');
-        
-        $cashJournals = JournalItem::whereIn('account_id', $cashAccounts)
-            ->whereHas('journal', function($q) use ($startDate, $endDate) {
-                $q->whereBetween('date', [$startDate, $endDate]);
-            })
-            ->with(['journal.items.account'])
+
+        $journals = \App\Models\Journal::whereBetween('date', [$startDate, $endDate])
+            ->whereHas('items', fn ($q) => $q->whereIn('account_id', $cashAccounts))
+            ->with('items.account')
             ->get();
 
-        $operatingIn = 0;
-        $operatingOut = 0;
-        $investingOut = 0;
-        $financingIn = 0;
+        $operatingIn = $operatingOut = $investingOut = $financingIn = $otherIn = $otherOut = 0.0;
 
-        foreach ($cashJournals as $cashItem) {
-            $isDebit = $cashItem->debit > 0;
-            $amount = $isDebit ? $cashItem->debit : $cashItem->credit;
-            
-            // Find the offset account in the same journal
-            $offsetItems = $cashItem->journal->items->where('account_id', '!=', $cashItem->account_id);
-            
-            foreach ($offsetItems as $offset) {
-                $type = $offset->account->type;
-                $code = $offset->account->code;
+        foreach ($journals as $journal) {
+            $cashItems = $journal->items->whereIn('account_id', $cashAccounts);
+            $offsets = $journal->items->whereNotIn('account_id', $cashAccounts);
+            $netCash = (float) $cashItems->sum('debit') - (float) $cashItems->sum('credit');
+            if (abs($netCash) < 0.005 || $offsets->isEmpty()) {
+                continue;   // transfer antar kas/bank: tidak mengubah total kas
+            }
 
-                if ($isDebit) { // Cash In
-                    if ($type === 'income' || $code === '1103') { // Revenue or Accounts Receivable
+            $classified = 0.0;
+            foreach ($offsets as $offset) {
+                $type = $offset->account?->type;
+                $code = $offset->account?->code;
+                if ($netCash > 0) {   // kas masuk: sisi kredit akun lawan
+                    $amount = (float) $offset->credit - (float) $offset->debit;
+                    if ($type === 'income' || $code === '1103') {
                         $operatingIn += $amount;
                     } elseif ($type === 'equity' || $type === 'liability') {
                         $financingIn += $amount;
+                    } else {
+                        continue;
                     }
-                } else { // Cash Out
-                    if ($type === 'expense' || $code === '2101' || $code === '2103') { // Expense, AP, or Tax Payable
+                } else {              // kas keluar: sisi debit akun lawan
+                    $amount = (float) $offset->debit - (float) $offset->credit;
+                    if ($type === 'expense' || in_array($code, ['2101', '2103'], true)) {
                         $operatingOut += $amount;
-                    } elseif ($code === '1104' || $code === '1201' || $code === '1202') { // Inventory or Fixed Assets
+                    } elseif (in_array($code, ['1104', '1201', '1202'], true)) {
                         $investingOut += $amount;
+                    } else {
+                        continue;
                     }
+                }
+                $classified += $amount;
+            }
+
+            // Sisa yang tidak terklasifikasi
+            $rest = abs($netCash) - $classified;
+            if (abs($rest) >= 0.005) {
+                if ($netCash > 0) {
+                    $otherIn += $rest;
+                } else {
+                    $otherOut += $rest;
                 }
             }
         }
@@ -279,21 +304,21 @@ class ReportController extends Controller
         $netOperating = $operatingIn - $operatingOut;
         $netInvesting = -$investingOut;
         $netFinancing = $financingIn;
-        $netIncrease = $netOperating + $netInvesting + $netFinancing;
+        $netOther = $otherIn - $otherOut;
+        $netIncrease = $netOperating + $netInvesting + $netFinancing + $netOther;
 
-        // Opening Cash Balance
-        $prevCashItems = JournalItem::whereIn('account_id', $cashAccounts)
-            ->whereHas('journal', function($q) use ($startDate) {
-                $q->where('date', '<', $startDate);
-            })->get();
-        $openingCash = $prevCashItems->sum('debit') - $prevCashItems->sum('credit');
-        $closingCash = $openingCash + $netIncrease;
+        $cashBalance = fn (string $op, string $date) => (float) JournalItem::whereIn('account_id', $cashAccounts)
+            ->whereHas('journal', fn ($q) => $q->where('date', $op, $date))
+            ->selectRaw('COALESCE(SUM(debit), 0) - COALESCE(SUM(credit), 0) AS bal')->value('bal');
 
-        return view('accounting.reports.cash-flow', compact(
-            'operatingIn', 'operatingOut', 'investingOut', 'financingIn',
-            'netOperating', 'netInvesting', 'netFinancing', 'netIncrease',
-            'openingCash', 'closingCash', 'startDate', 'endDate'
-        ));
+        $openingCash = $cashBalance('<', $startDate);
+        $closingCash = $cashBalance('<=', $endDate);
+
+        return compact(
+            'operatingIn', 'operatingOut', 'investingOut', 'financingIn', 'otherIn', 'otherOut',
+            'netOperating', 'netInvesting', 'netFinancing', 'netOther', 'netIncrease',
+            'openingCash', 'closingCash'
+        );
     }
 
     public function exportLedger(Request $request)
@@ -380,35 +405,38 @@ class ReportController extends Controller
     public function exportCashFlow(Request $request)
     {
         $allTime = $request->has('all_time');
-        $startDate = $allTime ? '2000-01-01' : $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
+        $firstJournal = \App\Models\Journal::min('date');
+        $startDate = $allTime
+            ? ($firstJournal ? substr((string) $firstJournal, 0, 10) : Carbon::now()->toDateString())
+            : $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
         $endDate = $allTime ? Carbon::now()->toDateString() : $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
 
-        $fileName = ($allTime ? 'CashFlow_Full_' : 'CashFlow_') . ($allTime ? Carbon::now()->format('Ymd') : ($startDate . '_to_' . $endDate)) . '.csv';
-        $headers = [
-            "Content-type"        => "text/csv",
-            "Content-Disposition" => "attachment; filename=$fileName",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
+        $d = $this->computeCashFlow($startDate, $endDate);
+        $period = Carbon::parse($startDate)->format('d/m/Y') . ' – ' . Carbon::parse($endDate)->format('d/m/Y');
+
+        $rows = [
+            ['Arus kas dari aktivitas operasional', null],
+            ['   Penerimaan kas dari pelanggan', $d['operatingIn']],
+            ['   Pembayaran kas kepada pemasok & karyawan', -$d['operatingOut']],
+            ['Kas neto dari aktivitas operasional', $d['netOperating']],
+            ['Arus kas dari aktivitas investasi', null],
+            ['   Pembelian inventaris & aset tetap', -$d['investingOut']],
+            ['Kas neto dari aktivitas investasi', $d['netInvesting']],
+            ['Arus kas dari aktivitas pendanaan', null],
+            ['   Penerimaan modal / pinjaman', $d['financingIn']],
+            ['Kas neto dari aktivitas pendanaan', $d['netFinancing']],
         ];
+        if (abs($d['netOther']) >= 0.005) {
+            $rows[] = ['Arus kas lainnya (belum terklasifikasi)', $d['netOther']];
+        }
+        $rows[] = ['Kenaikan (penurunan) kas neto', $d['netIncrease']];
+        $rows[] = ['Saldo kas awal periode', $d['openingCash']];
 
-        // Recalculate or ideally we should refactor data fetching into a service
-        // Let's use a simpler approach for the export
-        $callback = function() use ($startDate, $endDate) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, ['Laporan Arus Kas', $startDate . ' s/d ' . $endDate]);
-            fputcsv($file, []);
-            fputcsv($file, ['Kategori', 'Penerimaan', 'Pengeluaran', 'Neto']);
-            
-            // This is a placeholder for the actual calculation logic 
-            // In a real app, I'd move the calculation to a shared method/service
-            fputcsv($file, ['Aktivitas Operasional', '...', '...', '...']);
-            fputcsv($file, ['Aktivitas Investasi', '...', '...', '...']);
-            fputcsv($file, ['Aktivitas Pendanaan', '...', '...', '...']);
-            
-            fclose($file);
-        };
+        $file = $allTime ? 'Arus-Kas-Semua-' . Carbon::now()->format('Ymd') . '.xlsx' : "Arus-Kas-{$startDate}_{$endDate}.xlsx";
 
-        return response()->stream($callback, 200, $headers);
+        return (new \App\Support\SpreadsheetExport((string) get_setting('company_name', config('app.name'))))
+            ->sheet('Arus Kas', ['Laporan Arus Kas (metode langsung)', 'Periode ' . $period], ['Keterangan', 'Jumlah (Rp)'], $rows,
+                [1 => 'money'], ['Saldo kas akhir periode', $d['closingCash']], [52, 20])
+            ->download($file);
     }
 }

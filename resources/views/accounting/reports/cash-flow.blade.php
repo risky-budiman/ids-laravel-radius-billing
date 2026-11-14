@@ -53,6 +53,14 @@
                     <tr class="report-row"><td>Penerimaan modal / pinjaman</td><td class="amount">{{ $amt($financingIn) }}</td></tr>
                     <tr class="report-subtotal"><td>Kas neto dari aktivitas pendanaan</td><td class="amount {{ $cls($netFinancing) }}">{{ $amt($netFinancing) }}</td></tr>
 
+                    @if(abs($netOther) >= 0.005)
+                        <tr class="report-section"><td colspan="2">Arus kas lainnya</td></tr>
+                        <tr class="report-row">
+                            <td>Belum terklasifikasi <span class="text-xs text-surface-400">(akun lawan di luar kategori di atas)</span></td>
+                            <td class="amount {{ $cls($netOther) }}">{{ $amt($netOther) }}</td>
+                        </tr>
+                    @endif
+
                     <tr class="report-section"><td colspan="2">Rekonsiliasi kas</td></tr>
                     <tr class="report-row"><td>Kenaikan (penurunan) kas neto</td><td class="amount {{ $cls($netIncrease) }}">{{ $amt($netIncrease) }}</td></tr>
                     <tr class="report-row"><td>Saldo kas awal periode</td><td class="amount">{{ $amt($openingCash) }}</td></tr>
