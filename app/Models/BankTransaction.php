@@ -80,24 +80,17 @@ class BankTransaction extends Model
 
     public function updateBalance($isDelete = false)
     {
-        $account = $this->bankAccount;
-        $amount = (float) $this->amount;
-        $currentBalance = (float) $account->balance;
+        // Ubah saldo secara atomik di database (balance = balance ± amount). Sebelumnya saldo
+        // dibaca lalu ditulis ulang dari PHP, sehingga dua transaksi bersamaan (mis. webhook
+        // pembayaran + input kasir) bisa saling menimpa dan saldo tidak lagi sama dengan mutasi.
+        $sign = ($this->type === 'deposit') === ! $isDelete ? 1 : -1;
+        $delta = round($sign * (float) $this->amount, 2);
 
-        if ($this->type === 'deposit') {
-            if (function_exists('bcadd')) {
-                $newBalance = $isDelete ? bcsub($currentBalance, $amount, 2) : bcadd($currentBalance, $amount, 2);
-            } else {
-                $newBalance = $isDelete ? ($currentBalance - $amount) : ($currentBalance + $amount);
-            }
-        } else {
-            if (function_exists('bcadd')) {
-                $newBalance = $isDelete ? bcadd($currentBalance, $amount, 2) : bcsub($currentBalance, $amount, 2);
-            } else {
-                $newBalance = $isDelete ? ($currentBalance + $amount) : ($currentBalance - $amount);
-            }
+        BankAccount::whereKey($this->bank_account_id)->increment('balance', $delta);
+
+        // Objek yang sudah dimuat ikut menampilkan saldo terbaru.
+        if ($this->relationLoaded('bankAccount') && $this->bankAccount) {
+            $this->bankAccount->refresh();
         }
-
-        $account->update(['balance' => round($newBalance, 2)]);
     }
 }

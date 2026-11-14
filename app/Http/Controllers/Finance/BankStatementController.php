@@ -44,6 +44,7 @@ class BankStatementController extends Controller
             'periodLabel' => Period::label($year, $month),
             'accountLabel' => $this->accountLabel($selected, $accounts),
             'months' => Period::MONTHS,
+            'drift' => $this->statements->drift($accounts),
         ];
 
         if ($month) {
@@ -68,6 +69,7 @@ class BankStatementController extends Controller
         $months = Period::MONTHS;
 
         $xlsx = new SpreadsheetExport((string) get_setting('company_name', config('app.name')));
+        $driftNote = $this->driftNote($this->statements->drift($accounts));
 
         if (! $month) {
             $sum = $this->statements->yearSummary($accounts, $year);
@@ -84,7 +86,7 @@ class BankStatementController extends Controller
         foreach ($monthList as $m) {
             $start = CarbonImmutable::create($year, $m, 1)->startOfMonth();
             $st = $this->statements->statement($accounts, $start, $start->endOfMonth());
-            $this->statementSheet($xlsx, $month ? 'Mutasi' : $months[$m], $st, $months[$m] . ' ' . $year, $accountLabel, $multi);
+            $this->statementSheet($xlsx, $month ? 'Mutasi' : $months[$m], $st, $months[$m] . ' ' . $year, $accountLabel, $multi, $driftNote);
         }
 
         $slug = $multi ? 'Semua-Rekening' : preg_replace('/[^A-Za-z0-9]+/', '-', $accounts->first()->bank_name . '-' . ($accounts->first()->account_number ?: $accounts->first()->account_name));
@@ -93,7 +95,7 @@ class BankStatementController extends Controller
         return $xlsx->download($file);
     }
 
-    private function statementSheet(SpreadsheetExport $xlsx, string $name, array $st, string $periodLabel, string $accountLabel, bool $multi): void
+    private function statementSheet(SpreadsheetExport $xlsx, string $name, array $st, string $periodLabel, string $accountLabel, bool $multi, ?string $driftNote = null): void
     {
         $headers = array_merge(['Tanggal'], $multi ? ['Rekening'] : [], ['Keterangan', 'Referensi', 'Kategori', 'Masuk (CR)', 'Keluar (DB)', 'Saldo']);
         $off = $multi ? 1 : 0;
@@ -105,16 +107,27 @@ class BankStatementController extends Controller
         }
 
         $xlsx->sheet($name,
-            ["Rekening Koran — $periodLabel", $accountLabel,
+            array_merge(["Rekening Koran — $periodLabel", $accountLabel,
              sprintf('Saldo awal %s · Masuk %s (%d trx) · Keluar %s (%d trx) · Saldo akhir %s',
                  rupiah($st['opening'], 0, false), rupiah($st['total_in'], 0, false), $st['count_in'],
-                 rupiah($st['total_out'], 0, false), $st['count_out'], rupiah($st['closing'], 0, false))],
+                 rupiah($st['total_out'], 0, false), $st['count_out'], rupiah($st['closing'], 0, false))], $driftNote ? [$driftNote] : []),
             $headers,
             $rows,
             [0 => 'datetime', 4 + $off => 'money', 5 + $off => 'money', 6 + $off => 'money'],
             array_merge(['SALDO AKHIR'], $blank, [null, null, null, $st['total_in'], $st['total_out'], $st['closing']]),
             array_merge([17], $multi ? [26] : [], [48, 18, 24, 16, 16, 18]),
         );
+    }
+
+    /** Catatan selisih saldo tersimpan vs mutasi untuk file Excel. */
+    private function driftNote(array $drift): ?string
+    {
+        if (! $drift) {
+            return null;
+        }
+
+        return 'PERHATIAN — saldo tersimpan berbeda dari mutasi: ' . collect($drift)->map(fn ($d) => $d['account']->bank_name . ' · ' . $d['account']->account_name
+            . ' selisih ' . rupiah($d['difference'], 0, false))->implode('; ');
     }
 
     /** Rekening yang boleh dilihat user ini. */

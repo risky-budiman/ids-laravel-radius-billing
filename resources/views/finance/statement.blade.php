@@ -60,8 +60,34 @@
     @php $head = $isYear ? $summary : $statement; @endphp
 
     <div class="space-y-6">
-        {{-- Ringkasan saldo --}}
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        @if($drift)
+            {{-- Saldo tersimpan tidak sama dengan jumlah mutasi: tampilkan terbuka, jangan disembunyikan --}}
+            <div class="no-print rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+                <div class="flex gap-3">
+                    <x-icon name="exclamation" class="w-5 h-5 shrink-0 mt-0.5" />
+                    <div class="space-y-2">
+                        <p class="font-semibold">Saldo di menu Kas &amp; Bank berbeda dari jumlah mutasinya</p>
+                        <ul class="space-y-0.5">
+                            @foreach($drift as $d)
+                                <li>
+                                    <strong>{{ $d['account']->bank_name }} · {{ $d['account']->account_name }}</strong>:
+                                    saldo tersimpan {{ rupiah($d['stored'], 0) }}, menurut mutasi {{ rupiah($d['from_mutations'], 0) }}
+                                    — selisih <strong>{{ rupiah($d['difference'], 0) }}</strong>
+                                </li>
+                            @endforeach
+                        </ul>
+                        <p class="text-amber-800/90 dark:text-amber-200/80">
+                            Rekening koran ini dihitung dari mutasi (seperti rekening koran bank), jadi saldo akhirnya mengikuti mutasi.
+                            Selisih biasanya terjadi karena ada transaksi yang terhapus di luar aplikasi (langsung di database / restore).
+                            Cocokkan dengan mutasi bank asli, lalu catat transaksi penyesuaian bila memang ada dana yang belum tercatat.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- Ringkasan saldo (layar saja; cetakan cukup tabel) --}}
+        <div class="no-print grid grid-cols-2 lg:grid-cols-4 gap-4">
             <x-stat-card label="Saldo awal" :value="$rp($head['opening'])" icon="credit-card" tone="gray"
                          :hint="'Per ' . $head['start']->locale('id')->translatedFormat('d F Y')" />
             <x-stat-card label="Total masuk (CR)" :value="$rp($head['total_in'])" icon="arrow-down" tone="success"
@@ -75,10 +101,6 @@
         @if($isYear)
             {{-- Rekap tahunan per bulan --}}
             <div class="report-doc">
-                <div class="print-only mb-4">
-                    <p class="text-base font-semibold">Rekening Koran Tahunan {{ $year }}</p>
-                    <p class="text-sm">{{ $accountLabel }}</p>
-                </div>
                 <div class="overflow-x-auto">
                     <table class="report-table">
                         <thead>
@@ -127,10 +149,6 @@
         @else
             {{-- Rekening koran bulanan --}}
             <div class="report-doc">
-                <div class="print-only mb-4">
-                    <p class="text-base font-semibold">Rekening Koran — {{ $periodLabel }}</p>
-                    <p class="text-sm">{{ $accountLabel }}</p>
-                </div>
                 <div class="overflow-x-auto">
                     <table class="report-table">
                         <thead>

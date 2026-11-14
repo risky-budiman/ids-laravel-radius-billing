@@ -12,10 +12,13 @@ use Illuminate\Support\Facades\DB;
  * Rekening koran Kas & Bank: saldo awal, mutasi masuk (CR) / keluar (DB) dengan saldo
  * berjalan, dan saldo akhir — per bulan, atau ringkasan 12 bulan untuk satu tahun.
  *
- * Saldo dihitung mundur dari saldo rekening saat ini:
- *   saldo awal periode = saldo sekarang - mutasi bersih sejak awal periode
- * sehingga selalu cocok dengan saldo yang tampil di menu Kas & Bank, termasuk
- * saldo pembukaan yang diisi langsung saat rekening dibuat.
+ * Seperti rekening koran bank, saldo dihitung MAJU dari mutasi:
+ *   saldo awal periode = jumlah bersih semua mutasi sebelum awal periode
+ * (saldo awal rekening dicatat sebagai transaksi "Saldo Awal" saat rekening dibuat).
+ *
+ * Kolom bank_accounts.balance hanyalah saldo tersimpan. Bila berbeda dari jumlah mutasi
+ * (mis. transaksi pernah dihapus langsung di database), selisihnya dilaporkan lewat
+ * drift() — tidak disebar diam-diam ke saldo awal setiap periode.
  */
 class BankStatementService
 {
@@ -110,14 +113,35 @@ class BankStatementService
         ];
     }
 
-    /** Saldo gabungan rekening pada awal $moment (sebelum transaksi di/ setelah $moment). */
+    /** Saldo gabungan rekening tepat sebelum $moment = mutasi bersih sebelum $moment. */
     public function balanceAt(Collection $accounts, CarbonImmutable $moment): float
     {
-        $current = (float) $accounts->sum('balance');
-        $netSince = (float) BankTransaction::whereIn('bank_account_id', $accounts->pluck('id')->all())
-            ->where('transaction_date', '>=', $moment)
-            ->sum(DB::raw("CASE WHEN type = 'deposit' THEN amount ELSE -amount END"));
+        return round((float) BankTransaction::whereIn('bank_account_id', $accounts->pluck('id')->all())
+            ->where('transaction_date', '<', $moment)
+            ->sum(DB::raw("CASE WHEN type = 'deposit' THEN amount ELSE -amount END")), 2);
+    }
 
-        return round($current - $netSince, 2);
+    /**
+     * Rekening yang saldo tersimpannya tidak sama dengan jumlah mutasinya.
+     *
+     * @return array<int, array{account: BankAccount, stored: float, from_mutations: float, difference: float}>
+     */
+    public function drift(Collection $accounts): array
+    {
+        $net = BankTransaction::whereIn('bank_account_id', $accounts->pluck('id')->all())
+            ->groupBy('bank_account_id')
+            ->selectRaw("bank_account_id, SUM(CASE WHEN type = 'deposit' THEN amount ELSE -amount END) AS net")
+            ->pluck('net', 'bank_account_id');
+
+        $out = [];
+        foreach ($accounts as $a) {
+            $fromMutations = round((float) ($net[$a->id] ?? 0), 2);
+            $diff = round((float) $a->balance - $fromMutations, 2);
+            if (abs($diff) >= 0.01) {
+                $out[] = ['account' => $a, 'stored' => (float) $a->balance, 'from_mutations' => $fromMutations, 'difference' => $diff];
+            }
+        }
+
+        return $out;
     }
 }

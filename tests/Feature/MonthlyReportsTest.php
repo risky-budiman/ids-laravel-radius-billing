@@ -164,7 +164,8 @@ class MonthlyReportsTest extends TestCase
     public function test_monthly_statement_has_opening_running_and_closing_balance(): void
     {
         $this->actor = $this->staff('administrator');
-        $bca = $this->account('BCA', 1_000_000);                 // saldo pembukaan langsung
+        $bca = $this->account('BCA', 0);
+        $this->tx($bca, 'deposit', 1_000_000, '2026-01-01 00:00', 'Saldo Awal');   // seperti form rekening baru
         $this->tx($bca, 'deposit', 500_000, '2026-02-20 10:00', 'Feb masuk');
         $this->tx($bca, 'deposit', 200_000, '2026-03-02 09:00', 'Pembayaran INV-1');
         $this->tx($bca, 'withdrawal', 50_000, '2026-03-15 14:00', 'Beli kabel');
@@ -182,10 +183,51 @@ class MonthlyReportsTest extends TestCase
         $this->assertEquals([1_700_000, 1_650_000], $st['rows']->pluck('balance')->all());
 
         $year = app(BankStatementService::class)->yearSummary(collect([$bca->fresh()]), 2026);
-        $this->assertEquals(1_000_000, $year['opening']);
+        $this->assertEquals(0, $year['opening']);
+        $this->assertEquals(1_000_000, $year['months'][1]['closing']);
         $this->assertEquals(1_500_000, $year['months'][2]['closing']);
         $this->assertEquals($year['months'][3]['closing'], $year['months'][4]['opening']);
         $this->assertEquals(1_725_000, $year['closing']);     // = saldo di menu Kas & Bank
+        $this->assertSame([], app(BankStatementService::class)->drift(collect([$bca->fresh()])));
+    }
+
+    public function test_balance_drift_is_reported_instead_of_shifting_every_opening_balance(): void
+    {
+        $this->actor = $this->staff('administrator');
+        $kas = $this->account('KAS', 0);
+        $this->tx($kas, 'deposit', 15_000, '2026-05-04 13:00', 'Instalasi');
+        $this->tx($kas, 'deposit', 80_000, '2026-06-10 09:00', 'Pembayaran');
+        // Transaksi dihapus langsung di database (tanpa model): saldo tersimpan tidak terkoreksi.
+        BankTransaction::where('description', 'Pembayaran')->toBase()->delete();
+
+        $service = app(BankStatementService::class);
+        $year = $service->yearSummary(collect([$kas->fresh()]), 2026);
+
+        $this->assertEquals(0, $year['months'][1]['opening'], 'sebelum rekening dipakai saldonya nol');
+        $this->assertEquals(15_000, $year['closing'], 'saldo akhir mengikuti mutasi, seperti rekening koran bank');
+
+        $drift = $service->drift(collect([$kas->fresh()]));
+        $this->assertCount(1, $drift);
+        $this->assertEquals(80_000, $drift[0]['difference']);
+
+        $this->actingAs($this->actor)->get(route('bank-statement.index', ['account' => $kas->id, 'period' => 'year', 'year' => 2026]))
+            ->assertOk()->assertSee('berbeda dari jumlah mutasinya');
+    }
+
+    public function test_balance_update_is_atomic_even_with_a_stale_account_instance(): void
+    {
+        $this->actor = $this->staff('administrator');
+        $kas = $this->account('KAS', 0);
+        $stale = $kas->fresh();   // seperti request lain yang memuat rekening lebih dulu
+
+        $this->tx($kas, 'deposit', 100_000, '2026-05-01 08:00', 'A');
+        $t = new BankTransaction(['bank_account_id' => $kas->id, 'type' => 'deposit', 'amount' => 50_000,
+            'description' => 'B', 'transaction_date' => '2026-05-01 08:01', 'created_by' => $this->actor->id]);
+        $t->setRelation('bankAccount', $stale);   // saldo basi = 0
+        $t->skipAutoJournal = true;
+        $t->save();
+
+        $this->assertEquals(150_000, (float) $kas->fresh()->balance);
     }
 
     public function test_statement_access_follows_account_ownership(): void

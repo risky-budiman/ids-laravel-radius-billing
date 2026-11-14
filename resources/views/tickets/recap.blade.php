@@ -54,8 +54,8 @@
     </x-slot>
 
     <div class="space-y-6">
-        {{-- Ringkasan --}}
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        {{-- Ringkasan (layar saja; cetakan cukup tabel) --}}
+        <div class="no-print grid grid-cols-2 lg:grid-cols-5 gap-4">
             <x-stat-card label="Tiket masuk" :value="number_format($s['masuk'], 0, ',', '.')" icon="inbox" tone="info" />
             <x-stat-card label="Diselesaikan" :value="number_format($s['selesai'], 0, ',', '.')" icon="check-circle" tone="success"
                          hint="Termasuk tiket dari periode sebelumnya" />
