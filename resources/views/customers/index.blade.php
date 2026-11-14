@@ -8,15 +8,15 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kelola data pelanggan dan profil bandwidth</p>
             </div>
             <div class="flex items-center gap-3">
-                <a href="{{ route('customers.export') }}" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm shadow-blue-500/20 flex items-center gap-2">
+                <a href="{{ route('customers.export') }}" class="btn-secondary">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     Export Data (Excel)
                 </a>
-                <a href="{{ route('customers.import.index') }}" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm shadow-emerald-500/20 flex items-center gap-2">
+                <a href="{{ route('customers.import.index') }}" class="btn-secondary">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                     Import Data (Excel)
                 </a>
-                <a href="{{ route('customers.create') }}" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm shadow-indigo-500/30 flex items-center gap-2">
+                <a href="{{ route('customers.create') }}" class="btn-primary">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     + Add Subscriber
                 </a>
@@ -39,10 +39,10 @@
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <!-- Card 1: Total -->
-        <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex items-center justify-between">
+        <div class="card p-5 flex items-center justify-between">
             <div>
-                <span class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Subscribers</span>
-                <span class="block text-3xl font-black text-slate-800 dark:text-slate-100 mt-2">{{ number_format($stats['total'] ?? 0) }}</span>
+                <span class="block text-sm font-medium text-surface-500 dark:text-surface-400">Total Subscribers</span>
+                <span class="block text-2xl font-semibold tabular-nums text-slate-800 dark:text-slate-100 mt-2">{{ number_format($stats['total'] ?? 0) }}</span>
             </div>
             <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -50,10 +50,10 @@
         </div>
 
         <!-- Card 2: Active -->
-        <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex items-center justify-between">
+        <div class="card p-5 flex items-center justify-between">
             <div>
-                <span class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Active</span>
-                <span class="block text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-2">{{ number_format($stats['active'] ?? 0) }}</span>
+                <span class="block text-sm font-medium text-surface-500 dark:text-surface-400">Active</span>
+                <span class="block text-2xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400 mt-2">{{ number_format($stats['active'] ?? 0) }}</span>
             </div>
             <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -61,10 +61,10 @@
         </div>
 
         <!-- Card 3: Waiting Activation -->
-        <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex items-center justify-between">
+        <div class="card p-5 flex items-center justify-between">
             <div>
-                <span class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Waiting Activation</span>
-                <span class="block text-3xl font-black text-amber-600 dark:text-amber-400 mt-2">{{ number_format($stats['waiting_activation'] ?? 0) }}</span>
+                <span class="block text-sm font-medium text-surface-500 dark:text-surface-400">Waiting Activation</span>
+                <span class="block text-2xl font-semibold tabular-nums text-amber-600 dark:text-amber-400 mt-2">{{ number_format($stats['waiting_activation'] ?? 0) }}</span>
             </div>
             <div class="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -72,10 +72,10 @@
         </div>
 
         <!-- Card 4: Suspended -->
-        <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex items-center justify-between">
+        <div class="card p-5 flex items-center justify-between">
             <div>
-                <span class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Suspended</span>
-                <span class="block text-3xl font-black text-rose-600 dark:text-rose-400 mt-2">{{ number_format($stats['suspended'] ?? 0) }}</span>
+                <span class="block text-sm font-medium text-surface-500 dark:text-surface-400">Suspended</span>
+                <span class="block text-2xl font-semibold tabular-nums text-rose-600 dark:text-rose-400 mt-2">{{ number_format($stats['suspended'] ?? 0) }}</span>
             </div>
             <div class="p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-xl">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
@@ -85,7 +85,7 @@
 
     <form action="{{ route('customers.bulk-action') }}" method="POST" id="bulk-action-form">
         @csrf
-        <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="card overflow-hidden">
             <!-- Control Bar -->
             <div class="p-6 border-b border-gray-100 dark:border-gray-700/50 flex flex-col lg:flex-row justify-between items-center gap-4">
                 <div class="w-full lg:w-auto flex flex-col md:flex-row items-center gap-3">
@@ -124,14 +124,14 @@
                     @endif
                 </div>
                 
-                <div class="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">
+                <div class="text-xs font-medium text-surface-500 dark:text-surface-400">
                     Total: {{ $customers->total() }} Subscribers
                 </div>
             </div>
 
             <!-- Bulk Action Bar -->
             <div class="px-6 py-3 bg-slate-50 dark:bg-slate-900/30 border-b border-gray-100 dark:border-gray-700/50 flex flex-col md:flex-row items-center gap-3">
-                <span class="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">Aksi Massal:</span>
+                <span class="text-xs font-medium text-surface-500 dark:text-surface-400">Aksi Massal:</span>
                 <div class="flex items-center gap-2">
                     <select name="action" class="pl-3 pr-8 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs text-slate-700 dark:text-slate-300 focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">Pilih Aksi...</option>
@@ -150,17 +150,17 @@
                 <table class="w-full text-left whitespace-nowrap">
                     <thead>
                         <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-8">
+                            <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800 w-8">
                                 <input type="checkbox" id="select-all" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
                             </th>
-                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer ID</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Username</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Password</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Subscriber Name</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Package</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Actions</th>
+                            <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">#</th>
+                        <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">Customer ID</th>
+                        <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">Username</th>
+                        <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">Password</th>
+                        <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">Subscriber Name</th>
+                        <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">Package</th>
+                        <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">Status</th>
+                        <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800 text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -179,7 +179,7 @@
                                 {{ $customer->username }}
                             </td>
                             <td class="px-6 py-4">
-                                <div class="font-mono text-[10px] font-black text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded border border-gray-100 dark:border-gray-700/50 inline-block">
+                                <div class="font-mono text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded border border-gray-100 dark:border-gray-700/50 inline-block">
                                     @if(auth()->user()->isAdmin())
                                         {{ $customer->cleartext_password ?? '••••••••' }}
                                     @else
@@ -210,15 +210,15 @@
                                         'canceled' => 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500',
                                     ];
                                 @endphp
-                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest {{ $statusColors[$customer->status] ?? 'bg-gray-100' }}">
-                                    {{ str_replace('_', ' ', $customer->status ?? ($customer->is_active ? 'active' : 'inactive')) }}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium {{ $statusColors[$customer->status] ?? 'bg-gray-100' }}">
+                                    {{ ['new' => 'Baru', 'waiting_activation' => 'Menunggu aktivasi', 'active' => 'Aktif', 'suspended' => 'Terisolir', 'waiting_dismantle' => 'Menunggu dismantle', 'dismantled' => 'Dicabut', 'canceled' => 'Batal'][$customer->status ?? ''] ?? ($customer->is_active ? 'Aktif' : 'Nonaktif') }}
                                 </span>
                             </td>
                                     <td class="px-6 py-4 text-center">
                                         <div class="flex items-center justify-center space-x-3 group">
                                             @if($customer->status === 'waiting_activation' || (!$customer->is_active && $customer->status === 'new'))
                                                 @if(auth()->user()->isAdmin() || auth()->user()->isTeknisi())
-                                                <a href="{{ route('customers.activate', $customer) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all shadow-lg shadow-indigo-600/20">
+                                                <a href="{{ route('customers.activate', $customer) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all shadow-lg shadow-indigo-600/20">
                                                     ACTIVATE
                                                 </a>
                                                 @endif
@@ -228,7 +228,7 @@
                                                 @if(auth()->user()->isAdmin() || auth()->user()->isTeknisi())
                                                 <form action="{{ route('customers.request-dismantle', $customer) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin mengajukan dismantle untuk pelanggan ini?')">
                                                     @csrf
-                                                    <button type="submit" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all">
+                                                    <button type="submit" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
                                                         DISMANTLE
                                                     </button>
                                                 </form>
@@ -236,7 +236,7 @@
                                             @endif
 
                                             @if($customer->status === 'waiting_dismantle')
-                                                <a href="{{ route('customers.dismantle', $customer) }}" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all shadow-lg shadow-amber-600/20">
+                                                <a href="{{ route('customers.dismantle', $customer) }}" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all shadow-lg shadow-amber-600/20">
                                                     COLLECT GEAR
                                                 </a>
                                             @endif

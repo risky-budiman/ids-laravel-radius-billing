@@ -1,144 +1,51 @@
 <x-app-layout>
+    <x-slot name="header">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h2>Invoice & Penagihan</h2>
+                <p class="page-subtitle">Kelola tagihan pelanggan, pembayaran, dan notifikasi WhatsApp.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <form action="{{ route('invoices.generate-automated') }}" method="POST" onsubmit="return confirm('Proses penagihan otomatis untuk semua pelanggan aktif?')">
+                    @csrf
+                    <button type="submit" class="btn-secondary">
+                        <x-icon name="refresh" class="w-4 h-4" /> Generate Massal
+                    </button>
+                </form>
+                <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-create-invoice'))" class="btn-primary">
+                    <x-icon name="plus" class="w-4 h-4" /> Invoice Baru
+                </button>
+            </div>
+        </div>
+    </x-slot>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
-        
-        /* Prevent Alpine.js FOUC */
-        [x-cloak] { display: none !important; }
+        /* Checkbox & baris terpilih */
+        .bulk-check { width: 16px; height: 16px; border-radius: 4px; cursor: pointer; accent-color: #4f46e5; }
+        .row-selected { background-color: rgb(238 242 255 / 0.7) !important; }
+        .dark .row-selected { background-color: rgb(99 102 241 / 0.12) !important; }
 
-        .invoice-container {
-            font-family: 'Outfit', sans-serif;
-        }
-
-        .glass-card {
-            background-color: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-        }
-        
-        .dark .glass-card {
-            background-color: rgba(17, 24, 39, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-        }
-
-        /* Status Pills - pure CSS */
-        .status-pill {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 9999px;
-            font-size: 10px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            border: 1px solid;
-        }
-
-        .status-paid {
-            background-color: #ecfdf5;
-            color: #059669;
-            border-color: #d1fae5;
-        }
-        .dark .status-paid {
-            background-color: rgba(6, 78, 59, 0.2);
-            color: #34d399;
-            border-color: rgba(6, 78, 59, 0.3);
-        }
-
-        .status-unpaid {
-            background-color: #fff1f2;
-            color: #e11d48;
-            border-color: #ffe4e6;
-        }
-        .dark .status-unpaid {
-            background-color: rgba(136, 19, 55, 0.2);
-            color: #fb7185;
-            border-color: rgba(136, 19, 55, 0.3);
-        }
-
-        /* Bulk Action Bar */
-        .bulk-bar {
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 60;
-        }
-
+        /* Bar aksi massal (melayang di bawah) */
+        .bulk-bar { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 60; }
         .bulk-bar-inner {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 14px 24px;
-            border-radius: 2rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(255,255,255,0.08);
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(24px);
+            display: flex; align-items: center; gap: 6px; padding: 8px 8px 8px 14px; border-radius: 0.875rem;
+            background: #0f172a; border: 1px solid rgb(255 255 255 / 0.08); box-shadow: 0 20px 40px -16px rgb(15 23 42 / 0.5);
         }
-
-        .dark .bulk-bar-inner {
-            background: rgba(30, 41, 59, 0.97);
-        }
-
         .bulk-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            border-radius: 1rem;
-            font-size: 11px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            cursor: pointer;
-            border: none;
-            transition: all 0.15s;
-            white-space: nowrap;
+            display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 0.5rem;
+            font-size: 13px; font-weight: 500; color: #e2e8f0; background: transparent; border: none; cursor: pointer;
+            transition: background-color .15s, color .15s; white-space: nowrap;
         }
-        .bulk-btn:active { transform: scale(0.95); }
-
-        .bulk-btn-pay { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-        .bulk-btn-pay:hover { background: #10b981; color: #fff; }
-
-        .bulk-btn-wa { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
-        .bulk-btn-wa:hover { background: #22c55e; color: #fff; }
-
-        .bulk-btn-del { background: rgba(244, 63, 94, 0.2); color: #fb7185; }
-        .bulk-btn-del:hover { background: #f43f5e; color: #fff; }
-
-        /* Custom checkbox */
-        .bulk-check {
-            width: 18px;
-            height: 18px;
-            border-radius: 6px;
-            border: 2px solid #e5e7eb;
-            cursor: pointer;
-            accent-color: #4f46e5;
-            transition: all 0.15s;
-        }
-        .dark .bulk-check {
-            border-color: #4b5563;
-        }
-
-        @keyframes slideUpIn {
-            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-        .animate-slide-up {
-            animation: slideUpIn 0.3s ease-out forwards;
-        }
-
-        /* Selected row highlight */
-        .row-selected {
-            background-color: rgba(99, 102, 241, 0.06) !important;
-        }
-        .dark .row-selected {
-            background-color: rgba(99, 102, 241, 0.12) !important;
-        }
+        .bulk-btn:hover { background: rgb(255 255 255 / 0.08); color: #fff; }
+        .bulk-btn-pay svg { color: #34d399; }
+        .bulk-btn-wa svg { color: #4ade80; }
+        .bulk-btn-del { color: #fda4af; }
+        .bulk-btn-del:hover { background: rgb(244 63 94 / 0.15); color: #fecdd3; }
+        @keyframes slideUpIn { from { opacity: 0; transform: translateX(-50%) translateY(12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        .animate-slide-up { animation: slideUpIn .2s ease-out forwards; }
     </style>
 
-    <div class="invoice-container py-8 px-4 sm:px-6 lg:px-8"
+    <div
          x-data="{ 
             showCreateModal: false,
             showPaymentModal: false, 
@@ -173,181 +80,138 @@
                 window.__submitBulkAction(actionUrl, this.selectedIds);
             }
          }"
-         x-init="$watch('selectedIds', val => { selectAll = val.length === document.querySelectorAll('.inv-checkbox').length && val.length > 0; })">
-
-        <!-- Header Section -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
-            <div>
-                <h2 class="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
-                    Billing <span class="text-indigo-600">&</span> Invoices
-                </h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">Manage subscriber billing, payments, and notifications.</p>
-            </div>
-            
-            <div class="flex items-center space-x-3">
-                <form action="{{ route('invoices.generate-automated') }}" method="POST" onsubmit="return confirm('Proses penagihan otomatis untuk semua pelanggan aktif?')">
-                    @csrf
-                    <button type="submit" class="group flex items-center px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold rounded-2xl border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-all active:scale-95">
-                        <svg class="w-5 h-5 mr-2 text-indigo-500 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                        Batch Generate
-                    </button>
-                </form>
-                <button type="button" @click="showCreateModal = true" class="flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-indigo-600/30 transition-all transform hover:-translate-y-0.5 active:scale-95">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                    New Invoice
-                </button>
-            </div>
-        </div>
+         x-init="$watch('selectedIds', val => { selectAll = val.length === document.querySelectorAll('.inv-checkbox').length && val.length > 0; })"
+         @open-create-invoice.window="showCreateModal = true">
 
         @if(session('success'))
-            <div class="mb-8 flex items-center p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 rounded-2xl animate-fade-in">
-                <div class="flex-shrink-0 w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-bold text-emerald-800 dark:text-emerald-400">{{ session('success') }}</p>
-                </div>
+            <div class="mb-6 flex items-start gap-3 rounded-xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 px-4 py-3">
+                <x-icon name="check-circle" class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <p class="text-sm text-emerald-800 dark:text-emerald-300">{{ session('success') }}</p>
             </div>
         @endif
 
-        <!-- Advanced Filters -->
-        <div class="glass-card rounded-2xl px-5 py-6 mb-8 overflow-hidden relative border border-gray-200/50 dark:border-gray-700/50 shadow-sm">
-            <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-500/5 rounded-full blur-3xl"></div>
-            <form action="{{ route('invoices.index') }}" method="GET" class="relative z-10 grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
-                <div class="md:col-span-2">
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Search Invoice or Name</label>
+        {{-- Filter --}}
+        <div class="card mb-6">
+            <form action="{{ route('invoices.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end p-4">
+                <div class="md:col-span-5">
+                    <label for="f-search" class="label">Cari</label>
                     <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <span class="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-surface-400">
+                            <x-icon name="search" class="w-4 h-4" />
                         </span>
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Ex: INV-12345 or John Doe..." 
-                            class="w-full pl-11 pr-4 py-3 rounded-2xl border-gray-100 dark:border-gray-700 dark:bg-gray-900/50 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white/50">
+                        <input id="f-search" type="text" name="search" value="{{ request('search') }}" placeholder="Nomor invoice atau nama pelanggan" class="input pl-9">
                     </div>
                 </div>
-
-                <div>
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Filter by Period</label>
-                    <input type="month" name="period" value="{{ request('period') }}" 
-                        class="w-full py-3 rounded-2xl border-gray-100 dark:border-gray-700 dark:bg-gray-900/50 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white/50">
+                <div class="md:col-span-3">
+                    <label for="f-period" class="label">Periode</label>
+                    <input id="f-period" type="month" name="period" value="{{ request('period') }}" class="input">
                 </div>
-                
-                <div>
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Filter by Status</label>
-                    <select name="status" class="w-full py-3 rounded-2xl border-gray-100 dark:border-gray-700 dark:bg-gray-900/50 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white/50">
-                        <option value="">All Statuses</option>
-                        <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Paid</option>
-                        <option value="unpaid" {{ request('status') == 'unpaid' ? 'selected' : '' }}>Unpaid</option>
+                <div class="md:col-span-2">
+                    <label for="f-status" class="label">Status</label>
+                    <select id="f-status" name="status" class="input">
+                        <option value="">Semua status</option>
+                        <option value="paid" @selected(request('status') == 'paid')>Lunas</option>
+                        <option value="unpaid" @selected(request('status') == 'unpaid')>Belum bayar</option>
                     </select>
                 </div>
-
-                <div class="flex space-x-2">
-                    <button type="submit" class="flex-1 bg-gray-900 dark:bg-indigo-600 text-white font-bold py-3 rounded-2xl hover:shadow-lg transition-all active:scale-95">
-                        Apply Filter
-                    </button>
-                    <a href="{{ route('invoices.index') }}" class="p-3 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all" title="Reset Filters">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                <div class="md:col-span-2 flex gap-2">
+                    <button type="submit" class="btn-primary flex-1 !h-10">Terapkan</button>
+                    <a href="{{ route('invoices.index') }}" class="btn-secondary btn-icon !h-10 !w-10" title="Reset filter" aria-label="Reset filter">
+                        <x-icon name="x" class="w-4 h-4" />
                     </a>
                 </div>
             </form>
         </div>
 
-        <!-- Invoices Table Container -->
-        <div class="glass-card rounded-2xl overflow-hidden border border-gray-200/50 dark:border-gray-700/50 shadow-sm">
+        {{-- Tabel invoice --}}
+        <div class="card overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-3 border-b border-surface-200 dark:border-surface-800">
+                <p class="text-sm text-surface-500 dark:text-surface-400">
+                    @if($invoices->total() > 0)
+                        Menampilkan <span class="font-medium text-surface-900 dark:text-white">{{ $invoices->firstItem() }}–{{ $invoices->lastItem() }}</span> dari <span class="font-medium text-surface-900 dark:text-white">{{ number_format($invoices->total(), 0, ',', '.') }}</span> invoice
+                    @else
+                        Tidak ada invoice
+                    @endif
+                </p>
+                <p class="text-xs text-surface-400" x-show="selectedIds.length > 0" x-cloak><span x-text="selectedIds.length"></span> dipilih</p>
+            </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse whitespace-nowrap" style="min-width: 1000px;">
+                <table class="table whitespace-nowrap min-w-[960px]">
                     <thead>
-                        <tr class="bg-gray-50/30 dark:bg-gray-800/30">
-                            <th class="pl-4 pr-6 py-5 w-12">
-                                <input type="checkbox" class="bulk-check" x-model="selectAll" @change="toggleAll()">
-                            </th>
-                            <th class="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-center w-16">#</th>
-                            <th class="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Invoice Details</th>
-                            <th class="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Subscriber</th>
-                            <th class="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Total Amount</th>
-                            <th class="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] w-28">Status</th>
-                            <th class="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-center w-56">Action Console</th>
+                        <tr>
+                            <th class="w-10 !pr-0"><input type="checkbox" class="bulk-check" x-model="selectAll" @change="toggleAll()" aria-label="Pilih semua"></th>
+                            <th class="w-12 text-center">#</th>
+                            <th>Invoice</th>
+                            <th>Pelanggan</th>
+                            <th class="text-right">Jumlah</th>
+                            <th>Status</th>
+                            <th class="text-right">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
+                    <tbody>
                         @forelse($invoices as $invoice)
-                            <tr class="hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-colors group" :class="selectedIds.includes({{ $invoice->id }}) && 'row-selected'">
-                                <td class="pl-4 pr-6 py-5">
-                                    <input type="checkbox" class="bulk-check inv-checkbox" value="{{ $invoice->id }}" :checked="selectedIds.includes({{ $invoice->id }})" @change="toggleOne({{ $invoice->id }})">
+                            @php $isOverdue = $invoice->status !== 'paid' && $invoice->due_date && $invoice->due_date->isPast(); @endphp
+                            <tr :class="selectedIds.includes({{ $invoice->id }}) && 'row-selected'">
+                                <td class="!pr-0">
+                                    <input type="checkbox" class="bulk-check inv-checkbox" value="{{ $invoice->id }}" :checked="selectedIds.includes({{ $invoice->id }})" @change="toggleOne({{ $invoice->id }})" aria-label="Pilih {{ $invoice->invoice_number }}">
                                 </td>
-                                <td class="px-6 py-5 text-xs font-black text-gray-300 dark:text-gray-600 text-center">{{ $invoices->firstItem() + $loop->index }}</td>
-                                <td class="px-6 py-5">
-                                    <div class="flex items-center">
-                                        <div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                        </div>
-                                        <div>
-                                            <a href="{{ route('invoices.show', $invoice) }}" class="text-sm font-black text-gray-900 dark:text-white hover:text-indigo-600 transition-colors">
-                                                {{ $invoice->invoice_number }}
-                                            </a>
-                                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">
-                                                Due {{ $invoice->due_date->format('d M Y') }}
-                                            </div>
-                                        </div>
-                                    </div>
+                                <td class="text-center text-surface-400 tabular-nums">{{ $invoices->firstItem() + $loop->index }}</td>
+                                <td>
+                                    <a href="{{ route('invoices.show', $invoice) }}" class="font-medium text-surface-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400">{{ $invoice->invoice_number }}</a>
+                                    <p class="text-xs mt-0.5 {{ $isOverdue ? 'text-rose-600 dark:text-rose-400' : 'text-surface-400' }}">
+                                        Jatuh tempo {{ $invoice->due_date?->locale('id')->translatedFormat('d M Y') ?? '—' }}{{ $isOverdue ? ' · terlambat' : '' }}
+                                    </p>
                                 </td>
-                                <td class="px-6 py-5">
-                                    <div class="text-sm font-black text-gray-900 dark:text-white">{{ $invoice->customer->name ?? 'Unknown' }}</div>
-                                    <div class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-0.5">@ {{ $invoice->customer->username ?? '' }}</div>
+                                <td>
+                                    <p class="font-medium text-surface-900 dark:text-white">{{ $invoice->customer->name ?? 'Tidak diketahui' }}</p>
+                                    <p class="text-xs text-surface-400 font-mono">{{ $invoice->customer->username ?? '' }}</p>
                                 </td>
-                                <td class="px-6 py-5">
-                                    <div class="text-sm font-black text-gray-900 dark:text-white">Rp {{ number_format($invoice->amount, 0, ',', '.') }}</div>
-                                    <div class="text-[10px] text-gray-400 font-bold mt-1">{{ $invoice->billing_period ?? 'Service Fee' }}</div>
+                                <td class="text-right">
+                                    <p class="font-medium tabular-nums text-surface-900 dark:text-white">Rp {{ number_format($invoice->amount, 0, ',', '.') }}</p>
+                                    <p class="text-xs text-surface-400">{{ $invoice->billing_period ?? 'Biaya layanan' }}</p>
                                 </td>
-                                <td class="px-6 py-5">
-                                    <span class="status-pill {{ $invoice->status == 'paid' ? 'status-paid' : 'status-unpaid' }}">
-                                        {{ $invoice->status }}
-                                    </span>
+                                <td>
+                                    @if($invoice->status == 'paid')
+                                        <span class="badge-success">Lunas</span>
+                                    @elseif($isOverdue)
+                                        <span class="badge-danger">Terlambat</span>
+                                    @else
+                                        <span class="badge-warning">Belum bayar</span>
+                                    @endif
                                 </td>
-                                <td class="px-6 py-5">
-                                    <div class="flex items-center justify-center space-x-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                        <!-- Print Invoice (Always visible) -->
-                                        <a href="{{ route('invoices.show', $invoice) }}" target="_blank" 
-                                           class="p-2.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-600 hover:text-white transition-all active:scale-90" title="View & Print">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                <td>
+                                    <div class="flex items-center justify-end gap-0.5">
+                                        <a href="{{ route('invoices.show', $invoice) }}" target="_blank" class="btn-ghost btn-icon !h-8 !w-8" title="Lihat & cetak" aria-label="Lihat & cetak">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                                         </a>
 
                                         @if($invoice->status == 'unpaid')
-
-                                            <!-- Portal Link -->
-                                            <a href="{{ URL::signedRoute('portal.invoice', ['invoice' => $invoice->id]) }}" target="_blank" 
-                                               class="p-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-600 hover:text-white transition-all active:scale-90" title="Open Portal">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                            <a href="{{ URL::signedRoute('portal.invoice', ['invoice' => $invoice->id]) }}" target="_blank" class="btn-ghost btn-icon !h-8 !w-8" title="Buka portal pembayaran" aria-label="Buka portal pembayaran">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                                             </a>
-
-                                            <!-- Manual Payment -->
-                                            <button type="button" @click="openPaymentModal({{ $invoice->id }}, '{{ $invoice->invoice_number }}', '{{ number_format($invoice->amount, 0, ',', '.') }}')" 
-                                                    class="p-2.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl hover:bg-emerald-600 hover:text-white transition-all active:scale-90" title="Mark as Paid">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                            </button>
-
-                                            <!-- WhatsApp Notify -->
                                             <form action="{{ route('invoices.whatsapp', $invoice) }}" method="POST" class="inline">
                                                 @csrf
-                                                <button type="submit" class="p-2.5 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all active:scale-90" title="Send WhatsApp Notice">
+                                                <button type="submit" class="btn-ghost btn-icon !h-8 !w-8 !text-emerald-600 dark:!text-emerald-400" title="Kirim tagihan via WhatsApp" aria-label="Kirim WhatsApp">
                                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
                                                 </button>
                                             </form>
+                                            <button type="button" @click="openPaymentModal({{ $invoice->id }}, '{{ $invoice->invoice_number }}', '{{ number_format($invoice->amount, 0, ',', '.') }}')" class="btn-secondary btn-sm !h-8 ml-1">
+                                                Tandai lunas
+                                            </button>
                                         @else
-                                            <!-- Paid State: Reset Option -->
                                             <form action="{{ route('invoices.update', $invoice) }}" method="POST" class="inline">
                                                 @csrf @method('PUT')
                                                 <input type="hidden" name="cancel_payment" value="1">
-                                                <button type="submit" class="p-2.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl hover:bg-amber-600 hover:text-white transition-all" 
-                                                        onclick="return confirm('Reset payment status to UNPAID?');" title="Cancel Payment">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                                <button type="submit" onclick="return confirm('Batalkan pembayaran dan kembalikan status ke BELUM BAYAR?');" class="btn-ghost btn-icon !h-8 !w-8 hover:!text-amber-600" title="Batalkan pembayaran" aria-label="Batalkan pembayaran">
+                                                    <x-icon name="refresh" class="w-4 h-4" />
                                                 </button>
                                             </form>
                                         @endif
 
-                                        <form action="{{ route('invoices.destroy', $invoice) }}" method="POST" class="inline" onsubmit="return confirm('Permanently delete this invoice?');">
+                                        <form action="{{ route('invoices.destroy', $invoice) }}" method="POST" class="inline" onsubmit="return confirm('Hapus invoice {{ $invoice->invoice_number }} secara permanen?');">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="p-2.5 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl hover:bg-rose-600 hover:text-white transition-all" title="Delete Permanent">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            <button type="submit" class="btn-ghost btn-icon !h-8 !w-8 hover:!text-rose-600 hover:!bg-rose-50 dark:hover:!bg-rose-500/10" title="Hapus" aria-label="Hapus invoice">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                             </button>
                                         </form>
                                     </div>
@@ -355,26 +219,26 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-8 py-20 text-center">
-                                    <div class="flex flex-col items-center">
-                                        <div class="w-20 h-20 bg-gray-50 dark:bg-gray-800/50 rounded-full flex items-center justify-center mb-4">
-                                            <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                        </div>
-                                        <p class="text-gray-400 font-bold uppercase tracking-widest text-[10px]">No invoices matching filters found</p>
+                                <td colspan="7" class="!py-16 text-center">
+                                    <div class="mx-auto w-10 h-10 rounded-full bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-400 mb-3">
+                                        <x-icon name="document" class="w-5 h-5" />
                                     </div>
+                                    <p class="text-sm font-medium text-surface-700 dark:text-surface-200">Tidak ada invoice</p>
+                                    <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5">Coba ubah filter atau buat invoice baru.</p>
                                 </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-            
+
             @if($invoices->hasPages())
-            <div class="px-8 py-6 bg-gray-50/30 dark:bg-gray-800/30 border-t border-gray-100 dark:border-gray-700">
-                {{ $invoices->links() }}
-            </div>
+                <div class="px-5 py-3 border-t border-surface-200 dark:border-surface-800">
+                    {{ $invoices->links() }}
+                </div>
             @endif
         </div>
+
 
         <!-- Floating Bulk Action Bar (OUTSIDE overflow-hidden, but INSIDE x-data) -->
         <div class="bulk-bar animate-slide-up" x-show="selectedIds.length > 0" x-cloak x-transition>
@@ -418,7 +282,7 @@
 
         <!-- Payment Modal (Glass Style) -->
         <div x-show="showPaymentModal" 
-             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-md" 
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm" 
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
@@ -426,10 +290,10 @@
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95"
              x-cloak>
-            <div @click.away="showPaymentModal = false" class="glass-card rounded-2xl w-full max-w-lg overflow-hidden relative border border-gray-200 dark:border-gray-700 shadow-2xl">
+            <div @click.away="showPaymentModal = false" class="glass-card rounded-lg w-full max-w-lg overflow-hidden relative border border-gray-200 dark:border-gray-700 shadow-elevated">
                 <div class="bg-gradient-to-r from-emerald-600 to-teal-700 px-6 py-6 text-white relative">
                     <h3 class="font-bold text-xl tracking-tight">Manual Payment</h3>
-                    <p class="text-emerald-100 text-xs font-bold uppercase tracking-widest mt-1 opacity-80">Recording external transaction</p>
+                    <p class="text-emerald-100 text-xs font-bold uppercase tracking-wide mt-1 opacity-80">Recording external transaction</p>
                     <button @click="showPaymentModal = false" class="absolute top-8 right-8 text-white/50 hover:text-white transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
@@ -441,35 +305,35 @@
                     <input type="hidden" name="mark_as_paid" value="1">
                     
                     <div class="mb-8 grid grid-cols-2 gap-4">
-                        <div class="p-5 bg-indigo-50 dark:bg-indigo-900/30 rounded-3xl border border-indigo-100 dark:border-indigo-800/30">
-                            <label class="block text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Invoice ID</label>
-                            <p class="text-sm font-black text-gray-900 dark:text-white" x-text="activeInvoiceNumber"></p>
+                        <div class="p-5 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                            <label class="block text-[10px] font-semibold text-indigo-500 uppercase tracking-wide mb-1">Invoice ID</label>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="activeInvoiceNumber"></p>
                         </div>
-                        <div class="p-5 bg-emerald-50 dark:bg-emerald-900/30 rounded-3xl border border-emerald-100 dark:border-emerald-800/30">
-                            <label class="block text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Total Due</label>
-                            <p class="text-sm font-black text-gray-900 dark:text-white" x-text="'Rp ' + activeInvoiceAmount"></p>
+                        <div class="p-5 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
+                            <label class="block text-[10px] font-semibold text-emerald-500 uppercase tracking-wide mb-1">Total Due</label>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="'Rp ' + activeInvoiceAmount"></p>
                         </div>
                     </div>
 
                     <div class="mb-8">
-                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Receiving Bank Account</label>
-                        <select name="bank_account_id" class="w-full py-4 rounded-2xl border-gray-100 dark:border-gray-700 dark:bg-gray-900/50 text-sm font-bold focus:ring-emerald-500 focus:border-emerald-500 transition-all" required>
+                        <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-3">Receiving Bank Account</label>
+                        <select name="bank_account_id" class="w-full py-2.5 rounded-lg border-gray-100 dark:border-gray-700 dark:bg-gray-900/50 text-sm font-bold focus:ring-emerald-500 focus:border-emerald-500 transition-all" required>
                             <option value="">Select Account...</option>
                             @foreach($bankAccounts as $acc)
                                 <option value="{{ $acc->id }}">{{ $acc->bank_name }} - {{ $acc->account_name }}</option>
                             @endforeach
                         </select>
                         <p class="mt-3 text-[10px] text-gray-400 font-medium italic px-2 leading-relaxed">
-                            <span class="text-emerald-500 font-black mr-1">NOTE:</span>
+                            <span class="text-emerald-500 font-semibold mr-1">NOTE:</span>
                             Payment will be automatically logged to the general ledger and the customer service will be reactivated if currently suspended.
                         </p>
                     </div>
 
                     <div class="flex flex-col gap-3">
-                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-3xl shadow-xl shadow-emerald-600/30 transition-all transform hover:-translate-y-1 active:scale-95">
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl shadow-sm transition-all transform hover:-translate-y-1 active:scale-95">
                             CONFIRM PAYMENT
                         </button>
-                        <button type="button" @click="showPaymentModal = false" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 font-bold py-4 rounded-3xl transition-all">
+                        <button type="button" @click="showPaymentModal = false" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 font-bold py-4 rounded-xl transition-all">
                             CANCEL
                         </button>
                     </div>
@@ -479,7 +343,7 @@
 
         <!-- Bulk Payment Modal -->
         <div x-show="showBulkPayModal" 
-             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-md" 
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm" 
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
@@ -487,10 +351,10 @@
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95"
              x-cloak>
-            <div @click.away="showBulkPayModal = false" class="glass-card rounded-2xl w-full max-w-lg overflow-hidden relative border border-gray-200 dark:border-gray-700 shadow-2xl">
+            <div @click.away="showBulkPayModal = false" class="glass-card rounded-lg w-full max-w-lg overflow-hidden relative border border-gray-200 dark:border-gray-700 shadow-elevated">
                 <div class="bg-gradient-to-r from-emerald-600 to-teal-700 px-6 py-6 text-white relative">
                     <h3 class="font-bold text-xl tracking-tight">Bulk Payment</h3>
-                    <p class="text-emerald-100 text-xs font-bold uppercase tracking-widest mt-1 opacity-80">
+                    <p class="text-emerald-100 text-xs font-bold uppercase tracking-wide mt-1 opacity-80">
                         Marking <span x-text="selectedIds.length" class="text-white"></span> invoices as paid
                     </p>
                     <button @click="showBulkPayModal = false" class="absolute top-8 right-8 text-white/50 hover:text-white transition-colors">
@@ -505,31 +369,31 @@
                     </template>
                     
                     <div class="mb-8">
-                        <div class="p-5 bg-indigo-50 dark:bg-indigo-900/30 rounded-3xl border border-indigo-100 dark:border-indigo-800/30 mb-5">
-                            <label class="block text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Total Invoice Dipilih</label>
-                            <p class="text-lg font-black text-gray-900 dark:text-white" x-text="selectedIds.length + ' invoice (hanya yang berstatus unpaid akan diproses)'"></p>
+                        <div class="p-5 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl border border-indigo-100 dark:border-indigo-800/30 mb-5">
+                            <label class="block text-[10px] font-semibold text-indigo-500 uppercase tracking-wide mb-1">Total Invoice Dipilih</label>
+                            <p class="text-lg font-semibold text-gray-900 dark:text-white" x-text="selectedIds.length + ' invoice (hanya yang berstatus unpaid akan diproses)'"></p>
                         </div>
                     </div>
 
                     <div class="mb-8">
-                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Rekening Penerima</label>
-                        <select name="bank_account_id" class="w-full py-4 rounded-2xl border-gray-100 dark:border-gray-700 dark:bg-gray-900/50 text-sm font-bold focus:ring-emerald-500 focus:border-emerald-500 transition-all" required>
+                        <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-3">Rekening Penerima</label>
+                        <select name="bank_account_id" class="w-full py-2.5 rounded-lg border-gray-100 dark:border-gray-700 dark:bg-gray-900/50 text-sm font-bold focus:ring-emerald-500 focus:border-emerald-500 transition-all" required>
                             <option value="">Pilih Rekening...</option>
                             @foreach($bankAccounts as $acc)
                                 <option value="{{ $acc->id }}">{{ $acc->bank_name }} - {{ $acc->account_name }}</option>
                             @endforeach
                         </select>
                         <p class="mt-3 text-[10px] text-gray-400 font-medium italic px-2 leading-relaxed">
-                            <span class="text-emerald-500 font-black mr-1">NOTE:</span>
+                            <span class="text-emerald-500 font-semibold mr-1">NOTE:</span>
                             Semua invoice terpilih yang berstatus unpaid akan ditandai lunas, dicatat ke kas/bank, dan layanan pelanggan akan direaktivasi.
                         </p>
                     </div>
 
                     <div class="flex flex-col gap-3">
-                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-3xl shadow-xl shadow-emerald-600/30 transition-all transform hover:-translate-y-1 active:scale-95">
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl shadow-sm transition-all transform hover:-translate-y-1 active:scale-95">
                             KONFIRMASI PEMBAYARAN MASSAL
                         </button>
-                        <button type="button" @click="showBulkPayModal = false" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 font-bold py-4 rounded-3xl transition-all">
+                        <button type="button" @click="showBulkPayModal = false" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 font-bold py-4 rounded-xl transition-all">
                             BATAL
                         </button>
                     </div>
@@ -538,7 +402,7 @@
         </div>
         <!-- Create Invoice Modal -->
         <div x-show="showCreateModal" 
-             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-md" 
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm" 
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
@@ -546,18 +410,18 @@
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95"
              x-cloak>
-            <div @click.away="showCreateModal = false" class="rounded-[2.5rem] w-full max-w-6xl overflow-hidden relative border border-slate-200 dark:border-slate-800 shadow-2xl max-h-[90vh] flex flex-col bg-slate-100 dark:bg-slate-950 backdrop-blur-2xl">
+            <div @click.away="showCreateModal = false" class="rounded-xl w-full max-w-6xl overflow-hidden relative border border-slate-200 dark:border-slate-800 shadow-elevated max-h-[90vh] flex flex-col bg-slate-100 dark:bg-slate-950 backdrop-blur-2xl">
                 
                 <!-- Modal Header -->
                 <div class="px-8 py-6 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 shrink-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
                     <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-indigo-600 dark:bg-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/25">
+                        <div class="w-12 h-12 bg-indigo-600 dark:bg-indigo-500 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-600/25">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         </div>
                         <div>
                             <div class="flex items-center space-x-3">
-                                <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Generate Invoice</h2>
-                                <span class="px-3 py-1 rounded-full text-[9px] font-black bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 uppercase tracking-widest">Billing Engine</span>
+                                <h2 class="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">Generate Invoice</h2>
+                                <span class="px-3 py-1 rounded-full text-[9px] font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 uppercase tracking-wide">Billing Engine</span>
                             </div>
                             <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Manual billing creation for active subscribers.</p>
                         </div>
@@ -574,12 +438,12 @@
                         
                         <div class="lg:col-span-8 space-y-6">
                             <!-- 1. Subscriber Selection -->
-                            <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-7 border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <div class="bg-white dark:bg-slate-900 rounded-xl p-7 border border-slate-200 dark:border-slate-800 shadow-sm">
                                 <div class="flex items-center space-x-2.5 mb-4">
                                     <span class="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400"></span>
-                                    <label class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">1. Target Subscriber</label>
+                                    <label class="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wide">1. Target Subscriber</label>
                                 </div>
-                                <select id="customer_id" name="customer_id" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-4 px-5 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" required>
+                                <select id="customer_id" name="customer_id" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-4 px-5 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" required>
                                     <option value="" class="dark:bg-slate-900 dark:text-white">-- Select Subscriber --</option>
                                     @foreach($customers as $customer)
                                         <option value="{{ $customer->id }}" class="dark:bg-slate-900 dark:text-white" {{ old('customer_id') == $customer->id ? 'selected' : '' }}
@@ -597,16 +461,16 @@
                             </div>
 
                             <!-- 2. Period & Duration -->
-                            <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-7 border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <div class="bg-white dark:bg-slate-900 rounded-xl p-7 border border-slate-200 dark:border-slate-800 shadow-sm">
                                 <div class="flex items-center space-x-2.5 mb-6">
                                     <span class="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400"></span>
-                                    <label class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">2. Billing Period & Dates</label>
+                                    <label class="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wide">2. Billing Period & Dates</label>
                                 </div>
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                                     <div>
                                         <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 px-1">Duration</label>
-                                        <select id="billing_duration" name="billing_period" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 px-4 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
+                                        <select id="billing_duration" name="billing_period" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-4 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
                                             @for ($i = 1; $i <= 12; $i++)
                                                 <option value="{{ $i }} Month{{ $i > 1 ? 's' : '' }}" class="dark:bg-slate-900 dark:text-white" data-months="{{ $i }}" {{ $i == 1 ? 'selected' : '' }}>
                                                     {{ $i }} Month{{ $i > 1 ? 's' : '' }}
@@ -617,31 +481,31 @@
                                     </div>
                                     <div>
                                         <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 px-1">Start Date</label>
-                                        <input id="period_start" name="period_start" value="{{ old('period_start') }}" type="date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 px-4 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" required />
+                                        <input id="period_start" name="period_start" value="{{ old('period_start') }}" type="date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-4 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" required />
                                     </div>
                                     <div>
                                         <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 px-1">End Date</label>
-                                        <input id="period_end" name="period_end" value="{{ old('period_end') }}" type="date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 px-4 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" required />
+                                        <input id="period_end" name="period_end" value="{{ old('period_end') }}" type="date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-4 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" required />
                                     </div>
                                 </div>
 
                                 <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
                                     <div class="flex items-center space-x-2.5 mb-3">
                                         <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                                        <label class="text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest">Settlement Due Date</label>
+                                        <label class="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wide">Settlement Due Date</label>
                                     </div>
                                     <div class="max-w-xs">
-                                        <input id="due_date" name="due_date" value="{{ old('due_date') }}" type="date" class="w-full bg-rose-50/60 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 rounded-2xl py-3.5 px-5 text-sm font-bold text-rose-700 dark:text-rose-300 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all" required />
+                                        <input id="due_date" name="due_date" value="{{ old('due_date') }}" type="date" class="w-full bg-rose-50/60 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 rounded-lg py-3.5 px-5 text-sm font-bold text-rose-700 dark:text-rose-300 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all" required />
                                         <p class="mt-2 text-[10px] text-slate-400 dark:text-slate-500 font-medium px-1">Synced automatically with subscriber cycle.</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- 3. Financial Adjustments -->
-                            <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-7 border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <div class="bg-white dark:bg-slate-900 rounded-xl p-7 border border-slate-200 dark:border-slate-800 shadow-sm">
                                 <div class="flex items-center space-x-2.5 mb-6">
                                     <span class="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400"></span>
-                                    <label class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">3. Financial Adjustments</label>
+                                    <label class="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wide">3. Financial Adjustments</label>
                                 </div>
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
@@ -649,12 +513,12 @@
                                         <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 px-1">Base Amount (Rp)</label>
                                         <div class="relative">
                                             <span class="absolute left-4 top-3.5 font-bold text-sm text-slate-400 dark:text-slate-500">Rp</span>
-                                            <input id="amount" name="amount" value="{{ old('amount') }}" type="number" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 pl-11 pr-5 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" placeholder="0" required />
+                                            <input id="amount" name="amount" value="{{ old('amount') }}" type="number" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 pl-11 pr-5 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" placeholder="0" required />
                                         </div>
                                     </div>
                                     <div>
                                         <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 px-1">Tax Scheme</label>
-                                        <select id="tax_id" name="tax_id" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 px-5 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
+                                        <select id="tax_id" name="tax_id" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-5 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
                                             <option value="" class="dark:bg-slate-900 dark:text-white">No Tax Applied</option>
                                             @foreach($taxes as $tax)
                                                 <option value="{{ $tax->id }}" class="dark:bg-slate-900 dark:text-white" data-rate="{{ $tax->rate }}">{{ $tax->name }} ({{ $tax->rate }}%)</option>
@@ -665,22 +529,22 @@
 
                                 <div class="flex items-center space-x-2.5 mb-2.5">
                                     <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-                                    <label class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">Notes & Remarks</label>
+                                    <label class="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wide">Notes & Remarks</label>
                                 </div>
-                                <textarea id="notes" name="notes" rows="3" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 px-5 text-sm font-medium text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" placeholder="Enter optional notes for customer...">{{ old('notes') }}</textarea>
+                                <textarea id="notes" name="notes" rows="3" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-5 text-sm font-medium text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" placeholder="Enter optional notes for customer...">{{ old('notes') }}</textarea>
                             </div>
                         </div>
 
                         <!-- Right Panel: Auditor Summary Panel (Fully readable Light & Dark) -->
                         <div class="lg:col-span-4 sticky top-0">
-                            <div class="bg-indigo-600 dark:bg-slate-900 text-white rounded-[2.5rem] p-7 relative overflow-hidden border border-indigo-500/30 dark:border-slate-800 shadow-2xl">
+                            <div class="bg-indigo-600 dark:bg-slate-900 text-white rounded-xl p-7 relative overflow-hidden border border-indigo-500/30 dark:border-slate-800 shadow-elevated">
                                 <!-- Subtle Background Glow -->
                                 <div class="absolute -top-12 -right-12 w-44 h-44 bg-white/10 dark:bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
                                 <div class="flex items-center justify-between mb-7 relative z-10">
                                     <div class="flex items-center space-x-2">
                                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                        <span class="text-[10px] font-black text-indigo-100 dark:text-indigo-300 uppercase tracking-[0.25em]">Audit Summary</span>
+                                        <span class="text-[10px] font-semibold text-indigo-100 dark:text-indigo-300 uppercase tracking-[0.25em]">Audit Summary</span>
                                     </div>
                                     <div class="p-2 bg-white/15 dark:bg-slate-800 rounded-xl text-white dark:text-indigo-400 border border-white/20 dark:border-slate-700">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
@@ -688,10 +552,10 @@
                                 </div>
 
                                 <div class="text-center mb-7 relative z-10">
-                                    <span class="text-[10px] font-bold text-indigo-200 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Total Payable</span>
+                                    <span class="text-[10px] font-bold text-indigo-200 dark:text-slate-400 uppercase tracking-wide mb-1.5 block">Total Payable</span>
                                     <div class="flex items-baseline justify-center">
-                                        <span class="text-lg font-black mr-1 text-indigo-200 dark:text-indigo-400 italic">Rp</span>
-                                        <span id="total_display" class="text-4xl font-black tracking-tight text-white font-mono drop-shadow">0</span>
+                                        <span class="text-lg font-semibold mr-1 text-indigo-200 dark:text-indigo-400 italic">Rp</span>
+                                        <span id="total_display" class="text-4xl font-semibold tracking-tight text-white font-mono drop-shadow">0</span>
                                     </div>
                                 </div>
 
@@ -706,12 +570,12 @@
                                     </div>
                                 </div>
 
-                                <button type="submit" class="w-full bg-white dark:bg-indigo-600 hover:bg-slate-100 dark:hover:bg-indigo-500 text-indigo-900 dark:text-white font-black py-4 rounded-2xl transition-all shadow-xl active:scale-95 uppercase tracking-widest text-xs relative z-10 flex items-center justify-center space-x-2 group">
+                                <button type="submit" class="w-full bg-white dark:bg-indigo-600 hover:bg-slate-100 dark:hover:bg-indigo-500 text-indigo-900 dark:text-white font-semibold py-2.5 rounded-lg transition-all shadow-xl active:scale-95 uppercase tracking-wide text-xs relative z-10 flex items-center justify-center space-x-2 group">
                                     <span>Publish Invoice</span>
                                     <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                                 </button>
                                 
-                                <button type="button" @click="showCreateModal = false" class="w-full block text-center mt-3 text-[10px] font-bold text-indigo-200 dark:text-slate-400 hover:text-white uppercase tracking-widest transition-colors py-2 relative z-10">
+                                <button type="button" @click="showCreateModal = false" class="w-full block text-center mt-3 text-[10px] font-bold text-indigo-200 dark:text-slate-400 hover:text-white uppercase tracking-wide transition-colors py-2 relative z-10">
                                     Discard & Exit
                                 </button>
                             </div>

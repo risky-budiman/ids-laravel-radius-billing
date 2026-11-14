@@ -1,33 +1,31 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Ticket System') }}
-            </h2>
-            <div class="flex space-x-2">
-                <a href="{{ route('tickets.create', ['type' => 'aktivasi']) }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                    Aktivasi Baru
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h2>Tiket</h2>
+                <p class="page-subtitle">Aktivasi, gangguan, dan dismantle pelanggan.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('tickets.create', ['type' => 'dismantle']) }}" class="btn-secondary">
+                    <x-icon name="plus" class="w-4 h-4" /> Dismantle
                 </a>
-                <a href="{{ route('tickets.create', ['type' => 'gangguan']) }}" class="inline-flex items-center px-4 py-2 bg-rose-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-rose-700 focus:bg-rose-700 active:bg-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                    Buka Gangguan
+                <a href="{{ route('tickets.create', ['type' => 'gangguan']) }}" class="btn-secondary">
+                    <x-icon name="plus" class="w-4 h-4" /> Laporan Gangguan
                 </a>
-                <a href="{{ route('tickets.create', ['type' => 'dismantle']) }}" class="inline-flex items-center px-4 py-2 bg-amber-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-amber-700 focus:bg-amber-700 active:bg-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                    Dismantle
+                <a href="{{ route('tickets.create', ['type' => 'aktivasi']) }}" class="btn-primary">
+                    <x-icon name="plus" class="w-4 h-4" /> Aktivasi Baru
                 </a>
             </div>
         </div>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+    <div>
+        <div class="space-y-6">
             <!-- Rekap Kinerja Tim Dashboard -->
-            <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="card overflow-hidden">
                 <div class="p-6 border-b border-gray-100 dark:border-gray-700/50 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div>
-                        <h3 class="text-base font-black text-slate-800 dark:text-slate-100 flex items-center">
+                        <h3 class="text-base font-semibold text-slate-800 dark:text-slate-100 flex items-center">
                             <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                             Rekap Kinerja Tim & Status Tiket
                         </h3>
@@ -44,7 +42,7 @@
                         </div>
                         <div>
                             <span class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Efisiensi Tim</span>
-                            <span class="block text-sm font-black text-slate-800 dark:text-slate-100 mt-0.5">
+                            <span class="block text-sm font-semibold text-slate-800 dark:text-slate-100 mt-0.5">
                                 {{ $recap['overall']['resolved'] + $recap['overall']['closed'] }} dari {{ $recap['overall']['total'] }} Selesai
                             </span>
                         </div>
@@ -53,7 +51,7 @@
 
                 <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50/20 dark:bg-slate-900/10">
                     <!-- Aktivasi -->
-                    <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-between">
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-center mb-3">
                                 <a href="{{ route('tickets.index', ['type' => 'aktivasi']) }}" class="flex items-center text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
@@ -106,7 +104,7 @@
                     </div>
 
                     <!-- Gangguan -->
-                    <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-between">
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-center mb-3">
                                 <a href="{{ route('tickets.index', ['type' => 'gangguan']) }}" class="flex items-center text-sm font-bold text-rose-600 dark:text-rose-400 hover:underline">
@@ -159,7 +157,7 @@
                     </div>
 
                     <!-- Dismantle -->
-                    <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-between">
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-center mb-3">
                                 <a href="{{ route('tickets.index', ['type' => 'dismantle']) }}" class="flex items-center text-sm font-bold text-amber-600 dark:text-amber-400 hover:underline">
@@ -213,119 +211,93 @@
                 </div>
             </div>
 
+
             <!-- Table -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-2xl border border-gray-200 dark:border-gray-700">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
-                                    <th class="px-6 py-4 font-semibold">#</th>
-                                    <th class="px-6 py-4 font-semibold">Number</th>
-                                    <th class="px-6 py-4 font-semibold">Customer</th>
-                                    <th class="px-6 py-4 font-semibold">Type</th>
-                                    <th class="px-6 py-4 font-semibold">Status</th>
-                                    <th class="px-6 py-4 font-semibold">Priority</th>
-                                    <th class="px-6 py-4 font-semibold">Assigned To</th>
-                                    <th class="px-6 py-4 font-semibold">Date</th>
-                                    <th class="px-6 py-4 text-center">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-100 dark:divide-gray-700">
-                                @forelse($tickets as $ticket)
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors duration-150">
-                                        <td class="px-6 py-4 text-gray-400 dark:text-gray-500 text-sm font-medium">
-                                            {{ $tickets->firstItem() + $loop->index }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <a href="{{ route('tickets.show', $ticket) }}" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                {{ $ticket->ticket_number }}
+            <div class="card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="table whitespace-nowrap">
+                        <thead>
+                            <tr>
+                                <th class="w-12">#</th>
+                                <th>Nomor</th>
+                                <th>Pelanggan</th>
+                                <th>Jenis</th>
+                                <th>Status</th>
+                                <th>Prioritas</th>
+                                <th>Ditangani</th>
+                                <th>Dibuat</th>
+                                <th class="text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($tickets as $ticket)
+                                @php
+                                    $typeBadge = ['aktivasi' => 'badge-primary', 'gangguan' => 'badge-danger', 'dismantle' => 'badge-warning'][$ticket->type] ?? 'badge-gray';
+                                    $statusBadge = [
+                                        'open' => ['badge-info', 'Open'],
+                                        'in_progress' => ['badge-warning', 'Diproses'],
+                                        'resolved' => ['badge-success', 'Selesai'],
+                                        'closed' => ['badge-gray', 'Ditutup'],
+                                    ][$ticket->status] ?? ['badge-gray', \Illuminate\Support\Str::headline((string) $ticket->status)];
+                                    $prio = [
+                                        'low' => ['bg-surface-300', 'Rendah', 'text-surface-500'],
+                                        'medium' => ['bg-sky-500', 'Sedang', 'text-surface-700 dark:text-surface-300'],
+                                        'high' => ['bg-orange-500', 'Tinggi', 'text-orange-600 dark:text-orange-400'],
+                                        'urgent' => ['bg-rose-600', 'Mendesak', 'text-rose-600 dark:text-rose-400 font-medium'],
+                                    ][$ticket->priority] ?? ['bg-surface-300', ucfirst((string) $ticket->priority), 'text-surface-500'];
+                                @endphp
+                                <tr>
+                                    <td class="text-surface-400 tabular-nums">{{ $tickets->firstItem() + $loop->index }}</td>
+                                    <td>
+                                        <a href="{{ route('tickets.show', $ticket) }}" class="font-medium text-surface-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 font-mono text-[13px]">{{ $ticket->ticket_number }}</a>
+                                        @if($ticket->isOverdue())
+                                            <span class="badge-danger ml-1.5">Lewat SLA</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <p class="font-medium text-surface-900 dark:text-white">{{ $ticket->customer->name ?? 'Internal / Sistem' }}</p>
+                                        <p class="text-xs text-surface-400 font-mono">{{ $ticket->customer->username ?? '' }}</p>
+                                    </td>
+                                    <td><span class="{{ $typeBadge }}">{{ ucfirst($ticket->type) }}</span></td>
+                                    <td><span class="{{ $statusBadge[0] }}">{{ $statusBadge[1] }}</span></td>
+                                    <td>
+                                        <span class="inline-flex items-center gap-2 text-sm {{ $prio[2] }}">
+                                            <span class="w-2 h-2 rounded-full {{ $prio[0] }}"></span>{{ $prio[1] }}
+                                        </span>
+                                    </td>
+                                    <td class="{{ $ticket->assignee ? '' : 'text-surface-400' }}">{{ $ticket->assignee->name ?? 'Belum ada' }}</td>
+                                    <td class="text-surface-500 dark:text-surface-400 text-[13px]">{{ $ticket->created_at->locale('id')->translatedFormat('d M Y, H:i') }}</td>
+                                    <td>
+                                        <div class="flex items-center justify-end gap-0.5">
+                                            <a href="{{ route('tickets.show', $ticket) }}" class="btn-ghost btn-icon !h-8 !w-8" title="Lihat detail" aria-label="Lihat detail">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                             </a>
-                                            @if($ticket->isOverdue())
-                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black bg-rose-100 text-rose-700 animate-pulse border border-rose-200 uppercase tracking-tighter">
-                                                    OVERDUE
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <div class="flex flex-col">
-                                                <span class="font-medium text-gray-900 dark:text-white">{{ $ticket->customer->name ?? 'Internal/System' }}</span>
-                                                <span class="text-xs text-gray-500">{{ $ticket->customer->username ?? '' }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            @php
-                                                $typeColors = [
-                                                    'aktivasi' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
-                                                    'gangguan' => 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
-                                                    'dismantle' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-                                                ];
-                                            @endphp
-                                            <span class="px-2.5 py-1 text-xs font-bold rounded-full {{ $typeColors[$ticket->type] ?? 'bg-gray-100' }}">
-                                                {{ ucfirst($ticket->type) }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            @php
-                                                $statusColors = [
-                                                    'open' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-                                                    'in_progress' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-                                                    'resolved' => 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
-                                                    'closed' => 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
-                                                ];
-                                            @endphp
-                                            <span class="px-2.5 py-1 text-xs font-bold rounded-full {{ $statusColors[$ticket->status] ?? 'bg-gray-100' }}">
-                                                {{ str_replace('_', ' ', ucfirst($ticket->status)) }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            @php
-                                                $priorityColors = [
-                                                    'low' => 'text-gray-400',
-                                                    'medium' => 'text-blue-500',
-                                                    'high' => 'text-orange-500',
-                                                    'urgent' => 'text-rose-600 font-black',
-                                                ];
-                                            @endphp
-                                            <div class="flex items-center">
-                                                <div class="w-2 h-2 rounded-full mr-2 {{ str_replace('text-', 'bg-', $priorityColors[$ticket->priority] ?? 'bg-gray-100') }}"></div>
-                                                <span class="text-xs font-semibold {{ $priorityColors[$ticket->priority] ?? 'text-gray-500' }}">
-                                                    {{ strtoupper($ticket->priority) }}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            {{ $ticket->assignee->name ?? 'Unassigned' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
-                                            {{ $ticket->created_at->format('d M Y H:i') }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                            <div class="flex justify-center space-x-2">
-                                                <a href="{{ route('tickets.show', $ticket) }}" class="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                                </a>
-                                                <a href="{{ route('tickets.edit', $ticket) }}" class="p-2 text-gray-400 hover:text-amber-600 transition-colors">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="8" class="px-6 py-10 text-center text-gray-500 dark:text-gray-400 italic">
-                                            No tickets found for this segment.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="mt-6">
+                                            <a href="{{ route('tickets.edit', $ticket) }}" class="btn-ghost btn-icon !h-8 !w-8" title="Edit tiket" aria-label="Edit tiket">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="9" class="!py-16 text-center">
+                                        <div class="mx-auto w-10 h-10 rounded-full bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-400 mb-3">
+                                            <x-icon name="ticket" class="w-5 h-5" />
+                                        </div>
+                                        <p class="text-sm font-medium text-surface-700 dark:text-surface-200">Tidak ada tiket</p>
+                                        <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5">Belum ada tiket pada segmen ini.</p>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                @if($tickets->hasPages())
+                    <div class="px-5 py-3 border-t border-surface-200 dark:border-surface-800">
                         {{ $tickets->links() }}
                     </div>
-                </div>
+                @endif
             </div>
         </div>
     </div>
