@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class BankAccount extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'chart_of_account_id',
@@ -39,5 +41,10 @@ class BankAccount extends Model
     public function transactions()
     {
         return $this->hasMany(BankTransaction::class);
+    }
+
+    public function activityIdentifier(): string
+    {
+        return trim($this->bank_name . ' · ' . $this->account_name);
     }
 }

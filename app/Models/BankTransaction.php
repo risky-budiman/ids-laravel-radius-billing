@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class BankTransaction extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'bank_account_id',
@@ -92,5 +94,12 @@ class BankTransaction extends Model
         if ($this->relationLoaded('bankAccount') && $this->bankAccount) {
             $this->bankAccount->refresh();
         }
+    }
+
+    public function activityIdentifier(): string
+    {
+        return trim(($this->type === 'deposit' ? 'Masuk ' : 'Keluar ') . number_format((float) $this->amount, 0, ',', '.')
+            . ' · ' . ($this->bankAccount?->account_name ?? 'rekening #' . $this->bank_account_id)
+            . ($this->description ? ' · ' . \Illuminate\Support\Str::limit($this->description, 60) : ''));
     }
 }

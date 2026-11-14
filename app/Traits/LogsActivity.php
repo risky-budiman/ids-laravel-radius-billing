@@ -41,7 +41,11 @@ trait LogsActivity
 
     public function getModelIdentifier()
     {
-        $possibleFields = ['name', 'invoice_number', 'reference', 'ticket_number', 'customer_code', 'username', 'code', 'email', 'id'];
+        if (method_exists($this, 'activityIdentifier')) {
+            return $this->activityIdentifier();
+        }
+
+        $possibleFields = ['name', 'invoice_number', 'reference', 'reference_number', 'ticket_number', 'customer_code', 'username', 'code', 'account_name', 'key', 'email', 'id'];
         
         foreach ($possibleFields as $field) {
             if (isset($this->{$field})) {
@@ -54,14 +58,31 @@ trait LogsActivity
 
     protected function logAction($action, $description, $properties = null)
     {
+        // Model boleh melewati pencatatan untuk perubahan rutin (mis. status backup harian)
+        if (method_exists($this, 'shouldLogActivity') && ! $this->shouldLogActivity()) {
+            return;
+        }
+
         // Filter sensitive data from properties (including ID)
         $sensitiveFields = ['id', 'password', 'remember_token', 'secret', 'created_at', 'updated_at', 'deleted_at'];
-        
+
         if ($properties && isset($properties['old'])) {
             $properties['old'] = array_diff_key($properties['old'], array_flip($sensitiveFields));
         }
         if ($properties && isset($properties['new'])) {
             $properties['new'] = array_diff_key($properties['new'], array_flip($sensitiveFields));
+        }
+
+        // Rahasia (kredensial gateway, token, API key) tidak boleh tersimpan di log: hanya
+        // dicatat BAHWA nilainya berubah.
+        $redact = array_merge(['credentials', 'api_key', 'token', 'server_key', 'callback_token', 'secret_key'],
+            method_exists($this, 'activityRedactedFields') ? $this->activityRedactedFields() : []);
+        foreach (['old', 'new'] as $side) {
+            foreach ($redact as $field) {
+                if ($properties && array_key_exists($side, $properties) && array_key_exists($field, (array) $properties[$side])) {
+                    $properties[$side][$field] = '[disembunyikan]';
+                }
+            }
         }
 
         $userId = null;

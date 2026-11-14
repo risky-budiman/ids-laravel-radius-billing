@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
+
 use Illuminate\Database\Eloquent\Model;
 
 class ChartOfAccount extends Model
 {
+    use LogsActivity;
+
     protected $fillable = ['code', 'name', 'type', 'parent_id', 'is_active'];
 
     protected $appends = ['balance'];
