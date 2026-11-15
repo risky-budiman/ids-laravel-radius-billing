@@ -79,6 +79,15 @@ Route::prefix('v1/admin')->name('api.admin.')->group(function () {
             Route::post('/customers/{id}/reset-fup', [AdminCustomerController::class, 'resetFup']);
             Route::apiResource('/customers', AdminCustomerController::class)->except(['destroy']);
         });
+        // Wizard aktivasi & dismantle (aplikasi mobile teknisi) — bukan sales
+        Route::middleware('admin.role:administrator,admin,teknisi')->group(function () {
+            $w = \App\Http\Controllers\Api\v1\Admin\CustomerActivationController::class;
+            Route::get('/customers/{id}/activation', [$w, 'activationForm'])->whereNumber('id');
+            Route::post('/customers/{id}/activate', [$w, 'activate'])->whereNumber('id');
+            Route::get('/customers/{id}/dismantle', [$w, 'dismantleForm'])->whereNumber('id');
+            Route::post('/customers/{id}/dismantle', [$w, 'dismantle'])->whereNumber('id');
+            Route::post('/customers/{id}/request-dismantle', [$w, 'requestDismantle'])->whereNumber('id');
+        });
         Route::delete('/customers/{customer}', [AdminCustomerController::class, 'destroy'])
             ->middleware('admin.role:administrator,admin')->name('customers.destroy');
 
