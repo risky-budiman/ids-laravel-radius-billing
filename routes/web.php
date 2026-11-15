@@ -200,6 +200,11 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         // Piutang (umur tagihan) & daftar akan diisolir
         Route::get('receivables', [\App\Http\Controllers\ReceivablesController::class, 'index'])->name('receivables.index');
         Route::get('receivables/export', [\App\Http\Controllers\ReceivablesController::class, 'export'])->name('receivables.export');
+        // KPI bisnis (MRR, ARPU, churn) — hanya administrator & admin
+        Route::middleware('role:administrator,admin')->group(function () {
+            Route::get('kpi', [\App\Http\Controllers\BusinessKpiController::class, 'index'])->name('kpi.index');
+            Route::get('kpi/export', [\App\Http\Controllers\BusinessKpiController::class, 'export'])->name('kpi.export');
+        });
         Route::resource('invoices', \App\Http\Controllers\InvoiceController::class);
         Route::post('invoices/generate-automated', [\App\Http\Controllers\InvoiceController::class, 'generateAutomated'])->name('invoices.generate-automated');
         Route::get('invoices/{invoice}/pay', [\App\Http\Controllers\InvoiceController::class, 'pay'])->name('invoices.pay');

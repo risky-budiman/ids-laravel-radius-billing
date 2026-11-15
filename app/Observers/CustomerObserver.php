@@ -31,6 +31,22 @@ class CustomerObserver
     /**
      * Handle the Customer "updated" event.
      */
+    /**
+     * Catat tanggal layanan berakhir (untuk churn): diisi saat dicabut/batal, dikosongkan
+     * bila pelanggan kembali berlangganan.
+     */
+    public function saving(Customer $customer): void
+    {
+        if (! $customer->isDirty('status')) {
+            return;
+        }
+        if (in_array($customer->status, [Customer::STATUS_DISMANTLED, Customer::STATUS_CANCELED], true)) {
+            $customer->terminated_at ??= now();
+        } elseif (in_array($customer->status, [Customer::STATUS_ACTIVE, Customer::STATUS_SUSPENDED], true)) {
+            $customer->terminated_at = null;
+        }
+    }
+
     public function updated(Customer $customer): void
     {
         $this->syncIsolation($customer);
