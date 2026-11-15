@@ -23,6 +23,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Limiter terpisah untuk verifikasi & kirim ulang OTP portal. `throttle:N,1` biasa memakai satu
+        // penghitung per IP untuk semua rute, sehingga beberapa kali salah ketik kode memblokir "kirim ulang".
+        \Illuminate\Support\Facades\RateLimiter::for('portal-otp-verify', fn ($request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(20)->by('verify|' . $request->ip()));
+        \Illuminate\Support\Facades\RateLimiter::for('portal-otp-resend', fn ($request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(5)->by('resend|' . $request->ip()));
+
         // Hanya proxy yang benar-benar di depan aplikasi yang boleh menentukan IP klien lewat
         // X-Forwarded-For. Dulu '*' (siapa saja): batas percobaan login per IP bisa ditembus.
         $trusted = trim((string) config('app.trusted_proxies', '127.0.0.1,::1'));

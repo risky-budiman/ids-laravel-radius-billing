@@ -62,6 +62,9 @@
                         <label for="phone" class="label">Nomor HP terdaftar</label>
                         <input id="phone" type="tel" name="phone" value="{{ old('phone') }}" required inputmode="tel"
                                autocomplete="tel" placeholder="08xxxxxxxxxx" class="input">
+                        @if(\App\Services\PortalOtpService::enabled())
+                            <p class="help-text">Kode verifikasi akan dikirim ke WhatsApp nomor ini.</p>
+                        @endif
                     </div>
 
                     <button type="submit" class="btn-primary btn-lg w-full" :disabled="loading">

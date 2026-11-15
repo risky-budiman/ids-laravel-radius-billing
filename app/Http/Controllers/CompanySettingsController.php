@@ -24,6 +24,7 @@ class CompanySettingsController extends Controller
             'company_email' => 'nullable|email|max:255',
             'invoice_format' => 'required|in:A4,Thermal',
             'invoice_footer_note' => 'nullable|string',
+            'portal_login_otp' => 'nullable|boolean',
         ]);
 
         $settings = $request->only([
@@ -34,6 +35,7 @@ class CompanySettingsController extends Controller
             'invoice_format',
             'invoice_footer_note'
         ]);
+        $settings['portal_login_otp'] = $request->boolean('portal_login_otp') ? '1' : '0';
 
         // Handle Logo Upload
         if ($request->hasFile('company_logo')) {

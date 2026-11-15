@@ -43,9 +43,31 @@ class CustomerMobileApiTest extends TestCase
     /** @test */
     public function test_customer_can_login_via_api()
     {
+        $wa = new class extends \App\Services\WhatsAppService {
+            public array $sent = [];
+
+            public function sendMessage($target, $message, $logId = null): bool
+            {
+                $this->sent[] = $message;
+
+                return true;
+            }
+        };
+        $this->app->instance(\App\Services\WhatsAppService::class, $wa);
+
+        // Langkah 1: tanpa kode -> OTP dikirim, belum ada token
+        $this->postJson('/api/v1/customer/login', ['customer_code' => 'CUST_API_001', 'phone' => '0899999999'])
+            ->assertStatus(202)->assertJsonPath('otp_required', true)->assertJsonMissingPath('token');
+        preg_match('/\*(\d{6})\*/', $wa->sent[0], $m);
+
+        $this->postJson('/api/v1/customer/login', ['customer_code' => 'CUST_API_001', 'phone' => '0899999999', 'code' => '000000' === $m[1] ? '111111' : '000000'])
+            ->assertStatus(422);
+
+        // Langkah 2: dengan kode -> token
         $response = $this->postJson('/api/v1/customer/login', [
             'customer_code' => 'CUST_API_001',
             'phone' => '0899999999',
+            'code' => $m[1],
         ]);
 
         $response->assertStatus(200);

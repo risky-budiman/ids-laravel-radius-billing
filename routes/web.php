@@ -14,6 +14,13 @@ Route::get('/login', [\App\Http\Controllers\CustomerPortal\LoginController::clas
 Route::post('/login-client', [\App\Http\Controllers\CustomerPortal\LoginController::class, 'login'])
     ->middleware('throttle:10,1')
     ->name('customer.login.post');
+Route::get('/login-client/verify', [\App\Http\Controllers\CustomerPortal\LoginController::class, 'showVerifyForm'])->name('customer.login.verify');
+Route::post('/login-client/verify', [\App\Http\Controllers\CustomerPortal\LoginController::class, 'verify'])
+    ->middleware('throttle:portal-otp-verify')
+    ->name('customer.login.verify.post');
+Route::post('/login-client/resend', [\App\Http\Controllers\CustomerPortal\LoginController::class, 'resend'])
+    ->middleware('throttle:portal-otp-resend')
+    ->name('customer.login.resend');
 Route::post('/logout-client', [\App\Http\Controllers\CustomerPortal\LoginController::class, 'logout'])->name('customer.logout');
 
 

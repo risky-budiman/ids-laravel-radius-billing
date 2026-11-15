@@ -14,18 +14,37 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'customer_code' => 'required|string',
-            'phone' => 'required|string',
+            'customer_code' => 'required|string|max:100',
+            'phone' => 'required|string|max:30',
+            'code' => 'nullable|string|max:10',   // kode OTP WhatsApp (langkah ke-2)
         ]);
 
-        $customer = Customer::where('customer_code', $request->customer_code)
-            ->where('phone', $request->phone)
-            ->first();
+        $customer = \App\Services\PortalOtpService::findCustomer(trim($request->customer_code), trim($request->phone));
 
-        if (!$customer) {
+        if (! $customer || in_array($customer->status, \App\Services\PortalOtpService::BLOCKED_STATUSES, true)) {
             throw ValidationException::withMessages([
                 'customer_code' => ['ID Pelanggan atau Nomor HP terdaftar salah.'],
             ]);
+        }
+
+        // OTP WhatsApp (Pengaturan Perusahaan > Portal pelanggan). Langkah 1: tanpa `code` -> kode dikirim,
+        // respons 202 otp_required. Langkah 2: kirim ulang customer_code + phone + code -> token.
+        if (\App\Services\PortalOtpService::enabled()) {
+            $otp = app(\App\Services\PortalOtpService::class);
+            try {
+                if (! $request->filled('code')) {
+                    $otp->send($customer);
+
+                    return response()->json([
+                        'message' => 'Kode verifikasi dikirim ke WhatsApp ' . \App\Services\PortalOtpService::maskPhone($customer->phone) . '.',
+                        'otp_required' => true,
+                        'expires_in' => \App\Services\PortalOtpService::TTL_SECONDS,
+                    ], 202);
+                }
+                $otp->verify($customer, (string) $request->code);
+            } catch (\DomainException $e) {
+                throw ValidationException::withMessages([$request->filled('code') ? 'code' : 'phone' => [$e->getMessage()]]);
+            }
         }
 
         // Generate Sanctum Token

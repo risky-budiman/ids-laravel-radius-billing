@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.115] - 2026-11-15
+
+### Fitur baru
+- **portal:** WhatsApp OTP login for the customer portal and customer app
+
 ## [v1.5.114] - 2026-11-15
 
 ### Perbaikan

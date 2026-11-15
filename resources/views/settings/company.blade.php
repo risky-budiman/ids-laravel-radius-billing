@@ -101,6 +101,20 @@
                     </div>
                 </div>
 
+                <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Portal pelanggan</h3>
+                    <label class="mt-3 flex items-start gap-3 cursor-pointer">
+                        <input type="hidden" name="portal_login_otp" value="0">
+                        <input type="checkbox" name="portal_login_otp" value="1" class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                               @checked(old('portal_login_otp', get_setting('portal_login_otp', '1')) == '1')>
+                        <span>
+                            <span class="block text-sm font-medium text-gray-800 dark:text-gray-200">Masuk dengan kode OTP WhatsApp</span>
+                            <span class="block text-xs text-gray-500">Setelah mengisi ID pelanggan & nomor HP, pelanggan menerima kode 6 digit ke WhatsApp terdaftar.
+                                Matikan hanya bila gateway WhatsApp belum berfungsi — tanpa OTP, siapa pun yang tahu ID & nomor HP pelanggan bisa masuk.</span>
+                        </span>
+                    </label>
+                </div>
+
                 <div class="flex items-center justify-end pt-4">
                     <x-primary-button>
                         {{ __('Save Changes') }}
