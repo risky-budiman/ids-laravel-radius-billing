@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.122] - 2026-11-16
+
+### Perbaikan
+- **accounting:** Inventory purchases and usage reach the books correctly
+
 ## [v1.5.121] - 2026-11-15
 
 ### Fitur baru

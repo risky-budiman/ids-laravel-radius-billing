@@ -117,7 +117,9 @@ class InventoryController extends Controller
             'serials.*' => 'nullable|string|max:100',
             'is_existing' => 'boolean',
             'customer_id' => 'required_if:is_existing,1|nullable|exists:customers,id',
-        ]);
+            'payment_source' => 'nullable|in:bank,payable,none',
+            'bank_account_id' => 'nullable|required_if:payment_source,bank|exists:bank_accounts,id',
+        ], [], ['bank_account_id' => 'rekening pembayaran']);
 
         $item = InventoryItem::findOrFail($request->inventory_item_id);
         try {
@@ -126,6 +128,7 @@ class InventoryController extends Controller
                 'unit_price' => $request->unit_price, 'tax_id' => $request->tax_id, 'supplier_id' => $request->supplier_id,
                 'reference' => $request->reference, 'notes' => $request->notes,
                 'existing_customer_id' => $request->boolean('is_existing') ? $request->customer_id : null,
+                'payment_source' => $request->input('payment_source', 'payable'), 'bank_account_id' => $request->bank_account_id,
             ], $request->user());
         } catch (\DomainException $e) {
             return back()->withErrors(['serials' => $e->getMessage()])->withInput();
@@ -160,6 +163,8 @@ class InventoryController extends Controller
             app(InventoryService::class)->stockOut($item, [
                 'quantity' => $request->quantity, 'stock_ids' => $request->stock_ids ?? [],
                 'reference' => trim(($request->reference ?? '') . ' (' . $types[$request->type] . ')'), 'notes' => $request->notes,
+                // Infrastruktur -> aset Peralatan Jaringan; pemasangan -> beban operasional lapangan; lainnya -> beban maintenance
+                'debit_account' => ['infrastructure' => '1202', 'new_line' => '5105', 'maintenance' => '5106', 'other' => '5106'][$request->type],
             ], $request->user());
         } catch (\DomainException $e) {
             return back()->withErrors(['quantity' => $e->getMessage()])->withInput();

@@ -173,16 +173,18 @@ class CustomerActivationService
 
             if ($modem) {
                 $modem->update(['status' => 'installed', 'customer_id' => $customer->id]);
-                InventoryMovement::create([
+                $mv = InventoryMovement::create([
                     'inventory_item_id' => $modem->inventory_item_id, 'customer_id' => $customer->id, 'type' => 'out', 'quantity' => 1,
-                    'reference' => 'Activation: ' . $customer->customer_code,
-                    'notes' => 'Installed at Customer: ' . $customer->name . ' (SN: ' . $modem->serial_number . ')', 'user_id' => $by?->id,
+                    'reference' => 'Aktivasi: ' . $customer->customer_code,
+                    'notes' => 'Dipasang di pelanggan ' . $customer->name . ' (SN: ' . $modem->serial_number . ')', 'user_id' => $by?->id,
                 ]);
+                // Modem tetap milik perusahaan: pindah dari Persediaan ke Peralatan Jaringan terpasang
+                app(InventoryService::class)->journalMovement($mv, '1202', '1105', 'Modem dipasang: ' . $customer->customer_code . ' SN ' . $modem->serial_number);
             }
             // Material lewat jalur stok yang sama (dikunci & dicek saldo) — dulu bisa membuat stok minus
             foreach ($this->consumableTotals($data) as $itemId => $qty) {
                 app(InventoryService::class)->stockOut(InventoryItem::findOrFail($itemId), [
-                    'quantity' => $qty, 'customer_id' => $customer->id,
+                    'quantity' => $qty, 'customer_id' => $customer->id, 'debit_account' => '5105',
                     'reference' => 'Aktivasi: ' . $customer->customer_code, 'notes' => 'Material pemasangan',
                 ], $by);
             }
@@ -261,17 +263,20 @@ class CustomerActivationService
                 $stock->update($isBroken
                     ? ['status' => 'damaged', 'customer_id' => null, 'condition' => 'broken']
                     : ['status' => 'dismantled', 'customer_id' => null, 'condition' => 'used']);
-                InventoryMovement::create([
+                $inv = app(InventoryService::class);
+                $mv = InventoryMovement::create([
                     'inventory_item_id' => $stock->inventory_item_id, 'customer_id' => $customer->id, 'type' => 'in', 'quantity' => 1,
                     'reference' => 'Dismantle: ' . ($customer->customer_code ?? 'Manual'), 'notes' => 'Perangkat ditarik (SN: ' . $sn . ')',
                     'user_id' => $by?->id,
                 ]);
+                $inv->journalMovement($mv, '1105', '1202', 'Perangkat ditarik: ' . $customer->customer_code . ' SN ' . $sn);
                 if ($isBroken) {
                     // Masuk gudang tetapi bukan stok siap pakai
-                    InventoryMovement::create([
+                    $adj = InventoryMovement::create([
                         'inventory_item_id' => $stock->inventory_item_id, 'type' => 'adjustment', 'quantity' => -1,
                         'reference' => 'Status unit', 'notes' => "SN {$sn}: ditarik dalam kondisi rusak", 'user_id' => $by?->id,
                     ]);
+                    $inv->journalAdjustment($adj, "SN {$sn} rusak saat ditarik");
                 }
             }
         });

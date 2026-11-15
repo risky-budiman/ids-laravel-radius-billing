@@ -104,6 +104,27 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" x-data="{ source: '{{ old('payment_source', 'payable') }}' }">
+                    <div>
+                        <x-input-label value="Dibayar dari" />
+                        <select name="payment_source" x-model="source" class="mt-1 input">
+                            <option value="payable">Hutang supplier (bayar belakangan)</option>
+                            <option value="bank">Kas / rekening (sudah dibayar)</option>
+                            <option value="none">Tanpa pembelian (stok awal / hibah)</option>
+                        </select>
+                        <p class="help-text">Kas/rekening: saldo rekening berkurang & tercatat di Kas & Bank. Diabaikan untuk barang yang sudah ada di pelanggan.</p>
+                    </div>
+                    <div x-show="source === 'bank'" x-cloak>
+                        <x-input-label value="Rekening pembayaran" />
+                        <select name="bank_account_id" class="mt-1 input" :required="source === 'bank'">
+                            <option value="">Pilih rekening</option>
+                            @foreach(\App\Models\BankAccount::where('is_active', true)->orderBy('bank_name')->get() as $acc)
+                                <option value="{{ $acc->id }}" @selected(old('bank_account_id') == $acc->id)>{{ $acc->bank_name }} — {{ $acc->account_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <x-input-label value="Quantity / Jumlah" />

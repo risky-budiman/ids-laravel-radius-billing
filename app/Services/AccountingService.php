@@ -254,7 +254,11 @@ class AccountingService
      * Debit: PPN Masukan (1105) - if any
      * Credit: Kas Utama (1101)
      */
-    public function recordInventoryPurchase($movement)
+    /**
+     * @param  string  $creditCode  2101 Hutang Vendor (pembelian kredit). Pembelian tunai/transfer TIDAK lewat sini:
+     *                              dicatat sebagai transaksi Kas & Bank (saldo rekening ikut berkurang).
+     */
+    public function recordInventoryPurchase($movement, string $creditCode = '2101')
     {
         if ($movement->type !== 'in') return null;
 
@@ -263,13 +267,13 @@ class AccountingService
             return null;
         }
 
-        return DB::transaction(function () use ($movement) {
+        return DB::transaction(function () use ($movement, $creditCode) {
             $inventoryAccountId = ChartOfAccount::where('code', '1105')->first()?->id; // Persediaan Barang
             $taxInputAccountId = ChartOfAccount::where('code', '1106')->first()?->id; // PPN Masukan
-            $creditAccountId = ChartOfAccount::where('code', '1101')->first()?->id; // Kas Tunai
+            $creditAccountId = ChartOfAccount::where('code', $creditCode)->first()?->id; // Hutang Vendor (bawaan)
 
             if (!$inventoryAccountId || !$creditAccountId) {
-                \Illuminate\Support\Facades\Log::error("Missing CoA for Inventory Purchase (1104/1101)");
+                \Illuminate\Support\Facades\Log::error("Missing CoA for Inventory Purchase (1105/{$creditCode})");
                 return null;
             }
 
@@ -309,6 +313,40 @@ class AccountingService
                 'debit' => 0,
                 'credit' => $movement->total_amount,
             ]);
+
+            return $journal;
+        });
+    }
+
+    /**
+     * Jurnal nilai persediaan untuk pemakaian / pengembalian / penyesuaian stok (nilai = jumlah × harga rata-rata).
+     * Contoh: pemasangan modem Dr 1202 / Cr 1105; material Dr 5105 / Cr 1105; tarik perangkat Dr 1105 / Cr 1202.
+     */
+    public function recordInventoryValue($movement, string $debitCode, string $creditCode, float $value, string $description)
+    {
+        $value = round($value, 2);
+        if ($value <= 0) {
+            return null;
+        }
+        $date = $movement->created_at ?? now();
+        if (is_accounting_locked($date)) {
+            \Illuminate\Support\Facades\Log::warning("Inventory journal skipped (locked period): MOV-" . $movement->id);
+            return null;
+        }
+        $debit = ChartOfAccount::where('code', $debitCode)->value('id');
+        $credit = ChartOfAccount::where('code', $creditCode)->value('id');
+        if (! $debit || ! $credit) {
+            \Illuminate\Support\Facades\Log::error("Missing CoA {$debitCode}/{$creditCode} for inventory journal MOV-" . $movement->id);
+            return null;
+        }
+
+        return DB::transaction(function () use ($movement, $debit, $credit, $value, $description, $date) {
+            $journal = Journal::create([
+                'date' => $date, 'reference' => 'INV-MOV-' . $movement->id, 'description' => $description,
+                'created_by' => $movement->user_id ?? auth()->id() ?? 1,
+            ]);
+            JournalItem::create(['journal_id' => $journal->id, 'account_id' => $debit, 'debit' => $value, 'credit' => 0]);
+            JournalItem::create(['journal_id' => $journal->id, 'account_id' => $credit, 'debit' => 0, 'credit' => $value]);
 
             return $journal;
         });

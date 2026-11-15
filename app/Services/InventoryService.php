@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\BankAccount;
+use App\Models\BankTransaction;
+use App\Models\ChartOfAccount;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\InventoryStock;
@@ -43,7 +46,9 @@ class InventoryService
     /**
      * @param  array{quantity?: float|int, serials?: array, unit_price?: float, tax_id?: ?int, supplier_id?: ?int,
      *               reference?: ?string, notes?: ?string, existing_customer_id?: ?int, condition?: string,
-     *               journal?: bool, serials_later?: bool}  $d
+     *               journal?: bool, serials_later?: bool, payment_source?: string, bank_account_id?: ?int}  $d
+     *        payment_source: 'bank' (bayar dari rekening Kas & Bank: saldo berkurang), 'payable' (hutang supplier),
+     *        'none' (tanpa pembelian: stok awal, hibah, perangkat lama di pelanggan) — bawaan 'payable'.
      */
     public function stockIn(InventoryItem $item, array $d, ?User $by): InventoryMovement
     {
@@ -90,21 +95,83 @@ class InventoryService
                 ]);
             }
 
-            if ($d['journal'] ?? true) {
-                try {
-                    app(AccountingService::class)->recordInventoryPurchase($movement);
-                } catch (\Throwable $e) {
-                    Log::error("Auto-journal failed for STOCK-IN-{$movement->id}: " . $e->getMessage());
-                }
+            $source = $existingCustomer ? 'none' : ($d['payment_source'] ?? 'payable');
+            if (($d['journal'] ?? true) && $source !== 'none' && $movement->total_amount > 0) {
+                $this->recordPurchase($movement, $item, $source, $d['bank_account_id'] ?? null, $by);
             }
 
             return $movement;
         });
     }
 
+    /** Pembelian: dari rekening (transaksi Kas & Bank, saldo berkurang) atau hutang supplier (jurnal). */
+    private function recordPurchase(InventoryMovement $movement, InventoryItem $item, string $source, ?int $bankAccountId, ?User $by): void
+    {
+        if ($source === 'bank') {
+            $account = $bankAccountId ? BankAccount::find($bankAccountId) : null;
+            if (! $account) {
+                throw new \DomainException('Pilih rekening Kas & Bank sumber pembayaran.');
+            }
+            $label = 'Pembelian ' . $item->name . ' (' . $this->fmt((float) $movement->quantity) . ' ' . $item->unit . ')' . ($movement->reference ? ' ' . $movement->reference : '');
+            // Dr Persediaan (1105) & PPN Masukan (1106) / Cr rekening — lewat jurnal otomatis transaksi Kas & Bank
+            foreach ([['1105', (float) $movement->subtotal, $label], ['1106', (float) $movement->tax_amount, 'PPN ' . $label]] as [$code, $amount, $desc]) {
+                $coa = ChartOfAccount::where('code', $code)->value('id');
+                if ($amount > 0 && $coa) {
+                    BankTransaction::create([
+                        'bank_account_id' => $account->id, 'chart_of_account_id' => $coa, 'type' => 'withdrawal', 'amount' => $amount,
+                        'reference_number' => 'STOCK-IN-' . $movement->id, 'description' => $desc,
+                        'transaction_date' => now(), 'created_by' => $by?->id,
+                    ]);
+                }
+            }
+
+            return;
+        }
+        try {
+            app(AccountingService::class)->recordInventoryPurchase($movement, '2101');
+        } catch (\Throwable $e) {
+            Log::error("Auto-journal failed for STOCK-IN-{$movement->id}: " . $e->getMessage());
+        }
+    }
+
+    /** Harga rata-rata tertimbang dari pembelian (stok masuk berharga). 0 bila belum pernah dibeli. */
+    public function averageCost(InventoryItem $item): float
+    {
+        $row = InventoryMovement::where('inventory_item_id', $item->id)->where('type', 'in')->where('unit_price', '>', 0)
+            ->selectRaw('SUM(subtotal) as total, SUM(quantity) as qty')->first();
+
+        return $row && (float) $row->qty > 0 ? round((float) $row->total / (float) $row->qty, 2) : 0.0;
+    }
+
+    /**
+     * Jurnal nilai persediaan untuk mutasi (pemakaian / pengembalian / penyesuaian), nilai = |jumlah| × harga rata-rata.
+     * Akun: 1105 Persediaan, 1202 Peralatan Jaringan (terpasang), 5105 Beban Operasional Lapangan,
+     * 5106 Beban Maintenance Jaringan (pemakaian lain & selisih kurang), 4199 Pendapatan Lain-lain (selisih lebih).
+     */
+    public function journalMovement(InventoryMovement $movement, string $debitCode, string $creditCode, string $description): void
+    {
+        try {
+            $item = $movement->item;
+            app(AccountingService::class)->recordInventoryValue($movement, $debitCode, $creditCode,
+                abs((float) $movement->quantity) * $this->averageCost($item), $description);
+        } catch (\Throwable $e) {
+            Log::error("Jurnal persediaan MOV-{$movement->id} gagal: " . $e->getMessage());
+        }
+    }
+
+    /** Penyesuaian bertanda: kurang -> beban (5106), lebih -> pendapatan lain-lain (4199). */
+    public function journalAdjustment(InventoryMovement $movement, string $description): void
+    {
+        (float) $movement->quantity < 0
+            ? $this->journalMovement($movement, '5106', '1105', $description)
+            : $this->journalMovement($movement, '1105', '4199', $description);
+    }
+
     /**
      * @param  array{quantity?: float|int, stock_ids?: array, serials?: array, reference?: ?string, notes?: ?string,
-     *               customer_id?: ?int}  $d  barang ber-SN: pilih unit lewat stock_ids ATAU serials
+     *               customer_id?: ?int, debit_account?: string}  $d  barang ber-SN: pilih unit lewat stock_ids ATAU serials.
+     *        debit_account: akun pemakaian (1202 terpasang/infrastruktur, 5105 material pemasangan, 5106 lainnya). Bawaan:
+     *        ber-SN ke pelanggan -> 1202, lainnya -> 5106.
      */
     public function stockOut(InventoryItem $item, array $d, ?User $by): InventoryMovement
     {
@@ -137,6 +204,10 @@ class InventoryService
             foreach ($stocks as $stock) {
                 $stock->update(['status' => 'installed', 'customer_id' => $d['customer_id'] ?? null]);
             }
+
+            $debit = $d['debit_account'] ?? ($item->track_serial && ! empty($d['customer_id']) ? '1202' : '5106');
+            $this->journalMovement($movement, $debit, '1105', 'Pemakaian ' . $item->name . ' ' . $this->fmt($quantity) . ' ' . $item->unit
+                . ($movement->reference ? ' — ' . $movement->reference : ''));
 
             return $movement;
         });
@@ -210,13 +281,14 @@ class InventoryService
 
             $adjustment = round($actual - $item->movementBalance(), 2);
             if ($adjustment != 0.0) {
-                InventoryMovement::create([
+                $adj = InventoryMovement::create([
                     'inventory_item_id' => $item->id, 'type' => 'adjustment', 'quantity' => $adjustment,
                     'reference' => 'Stock opname',
                     'notes' => trim(($notes ? $notes . ' — ' : '') . ($lost ? "{$lost} SN hilang. " : '') . ($registered ? "{$registered} SN didaftarkan. " : '')
                         . 'Catatan disamakan dengan stok fisik (' . $this->fmt($actual) . " {$item->unit}).") ?: null,
                     'user_id' => $by?->id,
                 ]);
+                $this->journalAdjustment($adj, "Stock opname {$item->name}: " . ($adjustment > 0 ? '+' : '') . $this->fmt($adjustment) . " {$item->unit}");
             }
 
             return ['adjustment' => $adjustment, 'lost' => $lost, 'registered' => $registered];
@@ -245,11 +317,12 @@ class InventoryService
             ]);
             $delta = (int) $stock->isAvailable() - (int) $wasAvailable;
             if ($delta !== 0) {
-                InventoryMovement::create([
+                $adj = InventoryMovement::create([
                     'inventory_item_id' => $stock->inventory_item_id, 'type' => 'adjustment', 'quantity' => $delta,
                     'reference' => 'Status unit', 'user_id' => $by?->id,
                     'notes' => "SN {$stock->serial_number}: " . (InventoryStock::STATUS_LABELS[$status] ?? $status) . ($note ? " — {$note}" : ''),
                 ]);
+                $this->journalAdjustment($adj, "SN {$stock->serial_number}: " . (InventoryStock::STATUS_LABELS[$status] ?? $status));
             }
 
             return $stock;
