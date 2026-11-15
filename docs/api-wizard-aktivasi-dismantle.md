@@ -70,6 +70,7 @@ berhenti. Respons: `ticket_id`, `ticket_number`. 422 bila sudah dalam proses / s
 | Field | Keterangan |
 |---|---|
 | `stock_ids[]` | perangkat yang berhasil ditarik; boleh kosong. Hanya perangkat yang terpasang di pelanggan ini |
+| `broken_stock_ids[]` | bagian dari `stock_ids` yang ditarik dalam kondisi rusak: masuk gudang berstatus Rusak, tidak dihitung stok siap pakai |
 | `notes` | catatan, disimpan di catatan penyelesaian tiket |
 
 Efek: status `dismantled`, perangkat kembali ke gudang (kondisi `used`), tiket dismantle selesai, akun

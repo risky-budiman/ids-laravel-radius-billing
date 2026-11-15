@@ -87,10 +87,12 @@ class CustomerActivationController extends Controller
         $data = $request->validate([
             'stock_ids' => 'nullable|array',
             'stock_ids.*' => 'integer|exists:inventory_stocks,id',
+            'broken_stock_ids' => 'nullable|array',
+            'broken_stock_ids.*' => 'integer',
         ]);
 
         try {
-            $this->wizard->dismantle($customer, array_map('intval', $data['stock_ids'] ?? []), auth()->user());
+            $this->wizard->dismantle($customer, array_map('intval', $data['stock_ids'] ?? []), auth()->user(), null, $data['broken_stock_ids'] ?? []);
         } catch (\DomainException $e) {
             return back()->with('error', $e->getMessage());
         } catch (\Throwable $e) {

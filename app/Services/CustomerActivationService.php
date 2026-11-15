@@ -106,6 +106,15 @@ class CustomerActivationService
             }
         }
 
+        // Cek material lebih dulu agar aktivasi tidak setengah jalan bila stok kurang
+        foreach ($this->consumableTotals($data) as $itemId => $qty) {
+            $item = InventoryItem::find($itemId);
+            if ($item && ! $item->track_serial && $qty > $item->movementBalance()) {
+                throw new \DomainException("Stok {$item->name} tidak cukup: tersedia " . rtrim(rtrim(number_format($item->movementBalance(), 2, ',', '.'), '0'), ',')
+                    . " {$item->unit}, dipakai " . rtrim(rtrim(number_format($qty, 2, ',', '.'), '0'), ',') . '.');
+            }
+        }
+
         $method = $data['payment_method'] ?? null;
         $invoice = null;
         $installation = app(InstallationService::class);
@@ -170,13 +179,12 @@ class CustomerActivationService
                     'notes' => 'Installed at Customer: ' . $customer->name . ' (SN: ' . $modem->serial_number . ')', 'user_id' => $by?->id,
                 ]);
             }
-            foreach ($data['consumables'] ?? [] as $c) {
-                if ((float) $c['quantity'] > 0) {
-                    InventoryMovement::create([
-                        'inventory_item_id' => $c['item_id'], 'customer_id' => $customer->id, 'type' => 'out', 'quantity' => $c['quantity'],
-                        'reference' => 'Activation: ' . $customer->customer_code, 'notes' => 'Consumed for installation', 'user_id' => $by?->id,
-                    ]);
-                }
+            // Material lewat jalur stok yang sama (dikunci & dicek saldo) — dulu bisa membuat stok minus
+            foreach ($this->consumableTotals($data) as $itemId => $qty) {
+                app(InventoryService::class)->stockOut(InventoryItem::findOrFail($itemId), [
+                    'quantity' => $qty, 'customer_id' => $customer->id,
+                    'reference' => 'Aktivasi: ' . $customer->customer_code, 'notes' => 'Material pemasangan',
+                ], $by);
             }
         });
 
@@ -198,6 +206,20 @@ class CustomerActivationService
         return ['customer' => $customer->fresh(), 'installation_invoice' => $invoice?->fresh(), 'installation_report' => $report];
     }
 
+    /** Material per item (baris ganda dijumlahkan, jumlah 0 diabaikan). @return array<int, float> */
+    private function consumableTotals(array $data): array
+    {
+        $totals = [];
+        foreach ($data['consumables'] ?? [] as $c) {
+            $qty = round((float) ($c['quantity'] ?? 0), 2);
+            if ($qty > 0) {
+                $totals[(int) $c['item_id']] = ($totals[(int) $c['item_id']] ?? 0) + $qty;
+            }
+        }
+
+        return $totals;
+    }
+
     /** Perangkat terpasang di pelanggan (untuk form dismantle). */
     public function installedEquipment(Customer $customer)
     {
@@ -209,7 +231,10 @@ class CustomerActivationService
      *
      * @throws \DomainException
      */
-    public function dismantle(Customer $customer, array $stockIds, ?User $by, ?string $notes = null): Customer
+    /**
+     * @param  array<int>  $brokenStockIds  bagian dari $stockIds yang ditarik dalam kondisi rusak (tidak masuk stok siap pakai)
+     */
+    public function dismantle(Customer $customer, array $stockIds, ?User $by, ?string $notes = null, array $brokenStockIds = []): Customer
     {
         if (in_array($customer->status, [Customer::STATUS_DISMANTLED, Customer::STATUS_CANCELED], true)) {
             throw new \DomainException('Pelanggan ini sudah dicabut / dibatalkan.');
@@ -222,7 +247,8 @@ class CustomerActivationService
         }
 
         $username = $customer->username;
-        DB::transaction(function () use ($customer, $stocks, $by, $notes) {
+        $broken = array_map('intval', $brokenStockIds);
+        DB::transaction(function () use ($customer, $stocks, $by, $notes, $broken) {
             $customer->update(['is_active' => false, 'status' => Customer::STATUS_DISMANTLED]);
 
             Ticket::where('customer_id', $customer->id)->where('type', 'dismantle')->whereIn('status', ['open', 'in_progress'])->get()
@@ -231,12 +257,22 @@ class CustomerActivationService
 
             foreach ($stocks as $stock) {
                 $sn = $stock->serial_number;
-                $stock->update(['status' => 'dismantled', 'customer_id' => null, 'condition' => 'used']);
+                $isBroken = in_array($stock->id, $broken, true);
+                $stock->update($isBroken
+                    ? ['status' => 'damaged', 'customer_id' => null, 'condition' => 'broken']
+                    : ['status' => 'dismantled', 'customer_id' => null, 'condition' => 'used']);
                 InventoryMovement::create([
                     'inventory_item_id' => $stock->inventory_item_id, 'customer_id' => $customer->id, 'type' => 'in', 'quantity' => 1,
-                    'reference' => 'Dismantle: ' . ($customer->customer_code ?? 'Manual'), 'notes' => 'Equipment returned (SN: ' . $sn . ')',
+                    'reference' => 'Dismantle: ' . ($customer->customer_code ?? 'Manual'), 'notes' => 'Perangkat ditarik (SN: ' . $sn . ')',
                     'user_id' => $by?->id,
                 ]);
+                if ($isBroken) {
+                    // Masuk gudang tetapi bukan stok siap pakai
+                    InventoryMovement::create([
+                        'inventory_item_id' => $stock->inventory_item_id, 'type' => 'adjustment', 'quantity' => -1,
+                        'reference' => 'Status unit', 'notes' => "SN {$sn}: ditarik dalam kondisi rusak", 'user_id' => $by?->id,
+                    ]);
+                }
             }
         });
 

@@ -63,7 +63,13 @@ class ActivationWizardApiTest extends TestCase
         $c = $this->newCustomer('C-ACT-1');
         $this->assertSame(Customer::STATUS_WAITING_ACTIVATION, $c->status);
         $modem = $this->modem('ZTEG11111111');
+        InventoryMovement::create(['inventory_item_id' => $this->cable->id, 'type' => 'in', 'quantity' => 100, 'user_id' => $this->teknisi->id]);
         Sanctum::actingAs($this->teknisi);
+
+        // Material melebihi stok ditolak sebelum apa pun berubah (dulu stok jadi minus)
+        $this->postJson("/api/v1/admin/customers/{$c->id}/activate", ['consumables' => [['item_id' => $this->cable->id, 'quantity' => 150]]])
+            ->assertStatus(422)->assertJsonFragment(['message' => 'Stok Kabel Drop Core tidak cukup: tersedia 100 meter, dipakai 150.']);
+        $this->assertSame(Customer::STATUS_WAITING_ACTIVATION, $c->fresh()->status);
 
         $form = $this->getJson("/api/v1/admin/customers/{$c->id}/activation")->assertOk();
         $form->assertJsonPath('can_activate', true)->assertJsonPath('modems.0.serial_number', 'ZTEG11111111')
@@ -83,6 +89,7 @@ class ActivationWizardApiTest extends TestCase
         $this->assertSame('installed', $modem->fresh()->status);
         $this->assertSame($c->id, $modem->fresh()->customer_id);
         $this->assertSame(2, InventoryMovement::where('customer_id', $c->id)->where('type', 'out')->count());
+        $this->assertEquals(65, $this->cable->fresh()->stock_count);
         $this->assertTrue(BankTransaction::where('description', 'like', '%[Instalasi]%C-ACT-1%')->where('amount', 250000)->exists());
         $this->assertSame('resolved', Ticket::where('customer_id', $c->id)->where('type', 'aktivasi')->sole()->status);
     }

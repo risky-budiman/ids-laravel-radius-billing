@@ -168,6 +168,19 @@ class InventoryController extends Controller
         return redirect()->route('inventory.index')->with('success', 'Stok keluar dicatat.');
     }
 
+    /** Unit ber-SN: tandai rusak / hilang / siap pakai lagi. */
+    public function setUnitStatus(Request $request, InventoryStock $stock)
+    {
+        $data = $request->validate(['status' => 'required|in:ready,damaged,lost', 'note' => 'nullable|string|max:200']);
+        try {
+            app(InventoryService::class)->setUnitStatus($stock, $data['status'], $request->user(), $data['note'] ?? null);
+        } catch (\DomainException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', "SN {$stock->serial_number}: " . InventoryStock::STATUS_LABELS[$data['status']] . '.');
+    }
+
     /** Stock opname: tandai SN hilang, daftarkan SN yang ditemukan / isi jumlah fisik, samakan catatan mutasi. */
     public function opname(InventoryItem $item)
     {

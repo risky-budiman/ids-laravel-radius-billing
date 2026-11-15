@@ -77,7 +77,7 @@
                 <div class="card-header"><h3 class="card-title">Unit ber-SN</h3></div>
                 <div class="overflow-x-auto">
                     <table class="table">
-                        <thead><tr><th>Nomor seri / MAC</th><th>Kondisi</th><th>Status</th><th>Pelanggan</th></tr></thead>
+                        <thead><tr><th>Nomor seri / MAC</th><th>Kondisi</th><th>Status</th><th>Pelanggan</th>@if($canManage && ! $item->trashed())<th class="no-print">Ubah status</th>@endif</tr></thead>
                         <tbody>
                             @forelse($item->stocks->sortBy(fn ($s) => [in_array($s->status, \App\Models\InventoryStock::AVAILABLE_STATUSES) ? 0 : 1, $s->serial_number]) as $s)
                                 <tr>
@@ -89,9 +89,24 @@
                                             <a href="{{ route('customers.show', $s->customer) }}" class="text-primary-600 hover:underline dark:text-primary-400">{{ $s->customer->name }}</a>
                                         @else — @endif
                                     </td>
+                                    @if($canManage && ! $item->trashed())
+                                        <td class="no-print">
+                                            @if($s->status !== 'installed' && ! $s->customer_id)
+                                                <form method="POST" action="{{ route('inventory.stock.status', $s) }}" class="flex items-center gap-1">
+                                                    @csrf
+                                                    <select name="status" class="input !h-8 !py-0 text-xs w-32">
+                                                        @foreach(['ready' => 'Siap pakai', 'damaged' => 'Rusak', 'lost' => 'Hilang'] as $v => $l)
+                                                            <option value="{{ $v }}" @selected(($s->isAvailable() ? 'ready' : $s->status) === $v)>{{ $l }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <button class="btn-secondary btn-sm">Simpan</button>
+                                                </form>
+                                            @endif
+                                        </td>
+                                    @endif
                                 </tr>
                             @empty
-                                <tr><td colspan="4" class="py-8 text-center text-sm text-surface-500">Belum ada unit ber-SN.</td></tr>
+                                <tr><td colspan="5" class="py-8 text-center text-sm text-surface-500">Belum ada unit ber-SN.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

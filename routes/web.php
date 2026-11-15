@@ -262,6 +262,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
             Route::post('inventory/categories', [\App\Http\Controllers\InventoryController::class, 'storeCategory'])->name('inventory.category.store');
             Route::get('inventory/items/{item}/opname', [\App\Http\Controllers\InventoryController::class, 'opname'])->name('inventory.opname');
             Route::post('inventory/items/{item}/opname', [\App\Http\Controllers\InventoryController::class, 'storeOpname'])->name('inventory.opname.store');
+            Route::post('inventory/stocks/{stock}/status', [\App\Http\Controllers\InventoryController::class, 'setUnitStatus'])->name('inventory.stock.status');
         });
 
         // Wildcard routes must come AFTER static routes

@@ -223,6 +223,39 @@ class InventoryService
         });
     }
 
+    /**
+     * Ubah status unit ber-SN di gudang: siap pakai <-> rusak / hilang. Unit yang masuk/keluar dari
+     * stok tersedia dicatat sebagai penyesuaian ±1 agar catatan mutasi tetap sama dengan stok nyata.
+     */
+    public function setUnitStatus(InventoryStock $stock, string $status, ?User $by, ?string $note = null): InventoryStock
+    {
+        if (! in_array($status, ['ready', 'damaged', 'lost'], true)) {
+            throw new \DomainException('Status tidak dikenal.');
+        }
+
+        return DB::transaction(function () use ($stock, $status, $by, $note) {
+            $stock = InventoryStock::whereKey($stock->id)->lockForUpdate()->firstOrFail();
+            if ($stock->status === 'installed' || $stock->customer_id) {
+                throw new \DomainException("SN {$stock->serial_number} sedang terpasang di pelanggan; tarik lewat dismantle dulu.");
+            }
+            $wasAvailable = $stock->isAvailable();
+            $stock->update([
+                'status' => $status,
+                'condition' => $status === 'damaged' ? 'broken' : ($stock->condition === 'broken' ? 'refurbished' : $stock->condition),
+            ]);
+            $delta = (int) $stock->isAvailable() - (int) $wasAvailable;
+            if ($delta !== 0) {
+                InventoryMovement::create([
+                    'inventory_item_id' => $stock->inventory_item_id, 'type' => 'adjustment', 'quantity' => $delta,
+                    'reference' => 'Status unit', 'user_id' => $by?->id,
+                    'notes' => "SN {$stock->serial_number}: " . (InventoryStock::STATUS_LABELS[$status] ?? $status) . ($note ? " — {$note}" : ''),
+                ]);
+            }
+
+            return $stock;
+        });
+    }
+
     private function quantity(InventoryItem $item, $quantity, array $serials, string $dir, bool $serialsLater = false): float
     {
         $quantity = round((float) $quantity, 2);

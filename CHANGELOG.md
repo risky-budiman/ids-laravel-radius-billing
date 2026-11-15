@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.119] - 2026-11-15
+
+### Perbaikan
+- **inventory:** Activation materials cannot overdraw stock; damaged and lost units
+
 ## [v1.5.118] - 2026-11-15
 
 ### Perbaikan

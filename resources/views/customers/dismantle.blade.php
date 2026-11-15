@@ -36,9 +36,11 @@
                                         <h5 class="text-sm font-bold text-gray-900 dark:text-white group-hover:text-rose-600 transition-colors">{{ $stock->item->name }}</h5>
                                         <p class="text-xs text-gray-400 font-mono italic">Serial Number: {{ $stock->serial_number }}</p>
                                     </div>
-                                    <div class="text-right">
-                                        <span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-xs font-semibold rounded">Installed</span>
-                                    </div>
+                                    {{-- Perangkat rusak masuk gudang tetapi tidak dihitung stok siap pakai --}}
+                                    <span class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                                        <input type="checkbox" id="broken_{{ $stock->id }}" name="broken_stock_ids[]" value="{{ $stock->id }}" class="rounded border-gray-300 text-amber-600 focus:ring-amber-500">
+                                        <span onclick="event.preventDefault(); document.getElementById('broken_{{ $stock->id }}').click()">Kondisi rusak</span>
+                                    </span>
                                 </label>
                             @endforeach
                         </div>

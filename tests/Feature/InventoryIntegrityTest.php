@@ -161,6 +161,51 @@ class InventoryIntegrityTest extends TestCase
             ->get(route('inventory.opname', $this->cable))->assertForbidden();
     }
 
+    public function test_units_can_be_marked_damaged_or_lost_and_restored_keeping_ledger_in_sync(): void
+    {
+        $this->svc()->stockIn($this->onu, ['quantity' => 2, 'serials' => ['U-1', 'U-2']], $this->admin);
+        $u1 = InventoryStock::where('serial_number', 'U-1')->first();
+        $this->actingAs($this->admin);
+
+        $this->post(route('inventory.stock.status', $u1), ['status' => 'damaged', 'note' => 'Port PON mati'])->assertSessionHas('success');
+        $this->assertSame('damaged', $u1->fresh()->status);
+        $this->assertSame('broken', $u1->fresh()->condition);
+        $this->assertSame(1, $this->onu->stock_count);
+        $this->assertEquals(0, $this->onu->serialDiscrepancy(), 'catatan mutasi ikut berkurang');
+
+        // Rusak -> hilang: tidak mengubah stok tersedia lagi
+        $this->post(route('inventory.stock.status', $u1), ['status' => 'lost']);
+        $this->assertSame(1, InventoryMovement::where('type', 'adjustment')->count());
+
+        // Diperbaiki -> siap pakai lagi
+        $this->post(route('inventory.stock.status', $u1), ['status' => 'ready']);
+        $this->assertSame(2, $this->onu->stock_count);
+        $this->assertNotSame('broken', $u1->fresh()->condition);
+        $this->assertEquals(0, $this->onu->serialDiscrepancy());
+
+        // Unit terpasang tidak bisa diubah dari sini
+        $u2 = InventoryStock::where('serial_number', 'U-2')->first();
+        $u2->update(['status' => 'installed']);
+        $this->post(route('inventory.stock.status', $u2), ['status' => 'lost'])->assertSessionHas('error');
+        $this->get(route('inventory.show', $this->onu))->assertOk()->assertSee('Ubah status');
+    }
+
+    public function test_dismantle_can_return_broken_devices_outside_ready_stock(): void
+    {
+        $pkg = Package::create(['name' => 'P2', 'type' => 'pppoe', 'price' => 100000, 'upload_speed' => '5M', 'download_speed' => '5M']);
+        $customer = Customer::create(['customer_code' => 'C-DIS', 'username' => 'c-dis', 'name' => 'Pel', 'package_id' => $pkg->id, 'status' => 'active', 'is_active' => true]);
+        $customer->update(['status' => 'active']);
+        $ok = InventoryStock::create(['inventory_item_id' => $this->onu->id, 'serial_number' => 'D-OK', 'status' => 'installed', 'customer_id' => $customer->id]);
+        $bad = InventoryStock::create(['inventory_item_id' => $this->onu->id, 'serial_number' => 'D-BAD', 'status' => 'installed', 'customer_id' => $customer->id]);
+
+        app(CustomerActivationService::class)->dismantle($customer->fresh(), [$ok->id, $bad->id], $this->admin, null, [$bad->id]);
+
+        $this->assertSame('dismantled', $ok->fresh()->status);
+        $this->assertSame('damaged', $bad->fresh()->status);
+        $this->assertSame(1, $this->onu->stock_count, 'yang rusak tidak dihitung siap pakai');
+        $this->assertEquals(0, $this->onu->serialDiscrepancy());
+    }
+
     public function test_concurrent_activation_cannot_reuse_a_modem(): void
     {
         $modem = InventoryStock::create(['inventory_item_id' => $this->onu->id, 'serial_number' => 'M-1', 'status' => 'ready']);
