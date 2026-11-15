@@ -92,6 +92,7 @@ class SidebarMenu
         $billing = [];
         if ($isAdmin || $isKasir) {
             $billing[] = self::link('Invoices', 'invoices.index', 'document', ['invoices.*']);
+            $billing[] = self::link('Piutang', 'receivables.index', 'receipt', ['receivables.*']);
             $billing[] = self::link('Invoice Builder', 'invoice-templates.index', 'template', ['invoice-templates.*']);
         }
         if ($isAdmin || $isTeknisi) {
