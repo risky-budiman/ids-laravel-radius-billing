@@ -56,9 +56,9 @@ class CustomerActivationService
             'stb_code' => 'nullable|string',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
-            'identity_photo' => 'nullable|image|max:2048',
-            'house_photo' => 'nullable|image|max:2048',
-            'cpe_photo' => 'nullable|image|max:2048',
+            'identity_photo' => 'nullable|image|max:8192',
+            'house_photo' => 'nullable|image|max:8192',
+            'cpe_photo' => 'nullable|image|max:8192',   // foto kamera ponsel; form web mengecilkannya dulu
             'description' => 'nullable|string',
             'olt_id' => 'nullable|exists:olts,id',
             'onu_sn' => 'nullable|string',

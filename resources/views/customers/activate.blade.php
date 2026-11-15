@@ -203,29 +203,28 @@
                     <div class="bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                             <div>
-                                <x-input-label for="identity_photo" :value="__('Foto KTP/Identitas')" />
-                                <input type="file" id="identity_photo" name="identity_photo" class="mt-1 block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-100 file:text-amber-700" accept="image/*">
+                                <x-input-label for="identity_photo" value="Foto KTP/Identitas (opsional)" />
+                                <input type="file" id="identity_photo" name="identity_photo" data-compress class="mt-1 block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-100 file:text-amber-700" accept="image/*">
                             </div>
                             <div>
-                                <x-input-label for="house_photo" :value="__('Foto Rumah/Lokasi')" />
-                                <input type="file" id="house_photo" name="house_photo" class="mt-1 block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-100 file:text-amber-700" accept="image/*">
+                                <x-input-label for="house_photo" value="Foto Rumah/Lokasi (opsional)" />
+                                <input type="file" id="house_photo" name="house_photo" data-compress class="mt-1 block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-100 file:text-amber-700" accept="image/*">
                             </div>
                             <div class="space-y-3">
-                                <x-input-label for="cpe_photo" :value="__('Foto Fisik Modem (Harus Terlihat SN)')" />
+                                <x-input-label for="cpe_photo" value="Foto Label Modem (opsional)" />
                                 <div class="flex items-center space-x-4">
-                                    <input type="file" id="cpe_photo" name="cpe_photo" class="mt-1 block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-100 file:text-amber-700" accept="image/*" @change="previewImage($event, 'cpe-preview')">
+                                    <input type="file" id="cpe_photo" name="cpe_photo" data-compress class="mt-1 block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-100 file:text-amber-700" accept="image/*">
                                     <div id="cpe-preview-container" class="hidden">
-                                        <img id="cpe-preview" class="h-16 w-16 object-cover rounded-lg border-2 border-amber-200 shadow-sm">
+                                        <img id="cpe-preview" class="h-16 w-16 object-cover rounded-lg border-2 border-amber-200 shadow-sm" alt="">
                                     </div>
                                 </div>
-                                <div class="mt-2 p-2 bg-amber-100/50 rounded-lg border border-amber-200 flex flex-col space-y-2">
-                                    <div class="flex items-center">
-                                        <svg id="ocr-status-icon" class="w-4 h-4 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        <p id="ocr-status-text" class="text-xs text-amber-800 font-medium italic">Menunggu upload foto untuk verifikasi SN...</p>
-                                    </div>
-                                    <div id="ocr-result-container" class="hidden text-xs bg-white/50 p-2 rounded border border-amber-200/50">
-                                        <span class="font-bold text-gray-700">Terdeteksi di Foto:</span>
-                                        <span id="ocr-detected-sn" class="font-mono text-indigo-600 bg-indigo-50 px-1 rounded ml-1 tracking-wider">TIDAK ADA</span>
+                                <p class="help-text !mt-1">Bila dilampirkan, SN di label dibaca otomatis (OCR). Foto dekat & tegak lurus ke label, tanpa pantulan cahaya.</p>
+                                <div id="ocr-box" class="hidden mt-2 p-2 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 space-y-2">
+                                    <p id="ocr-status-text" class="text-xs text-amber-800 dark:text-amber-300"></p>
+                                    <div id="ocr-result-container" class="hidden text-xs flex flex-wrap items-center gap-2">
+                                        <span class="text-gray-600 dark:text-gray-300">Terbaca:</span>
+                                        <span id="ocr-detected-sn" class="font-mono text-indigo-600 dark:text-indigo-300 bg-white/70 dark:bg-white/10 px-1.5 py-0.5 rounded tracking-wider"></span>
+                                        <button type="button" id="ocr-use-sn" class="hidden btn-secondary btn-sm">Pakai sebagai SN ONU</button>
                                     </div>
                                 </div>
                             </div>
@@ -361,86 +360,146 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
     <script>
-        function previewImage(event, previewId) {
-            const input = event.target;
-            const preview = document.getElementById(previewId);
-            const container = document.getElementById(previewId + '-container');
-            
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    container.classList.remove('hidden');
-                    
-                    // Trigger OCR if it's CPE Photo
-                    if (previewId === 'cpe-preview') {
-                        runOcr(e.target.result);
-                    }
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
+        // ---------------------------------------------------------------- Foto & OCR SN modem
+        // Foto kamera ponsel 3–8 MB dikecilkan di perangkat (maks. 1600 px, JPEG) sebelum dikirim:
+        // unggahan lebih cepat & tidak ditolak batas ukuran server.
+        async function compressImage(file, maxSide = 1600, quality = 0.85) {
+            if (!file || !file.type.startsWith('image/') || file.size < 400 * 1024) return file;
+            const bmp = await createImageBitmap(file).catch(() => null);
+            if (!bmp) return file;
+            const scale = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(bmp.width * scale);
+            canvas.height = Math.round(bmp.height * scale);
+            canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height);
+            const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
+            if (!blob || blob.size >= file.size) return file;
+            return new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
         }
 
-        async function runOcr(imageSrc) {
-            const statusText = document.getElementById('ocr-status-text');
-            const statusIcon = document.getElementById('ocr-status-icon');
-            const resultContainer = document.getElementById('ocr-result-container');
-            const detectedSnSpan = document.getElementById('ocr-detected-sn');
-            const selectedSn = document.getElementById('onu_sn').value;
+        document.querySelectorAll('input[type=file][data-compress]').forEach(input => {
+            input.addEventListener('change', async () => {
+                const original = input.files && input.files[0];
+                if (!original) return;
+                if (input.id === 'cpe_photo') {
+                    const url = URL.createObjectURL(original);
+                    document.getElementById('cpe-preview').src = url;
+                    document.getElementById('cpe-preview-container').classList.remove('hidden');
+                    runOcr(original);   // OCR memakai foto asli (lebih tajam)
+                }
+                try {
+                    const small = await compressImage(original);
+                    if (small !== original) {
+                        const dt = new DataTransfer();
+                        dt.items.add(small);
+                        input.files = dt.files;
+                    }
+                } catch (e) { console.warn('Kompres foto gagal, dikirim apa adanya', e); }
+            });
+        });
 
-            statusText.innerText = 'Memindai Serial Number dari foto (OCR)...';
-            statusText.className = 'text-xs text-indigo-600 font-bold animate-pulse';
-            statusIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>';
-            statusIcon.classList.add('animate-spin');
+        // Huruf/angka yang sering tertukar oleh OCR disamakan sebelum membandingkan SN
+        const OCR_CONFUSABLE = { O: '0', Q: '0', D: '0', I: '1', L: '1', T: '1', Z: '2', S: '5', B: '8', G: '6' };
+        const normSn = s => (s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/[OQDILTZSBG]/g, c => OCR_CONFUSABLE[c]);
+
+        function editDistance(a, b) {
+            const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+            for (let j = 1; j <= b.length; j++) dp[0][j] = j;
+            for (let i = 1; i <= a.length; i++)
+                for (let j = 1; j <= b.length; j++)
+                    dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+            return dp[a.length][b.length];
+        }
+
+        // Kandidat SN dari teks OCR: utamakan yang setelah tulisan S/N, SN, Serial; lalu pola SN GPON umum
+        function snCandidates(text) {
+            const up = text.toUpperCase();
+            const out = [];
+            const push = v => { v = (v || '').replace(/[^A-Z0-9]/g, ''); if (v.length >= 8 && v.length <= 20 && !out.includes(v)) out.push(v); };
+            for (const m of up.matchAll(/(?:G?PON\s*)?(?:S\s*\/\s*N|SN|SERIAL(?:\s*(?:NO|NUMBER))?)\s*[:.#\-]?\s*([A-Z0-9][A-Z0-9\-]{6,22})/g)) push(m[1]);
+            for (const m of up.matchAll(/\b(?:ZTEG|HWTC|FHTT|ALCL|ZNTS|HALN|GPON|CDTC|TPLG|YHTC|ZXIC)[A-Z0-9]{8}\b/g)) push(m[0]);
+            for (const m of up.matchAll(/\b[0-9A-F]{16}\b/g)) push(m[0]);
+            for (const m of up.matchAll(/\b(?=[A-Z0-9]*\d)(?=[A-Z0-9]*[A-Z])[A-Z0-9]{10,16}\b/g)) push(m[0]);
+            return out;
+        }
+
+        // Gambar untuk OCR: diperbesar/diperkecil ke ±2000 px, abu-abu & kontras ditarik
+        async function ocrCanvas(file) {
+            const bmp = await createImageBitmap(file);
+            const scale = Math.min(2.5, 2000 / Math.max(bmp.width, bmp.height));
+            const c = document.createElement('canvas');
+            c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+            const ctx = c.getContext('2d');
+            ctx.drawImage(bmp, 0, 0, c.width, c.height);
+            const img = ctx.getImageData(0, 0, c.width, c.height), d = img.data;
+            let min = 255, max = 0;
+            for (let i = 0; i < d.length; i += 4) {
+                const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                d[i] = g; if (g < min) min = g; if (g > max) max = g;
+            }
+            const range = Math.max(1, max - min);
+            for (let i = 0; i < d.length; i += 4) { const v = (d[i] - min) * 255 / range; d[i] = d[i + 1] = d[i + 2] = v; }
+            ctx.putImageData(img, 0, 0);
+            return c;
+        }
+
+        let ocrRun = 0;
+        async function runOcr(file) {
+            const run = ++ocrRun;
+            const box = document.getElementById('ocr-box');
+            const statusText = document.getElementById('ocr-status-text');
+            const resultContainer = document.getElementById('ocr-result-container');
+            const detected = document.getElementById('ocr-detected-sn');
+            const useBtn = document.getElementById('ocr-use-sn');
+            const snInput = document.getElementById('onu_sn');
+            const setStatus = (msg, tone) => {
+                statusText.textContent = msg;
+                statusText.className = 'text-xs ' + ({ ok: 'text-emerald-700 dark:text-emerald-300 font-semibold', warn: 'text-rose-700 dark:text-rose-300 font-semibold', info: 'text-amber-800 dark:text-amber-300' }[tone] || '');
+            };
+            box.classList.remove('hidden');
+            resultContainer.classList.add('hidden');
+            useBtn.classList.add('hidden');
+            setStatus('Membaca SN dari foto… (bisa 10–30 detik di ponsel)', 'info');
 
             try {
-                const { data: { text } } = await Tesseract.recognize(imageSrc, 'eng', {
-                    logger: m => console.log(m)
-                });
+                if (typeof Tesseract === 'undefined') throw new Error('Pustaka OCR tidak termuat (cek koneksi internet).');
+                const worker = await Tesseract.createWorker('eng');
+                await worker.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:/-. ' });
+                const { data: { text } } = await worker.recognize(await ocrCanvas(file));
+                await worker.terminate();
+                if (run !== ocrRun) return;   // ada foto yang lebih baru
+                console.log('OCR:', text);
 
-                console.log("OCR Extracted Text:", text);
-
-                // Simple regex to find common SN patterns (Alphanumeric 8-16 chars)
-                // Often starts with Brand prefix like ZTEG, ZTE, GPON, etc.
-                const snRegex = /[A-Z0-9]{8,16}/g;
-                const matches = text.match(snRegex) || [];
-                
-                let foundSn = null;
-                if (selectedSn && selectedSn.length > 5) {
-                    // Look for the exact selected SN in the text
-                    const normalizedSelected = selectedSn.toUpperCase().trim();
-                    if (text.toUpperCase().includes(normalizedSelected)) {
-                        foundSn = normalizedSelected;
-                    }
+                const candidates = snCandidates(text);
+                const expected = (snInput.value || '').trim();
+                if (!candidates.length) {
+                    setStatus('SN tidak terbaca dari foto. Ulangi foto lebih dekat ke label, atau isi SN ONU manual / pakai pemindai barcode.', 'warn');
+                    return;
                 }
 
-                // If not found exact, take the first likely candidate
-                if (!foundSn && matches.length > 0) {
-                    foundSn = matches[0];
-                }
-
-                statusIcon.classList.remove('animate-spin');
                 resultContainer.classList.remove('hidden');
-
-                if (foundSn && selectedSn && foundSn.includes(selectedSn.toUpperCase())) {
-                    statusText.innerText = 'Verifikasi Berhasil: SN di foto cocok dengan Inventory!';
-                    statusText.className = 'text-xs text-green-600 font-bold';
-                    statusIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
-                    statusIcon.className = 'w-4 h-4 text-green-500 mr-2';
-                    detectedSnSpan.innerText = foundSn;
+                if (expected.length >= 6) {
+                    // Bandingkan dengan SN yang diisi / dipilih dari gudang (toleran 1 karakter salah baca)
+                    const target = normSn(expected);
+                    const best = candidates.map(c => ({ c, d: editDistance(normSn(c), target) })).sort((a, b) => a.d - b.d)[0];
+                    detected.textContent = best.c;
+                    if (best.d <= 1) {
+                        setStatus('Cocok: SN di foto sesuai dengan SN ONU ' + expected.toUpperCase() + '.', 'ok');
+                    } else {
+                        setStatus('SN di foto berbeda dengan SN ONU yang diisi (' + expected.toUpperCase() + '). Periksa kembali perangkatnya.', 'warn');
+                        useBtn.classList.remove('hidden');
+                    }
                 } else {
-                    statusText.innerText = 'Peringatan: SN di foto tidak terdeteksi cocok. Mohon cek manual!';
-                    statusText.className = 'text-xs text-red-600 font-bold';
-                    statusIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>';
-                    statusIcon.className = 'w-4 h-4 text-red-500 mr-2';
-                    detectedSnSpan.innerText = foundSn || 'Tidak terbaca';
+                    // Belum ada SN (tanpa modem dari gudang): isi otomatis dari foto
+                    detected.textContent = candidates[0];
+                    snInput.value = candidates[0];
+                    snInput.dispatchEvent(new Event('input'));
+                    setStatus('SN ONU diisi dari foto. Periksa kembali — OCR bisa salah baca huruf/angka yang mirip (8/B, 0/O, 5/S).', 'info');
                 }
-
+                useBtn.onclick = () => { snInput.value = detected.textContent; snInput.dispatchEvent(new Event('input')); useBtn.classList.add('hidden'); setStatus('SN ONU diganti dengan hasil baca foto.', 'info'); };
             } catch (err) {
-                console.error("OCR Error:", err);
-                statusText.innerText = 'Gagal memproses OCR. Gunakan verifikasi manual.';
-                statusText.className = 'text-xs text-surface-500 dark:text-surface-400';
-                statusIcon.classList.remove('animate-spin');
+                console.error('OCR Error:', err);
+                if (run === ocrRun) setStatus('OCR gagal: ' + (err.message || err) + ' Isi SN ONU manual.', 'warn');
             }
         }
 

@@ -87,6 +87,25 @@ class ActivationWizardApiTest extends TestCase
         $this->assertSame('resolved', Ticket::where('customer_id', $c->id)->where('type', 'aktivasi')->sole()->status);
     }
 
+    public function test_activation_without_modem_or_photos_and_with_large_phone_photo(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        Sanctum::actingAs($this->teknisi);
+
+        // Tanpa modem gudang & tanpa foto: tetap bisa
+        $a = $this->newCustomer('C-NOPHOTO', 0);
+        $this->postJson("/api/v1/admin/customers/{$a->id}/activate", ['onu_sn' => 'ZTEGC8A1B2C3'])->assertOk();
+        $this->assertSame('ZTEGC8A1B2C3', $a->fresh()->onu_sn);
+        $this->assertNull($a->fresh()->cpe_photo);
+
+        // Foto kamera ponsel ~5 MB dulu ditolak (batas 2 MB)
+        $b = $this->newCustomer('C-BIGPHOTO', 0);
+        $this->post("/api/v1/admin/customers/{$b->id}/activate", [
+            'cpe_photo' => \Illuminate\Http\UploadedFile::fake()->image('label.jpg', 4000, 3000)->size(5000),
+        ], ['Accept' => 'application/json'])->assertOk();
+        $this->assertNotNull($b->fresh()->cpe_photo);
+    }
+
     public function test_activation_guards_status_and_modem_availability(): void
     {
         $other = $this->newCustomer('C-ACT-OTHER');

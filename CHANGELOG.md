@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.116] - 2026-11-15
+
+### Perbaikan
+- **activation:** Modem photo optional and small enough to upload; OCR reads and matches serials
+
 ## [v1.5.115] - 2026-11-15
 
 ### Fitur baru
