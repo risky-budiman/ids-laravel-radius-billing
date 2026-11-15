@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Mutasi stok. type: in / out / adjustment (penyesuaian stock opname; quantity bertanda + / -).
+ */
 class InventoryMovement extends Model
 {
     protected $fillable = [
@@ -24,7 +27,7 @@ class InventoryMovement extends Model
 
     public function item()
     {
-        return $this->belongsTo(InventoryItem::class, 'inventory_item_id');
+        return $this->belongsTo(InventoryItem::class, 'inventory_item_id')->withTrashed();
     }
 
     public function user()

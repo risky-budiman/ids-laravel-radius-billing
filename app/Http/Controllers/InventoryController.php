@@ -9,7 +9,7 @@ use App\Models\InventoryStock;
 use App\Models\InventoryMovement;
 use App\Models\Supplier;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
+use App\Services\InventoryService;
 
 class InventoryController extends Controller
 {
@@ -86,8 +86,9 @@ class InventoryController extends Controller
             return redirect()->back()->with('error', 'Unauthorized action. Only administrators can delete categories.');
         }
 
-        if ($category->items()->count() > 0) {
-            return redirect()->back()->with('error', 'Cannot delete category that has items.');
+        // Termasuk produk arsip: menghapus kategori menghapus produknya beserta riwayat (cascade)
+        if ($category->allItems()->count() > 0) {
+            return redirect()->back()->with('error', 'Kategori masih dipakai produk (termasuk produk yang diarsipkan).');
         }
 
         $category->delete();
@@ -106,101 +107,38 @@ class InventoryController extends Controller
     {
         $request->validate([
             'inventory_item_id' => 'required|exists:inventory_items,id',
-            'quantity' => 'required|numeric|min:1',
+            'quantity' => 'required|numeric|min:0.01',
             'unit_price' => 'required|numeric|min:0',
             'tax_id' => 'nullable|exists:taxes,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
-            'reference' => 'nullable|string',
-            'serials' => 'nullable|array', // For SN tracking
+            'reference' => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:1000',
+            'serials' => 'nullable|array',
+            'serials.*' => 'nullable|string|max:100',
             'is_existing' => 'boolean',
             'customer_id' => 'required_if:is_existing,1|nullable|exists:customers,id',
         ]);
 
         $item = InventoryItem::findOrFail($request->inventory_item_id);
-
-        // Validation for serial numbers if tracked
-        if ($item->track_serial) {
-            $serialCount = count(array_filter($request->serials ?? []));
-            if ($serialCount != $request->quantity) {
-                return back()->withErrors(['serials' => "Jumlah Serial Number ($serialCount) harus sama dengan Quantity ({$request->quantity})."])
-                             ->withInput();
-            }
+        try {
+            app(InventoryService::class)->stockIn($item, [
+                'quantity' => $request->quantity, 'serials' => $request->serials ?? [],
+                'unit_price' => $request->unit_price, 'tax_id' => $request->tax_id, 'supplier_id' => $request->supplier_id,
+                'reference' => $request->reference, 'notes' => $request->notes,
+                'existing_customer_id' => $request->boolean('is_existing') ? $request->customer_id : null,
+            ], $request->user());
+        } catch (\DomainException $e) {
+            return back()->withErrors(['serials' => $e->getMessage()])->withInput();
         }
 
-        DB::transaction(function() use ($request, $item) {
-            $subtotal = $request->unit_price * $request->quantity;
-            $taxAmount = 0;
-            if ($request->filled('tax_id')) {
-                $tax = \App\Models\Tax::find($request->tax_id);
-                $taxAmount = ($subtotal * $tax->rate) / 100;
-            }
-            $totalAmount = $subtotal + $taxAmount;
-
-            // 1. Create movement log (IN)
-            $movement = InventoryMovement::create([
-                'inventory_item_id' => $item->id,
-                'type' => 'in',
-                'quantity' => $request->quantity,
-                'unit_price' => $request->unit_price,
-                'subtotal' => $subtotal,
-                'tax_id' => $request->tax_id,
-                'tax_amount' => $taxAmount,
-                'total_amount' => $totalAmount,
-                'supplier_id' => $request->supplier_id,
-                'reference' => $request->reference,
-                'user_id' => Auth::id(),
-                'notes' => $request->is_existing ? 'Existing at customer' : $request->notes,
-            ]);
-
-            // 2. If track SN, create individual stocks
-            $status = $request->is_existing ? 'installed' : 'ready';
-            $condition = $request->is_existing ? 'used' : 'new';
-            $customerId = $request->is_existing ? $request->customer_id : null;
-
-            if ($item->track_serial && $request->has('serials')) {
-                foreach ($request->serials as $sn) {
-                    if (!empty($sn)) {
-                        InventoryStock::create([
-                            'inventory_item_id' => $item->id,
-                            'serial_number' => $sn,
-                            'condition' => $condition,
-                            'status' => $status,
-                            'customer_id' => $customerId
-                        ]);
-                    }
-                }
-            }
-
-            // 3. If existing at customer, create movement log (OUT)
-            if ($request->is_existing) {
-                InventoryMovement::create([
-                    'inventory_item_id' => $item->id,
-                    'type' => 'out',
-                    'quantity' => $request->quantity,
-                    'reference' => 'Existing Adjustment',
-                    'notes' => 'Recorded as existing at customer during stock-in',
-                    'user_id' => Auth::id(),
-                    'customer_id' => $customerId,
-                ]);
-            }
-
-            // 4. Auto-Journal: Inventory Purchase
-            try {
-                (new \App\Services\AccountingService())->recordInventoryPurchase($movement);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Auto-journal failed for STOCK-IN-{$movement->id}: " . $e->getMessage());
-            }
-        });
-
-        return redirect()->route('inventory.index')->with('success', 'Stock added successfully.');
+        return redirect()->route('inventory.index')->with('success', 'Stok masuk dicatat.');
     }
 
     public function stockOut()
     {
         $items = InventoryItem::orderBy('name')->get();
-        // Get only ready or returned stocks for SN items
-        $readyStocks = InventoryStock::whereIn('status', ['ready', 'returned'])->get()->groupBy('inventory_item_id');
-        
+        $readyStocks = InventoryStock::available()->orderBy('serial_number')->get()->groupBy('inventory_item_id');
+
         return view('inventory.stock-out', compact('items', 'readyStocks'));
     }
 
@@ -208,47 +146,69 @@ class InventoryController extends Controller
     {
         $request->validate([
             'inventory_item_id' => 'required|exists:inventory_items,id',
-            'quantity' => 'required|numeric|min:1',
+            'quantity' => 'required|numeric|min:0.01',
             'type' => 'required|in:infrastructure,new_line,maintenance,other',
-            'reference' => 'nullable|string',
-            'notes' => 'nullable|string',
-            'stock_ids' => 'nullable|array', // For SN tracking
+            'reference' => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:1000',
+            'stock_ids' => 'nullable|array',
+            'stock_ids.*' => 'integer',
         ]);
 
+        $types = ['infrastructure' => 'Infrastruktur', 'new_line' => 'Pemasangan baru', 'maintenance' => 'Perbaikan', 'other' => 'Lainnya'];
         $item = InventoryItem::findOrFail($request->inventory_item_id);
-        
-        // Validation for stock availability
-        if ($item->stock_count < $request->quantity) {
-            return back()->withErrors(['quantity' => 'Insufficient stock. current stock: ' . $item->stock_count])->withInput();
+        try {
+            app(InventoryService::class)->stockOut($item, [
+                'quantity' => $request->quantity, 'stock_ids' => $request->stock_ids ?? [],
+                'reference' => trim(($request->reference ?? '') . ' (' . $types[$request->type] . ')'), 'notes' => $request->notes,
+            ], $request->user());
+        } catch (\DomainException $e) {
+            return back()->withErrors(['quantity' => $e->getMessage()])->withInput();
         }
 
-        // Validation for serial numbers if tracked
+        return redirect()->route('inventory.index')->with('success', 'Stok keluar dicatat.');
+    }
+
+    /** Stock opname: tandai SN hilang, daftarkan SN yang ditemukan / isi jumlah fisik, samakan catatan mutasi. */
+    public function opname(InventoryItem $item)
+    {
+        return view('inventory.items.opname', [
+            'item' => $item,
+            'available' => $item->stocks()->available()->orderBy('serial_number')->get(),
+            'balance' => $item->movementBalance(),
+        ]);
+    }
+
+    public function storeOpname(Request $request, InventoryItem $item)
+    {
+        $data = $request->validate([
+            'present' => 'nullable|array', 'present.*' => 'integer',
+            'found_serials' => 'nullable|string|max:20000',
+            'physical_qty' => $item->track_serial ? 'nullable' : 'required|numeric|min:0',
+            'notes' => 'nullable|string|max:500',
+        ], [], ['physical_qty' => 'jumlah fisik']);
+
+        $missing = [];
         if ($item->track_serial) {
-            $serialCount = count($request->stock_ids ?? []);
-            if ($serialCount != $request->quantity) {
-                return back()->withErrors(['stock_ids' => "Anda harus memilih $request->quantity Serial Number."])->withInput();
-            }
+            // Yang tidak dicentang "ada" = hilang
+            $missing = $item->stocks()->available()->whereNotIn('id', $data['present'] ?? [])->pluck('id')->all();
         }
 
-        DB::transaction(function() use ($request, $item) {
-            // 1. Create movement log
-            InventoryMovement::create([
-                'inventory_item_id' => $item->id,
-                'type' => 'out',
-                'quantity' => $request->quantity,
-                'reference' => $request->reference . ' (' . $request->type . ')',
-                'notes' => $request->notes,
-                'user_id' => Auth::id()
-            ]);
+        try {
+            $r = app(InventoryService::class)->opname($item, $request->user(), $missing,
+                InventoryService::parseSerials($data['found_serials'] ?? ''),
+                $item->track_serial ? null : (float) $data['physical_qty'], $data['notes'] ?? null);
+        } catch (\DomainException $e) {
+            return back()->withErrors(['found_serials' => $e->getMessage()])->withInput();
+        }
 
-            // 2. If track SN, mark selected stocks as used
-            if ($item->track_serial && $request->has('stock_ids')) {
-                InventoryStock::whereIn('id', $request->stock_ids)
-                    ->update(['status' => 'installed']);
-            }
-        });
+        $fmt = fn ($n) => rtrim(rtrim(number_format(abs($n), 2, ',', '.'), '0'), ',');
+        $parts = array_filter([
+            $r['lost'] ? "{$r['lost']} SN ditandai hilang" : null,
+            $r['registered'] ? "{$r['registered']} SN didaftarkan" : null,
+            $r['adjustment'] != 0 ? 'penyesuaian ' . ($r['adjustment'] > 0 ? '+' : '−') . $fmt($r['adjustment']) . " {$item->unit}" : null,
+        ]);
 
-        return redirect()->route('inventory.index')->with('success', 'Stock out processed successfully.');
+        return redirect()->route('inventory.show', $item)->with('success', 'Stock opname disimpan' . ($parts ? ': ' . implode(', ', $parts) . '.' : ' — stok sudah sesuai.'));
     }
 
     public function outflowReport()
@@ -263,8 +223,10 @@ class InventoryController extends Controller
 
     public function show(InventoryItem $item)
     {
-        $item->load(['category', 'stocks', 'movements.user']);
-        return view('inventory.items.show', compact('item'));
+        $item->load(['category', 'stocks.customer']);
+        $movements = $item->movements()->with('user', 'customer')->latest('id')->paginate(25);
+
+        return view('inventory.items.show', compact('item', 'movements'));
     }
 
     // Standard resource stubs updated with redirects
@@ -321,10 +283,12 @@ class InventoryController extends Controller
         }
 
         if ($item->stock_count > 0) {
-            return redirect()->back()->with('error', 'Cannot delete product that still has stock.');
+            return redirect()->back()->with('error', 'Produk masih punya stok di gudang. Keluarkan atau sesuaikan lewat stock opname dulu.');
         }
 
+        // Arsip (soft delete): riwayat mutasi & SN — termasuk yang terpasang di pelanggan — tetap tersimpan
         $item->delete();
-        return redirect()->route('inventory.index')->with('success', 'Product deleted successfully.');
+
+        return redirect()->route('inventory.index')->with('success', 'Produk diarsipkan; riwayatnya tetap tersimpan.');
     }
 }

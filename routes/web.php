@@ -253,10 +253,12 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
             Route::post('inventory/items', [\App\Http\Controllers\InventoryController::class, 'store'])->name('inventory.store');
             Route::get('inventory/categories/create', [\App\Http\Controllers\InventoryController::class, 'createCategory'])->name('inventory.category.create');
             Route::post('inventory/categories', [\App\Http\Controllers\InventoryController::class, 'storeCategory'])->name('inventory.category.store');
+            Route::get('inventory/items/{item}/opname', [\App\Http\Controllers\InventoryController::class, 'opname'])->name('inventory.opname');
+            Route::post('inventory/items/{item}/opname', [\App\Http\Controllers\InventoryController::class, 'storeOpname'])->name('inventory.opname.store');
         });
 
         // Wildcard routes must come AFTER static routes
-        Route::get('inventory/items/{item}', [\App\Http\Controllers\InventoryController::class, 'show'])->name('inventory.show');
+        Route::get('inventory/items/{item}', [\App\Http\Controllers\InventoryController::class, 'show'])->name('inventory.show')->withTrashed();
 
         // Inventory - Restrictive Management (Administrator Only)
         Route::middleware('role:administrator')->group(function () {

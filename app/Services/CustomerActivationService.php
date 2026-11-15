@@ -72,8 +72,8 @@ class CustomerActivationService
     {
         return [
             'serial_items' => InventoryItem::where('track_serial', true)
-                ->whereHas('stocks', fn ($q) => $q->whereIn('status', ['ready', 'dismantled']))
-                ->with(['stocks' => fn ($q) => $q->whereIn('status', ['ready', 'dismantled'])])->get(),
+                ->whereHas('stocks', fn ($q) => $q->available())
+                ->with(['stocks' => fn ($q) => $q->available()->orderBy('serial_number')])->get(),
             'consumable_items' => InventoryItem::where('track_serial', false)->get(),
             'olts' => \App\Models\Olt::where('is_active', true)->get(),
             'regions' => \App\Models\Region::all(),
@@ -101,7 +101,7 @@ class CustomerActivationService
         $modem = null;
         if (! empty($data['modem_stock_id'])) {
             $modem = InventoryStock::with('item')->find($data['modem_stock_id']);
-            if (! $modem || ! in_array($modem->status, ['ready', 'dismantled'], true) || $modem->customer_id) {
+            if (! $modem || ! $modem->isAvailable()) {
                 throw new \DomainException('Modem yang dipilih tidak tersedia di gudang (sudah terpasang atau tidak siap pakai).');
             }
         }
@@ -134,6 +134,10 @@ class CustomerActivationService
                 if (($photos[$p] ?? null) instanceof UploadedFile) {
                     $update[$p] = $photos[$p]->store('kyc_photos', 'public');
                 }
+            }
+            // Kunci & periksa ulang modem: dua aktivasi bersamaan tidak boleh memakai unit yang sama
+            if ($modem && ! InventoryStock::whereKey($modem->id)->lockForUpdate()->first()?->isAvailable()) {
+                throw new \DomainException('Modem yang dipilih baru saja dipakai aktivasi lain.');
             }
             $customer->update($update);
 

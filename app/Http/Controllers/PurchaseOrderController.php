@@ -75,28 +75,25 @@ class PurchaseOrderController extends Controller
                     'subtotal' => $subtotal,
                 ]);
 
-                // Inventory In (create stock)
-                for ($i = 0; $i < $item['quantity']; $i++) {
-                    InventoryStock::create([
-                        'inventory_item_id' => $item['inventory_item_id'],
-                        'status' => 'ready',
-                        'condition' => 'new',
-                        // Optional: Generate serial number if track_serial is true
-                    ]);
-                }
+                // Stok masuk lewat jalur yang sama dengan Stok Masuk. Dulu tiap unit dibuat sebagai baris SN
+                // kosong tanpa catatan mutasi (barang non-SN tidak bertambah; barang SN bertambah tanpa SN).
+                // Barang ber-SN: SN didaftarkan kemudian lewat stock opname. Jurnal dibuat di bawah (hutang).
+                app(\App\Services\InventoryService::class)->stockIn(\App\Models\InventoryItem::findOrFail($item['inventory_item_id']), [
+                    'quantity' => $item['quantity'], 'unit_price' => $item['unit_price'], 'supplier_id' => $validated['supplier_id'],
+                    'reference' => $poNumber, 'serials_later' => true, 'journal' => false,
+                ], $request->user());
             }
 
             // Auto Journal Entry (Debit Inventory, Credit AP)
-            $inventoryAccount = ChartOfAccount::where('code', '1140')->first(); // Persediaan
-            $apAccount = ChartOfAccount::where('code', '2110')->first(); // Hutang Usaha
+            $inventoryAccount = ChartOfAccount::where('code', '1105')->first(); // Persediaan Barang (1140 tidak ada di COA)
+            $apAccount = ChartOfAccount::where('code', '2101')->first(); // Hutang Vendor (2110 tidak ada di COA)
 
             if ($inventoryAccount && $apAccount && $totalAmount > 0) {
                 $journal = Journal::create([
-                    'journal_number' => 'JRN-PO-' . $purchaseOrder->id,
                     'date' => $validated['date'],
                     'reference' => 'Pembelian via ' . $poNumber,
                     'description' => 'Penerimaan barang dari PO',
-                    'status' => 'posted',
+                    'created_by' => $request->user()?->id,
                 ]);
 
                 JournalItem::create([

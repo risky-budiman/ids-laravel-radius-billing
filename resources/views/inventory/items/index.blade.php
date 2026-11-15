@@ -107,10 +107,10 @@
                                     @if(auth()->user()->isAdministrator())
                                         <a href="{{ route('inventory.edit', $item) }}" class="text-amber-500 hover:text-amber-700 text-xs font-bold" title="Ubah Barang">Ubah</a>
                                         
-                                        <form action="{{ route('inventory.destroy', $item) }}" method="POST" onsubmit="return confirm('Delete this product?')" class="inline">
+                                        <form action="{{ route('inventory.destroy', $item) }}" method="POST" onsubmit="return confirm('Arsipkan produk ini? Riwayat mutasi &amp; SN tetap tersimpan.')" class="inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-bold" title="Hapus Barang">Hapus</button>
+                                            <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-bold" title="Arsipkan produk">Arsipkan</button>
                                         </form>
                                     @endif
                                 </div>

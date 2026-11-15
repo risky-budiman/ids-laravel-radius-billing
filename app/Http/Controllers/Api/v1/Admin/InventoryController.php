@@ -9,6 +9,7 @@ use App\Models\InventoryMovement;
 use App\Models\InventoryStock;
 use App\Models\FixedAsset;
 use App\Models\Supplier;
+use App\Services\InventoryService;
 use Illuminate\Http\Request;
 
 class InventoryController extends Controller
@@ -22,7 +23,7 @@ class InventoryController extends Controller
 
         if ($request->filled('search')) {
             $s = $request->input('search');
-            $query->where('name', 'like', "%{$s}%")->orWhere('sku', 'like', "%{$s}%");
+            $query->where(fn ($q) => $q->where('name', 'like', "%{$s}%")->orWhere('sku', 'like', "%{$s}%"));
         }
 
         if ($request->filled('category_id') && $request->input('category_id') !== 'all') {
@@ -97,99 +98,33 @@ class InventoryController extends Controller
 
         $validated = $request->validate([
             'type' => 'required|in:in,out',
-            'quantity' => 'required|integer|min:1',
-            'notes' => 'nullable|string',
+            'quantity' => 'required|numeric|min:0.01',
+            'notes' => 'nullable|string|max:1000',
+            'reference' => 'nullable|string|max:255',
             'serial_number' => 'nullable|string',
             'serials' => 'nullable|array',
-            'serials.*' => 'string',
+            'serials.*' => 'string|max:100',
         ]);
 
-        // Parse serial numbers if provided via serial_number string or serials array
-        $serials = [];
-        if (!empty($validated['serial_number'])) {
-            $parsed = preg_split('/[\r\n,]+/', $validated['serial_number']);
-            foreach ($parsed as $s) {
-                $trimmed = trim($s);
-                if (!empty($trimmed) && !in_array($trimmed, $serials)) {
-                    $serials[] = $trimmed;
-                }
-            }
-        }
-        if (!empty($validated['serials']) && is_array($validated['serials'])) {
-            foreach ($validated['serials'] as $s) {
-                $trimmed = trim($s);
-                if (!empty($trimmed) && !in_array($trimmed, $serials)) {
-                    $serials[] = $trimmed;
-                }
-            }
-        }
+        // SN boleh dikirim sebagai teks (baris baru / koma) dan/atau array
+        $serials = InventoryService::parseSerials($validated['serial_number'] ?? null, $validated['serials'] ?? []);
+        $service = app(InventoryService::class);
 
-        $quantity = count($serials) > 0 ? max($validated['quantity'], count($serials)) : $validated['quantity'];
-
-        // Validation for stock out
-        if ($validated['type'] === 'out') {
-            if ($item->stock_count < $quantity) {
-                return response()->json([
-                    'message' => "Stok {$item->name} tidak mencukupi untuk pengeluaran ({$quantity} {$item->unit}). Stok saat ini: {$item->stock_count} {$item->unit}.",
-                ], 422);
-            }
-
-            // Verify all serial numbers exist and are ready if provided
-            if ($item->track_serial && count($serials) > 0) {
-                foreach ($serials as $sn) {
-                    $stock = $item->stocks()->where('serial_number', $sn)->whereIn('status', ['ready', 'returned'])->first();
-                    if (!$stock) {
-                        return response()->json([
-                            'message' => "Serial Number '{$sn}' tidak ditemukan atau tidak tersedia (ready) di gudang.",
-                        ], 422);
-                    }
-                }
-            }
-        }
-
-        // Validation for stock in (duplicate check)
-        if ($validated['type'] === 'in' && $item->track_serial && count($serials) > 0) {
-            foreach ($serials as $sn) {
-                $existing = InventoryStock::where('serial_number', $sn)->first();
-                if ($existing) {
-                    return response()->json([
-                        'message' => "Serial Number '{$sn}' sudah terdaftar di sistem dengan status '{$existing->status}'.",
-                    ], 422);
-                }
-            }
-        }
-
-        $movement = $item->movements()->create([
-            'user_id' => $request->user()->id,
-            'type' => $validated['type'],
-            'quantity' => $quantity,
-            'notes' => $validated['notes'] ?? null,
-        ]);
-
-        if ($item->track_serial && count($serials) > 0) {
-            if ($validated['type'] === 'in') {
-                foreach ($serials as $sn) {
-                    $item->stocks()->create([
-                        'serial_number' => $sn,
-                        'status' => 'ready',
-                        'condition' => 'new',
-                    ]);
-                }
-            } else {
-                foreach ($serials as $sn) {
-                    $stock = $item->stocks()->where('serial_number', $sn)->first();
-                    if ($stock) {
-                        $stock->update(['status' => 'deployed']);
-                    }
-                }
-            }
+        try {
+            $payload = ['quantity' => $validated['quantity'], 'serials' => $serials,
+                'notes' => $validated['notes'] ?? null, 'reference' => $validated['reference'] ?? null];
+            $validated['type'] === 'in'
+                ? $service->stockIn($item, $payload + ['journal' => false], $request->user())
+                : $service->stockOut($item, $payload, $request->user());
+        } catch (\DomainException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
 
         $typeLabel = $validated['type'] === 'in' ? 'Masuk' : 'Keluar';
-        $snCountMsg = count($serials) > 0 ? " (" . count($serials) . " Serial Number dicatat)" : "";
+        $snCountMsg = $serials ? ' (' . count($serials) . ' Serial Number dicatat)' : '';
 
         return response()->json([
-            'message' => "Stok {$typeLabel} ({$quantity} {$item->unit}) berhasil dicatat.{$snCountMsg}",
+            'message' => "Stok {$typeLabel} ({$validated['quantity']} {$item->unit}) berhasil dicatat.{$snCountMsg}",
             'current_stock' => $item->stock_count,
         ]);
     }

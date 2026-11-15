@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.113] - 2026-11-15
+
+### Perbaikan
+- **inventory:** Consistent available stock, mandatory serials, archive instead of delete, stock opname
+
 ## [v1.5.112] - 2026-11-15
 
 ### Perbaikan
