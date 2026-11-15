@@ -6,6 +6,8 @@ use App\Models\Gateway;
 use App\Models\Invoice;
 use App\Models\Customer;
 use App\Models\BankAccount;
+use App\Models\BankMutation;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -42,12 +44,12 @@ class MootaWebhookTest extends TestCase
         return $this->postJson(route('webhooks.moota'), $payload, $headers);
     }
 
-    private function unpaidInvoice(string $code, string $number, int $amount): Invoice
+    private function unpaidInvoice(string $code, string $number, int $amount, ?string $name = null): Invoice
     {
         $customer = Customer::create([
             'customer_code' => $code,
             'username' => strtolower($code),
-            'name' => 'Pelanggan ' . $code,
+            'name' => $name ?? 'Pelanggan ' . $code,
             'is_active' => false,
             'status' => Customer::STATUS_SUSPENDED,
         ]);
@@ -61,10 +63,10 @@ class MootaWebhookTest extends TestCase
         ]);
     }
 
-    private function mutation(int $amount, string $description = 'TRANSFER DARI MOOTA CUSTOMER'): array
+    private function mutation(int $amount, string $description = 'TRANSFER DARI MOOTA CUSTOMER', ?string $id = null): array
     {
         return [[
-            'mutation_id' => 'mut_' . $amount,
+            'mutation_id' => $id ?? 'mut_' . $amount,
             'amount' => $amount,
             'type' => 'CR',
             'description' => $description,
@@ -132,5 +134,72 @@ class MootaWebhookTest extends TestCase
         $this->postSigned($this->mutation(175558), secret: 'legacy-token')->assertOk();
 
         $this->assertEquals('paid', $invoice->fresh()->status);
+    }
+
+    public function test_resent_mutation_does_not_pay_another_invoice(): void
+    {
+        $a = $this->unpaidInvoice('C-RA', 'INV-RA-1', 150000, 'Andi Wijaya');
+        $b = $this->unpaidInvoice('C-RB', 'INV-RB-1', 150000, 'Budi Santoso');
+
+        $this->postSigned($this->mutation(150000, 'TRF ANDI WIJAYA', 'mut-1'))->assertOk();
+        $this->assertSame('paid', $a->fresh()->status);
+
+        // Moota mengirim ulang mutasi yang sama: dulu B (kini satu-satunya bernominal sama) ikut dilunasi
+        $this->postSigned($this->mutation(150000, 'TRF ANDI WIJAYA', 'mut-1'))->assertOk();
+        $this->assertSame('unpaid', $b->fresh()->status);
+        $this->assertSame(1, BankMutation::count());
+    }
+
+    public function test_ambiguous_names_are_not_guessed(): void
+    {
+        $budi = $this->unpaidInvoice('C-N1', 'INV-N1-1', 150000, 'Budi');
+        $budiman = $this->unpaidInvoice('C-N2', 'INV-N2-1', 150000, 'Budiman');
+
+        // "BUDIMAN" dulu cocok dengan "Budi" (substring; invoice pertama menang)
+        $this->postSigned($this->mutation(150000, 'TRSF E-BANKING BUDIMAN', 'mut-n'))->assertOk();
+        $this->assertSame('unpaid', $budi->fresh()->status);
+        $this->assertSame('paid', $budiman->fresh()->status);
+
+        // Keterangan tanpa nama -> menunggu manual & tercatat (dulu hanya di log)
+        $c = $this->unpaidInvoice('C-N3', 'INV-N3-1', 150000, 'Citra');
+        $this->postSigned($this->mutation(150000, 'SETORAN TUNAI', 'mut-x'))->assertOk();
+        $this->assertSame('unpaid', $budi->fresh()->status);
+        $this->assertSame('unpaid', $c->fresh()->status);
+        $this->assertSame('unmatched', BankMutation::where('mutation_id', 'mut-x')->value('status'));
+    }
+
+    public function test_invoice_number_wins_but_underpayment_is_held(): void
+    {
+        $inv = $this->unpaidInvoice('C-IN', 'INV-2026-0042', 200000);
+        $this->unpaidInvoice('C-OT', 'INV-2026-0043', 150000);
+
+        $this->postSigned($this->mutation(150000, 'bayar inv-2026-0042', 'mut-u'))->assertOk();
+        $this->assertSame('unpaid', $inv->fresh()->status);
+        $this->assertStringContainsString('kurang', BankMutation::where('mutation_id', 'mut-u')->value('note'));
+
+        $this->postSigned($this->mutation(200000, 'bayar inv-2026-0042', 'mut-v'))->assertOk();
+        $this->assertSame('paid', $inv->fresh()->status);
+    }
+
+    public function test_unmatched_mutation_can_be_matched_manually_once(): void
+    {
+        $x = $this->unpaidInvoice('C-M1', 'INV-M-1', 150000, 'Dewi');
+        $y = $this->unpaidInvoice('C-M2', 'INV-M-2', 150000, 'Eka');
+        $this->postSigned($this->mutation(150000, 'TRANSFER', 'mut-m'))->assertOk();
+        $mutation = BankMutation::sole();
+        $this->assertSame('unmatched', $mutation->status);
+
+        $admin = User::factory()->create(['role' => 'administrator', 'is_active' => true]);
+        $this->actingAs($admin)->get(route('bank-mutations.index'))->assertOk()->assertSee('Belum cocok');
+        $this->post(route('bank-mutations.match', $mutation), ['invoice_number' => 'INV-M-2'])->assertSessionHas('success');
+        $this->assertSame('paid', $y->fresh()->status);
+        $this->assertSame('manual', $mutation->fresh()->status);
+
+        // Mutasi yang sama tidak bisa dipakai dua kali
+        $this->post(route('bank-mutations.match', $mutation), ['invoice_number' => 'INV-M-1'])->assertSessionHas('error');
+        $this->assertSame('unpaid', $x->fresh()->status);
+
+        $this->actingAs(User::factory()->create(['role' => 'teknisi', 'is_active' => true]))
+            ->get(route('bank-mutations.index'))->assertForbidden();
     }
 }

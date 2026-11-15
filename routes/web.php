@@ -293,6 +293,11 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
             Route::get('transfer', [\App\Http\Controllers\Finance\BankTransactionController::class, 'transfer'])->name('bank-transactions.transfer');
             Route::post('transfer', [\App\Http\Controllers\Finance\BankTransactionController::class, 'processTransfer'])->name('bank-transactions.process-transfer');
             
+            // Mutasi bank (Moota): cocokkan manual yang belum teralokasi
+            Route::get('mutations', [\App\Http\Controllers\Finance\BankMutationController::class, 'index'])->name('bank-mutations.index');
+            Route::post('mutations/{mutation}/match', [\App\Http\Controllers\Finance\BankMutationController::class, 'match'])->name('bank-mutations.match');
+            Route::post('mutations/{mutation}/ignore', [\App\Http\Controllers\Finance\BankMutationController::class, 'ignore'])->name('bank-mutations.ignore');
+
             Route::get('expense', [\App\Http\Controllers\Finance\BankTransactionController::class, 'expense'])->name('bank-transactions.expense');
             Route::post('expense', [\App\Http\Controllers\Finance\BankTransactionController::class, 'processExpense'])->name('bank-transactions.process-expense');
 

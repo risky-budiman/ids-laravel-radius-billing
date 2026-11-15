@@ -249,56 +249,18 @@ class PaymentWebhookController extends Controller
             return response()->json(['message' => 'Invalid signature'], 403);
         }
 
+        // Pencocokan & anti-duplikat ada di BankMutationService (lihat aturannya di sana)
+        $service = app(\App\Services\BankMutationService::class);
         foreach ($payload as $mutation) {
-            $type = strtoupper($mutation['type'] ?? '');
-            $amount = (float) ($mutation['amount'] ?? 0);
-            $description = $mutation['description'] ?? '';
-
-            // Moota CR = Credit (incoming mutation/transfer)
-            if ($type === 'CR' && $amount > 0) {
-                // Find all unpaid invoices
-                $invoices = Invoice::where('status', 'unpaid')
-                    ->where('amount', $amount)
-                    ->get();
-
-                $matchedInvoice = null;
-
-                if ($invoices->count() === 1) {
-                    $matchedInvoice = $invoices->first();
-                } elseif ($invoices->count() > 1) {
-                    // Try to match based on description details (customer name, invoice number, code)
-                    foreach ($invoices as $inv) {
-                        if (str_contains(strtolower($description), strtolower($inv->invoice_number)) || 
-                            str_contains(strtolower($description), strtolower($inv->customer->name)) ||
-                            str_contains(strtolower($description), strtolower($inv->customer->customer_code ?? ''))) {
-                            $matchedInvoice = $inv;
-                            break;
-                        }
-                    }
-                }
-
-                if ($matchedInvoice) {
-                    try {
-                        $pgAccount = BankAccount::where('bank_name', 'MOOTA')->first();
-                        if (!$pgAccount) {
-                            $pgAccount = BankAccount::create([
-                                'bank_name' => 'MOOTA',
-                                'account_name' => 'Gateway MOOTA',
-                                'type' => 'payment_gateway',
-                                'is_active' => true,
-                             ]);
-                        }
-
-                        app(\App\Services\InvoiceService::class)->markAsPaid($matchedInvoice, $pgAccount->id);
-                        Log::info("Moota successfully auto-reconciled Invoice {$matchedInvoice->invoice_number}");
-                    } catch (\Exception $e) {
-                        Log::error('Moota Payment Processing Failed: ' . $e->getMessage());
-                        if (app()->environment('testing')) {
-                            throw $e;
-                        }
-                    }
-                } else {
-                    Log::warning("Moota mutation unmatched: Amount {$amount}, Desc: {$description}");
+            if (! is_array($mutation)) {
+                continue;
+            }
+            try {
+                $service->receive('moota', $mutation);
+            } catch (\Exception $e) {
+                Log::error('Moota Payment Processing Failed: ' . $e->getMessage());
+                if (app()->environment('testing')) {
+                    throw $e;
                 }
             }
         }
