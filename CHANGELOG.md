@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.5.104] - 2026-11-15
+- feat(billing): WhatsApp payment reminders H-3 / H-1 / due day ([7e43dd3])
+- feat(tickets): credit unassigned tickets to the staff who resolve them ([dfd4cf1])
+- fix(backup): pass SystemRoot to mysqldump on Windows (error 2004 / 10106) ([7a2bc90])
+- fix(backup): find mysqldump automatically; "Backup sekarang" failed from the web ([bafc364])
+- feat(audit): log changes to cash/bank, prices, gateways and settings ([12d5b88])
+- feat(backup): daily full-database backup; fix settings ignored after config:cache ([6623e8b])
+- fix(accounting): cash flow double-counted split journals; Excel export was a placeholder ([8137b1c])
+- fix(update): web updater refuses releases that need composer/npm; reports failed migrations ([f72affe])
+- fix(security): login brute-force limit could be bypassed via X-Forwarded-For ([cb4dccc])
+- fix(payments): no double-recorded payments; underpaid gateway callbacks held ([ab841d5])
+- fix(isolir): RADIUS group is internal; PPP profile optional and auto-created ([9dd076f])
+- feat(isolir): payment bypass list and MikroTik script filled from system data ([b3b925c])
+- feat(isolir): RADIUS isolation with configurable isolation IP allocation ([bea7dd4])
+- fix(billing): overdue customers were never suspended; renewal invoices failed ([1697e16])
+- fix(finance): statement balances follow mutations; atomic balance updates ([ef994c4])
+
+
+
 ## [v1.5.103] - 2026-11-15
 - feat(tickets): credit unassigned tickets to the staff who resolve them ([dfd4cf1])
 - fix(backup): pass SystemRoot to mysqldump on Windows (error 2004 / 10106) ([7a2bc90])

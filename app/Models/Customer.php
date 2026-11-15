@@ -25,6 +25,12 @@ class Customer extends Authenticatable
     /** Layanan sudah/akan dicabut: pembayaran tidak boleh mengaktifkan kembali. */
     const TERMINATED_STATUSES = [self::STATUS_WAITING_DISMANTLE, self::STATUS_DISMANTLED, self::STATUS_CANCELED];
 
+    /**
+     * Status yang tetap dibuatkan invoice langganan otomatis. Pelanggan terisolir TETAP ditagih;
+     * batal (terminate), menunggu dismantle & dicabut TIDAK ditagih (keputusan bisnis).
+     */
+    const BILLABLE_STATUSES = [self::STATUS_ACTIVE, self::STATUS_SUSPENDED];
+
     const TYPE_PERSONAL = 'personal';
     const TYPE_CORPORATE = 'corporate';
     const TYPE_VIP = 'vip';

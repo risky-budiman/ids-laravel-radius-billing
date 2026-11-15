@@ -143,6 +143,37 @@ class BillingCycleSimulationTest extends TestCase
         $this->assertSame(CarbonImmutable::parse($expiry)->addDays(30)->toDateString(), $c->fresh()->expired_at->toDateString());
     }
 
+    /**
+     * Keputusan bisnis: pelanggan terisolir TETAP ditagih tiap bulan; batal (terminate),
+     * menunggu dismantle & dicabut tidak dibuatkan invoice lagi.
+     */
+    public function test_suspended_customers_keep_being_invoiced_but_terminated_ones_do_not(): void
+    {
+        $suspended = $this->activeCustomer('postpaid', 'cycle', '2026-03-10');
+        $this->assertSame('2026-04-21', $this->runDailyBilling($suspended, '2026-03-11', '2026-04-30'));
+        $this->runDailyBilling($suspended, '2026-05-01', '2026-06-01', false);
+        // Mar (prorata), Apr, Mei: tetap terbit walau terisolir sejak 21 Apr
+        $this->assertSame(3, Invoice::where('customer_id', $suspended->id)->count());
+
+        foreach ([Customer::STATUS_CANCELED, Customer::STATUS_WAITING_DISMANTLE, Customer::STATUS_DISMANTLED] as $status) {
+            $c = Customer::create([
+                'customer_code' => "C-$status", 'username' => "u_$status", 'name' => "Pelanggan $status",
+                'package_id' => $suspended->package_id, 'billing_type' => 'postpaid', 'billing_method' => 'cycle',
+                'is_active' => false, 'status' => Customer::STATUS_NEW,
+            ]);
+            // Jadwal tagihan sudah jatuh tempo, tapi statusnya tidak ditagih
+            Customer::whereKey($c->id)->update(['status' => $status, 'billing_next_date' => '2026-06-01', 'billing_due_date' => '2026-06-20']);
+        }
+
+        $this->travelTo(CarbonImmutable::parse('2026-06-02 00:01'));
+        $this->artisan('app:process-billing')->assertSuccessful();
+
+        foreach ([Customer::STATUS_CANCELED, Customer::STATUS_WAITING_DISMANTLE, Customer::STATUS_DISMANTLED] as $status) {
+            $this->assertSame(0, Invoice::whereHas('customer', fn ($q) => $q->where('status', $status))->count(), "status $status tidak boleh ditagih");
+        }
+        $this->assertSame([Customer::STATUS_ACTIVE, Customer::STATUS_SUSPENDED], Customer::BILLABLE_STATUSES);
+    }
+
     public function test_prepaid_renewal_customer_who_never_pays_gets_suspended_when_period_ends(): void
     {
         $c = $this->activeCustomer('prepaid', 'renewal', '2026-03-10');

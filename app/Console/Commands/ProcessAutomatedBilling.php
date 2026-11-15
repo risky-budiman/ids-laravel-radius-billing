@@ -45,7 +45,8 @@ class ProcessAutomatedBilling extends Command
         $this->info("Checking for new invoices to generate...");
         
         // Find customers whose billing_next_date is today or in the past (Only Active & Suspended)
-        $customers = Customer::whereIn('status', [Customer::STATUS_ACTIVE, Customer::STATUS_SUSPENDED])
+        // Terisolir tetap ditagih; batal, menunggu dismantle & dicabut tidak (Customer::BILLABLE_STATUSES)
+        $customers = Customer::whereIn('status', Customer::BILLABLE_STATUSES)
             ->whereNotNull('billing_next_date')
             ->whereDate('billing_next_date', '<=', now()->toDateString())
             ->get();

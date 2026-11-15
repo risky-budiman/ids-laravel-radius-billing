@@ -37,7 +37,7 @@ class GenerateCustomerInvoice implements ShouldQueue
         $customer = $this->customer;
         
         // Double check condition in case things changed while in queue
-        if (!in_array($customer->status, [Customer::STATUS_ACTIVE, Customer::STATUS_SUSPENDED]) || !$customer->billing_next_date || $customer->billing_next_date->toDateString() > now()->toDateString()) {
+        if (!in_array($customer->status, Customer::BILLABLE_STATUSES, true) || !$customer->billing_next_date || $customer->billing_next_date->toDateString() > now()->toDateString()) {
             return;
         }
 
