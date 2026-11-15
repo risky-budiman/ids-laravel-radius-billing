@@ -18,8 +18,25 @@
                 </div>
             </div>
 
-            <form action="{{ route('customers.activate.store', $customer) }}" method="POST" class="p-8 space-y-8" x-data="{ consumables: [] }">
+            {{-- enctype wajib: tanpa ini foto terkirim sebagai nama file saja -> validasi gagal diam-diam --}}
+            <form action="{{ route('customers.activate.store', $customer) }}" method="POST" enctype="multipart/form-data" class="p-8 space-y-8" x-data="{ consumables: [] }">
                 @csrf
+
+                @php $activatable = in_array($customer->status, \App\Services\CustomerActivationService::ACTIVATABLE, true); @endphp
+                @if(! $activatable)
+                    <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+                        Pelanggan berstatus <strong>{{ $customer->status }}</strong> — wizard aktivasi hanya untuk pelanggan baru / menunggu aktivasi.
+                    </div>
+                @endif
+                @if(session('error'))
+                    <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300" role="alert">{{ session('error') }}</div>
+                @endif
+                @if($errors->any())
+                    <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300" role="alert">
+                        <p class="font-semibold">Aktivasi belum disimpan:</p>
+                        <ul class="mt-1 list-disc pl-5 space-y-0.5">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+                    </div>
+                @endif
                 
                 <!-- Section: OLT Provisioning (Zero Touch) -->
                 <div class="space-y-4">

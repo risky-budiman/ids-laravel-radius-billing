@@ -147,4 +147,66 @@ class CustomerEnterpriseTest extends TestCase
         Storage::disk('public')->assertMissing('old_ktp.jpg');
         Storage::disk('public')->assertExists($customer->identity_photo);
     }
+
+    private function editPayload(array $extra = []): array
+    {
+        return array_merge([
+            'name' => 'Pel Uji', 'username' => 'peluji', 'password' => 'rahasia', 'package_id' => 1,
+            'region_code' => \App\Models\Region::first()->code, 'sto_code' => \App\Models\Sto::first()->code, 'stb_code' => \App\Models\Stb::first()->code,
+            'billing_type' => 'postpaid', 'billing_method' => 'cycle', 'customer_type' => 'personal',
+            'installation_fee' => 300000,
+        ], $extra);
+    }
+
+    public function test_editing_does_not_change_status_of_customer_waiting_for_activation_nor_wipe_coordinates(): void
+    {
+        $c = Customer::create(['customer_code' => 'W-ACT', 'username' => 'peluji', 'password' => 'x', 'name' => 'Pel', 'package_id' => 1,
+            'region_code' => 'BGR', 'sto_code' => 'STO', 'stb_code' => 'STB', 'billing_type' => 'postpaid', 'billing_method' => 'cycle',
+            'customer_type' => 'personal', 'is_active' => false, 'status' => Customer::STATUS_WAITING_ACTIVATION,
+            'latitude' => -6.21129546, 'longitude' => 106.84375763]);
+
+        // Form edit mengirim is_active=0 ("Terisolir") untuk pelanggan yang belum aktif
+        $this->put(route('customers.update', $c), $this->editPayload(['is_active' => '0']))->assertRedirect(route('customers.show', $c));
+
+        $c->refresh();
+        $this->assertSame(Customer::STATUS_WAITING_ACTIVATION, $c->status, 'dulu menjadi suspended');
+        $this->assertEqualsWithDelta(-6.21129546, (float) $c->latitude, 0.000001, 'dulu dihapus');
+        $this->assertEqualsWithDelta(106.84375763, (float) $c->longitude, 0.000001);
+        $this->get(route('customers.edit', $c))->assertOk()->assertSee('Menunggu aktivasi')->assertSee('wizard aktivasi');
+
+        // Pelanggan dicabut tidak kembali tertagih lewat form edit
+        $c->update(['status' => Customer::STATUS_DISMANTLED]);
+        $this->put(route('customers.update', $c), $this->editPayload(['is_active' => '1']));
+        $this->assertSame(Customer::STATUS_DISMANTLED, $c->fresh()->status);
+        $this->assertFalse((bool) $c->fresh()->is_active);
+    }
+
+    public function test_active_customer_can_still_be_isolated_from_edit_form(): void
+    {
+        $c = Customer::create(['customer_code' => 'A-ACT', 'username' => 'peluji', 'password' => 'x', 'name' => 'Pel', 'package_id' => 1,
+            'region_code' => 'BGR', 'sto_code' => 'STO', 'stb_code' => 'STB', 'billing_type' => 'postpaid', 'billing_method' => 'cycle',
+            'customer_type' => 'personal', 'is_active' => true, 'status' => Customer::STATUS_ACTIVE]);
+        \Illuminate\Support\Facades\Process::fake();
+        \Illuminate\Support\Facades\Queue::fake();
+
+        $this->put(route('customers.update', $c), $this->editPayload(['is_active' => '0']));
+        $this->assertSame(Customer::STATUS_SUSPENDED, $c->fresh()->status);
+    }
+
+    public function test_activation_form_uploads_files_and_shows_errors(): void
+    {
+        $c = Customer::create(['customer_code' => 'F-ACT', 'username' => 'peluji', 'password' => 'x', 'name' => 'Pel', 'package_id' => 1,
+            'region_code' => 'BGR', 'sto_code' => 'STO', 'stb_code' => 'STB', 'billing_type' => 'postpaid', 'billing_method' => 'cycle',
+            'customer_type' => 'personal', 'is_active' => false]);
+        $c->update(['status' => Customer::STATUS_SUSPENDED]);   // observer menjadikan pelanggan baru "menunggu aktivasi"
+
+        // Tanpa enctype multipart, foto terkirim sebagai nama file -> validasi gagal tanpa pesan
+        $this->get(route('customers.activate', $c))->assertOk()
+            ->assertSee('enctype="multipart/form-data"', false)
+            ->assertSee('wizard aktivasi hanya untuk pelanggan baru');
+
+        $this->from(route('customers.activate', $c))->post(route('customers.activate.store', $c), [])
+            ->assertRedirect(route('customers.activate', $c));
+        $this->get(route('customers.activate', $c))->assertSee('tidak bisa diaktivasi');
+    }
 }

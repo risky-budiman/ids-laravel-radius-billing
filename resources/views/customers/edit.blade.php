@@ -296,10 +296,24 @@
                 <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <x-input-label for="is_active" :value="__('Account Status')" />
-                        <select id="is_active" name="is_active" class="mt-1 input" {{ auth()->user()->isSales() ? 'disabled' : '' }}>
-                            <option value="1" {{ old('is_active', $customer->is_active) == '1' ? 'selected' : '' }}>Aktif</option>
-                            <option value="0" {{ old('is_active', $customer->is_active) == '0' ? 'selected' : '' }}>Terisolir</option>
-                        </select>
+                        @if(in_array($customer->status, \App\Models\Customer::BILLABLE_STATUSES, true))
+                            <select id="is_active" name="is_active" class="mt-1 input" {{ auth()->user()->isSales() ? 'disabled' : '' }}>
+                                <option value="1" {{ old('is_active', $customer->is_active) == '1' ? 'selected' : '' }}>Aktif</option>
+                                <option value="0" {{ old('is_active', $customer->is_active) == '0' ? 'selected' : '' }}>Terisolir</option>
+                            </select>
+                        @else
+                            {{-- Status di luar aktif/terisolir diubah lewat alurnya sendiri (wizard aktivasi / dismantle) --}}
+                            <div class="mt-1 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2 text-sm dark:border-surface-700 dark:bg-surface-800">
+                                {{ ['new' => 'Baru', 'waiting_activation' => 'Menunggu aktivasi', 'waiting_dismantle' => 'Menunggu dismantle', 'dismantled' => 'Dicabut', 'canceled' => 'Batal'][$customer->status] ?? $customer->status }}
+                            </div>
+                            <p class="help-text">
+                                @if(in_array($customer->status, \App\Services\CustomerActivationService::ACTIVATABLE, true))
+                                    Diaktifkan lewat <a href="{{ route('customers.activate', $customer) }}" class="text-primary-600 hover:underline dark:text-primary-400">wizard aktivasi</a>.
+                                @else
+                                    Tidak bisa diubah dari form ini.
+                                @endif
+                            </p>
+                        @endif
                         <x-input-error class="mt-2" :messages="$errors->get('is_active')" />
                     </div>
 

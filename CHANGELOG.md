@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.117] - 2026-11-15
+
+### Perbaikan
+- **customers:** Editing no longer turns customers awaiting activation into suspended or wipes coordinates
+
 ## [v1.5.116] - 2026-11-15
 
 ### Perbaikan

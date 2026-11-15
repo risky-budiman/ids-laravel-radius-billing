@@ -416,16 +416,30 @@ class CustomerController extends Controller
         $oldStatus = $customer->is_active;
         $newUsername = $validated['username'];
         $package = \App\Models\Package::find($validated['package_id']);
-        $isActive = $request->has('is_active') ? filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN) : $customer->is_active;
-        
-        DB::transaction(function () use ($customer, $validated, $oldUsername, $newUsername, $package, $isActive, $latitude, $longitude, $request) {
-            // 1. Update customer fields (excluding coordinates)
-            $updateData = collect($validated)->except(['latitude', 'longitude', 'identity_photo', 'house_photo', 'cpe_photo'])->toArray();
+        // Aktif <-> terisolir hanya bisa diubah di sini untuk pelanggan yang sedang aktif/terisolir.
+        // Dulu status selalu ditimpa: pelanggan "menunggu aktivasi" menjadi suspended setelah diedit (wizard
+        // aktivasi menolaknya), dan pelanggan dismantled/batal kembali tertagih.
+        $statusEditable = in_array($customer->status, Customer::BILLABLE_STATUSES, true);
+        $isActive = $statusEditable && $request->has('is_active')
+            ? filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN)
+            : (bool) $customer->is_active;
+
+        DB::transaction(function () use ($customer, $validated, $oldUsername, $newUsername, $package, $isActive, $latitude, $longitude, $request, $statusEditable) {
+            // 1. Update customer fields
+            $updateData = collect($validated)->except(['latitude', 'longitude', 'identity_photo', 'house_photo', 'cpe_photo', 'is_active'])->toArray();
             $updateData['password'] = $validated['password'];
-            $updateData['is_active'] = $isActive;
-            $updateData['status'] = $isActive ? Customer::STATUS_ACTIVE : Customer::STATUS_SUSPENDED;
-            $updateData['latitude'] = $latitude;
-            $updateData['longitude'] = $longitude;
+            if ($statusEditable) {
+                $updateData['is_active'] = $isActive;
+                $updateData['status'] = $isActive ? Customer::STATUS_ACTIVE : Customer::STATUS_SUSPENDED;
+            }
+            // Koordinat hanya bila formulir mengirimnya (form edit saat ini tidak punya isian koordinat;
+            // dulu setiap simpan menghapus koordinat pelanggan)
+            if ($request->has('latitude')) {
+                $updateData['latitude'] = $latitude;
+            }
+            if ($request->has('longitude')) {
+                $updateData['longitude'] = $longitude;
+            }
             $updateData['partner_id'] = $validated['partner_id'] ?? null;
             $updateData['commission_rate'] = $validated['commission_rate'] ?? null;
             $updateData['commission_type'] = $validated['commission_type'] ?? null;
