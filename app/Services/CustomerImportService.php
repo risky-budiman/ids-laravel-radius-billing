@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Package;
 use App\Models\Radius\RadCheck;
 use App\Models\Radius\RadUserGroup;
+use App\Services\PackageChangeService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\Style\Protection;
@@ -457,6 +458,7 @@ class CustomerImportService
         $updatedCount = 0;
         $skippedCount = 0;
         $errors = [];
+        $notes = [];   // informasi per baris yang tidak menggagalkan baris
 
         // Loop data starting after header row
         $currentRowIndex = 0;
@@ -609,6 +611,8 @@ class CustomerImportService
 
             // Check existing customer
             $existing = Customer::where('username', $username)->first();
+            // Kolom yang benar-benar diisi di file (mode perbarui hanya mengubah kolom yang diisi)
+            $raw = fn (string $key) => trim((string) ($row[$colMap[$key] ?? ''] ?? ''));
 
             if ($existing) {
                 if ($duplicateAction === 'skip') {
@@ -619,62 +623,63 @@ class CustomerImportService
                         'reason' => 'Username sudah ada (dilewati sesuai pengaturan).'
                     ];
                     continue;
-                } else {
-                    // UPDATE existing customer
-                    DB::transaction(function () use ($existing, $name, $password, $matchedPackage, $phone, $billingType, $billingMethod, $billingDueDay, $useTax, $discountType, $discountValue, $status, $isActive, $customerCode, $regCode, $stCode, $tbCode, $activatedAt, $email, $ktp, $address, $onuSn, $lat, $lng, $username) {
-                        $existing->update([
-                            'name' => $name,
-                            'password' => $password,
-                            'package_id' => $matchedPackage->id,
-                            'phone' => $phone,
-                            'billing_type' => $billingType,
-                            'billing_method' => $billingMethod,
-                            'billing_due_day' => $billingDueDay,
-                            'use_tax' => $useTax,
-                            'discount_type' => $discountType,
-                            'discount_value' => $discountValue,
-                            'status' => $status,
-                            'is_active' => $isActive,
-                            'activated_at' => $activatedAt ?? $existing->activated_at,
-                            'customer_code' => $customerCode,
-                            'region_code' => $regCode,
-                            'sto_code' => $stCode,
-                            'stb_code' => $tbCode,
-                            'email' => $email,
-                            'ktp' => $ktp,
-                            'address' => $address,
-                            'onu_sn' => $onuSn,
-                            'latitude' => $lat,
-                            'longitude' => $lng,
-                        ]);
+                }
 
-                        // Hanya isi jadwal tagihan bila belum ada. syncBillingDates() MEMAJUKAN jadwal,
-                        // jadi memanggilnya setiap import ulang menggeser jatuh tempo sebulan
-                        // (dan menambah masa aktif renewal 30 hari) tanpa pembayaran.
+                // UPDATE existing customer — hanya kolom yang diisi. Dulu kolom kosong menimpa data lama
+                // (email, NIK, alamat, SN, koordinat, diskon, PPN) dan password kosong diganti password
+                // acak baru sehingga pelanggan terputus.
+                try {
+                    if ($raw('id_pelanggan') !== '' && Customer::where('customer_code', $customerCode)->whereKeyNot($existing->id)->exists()) {
+                        throw new Exception("ID pelanggan {$customerCode} sudah dipakai pelanggan lain.");
+                    }
+
+                    $changes = ['name' => $name];
+                    if ($phone !== '') $changes['phone'] = $phone;
+                    if ($raw('tipe_tagihan') !== '') $changes['billing_type'] = $billingType;
+                    if ($raw('metode_tagihan') !== '') $changes['billing_method'] = $billingMethod;
+                    if ($raw('tgl_jatuh_tempo') !== '') $changes['billing_due_day'] = $billingDueDay;
+                    if ($raw('kenakan_ppn') !== '') $changes['use_tax'] = $useTax;
+                    if ($raw('tipe_diskon') !== '' || $raw('nilai_diskon') !== '') {
+                        $changes['discount_type'] = $discountType;
+                        $changes['discount_value'] = $discountValue;
+                    }
+                    if ($raw('tgl_aktivasi') !== '' && $activatedAt) $changes['activated_at'] = $activatedAt;
+                    if ($raw('id_pelanggan') !== '') {
+                        $changes += ['customer_code' => $customerCode, 'region_code' => $regCode, 'sto_code' => $stCode, 'stb_code' => $tbCode];
+                    }
+                    foreach (['email' => $email, 'ktp' => $ktp, 'address' => $address, 'onu_sn' => $onuSn, 'latitude' => $lat, 'longitude' => $lng] as $field => $value) {
+                        if ($value !== null) $changes[$field] = $value;
+                    }
+                    $newPassword = $raw('password') !== '' ? $password : null;
+                    if ($newPassword !== null) $changes['password'] = $newPassword;
+
+                    DB::transaction(function () use ($existing, $changes, $newPassword, $matchedPackage, $username) {
+                        $existing->update($changes);
+
+                        // Hanya isi jadwal tagihan bila belum ada (syncBillingDates() memajukan jadwal)
                         if ($existing->is_active && ! $existing->billing_next_date) {
                             $existing->syncBillingDates();
                         }
-
-                        // Sync RADIUS
-                        RadCheck::updateOrCreate(
-                            ['username' => $username, 'attribute' => 'Cleartext-Password'],
-                            ['op' => ':=', 'value' => $password]
-                        );
-
-                        RadUserGroup::updateOrCreate(
-                            ['username' => $username],
-                            ['groupname' => $matchedPackage->name, 'priority' => 1]
-                        );
-
-                        // Pelanggan terisolir tetap di grup ISOLIR
-                        if ($existing->status === \App\Models\Customer::STATUS_SUSPENDED) {
-                            app(\App\Services\IsolationService::class)->isolate($existing->fresh());
+                        if ($newPassword !== null) {
+                            RadCheck::updateOrCreate(['username' => $username, 'attribute' => 'Cleartext-Password'], ['op' => ':=', 'value' => $newPassword]);
+                        }
+                        // Ganti paket lewat alur resmi: grup RADIUS (tetap ISOLIR bila terisolir), putus sesi, profil ONU
+                        if ((int) $existing->package_id !== (int) $matchedPackage->id) {
+                            app(PackageChangeService::class)->apply($existing->fresh(), $matchedPackage);
                         }
                     });
 
+                    // Status pelanggan lama tidak diubah lewat impor (aktivasi, isolir & dismantle punya alurnya sendiri)
+                    if ($raw('status') !== '' && $status !== $existing->status) {
+                        $notes[] = ['row' => $rowIndex, 'username' => $username,
+                            'reason' => "Status di file ('{$status}') diabaikan; status saat ini '{$existing->status}' tetap. Ubah lewat menu pelanggan."];
+                    }
                     $updatedCount++;
-                    continue;
+                } catch (Exception $e) {
+                    $errors[] = ['row' => $rowIndex, 'username' => $username, 'reason' => $e->getMessage()];
+                    $skippedCount++;
                 }
+                continue;
             }
 
             // CREATE new customer
@@ -696,9 +701,10 @@ class CustomerImportService
                         'use_tax' => $useTax,
                         'discount_type' => $discountType,
                         'discount_value' => $discountValue,
-                        'status' => $status,
-                        'is_active' => $isActive,
-                        'activated_at' => $activatedAt,
+                        // suspended: dibuat aktif dulu, diisolir setelah akun RADIUS dibuat (lihat bawah)
+                        'status' => $status === 'suspended' ? 'active' : $status,
+                        'is_active' => $isActive || $status === 'suspended',
+                        'activated_at' => $activatedAt ?? ($status === 'suspended' ? now() : null),
                         'customer_type' => Customer::TYPE_PERSONAL,
                         'email' => $email,
                         'ktp' => $ktp,
@@ -729,6 +735,12 @@ class CustomerImportService
                         'groupname' => $matchedPackage->name,
                         'priority' => 1,
                     ]);
+
+                    // Pelanggan terisolir di sistem lama: tetap terisolir (observer memindahkan ke grup ISOLIR).
+                    // Dulu observer mengubahnya menjadi "menunggu aktivasi" + membuat tiket aktivasi.
+                    if ($status === 'suspended') {
+                        $customer->update(['status' => Customer::STATUS_SUSPENDED, 'is_active' => false, 'suspended_at' => now()]);
+                    }
                 });
 
                 $successCount++;
@@ -749,6 +761,7 @@ class CustomerImportService
             'updated' => $updatedCount,
             'skipped' => $skippedCount,
             'errors' => $errors,
+            'notes' => $notes,
         ];
     }
 
@@ -758,7 +771,7 @@ class CustomerImportService
      *
      * @param array $filters Optional filters: status, package_id, billing_type, search
      */
-    public function exportCustomersSpreadsheet(array $filters = []): Spreadsheet
+    public function exportCustomersSpreadsheet(array $filters = [], bool $withPasswords = false): Spreadsheet
     {
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -902,7 +915,8 @@ class CustomerImportService
 
             $sheet->setCellValueExplicit('A' . $rowIdx, $customer->name, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
             $sheet->setCellValueExplicit('B' . $rowIdx, $customer->username, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('C' . $rowIdx, $customer->password, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            // Kosong bila password tidak diminta — impor ulang file ini tidak mengubah password (kolom kosong = tetap)
+            $sheet->setCellValueExplicit('C' . $rowIdx, $withPasswords ? (string) $customer->password : '', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
             $sheet->setCellValueExplicit('D' . $rowIdx, $customer->package?->name ?? '', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
             $sheet->setCellValueExplicit('E' . $rowIdx, $customer->phone ?? '', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
             $sheet->setCellValue('F' . $rowIdx, $customer->billing_type ?? 'prepaid');
@@ -978,7 +992,9 @@ class CustomerImportService
             ['1.', 'File ini bisa langsung diimpor ke sistem billing lain yang mendukung format yang sama.'],
             ['2.', 'Buka menu Import Pelanggan di sistem tujuan, lalu unggah file ini.'],
             ['3.', 'Pastikan paket internet di sistem tujuan sudah dibuat terlebih dahulu dengan nama yang sama.'],
-            ['4.', 'Kolom username dan password sudah terisi, sehingga akun PPPoE/RADIUS akan otomatis tersinkron.'],
+            ['4.', $withPasswords
+                ? 'Kolom password terisi: file ini RAHASIA, simpan & hapus dengan aman.'
+                : 'Kolom password sengaja dikosongkan. Saat diimpor ulang (mode perbarui) password pelanggan tidak berubah.'],
         ];
 
         $sIdx = 3;

@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.128] - 2026-11-16
+
+### Perbaikan
+- **import:** Admin-only import/export, passwords opt-in, update mode no longer wipes or reshuffles data
+
 ## [v1.5.127] - 2026-11-16
 
 ### Perbaikan

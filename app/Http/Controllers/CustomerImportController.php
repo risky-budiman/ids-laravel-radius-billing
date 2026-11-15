@@ -86,8 +86,10 @@ class CustomerImportController extends Controller
     public function export(Request $request)
     {
         $filters = $request->only(['status', 'package_id', 'billing_type', 'search']);
+        // Password PPPoE hanya bila diminta khusus (dulu selalu ikut terekspor)
+        $withPasswords = $request->boolean('with_passwords');
 
-        $spreadsheet = $this->importService->exportCustomersSpreadsheet($filters);
+        $spreadsheet = $this->importService->exportCustomersSpreadsheet($filters, $withPasswords);
         
         $filterSuffix = '';
         if (!empty($filters['status'])) {
@@ -100,7 +102,7 @@ class CustomerImportController extends Controller
         ActivityLog::create([
             'user_id' => auth()->id(),
             'action' => 'customers_exported',
-            'description' => "Export data pelanggan ke file '{$fileName}'.",
+            'description' => "Export data pelanggan ke file '{$fileName}'" . ($withPasswords ? ' TERMASUK password PPPoE.' : ' (tanpa password).'),
         ]);
 
         return response()->streamDownload(function () use ($spreadsheet) {

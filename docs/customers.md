@@ -1,34 +1,69 @@
 # Manajemen Pelanggan
 
-> **Lokasi Menu:** `Customers`
+> **Lokasi Menu:** `Manajemen > Pelanggan`
 
-Modul Pelanggan adalah inti dari operasional ISP Anda. Di sini Anda dapat mengelola seluruh data subscriber mulai dari pendaftaran hingga pemutusan layanan.
+Modul Pelanggan adalah inti operasional ISP: pendaftaran, aktivasi, perubahan layanan, hingga pencabutan.
 
 ## Pendaftaran Pelanggan Baru
 
-Untuk mendaftarkan pelanggan, buka menu **Customers > Add New**.
+Buka **Pelanggan > Tambah Pelanggan** (administrator, admin, teknisi, sales).
 
 ### 1. Data Identitas
-- **Full Name**: Nama lengkap pelanggan sesuai identitas.
-- **Email & Phone**: Kontak aktif untuk pengiriman invoice dan notifikasi.
-- **Identity Number (NIK/Passport)**: Untuk keperluan verifikasi legal.
+- **Nama**, **Email & No. HP** — No. HP dipakai untuk tagihan, pengingat WhatsApp dan kode OTP portal.
+- **NIK/KTP** — untuk verifikasi.
 
-### 2. Lokasi & Mapping
-Salah satu fitur unggulan sistem ini adalah integrasi **Map Geolocation**:
-- Gunakan fitur map untuk menentukan titik koordinat rumah pelanggan secara presisi.
-- Koordinat ini akan sangat membantu tim teknisi saat melakukan instalasi atau perbaikan di lapangan.
+### 2. Lokasi & Peta
+Tentukan titik koordinat rumah pelanggan di peta; membantu teknisi saat instalasi & perbaikan.
 
-### 3. Pengaturan Layanan
-- **Service Plan**: Pilih paket internet yang telah Anda buat di menu Broadband.
-- **Installation Date**: Tanggal mulai instalasi perangkat.
-- **Due Date**: Tanggal jatuh tempo penagihan setiap bulannya.
+### 3. Layanan
+- **Paket**, **jenis & metode tagihan**, **tanggal jatuh tempo**, **biaya instalasi**.
+
+Pelanggan baru berstatus **Menunggu aktivasi** dan otomatis mendapat tiket aktivasi. Aktivasi dilakukan lewat **wizard aktivasi** (teknisi/admin).
 
 ## Status Pelanggan
 
-Sistem memiliki 3 status utama yang berjalan secara otomatis:
-1. **Active**: Pelanggan memiliki akses internet dan tagihan lancar.
-2. **Isolated**: Pelanggan belum membayar tagihan melewati jatuh tempo (Internet terputus otomatis).
-3. **Inactive**: Pelanggan telah berhenti berlangganan atau masa kontrak habis.
+| Status | Arti | Tertagih |
+|---|---|---|
+| Baru / Menunggu aktivasi | Belum dipasang | Tidak |
+| Aktif | Internet berjalan | Ya |
+| Terisolir (suspended) | Menunggak; internet diarahkan ke halaman isolir | Ya |
+| Menunggu dismantle | Diajukan penarikan perangkat | Tidak |
+| Dicabut (dismantled) / Batal | Berhenti berlangganan | Tidak |
+
+Di **Edit Pelanggan**, status hanya bisa diubah antara **Aktif** dan **Terisolir**. Status lain berubah lewat alurnya sendiri (wizard aktivasi, dismantle) dan ditampilkan apa adanya di form. Menyimpan form edit tidak mengubah koordinat bila form tidak mengirimnya.
+
+## Ubah Kontak
+
+Tombol **Ubah kontak** di halaman pelanggan (admin & CS) hanya mengubah **No. HP, email dan alamat**. Perubahan tercatat di Log Aktivitas.
+
+## Ganti Paket (lewat pengajuan)
+
+1. Di halaman pelanggan klik **Ajukan ganti paket**, pilih paket baru dan tulis alasannya (admin & CS).
+2. Pengajuan muncul di **Manajemen > Pengajuan Ganti Paket** dengan selisih harga per bulan.
+3. Admin/administrator **Setujui** atau **Tolak** (alasan wajib).
+4. Saat disetujui paket langsung berganti: grup RADIUS paket baru (tetap terisolir bila sedang diisolir), sesi diputus agar kecepatan baru berlaku, profil T-CONT ONU diganti bila paket punya *Profil T-CONT OLT*. Tagihan berikutnya memakai harga baru.
+
+Aturan: satu pengajuan menunggu per pelanggan; admin tidak bisa menyetujui pengajuannya sendiri (administrator bisa); pengajuan ditolak bila paket pelanggan sudah berubah sejak diajukan.
+
+## Impor & Ekspor Data
+
+Hanya **admin & administrator** (menu Pelanggan → *Impor Data* / *Ekspor Data*).
+
+### Ekspor
+- **Tanpa password PPPoE** — disarankan untuk arsip/dibagikan. Kolom password dikosongkan.
+- **Dengan password PPPoE** — untuk migrasi ke sistem lain. File berisi password semua pelanggan; simpan dengan aman. Tercatat di Log Aktivitas.
+
+### Impor
+1. Unduh **template**, isi sheet *Format Import* (lihat sheet *Contoh & Panduan*).
+2. Pilih cara menangani username yang sudah ada:
+   - **Lewati** — baris dengan username yang sudah ada tidak diproses.
+   - **Perbarui** — hanya kolom yang **diisi** di file yang diubah. Kolom kosong — termasuk password — **tidak** menghapus data lama, jadi file hasil ekspor tanpa password aman diimpor ulang.
+3. Aturan mode *Perbarui*:
+   - **Status pelanggan lama tidak diubah** lewat impor; perbedaan status ditampilkan sebagai catatan.
+   - **Ganti paket** memakai alur resmi (grup RADIUS, putus sesi, profil ONU).
+   - ID pelanggan yang sudah dipakai pelanggan lain ditolak per baris.
+4. Pelanggan **baru** berstatus *suspended* tetap terisolir (tidak menjadi "menunggu aktivasi"); berstatus *waiting_activation* mendapat tiket aktivasi.
+5. Hasil impor menampilkan baris yang dilewati/gagal beserta alasannya, dan **catatan** untuk baris yang tetap diproses.
 
 ---
-*Tips: Selalu pastikan koordinat map diisi dengan benar untuk mempermudah audit jaringan di masa depan.*
+*Tips: isi koordinat dengan benar untuk memudahkan teknisi dan pemetaan jaringan.*

@@ -121,10 +121,13 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
     // CUSTOMERS: All Operational Roles (View, Create, Edit)
     Route::middleware('role:administrator,admin,teknisi,sales')->group(function () {
         // Import Customers (Excel / CSV)
-        Route::get('customers/import', [\App\Http\Controllers\CustomerImportController::class, 'index'])->name('customers.import.index');
-        Route::get('customers/import/template', [\App\Http\Controllers\CustomerImportController::class, 'downloadTemplate'])->name('customers.import.template');
-        Route::get('customers/export', [\App\Http\Controllers\CustomerImportController::class, 'export'])->name('customers.export');
-        Route::post('customers/import', [\App\Http\Controllers\CustomerImportController::class, 'store'])->name('customers.import.store');
+        // Impor/ekspor hanya admin (dulu teknisi & sales bisa mengekspor seluruh data pribadi pelanggan)
+        Route::middleware('role:administrator,admin')->group(function () {
+            Route::get('customers/import', [\App\Http\Controllers\CustomerImportController::class, 'index'])->name('customers.import.index');
+            Route::get('customers/import/template', [\App\Http\Controllers\CustomerImportController::class, 'downloadTemplate'])->name('customers.import.template');
+            Route::get('customers/export', [\App\Http\Controllers\CustomerImportController::class, 'export'])->name('customers.export');
+            Route::post('customers/import', [\App\Http\Controllers\CustomerImportController::class, 'store'])->name('customers.import.store');
+        });
 
         Route::post('customers/bulk-action', [\App\Http\Controllers\CustomerController::class, 'bulkAction'])->name('customers.bulk-action');
         Route::get('customers/create', [\App\Http\Controllers\CustomerController::class, 'create'])->name('customers.create');

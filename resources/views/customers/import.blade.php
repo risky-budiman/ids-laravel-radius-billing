@@ -86,6 +86,20 @@
                         </div>
                     </div>
                 @endif
+                @if(!empty($res['notes']))
+                    <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <h5 class="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-2">Catatan (baris tetap diproses):</h5>
+                        <div class="max-h-48 overflow-y-auto space-y-2">
+                            @foreach($res['notes'] as $note)
+                                <div class="text-xs p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                                    <span class="font-bold px-1.5 py-0.5 rounded bg-amber-200 dark:bg-amber-900 text-xs">Baris {{ $note['row'] }}</span>
+                                    <span class="font-mono font-semibold">[{{ $note['username'] }}]</span>
+                                    <span>{{ $note['reason'] }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             </div>
         @endif
 
@@ -137,7 +151,7 @@
                                 <input type="radio" name="duplicate_action" value="update" class="mt-1 text-emerald-600 focus:ring-emerald-500">
                                 <div>
                                     <span class="font-bold text-sm text-gray-900 dark:text-white block">Perbarui</span>
-                                    <span class="text-xs text-gray-400">Memperbarui paket, password, diskon, dan data pelanggan lama sesuai file.</span>
+                                    <span class="text-xs text-gray-400">Hanya kolom yang <strong>diisi</strong> di file yang diubah; kolom kosong (termasuk password) tidak menghapus data lama. Status pelanggan lama tidak diubah. Ganti paket memutus sesi agar kecepatan baru berlaku.</span>
                                 </div>
                             </label>
                         </div>
