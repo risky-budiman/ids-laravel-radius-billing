@@ -1,231 +1,159 @@
+@php
+    $v = fn ($k, $d = '') => old($k, $settings[$k]->value ?? $d);
+    $on = fn ($k) => old($k, $settings[$k]->value ?? '0') == '1';
+    $logo = $settings['company_logo']->value ?? null;
+    $icon = $settings['app_icon']->value ?? null;
+@endphp
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
-            {{ __('Application Settings') }}
-        </h2>
+        <div>
+            <h2>Pengaturan Aplikasi</h2>
+            <p class="page-subtitle">Identitas perusahaan, modul tambahan, dan grup WhatsApp notifikasi tiket.</p>
+        </div>
     </x-slot>
 
-    <div class="max-w-4xl">
-        <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-            <div class="p-8">
-                <div class="flex items-center mb-8">
-                    <div class="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-600 mr-4">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+    <form action="{{ route('settings.update') }}" method="POST" enctype="multipart/form-data" class="max-w-4xl space-y-6">
+        @csrf
+        @if(session('success'))
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">{{ session('success') }}</div>
+        @endif
+        @if($errors->any())
+            <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+                <ul class="list-disc pl-5 space-y-0.5">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+            </div>
+        @endif
+
+        {{-- Identitas --}}
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Identitas perusahaan</h3>
+                <p class="text-xs text-surface-500 dark:text-surface-400">Tampil di invoice, laporan, Berita Acara, halaman login & pesan WhatsApp.</p>
+            </div>
+            <div class="card-body grid gap-6 md:grid-cols-[180px_minmax(0,1fr)]">
+                <div class="space-y-5">
+                    <div>
+                        <span class="label">Logo</span>
+                        <label class="flex h-28 cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-surface-200 bg-surface-50 hover:border-primary-300 dark:border-surface-700 dark:bg-surface-900">
+                            <img id="logo_preview" src="{{ $logo ? asset('storage/' . $logo) : '' }}" alt="" class="{{ $logo ? '' : 'hidden' }} h-full w-full object-contain p-3">
+                            <span class="{{ $logo ? 'hidden' : '' }} text-xs text-surface-400" id="logo_empty">Pilih gambar</span>
+                            <input type="file" name="company_logo" accept="image/png,image/jpeg,image/svg+xml,image/webp" class="hidden"
+                                   onchange="if(this.files[0]){const i=document.getElementById('logo_preview');i.src=URL.createObjectURL(this.files[0]);i.classList.remove('hidden');document.getElementById('logo_empty').classList.add('hidden');}">
+                        </label>
+                        <p class="help-text">PNG/SVG transparan, maks. 2 MB.</p>
                     </div>
                     <div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Profil Perusahaan</h3>
-                        <p class="text-sm text-gray-500">Kelola identitas usaha dan aturan otomatis.</p>
+                        <span class="label">Ikon aplikasi (favicon)</span>
+                        <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-surface-200 p-2 hover:border-primary-300 dark:border-surface-700">
+                            <span class="flex h-10 w-10 items-center justify-center overflow-hidden rounded bg-surface-50 dark:bg-surface-900">
+                                <img id="icon_preview" src="{{ $icon ? asset('storage/' . $icon) : '' }}" alt="" class="{{ $icon ? '' : 'hidden' }} h-full w-full object-contain">
+                            </span>
+                            <span class="text-xs text-surface-500">Unggah ikon<br>PNG/ICO persegi</span>
+                            <input type="file" name="app_icon" accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml" class="hidden"
+                                   onchange="if(this.files[0]){const i=document.getElementById('icon_preview');i.src=URL.createObjectURL(this.files[0]);i.classList.remove('hidden');}">
+                        </label>
                     </div>
                 </div>
 
-                <form action="{{ route('settings.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
-                    @csrf
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <!-- Left: Logo & Icon Upload -->
-                        <div class="space-y-6">
-                            <div>
-                                <x-input-label :value="__('Company Logo')" />
-                                <div class="relative group mt-2">
-                                    <div class="w-full h-32 bg-slate-50 dark:bg-slate-900 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center overflow-hidden transition-all group-hover:border-indigo-300">
-                                        @if(isset($settings['company_logo']))
-                                            <img src="{{ asset('storage/' . $settings['company_logo']->value) }}" class="w-full h-full object-contain p-4" id="logo_preview">
-                                        @else
-                                            <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                        @endif
-                                    </div>
-                                    <input type="file" name="company_logo" class="absolute inset-0 opacity-0 cursor-pointer" onchange="const img = document.getElementById('logo_preview'); if(img) img.src = window.URL.createObjectURL(this.files[0]);">
-                                </div>
-                                <p class="text-xs text-slate-400 mt-2 italic">* Digunakan pada Laporan & Halaman Login</p>
-                            </div>
-
-                            <div>
-                                <x-input-label :value="__('App Icon (Favicon)')" />
-                                <div class="flex items-center gap-4 mt-2">
-                                    <div class="w-16 h-16 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden relative group">
-                                        @if(isset($settings['app_icon']))
-                                            <img src="{{ asset('storage/' . $settings['app_icon']->value) }}" class="w-full h-full object-cover" id="icon_preview">
-                                        @else
-                                            <svg class="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"></path></svg>
-                                        @endif
-                                        <input type="file" name="app_icon" class="absolute inset-0 opacity-0 cursor-pointer" onchange="const img = document.getElementById('icon_preview'); if(img) img.src = window.URL.createObjectURL(this.files[0]);">
-                                    </div>
-                                    <div>
-                                        <p class="text-xs font-bold text-slate-700 dark:text-slate-300">Upload Icon</p>
-                                        <p class="text-xs text-slate-400">Format: ICO, PNG (Square)</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right: Details -->
-                        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="md:col-span-2">
-                            <x-input-label for="company_name" :value="__('Company Name')" />
-                            <x-text-input id="company_name" name="company_name" type="text" class="mt-1 block w-full" :value="$settings['company_name']->value ?? ''" />
-                        </div>
-
-                        <div class="md:col-span-1">
-                            <x-input-label for="company_tax_id" :value="__('NPWP / Tax ID')" />
-                            <x-text-input id="company_tax_id" name="company_tax_id" type="text" class="mt-1 block w-full" :value="$settings['company_tax_id']->value ?? ''" placeholder="00.000.000.0-000.000" />
-                        </div>
-
-                        <div>
-                            <x-input-label for="company_email" :value="__('Business Email')" />
-                                <x-text-input id="company_email" name="company_email" type="email" class="mt-1 block w-full" :value="$settings['company_email']->value ?? ''" placeholder="billing@ids.net.id" />
-                            </div>
-
-                            <div>
-                                <x-input-label for="company_phone" :value="__('Contact Number')" />
-                                <x-text-input id="company_phone" name="company_phone" type="text" class="mt-1 block w-full" :value="$settings['company_phone']->value ?? ''" placeholder="+62..." />
-                            </div>
-
-                            <div>
-                                <x-input-label for="company_website" :value="__('Website URL')" />
-                                <x-text-input id="company_website" name="company_website" type="text" class="mt-1 block w-full" :value="$settings['company_website']->value ?? ''" placeholder="https://..." />
-                            </div>
-
-                            <div>
-                                <x-input-label for="company_domain" :value="__('User Domain Suffix')" />
-                                <div class="flex mt-1">
-                                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-500 text-sm">@</span>
-                                    <x-text-input id="company_domain" name="company_domain" type="text" class="block w-full rounded-none rounded-r-md" :value="$settings['company_domain']->value ?? ''" placeholder="ids.net.id" />
-                                </div>
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <x-input-label for="company_address" :value="__('Office Address')" />
-                                <textarea id="company_address" name="company_address" rows="3" class="mt-1 input">{{ $settings['company_address']->value ?? '' }}</textarea>
-                            </div>
-
-                        <div class="md:col-span-2 mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
-                            <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                                <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                                Advanced Modules
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <!-- Card 1: B2B Partner -->
-                                <div class="bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <div>
-                                            <h5 class="text-sm font-bold text-gray-900 dark:text-white">Manajemen Mitra B2B</h5>
-                                            <p class="text-xs text-gray-500 mt-1">Aktifkan sistem agen/reseller.</p>
-                                        </div>
-                                        <div class="flex items-center space-x-3">
-                                            <input type="checkbox" id="enable_partner_module" name="enable_partner_module" value="1" {{ (isset($settings['enable_partner_module']) && $settings['enable_partner_module']->value == '1') ? 'checked' : '' }} class="w-6 h-6 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 cursor-pointer">
-                                            <label for="enable_partner_module" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer">Aktifkan Mitra</label>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="grid grid-cols-2 gap-4 mt-6">
-                                        <div>
-                                            <x-input-label for="default_commission_rate" :value="__('Rate')" />
-                                            <x-text-input id="default_commission_rate" name="default_commission_rate" type="number" step="0.01" class="mt-1 block w-full text-xs" :value="$settings['default_commission_rate']->value ?? '10.00'" />
-                                        </div>
-                                        <div>
-                                            <x-input-label for="commission_type" :value="__('Type')" />
-                                            <select name="commission_type" class="mt-1 input">
-                                                <option value="percentage" {{ ($settings['commission_type']->value ?? 'percentage') == 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
-                                                <option value="fixed" {{ ($settings['commission_type']->value ?? 'percentage') == 'fixed' ? 'selected' : '' }}>Nominal Tetap</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Card 2: FUP Management -->
-                                <div class="bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <div>
-                                            <h5 class="text-sm font-bold text-gray-900 dark:text-white">FUP & Quota Management</h5>
-                                            <p class="text-xs text-gray-500 mt-1">Aktifkan pencatatan pemakaian dan penurunan kecepatan.</p>
-                                        </div>
-                                        <div class="flex items-center space-x-3">
-                                            <input type="checkbox" id="enable_fup_module" name="enable_fup_module" value="1" {{ (isset($settings['enable_fup_module']) && $settings['enable_fup_module']->value == '1') ? 'checked' : '' }} class="w-6 h-6 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 cursor-pointer">
-                                            <label for="enable_fup_module" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer">Aktifkan FUP</label>
-                                        </div>
-                                    </div>
-                                    <p class="text-xs text-gray-400 italic mt-8">Modul ini memungkinkan sistem mendeteksi pemakaian kuota dan menurunkan kecepatan secara otomatis.</p>
-                                </div>
-
-                                <!-- Card 3: Sales Force Commission -->
-                                <div class="bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <div>
-                                            <h5 class="text-sm font-bold text-gray-900 dark:text-white">Internal Sales Incentive</h5>
-                                            <p class="text-xs text-gray-500 mt-1">Aktifkan komisi untuk sales internal.</p>
-                                        </div>
-                                        <div class="flex items-center space-x-3">
-                                            <input type="checkbox" id="enable_sales_commission_module" name="enable_sales_commission_module" value="1" {{ (isset($settings['enable_sales_commission_module']) && $settings['enable_sales_commission_module']->value == '1') ? 'checked' : '' }} class="w-6 h-6 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 cursor-pointer">
-                                            <label for="enable_sales_commission_module" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer">Aktifkan Sales Fee</label>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="grid grid-cols-2 gap-4 mt-6">
-                                        <div>
-                                            <x-input-label for="default_sales_commission_rate" :value="__('Default Rate')" />
-                                            <x-text-input id="default_sales_commission_rate" name="default_sales_commission_rate" type="number" step="0.01" class="mt-1 block w-full text-xs" :value="$settings['default_sales_commission_rate']->value ?? '5.00'" />
-                                        </div>
-                                        <div>
-                                            <x-input-label for="default_sales_commission_type" :value="__('Type')" />
-                                            <select name="default_sales_commission_type" class="mt-1 input">
-                                                <option value="percentage" {{ ($settings['default_sales_commission_type']->value ?? 'percentage') == 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
-                                                <option value="fixed" {{ ($settings['default_sales_commission_type']->value ?? 'percentage') == 'fixed' ? 'selected' : '' }}>Nominal Tetap</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                            <div class="md:col-span-2 mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
-                                <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                                    <svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path></svg>
-                                    Notifikasi Tiket WhatsApp (ID Grup)
-                                </h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    <div class="md:col-span-1 lg:col-span-1">
-                                        <x-input-label for="whatsapp_group_id" :value="__('Global Default Group ID')" />
-                                        <x-text-input id="whatsapp_group_id" name="whatsapp_group_id" type="text" class="mt-1 block w-full bg-indigo-50/30" :value="$settings['whatsapp_group_id']->value ?? ''" placeholder="12036302..." />
-                                        <p class="text-xs text-slate-400 mt-1">* Digunakan jika group per tipe tidak diisi</p>
-                                    </div>
-                                    <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <div>
-                                            <x-input-label for="whatsapp_group_id_gangguan" :value="__('Group: Gangguan')" />
-                                            <x-text-input id="whatsapp_group_id_gangguan" name="whatsapp_group_id_gangguan" type="text" class="mt-1 block w-full text-xs" :value="$settings['whatsapp_group_id_gangguan']->value ?? ''" />
-                                        </div>
-                                        <div>
-                                            <x-input-label for="whatsapp_group_id_aktivasi" :value="__('Group: Aktivasi')" />
-                                            <x-text-input id="whatsapp_group_id_aktivasi" name="whatsapp_group_id_aktivasi" type="text" class="mt-1 block w-full text-xs" :value="$settings['whatsapp_group_id_aktivasi']->value ?? ''" />
-                                        </div>
-                                        <div>
-                                            <x-input-label for="whatsapp_group_id_dismantle" :value="__('Group: Dismantle')" />
-                                            <x-text-input id="whatsapp_group_id_dismantle" name="whatsapp_group_id_dismantle" type="text" class="mt-1 block w-full text-xs" :value="$settings['whatsapp_group_id_dismantle']->value ?? ''" />
-                                        </div>
-                                        <div>
-                                            <x-input-label for="whatsapp_group_id_relokasi" :value="__('Group: Relokasi')" />
-                                            <x-text-input id="whatsapp_group_id_relokasi" name="whatsapp_group_id_relokasi" type="text" class="mt-1 block w-full text-xs" :value="$settings['whatsapp_group_id_relokasi']->value ?? ''" />
-                                        </div>
-                                        <div>
-                                            <x-input-label for="whatsapp_group_id_maintenance" :value="__('Group: Maintenance')" />
-                                            <x-text-input id="whatsapp_group_id_maintenance" name="whatsapp_group_id_maintenance" type="text" class="mt-1 block w-full text-xs" :value="$settings['whatsapp_group_id_maintenance']->value ?? ''" />
-                                        </div>
-                                    </div>
-                                    <div class="md:col-span-2 lg:col-span-3 mt-2 flex items-center text-xs text-slate-500 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
-                                        <svg class="w-3 h-3 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        <span><strong>Tips:</strong> Dapatkan ID Grup (format: <code>12036xxx@g.us</code>) dari Dashboard Provider (Fonnte/Wablas) atau kirim <code>/groups</code> ke nomor API Anda.</span>
-                                    </div>
-                                </div>
-                            </div>
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div class="sm:col-span-2">
+                        <label for="company_name" class="label">Nama perusahaan</label>
+                        <input id="company_name" name="company_name" class="input" value="{{ $v('company_name') }}" required maxlength="150">
+                    </div>
+                    <div>
+                        <label for="company_tax_id" class="label">NPWP</label>
+                        <input id="company_tax_id" name="company_tax_id" class="input font-mono" value="{{ $v('company_tax_id') }}" placeholder="00.000.000.0-000.000" maxlength="30">
+                    </div>
+                    <div>
+                        <label for="company_email" class="label">Email</label>
+                        <input id="company_email" name="company_email" type="email" class="input" value="{{ $v('company_email') }}" placeholder="billing@perusahaan.id">
+                    </div>
+                    <div>
+                        <label for="company_phone" class="label">Nomor kontak / WhatsApp</label>
+                        <input id="company_phone" name="company_phone" class="input" value="{{ $v('company_phone') }}" placeholder="08…" maxlength="20">
+                        <p class="help-text">Dipakai tombol "Hubungi kami" di portal & halaman isolir.</p>
+                    </div>
+                    <div>
+                        <label for="company_website" class="label">Website</label>
+                        <input id="company_website" name="company_website" type="url" class="input" value="{{ $v('company_website') }}" placeholder="https://…">
+                    </div>
+                    <div>
+                        <label for="company_domain" class="label">Akhiran username PPPoE</label>
+                        <div class="flex">
+                            <span class="inline-flex items-center rounded-l-lg border border-r-0 border-surface-300 bg-surface-50 px-3 text-sm text-surface-500 dark:border-surface-700 dark:bg-surface-800">@</span>
+                            <input id="company_domain" name="company_domain" class="input !rounded-l-none font-mono" value="{{ $v('company_domain') }}" placeholder="perusahaan" maxlength="60">
                         </div>
                     </div>
-
-                    <div class="flex items-center justify-end pt-6 border-t border-gray-100 dark:border-gray-700">
-                        <x-primary-button>
-                            {{ __('Save Settings') }}
-                        </x-primary-button>
+                    <div class="sm:col-span-2">
+                        <label for="company_address" class="label">Alamat kantor</label>
+                        <textarea id="company_address" name="company_address" rows="2" class="input !h-auto" maxlength="500">{{ $v('company_address') }}</textarea>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
-    </div>
+
+        {{-- Modul --}}
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Modul tambahan</h3>
+                <p class="text-xs text-surface-500 dark:text-surface-400">Menu & perhitungan modul hanya muncul bila diaktifkan.</p>
+            </div>
+            <div class="card-body divide-y divide-surface-100 dark:divide-surface-800">
+                @foreach([
+                    ['enable_partner_module', 'Mitra (B2B / reseller)', 'Pelanggan bisa dihubungkan ke mitra yang mendapat komisi dari setiap pembayaran.', 'default_commission_rate', 'commission_type', 'Komisi bawaan'],
+                    ['enable_sales_commission_module', 'Insentif sales', 'Sales internal mendapat insentif dari pelanggan yang didaftarkannya.', 'default_sales_commission_rate', 'default_sales_commission_type', 'Insentif bawaan'],
+                    ['enable_fup_module', 'FUP & kuota', 'Mencatat pemakaian kuota dan menurunkan kecepatan otomatis setelah batas paket.', null, null, null],
+                ] as [$key, $title, $desc, $rate, $type, $rateLabel])
+                    <div class="grid gap-4 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_auto]" x-data="{ on: {{ $on($key) ? 'true' : 'false' }} }">
+                        <label class="flex cursor-pointer items-start gap-3">
+                            <input type="checkbox" name="{{ $key }}" value="1" x-model="on" class="mt-1 rounded border-surface-300 text-primary-600 focus:ring-primary-500">
+                            <span>
+                                <span class="block text-sm font-medium text-surface-900 dark:text-white">{{ $title }}</span>
+                                <span class="block text-xs text-surface-500 dark:text-surface-400">{{ $desc }}</span>
+                            </span>
+                        </label>
+                        @if($rate)
+                            <div class="flex items-end gap-2" :class="on ? '' : 'opacity-50'">
+                                <div>
+                                    <label for="{{ $rate }}" class="label !text-xs">{{ $rateLabel }}</label>
+                                    <input id="{{ $rate }}" name="{{ $rate }}" type="number" step="0.01" min="0" class="input !w-28 text-right tabular-nums" value="{{ $v($rate, '0') }}">
+                                </div>
+                                <select name="{{ $type }}" class="input !w-36" aria-label="Jenis {{ strtolower($rateLabel) }}">
+                                    <option value="percentage" @selected($v($type, 'percentage') === 'percentage')>Persen (%)</option>
+                                    <option value="fixed" @selected($v($type, 'percentage') === 'fixed')>Nominal (Rp)</option>
+                                </select>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- Grup WhatsApp tiket --}}
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Notifikasi tiket ke grup WhatsApp</h3>
+                <p class="text-xs text-surface-500 dark:text-surface-400">ID grup berformat <span class="font-mono">120363xxxxxxxx@g.us</span> — lihat di dasbor penyedia (Fonnte/Wablas) atau kirim <span class="font-mono">/groups</span> ke nomor API.</p>
+            </div>
+            <div class="card-body space-y-4">
+                <div>
+                    <label for="whatsapp_group_id" class="label">Grup bawaan</label>
+                    <input id="whatsapp_group_id" name="whatsapp_group_id" class="input font-mono" value="{{ $v('whatsapp_group_id') }}" placeholder="120363…@g.us" maxlength="80">
+                    <p class="help-text">Dipakai untuk jenis tiket yang grupnya di bawah dikosongkan.</p>
+                </div>
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach(['gangguan' => 'Gangguan', 'aktivasi' => 'Aktivasi', 'dismantle' => 'Dismantle', 'relokasi' => 'Relokasi', 'maintenance' => 'Maintenance'] as $type => $label)
+                        <div>
+                            <label for="whatsapp_group_id_{{ $type }}" class="label">Tiket {{ strtolower($label) }}</label>
+                            <input id="whatsapp_group_id_{{ $type }}" name="whatsapp_group_id_{{ $type }}" class="input font-mono text-xs" value="{{ $v('whatsapp_group_id_' . $type) }}" placeholder="(grup bawaan)" maxlength="80">
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <p class="text-xs text-surface-500 dark:text-surface-400">Format invoice, catatan kaki & login OTP portal: <a href="{{ route('settings.company') }}" class="text-primary-600 hover:underline dark:text-primary-400">Invoice & Portal</a>.</p>
+            <button class="btn-primary">Simpan pengaturan</button>
+        </div>
+    </form>
 </x-app-layout>

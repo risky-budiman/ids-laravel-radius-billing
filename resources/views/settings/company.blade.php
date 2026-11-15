@@ -1,126 +1,59 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
-            {{ __('Company Profile & Settings') }}
-        </h2>
+        <div>
+            <h2>Invoice & Portal</h2>
+            <p class="page-subtitle">Format cetak invoice, catatan kaki, dan cara pelanggan masuk portal. Identitas perusahaan diatur di <a href="{{ route('settings.index') }}" class="text-primary-600 hover:underline dark:text-primary-400">Pengaturan Aplikasi</a>.</p>
+        </div>
     </x-slot>
 
-    <div class="max-w-4xl mx-auto py-10 sm:px-6 lg:px-8">
+    <form action="{{ route('settings.company.update') }}" method="POST" class="max-w-3xl space-y-6">
+        @csrf
         @if(session('success'))
-            <div class="mb-6 px-4 py-3 bg-green-100/80 border border-green-200 text-green-700 rounded-xl dark:bg-green-900/30 dark:border-green-800 dark:text-green-400 font-medium">
-                {{ session('success') }}
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">{{ session('success') }}</div>
+        @endif
+        @if($errors->any())
+            <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+                <ul class="list-disc pl-5 space-y-0.5">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
             </div>
         @endif
 
-        <div class="card overflow-hidden">
-            <form action="{{ route('settings.company.update') }}" method="POST" enctype="multipart/form-data" class="p-8">
-                @csrf
-
-                <!-- Section: Visual Identity -->
-                <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Visual Identity</h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="md:col-span-1">
-                            <div class="flex flex-col items-center">
-                                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-center w-full">Logo Saat Ini</p>
-                                <div class="w-32 h-32 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-900/50">
-                                    @if(get_setting('company_logo'))
-                                        <img src="{{ asset('storage/' . get_setting('company_logo')) }}" alt="Logo" class="max-w-full max-h-full object-contain p-2">
-                                    @else
-                                        <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <x-input-label for="company_logo" :value="__('Upload New Logo')" />
-                            <input id="company_logo" name="company_logo" type="file" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-gray-700 dark:file:text-gray-300" />
-                            <p class="mt-2 text-xs text-gray-500 italic">Recommended: Transparent PNG or SVG. Max 2MB.</p>
-                            <x-input-error class="mt-2" :messages="$errors->get('company_logo')" />
-                        </div>
-                    </div>
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Invoice</h3></div>
+            <div class="card-body space-y-4">
+                <div>
+                    <label for="invoice_format" class="label">Format cetak bawaan</label>
+                    <select id="invoice_format" name="invoice_format" class="input sm:max-w-xs">
+                        <option value="A4" @selected(old('invoice_format', get_setting('invoice_format', 'A4')) === 'A4')>A4 (standar kantor)</option>
+                        <option value="Thermal" @selected(old('invoice_format', get_setting('invoice_format')) === 'Thermal')>Struk thermal 80 mm</option>
+                    </select>
                 </div>
-
-                <!-- Section: Company Basics -->
-                <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Basic Information</h3>
-                    
-                    <div class="grid grid-cols-1 gap-6">
-                        <div>
-                            <x-input-label for="company_name" :value="__('Company Name')" />
-                            <x-text-input id="company_name" name="company_name" type="text" class="mt-1 block w-full" :value="old('company_name', get_setting('company_name', config('app.name')))" required />
-                            <x-input-error class="mt-2" :messages="$errors->get('company_name')" />
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <x-input-label for="company_email" :value="__('Company Email')" />
-                                <x-text-input id="company_email" name="company_email" type="email" class="mt-1 block w-full" :value="old('company_email', get_setting('company_email'))" />
-                                <x-input-error class="mt-2" :messages="$errors->get('company_email')" />
-                            </div>
-                            <div>
-                                <x-input-label for="company_phone" :value="__('Company Phone')" />
-                                <x-text-input id="company_phone" name="company_phone" type="text" class="mt-1 block w-full" :value="old('company_phone', get_setting('company_phone'))" />
-                                <x-input-error class="mt-2" :messages="$errors->get('company_phone')" />
-                            </div>
-                        </div>
-
-                        <div>
-                            <x-input-label for="company_address" :value="__('Company Address')" />
-                            <textarea id="company_address" name="company_address" rows="3" class="mt-1 input">{{ old('company_address', get_setting('company_address')) }}</textarea>
-                            <x-input-error class="mt-2" :messages="$errors->get('company_address')" />
-                        </div>
-                    </div>
+                <div>
+                    <label for="invoice_footer_note" class="label">Catatan kaki invoice</label>
+                    <textarea id="invoice_footer_note" name="invoice_footer_note" rows="3" class="input !h-auto" maxlength="1000"
+                              placeholder="mis. Terima kasih. Pembayaran ke BCA 123456 a.n. PT …">{{ old('invoice_footer_note', get_setting('invoice_footer_note')) }}</textarea>
+                    <p class="help-text">Dicetak di bagian bawah setiap invoice.</p>
                 </div>
-
-                <!-- Section: Invoice Templates -->
-                <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Pengaturan Invoice
-                    </h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                            <x-input-label for="invoice_format" :value="__('Default Print Format')" />
-                            <select id="invoice_format" name="invoice_format" class="mt-1 input">
-                                <option value="A4" {{ get_setting('invoice_format', 'A4') == 'A4' ? 'selected' : '' }}>A4 / Letter (Standar Kantor)</option>
-                                <option value="Thermal" {{ get_setting('invoice_format') == 'Thermal' ? 'selected' : '' }}>Thermal / Struk (80mm)</option>
-                            </select>
-                            <p class="mt-1 text-[11px] text-gray-500">Pilih format cetak default yang akan digunakan saat mencetak faktur.</p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <x-input-label for="invoice_footer_note" :value="__('Invoice Footer Note (Terms / Thanks)')" />
-                        <textarea id="invoice_footer_note" name="invoice_footer_note" rows="3" class="mt-1 input" placeholder="Contoh: Terima kasih atas kepercayaan Anda. Pembayaran harap ditransfer ke rekening BCA 123456 a.n PT XYZ.">{{ old('invoice_footer_note', get_setting('invoice_footer_note')) }}</textarea>
-                        <p class="mt-1 text-[11px] text-gray-500">Pesan ini akan ditampilkan di bagian bawah setiap faktur yang dicetak.</p>
-                        <x-input-error class="mt-2" :messages="$errors->get('invoice_footer_note')" />
-                    </div>
-                </div>
-
-                <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Portal pelanggan</h3>
-                    <label class="mt-3 flex items-start gap-3 cursor-pointer">
-                        <input type="hidden" name="portal_login_otp" value="0">
-                        <input type="checkbox" name="portal_login_otp" value="1" class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                               @checked(old('portal_login_otp', get_setting('portal_login_otp', '1')) == '1')>
-                        <span>
-                            <span class="block text-sm font-medium text-gray-800 dark:text-gray-200">Masuk dengan kode OTP WhatsApp</span>
-                            <span class="block text-xs text-gray-500">Setelah mengisi ID pelanggan & nomor HP, pelanggan menerima kode 6 digit ke WhatsApp terdaftar.
-                                Matikan hanya bila gateway WhatsApp belum berfungsi — tanpa OTP, siapa pun yang tahu ID & nomor HP pelanggan bisa masuk.</span>
-                        </span>
-                    </label>
-                </div>
-
-                <div class="flex items-center justify-end pt-4">
-                    <x-primary-button>
-                        {{ __('Save Changes') }}
-                    </x-primary-button>
-                </div>
-            </form>
+            </div>
         </div>
-    </div>
+
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Portal pelanggan</h3></div>
+            <div class="card-body">
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="hidden" name="portal_login_otp" value="0">
+                    <input type="checkbox" name="portal_login_otp" value="1" class="mt-1 rounded border-surface-300 text-primary-600 focus:ring-primary-500"
+                           @checked(old('portal_login_otp', get_setting('portal_login_otp', '1')) == '1')>
+                    <span>
+                        <span class="block text-sm font-medium text-surface-900 dark:text-white">Masuk dengan kode OTP WhatsApp</span>
+                        <span class="block text-xs text-surface-500 dark:text-surface-400">Setelah mengisi ID pelanggan & nomor HP, pelanggan menerima kode 6 digit ke WhatsApp terdaftar (portal web & aplikasi).
+                            Matikan hanya bila gateway WhatsApp belum berfungsi — tanpa OTP, siapa pun yang tahu ID & nomor HP pelanggan bisa masuk.</span>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <div class="flex justify-end">
+            <button class="btn-primary">Simpan</button>
+        </div>
+    </form>
 </x-app-layout>

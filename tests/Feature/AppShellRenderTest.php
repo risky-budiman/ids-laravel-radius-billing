@@ -78,11 +78,11 @@ class AppShellRenderTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
         $this->actingAs($admin)->get(route('changelog.index'))
             ->assertOk()
-            ->assertDontSee(route('settings.company'), false);
+            ->assertDontSee(route('settings.index'), false);
 
         $administrator = User::factory()->create(['role' => 'administrator', 'is_active' => true]);
         $this->actingAs($administrator)->get(route('changelog.index'))
             ->assertOk()
-            ->assertSee(route('settings.company'), false);
+            ->assertSee(route('settings.index'), false);
     }
 }

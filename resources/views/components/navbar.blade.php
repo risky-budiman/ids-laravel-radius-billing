@@ -304,8 +304,8 @@
                                 <x-icon name="user" class="w-4 h-4 text-surface-400" /> Profil Saya
                             </x-dropdown-link>
                             @if($isAdministratorUser)
-                                <x-dropdown-link :href="route('settings.company')">
-                                    <x-icon name="office" class="w-4 h-4 text-surface-400" /> Profil Perusahaan
+                                <x-dropdown-link :href="route('settings.index')">
+                                    <x-icon name="office" class="w-4 h-4 text-surface-400" /> Pengaturan Aplikasi
                                 </x-dropdown-link>
                             @endif
                         @endunless

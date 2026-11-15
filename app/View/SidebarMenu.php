@@ -143,6 +143,8 @@ class SidebarMenu
         if ($isAdministrator) {
             $sections[] = ['label' => 'Pengaturan & Keamanan', 'items' => [
                 self::link('Kelola Staf', 'users.index', 'user-cog', ['users.*']),
+                self::link('Pengaturan Aplikasi', 'settings.index', 'settings', ['settings.index', 'settings.update']),
+                self::link('Invoice & Portal', 'settings.company', 'receipt', ['settings.company*']),
                 self::link('Pengaturan Isolir', 'settings.isolation', 'shield-check', ['settings.isolation*']),
                 self::link('Pengaturan Instalasi', 'settings.installation', 'document', ['settings.installation*']),
                 self::group('Data Master', 'globe', [
@@ -151,7 +153,6 @@ class SidebarMenu
                     self::link('Data STB', 'locations.stbs'),
                     self::link('Data ODC', 'locations.odcs'),
                     self::link('Data ODP', 'locations.odps'),
-                    self::link('Pengaturan Sistem', 'settings.index', null, ['settings.index', 'settings.update', 'settings.company*']),
                 ]),
                 self::group('Integrasi', 'puzzle', [
                     self::link('Payment Gateway', 'integrations.payment'),

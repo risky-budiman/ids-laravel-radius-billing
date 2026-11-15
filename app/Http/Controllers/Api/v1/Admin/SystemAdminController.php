@@ -104,14 +104,24 @@ class SystemAdminController extends Controller
      */
     public function updateSettings(Request $request)
     {
-        $data = $request->all();
+        // Hanya kunci yang ditampilkan endpoint GET; dulu kunci apa pun disimpan (mis. pengaturan isolir/OTP)
+        $data = $request->validate([
+            'company_name' => 'sometimes|required|string|max:150',
+            'company_phone' => 'sometimes|nullable|string|max:20',
+            'company_address' => 'sometimes|nullable|string|max:500',
+            'tax_percentage' => 'sometimes|numeric|min:0|max:100',
+            'wa_gateway_enabled' => 'sometimes|boolean',
+            'radius_auto_coa' => 'sometimes|boolean',
+        ]);
 
         foreach ($data as $key => $value) {
             Setting::updateOrCreate(
                 ['key' => $key],
-                ['value' => is_bool($value) ? ($value ? '1' : '0') : (string) $value]
+                ['value' => is_bool($value) || in_array($key, ['wa_gateway_enabled', 'radius_auto_coa'], true)
+                    ? (filter_var($value, FILTER_VALIDATE_BOOLEAN) ? '1' : '0') : (string) $value]
             );
         }
+        \Illuminate\Support\Facades\Cache::forget('app_settings');   // dulu perubahan baru berlaku setelah cache kedaluwarsa
 
         return response()->json([
             'message' => 'Pengaturan sistem berhasil disimpan.',

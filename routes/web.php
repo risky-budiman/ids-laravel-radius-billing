@@ -435,8 +435,9 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
     Route::get('api/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('api.notifications');
     Route::post('api/notifications/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('api.notifications.read');
     // Settings
-    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
-    Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+    // Pengaturan Aplikasi: hanya administrator (dulu terbuka untuk semua staf)
+    Route::get('/settings', [SettingController::class, 'index'])->middleware('role:administrator')->name('settings.index');
+    Route::post('/settings', [SettingController::class, 'update'])->middleware('role:administrator')->name('settings.update');
     // ACCOUNTING SYSTEM (Admin & Administrator Only)
     Route::middleware('role:admin,administrator')->prefix('accounting')->name('accounting.')->group(function () {
         Route::resource('coa', \App\Http\Controllers\Accounting\ChartOfAccountController::class)->only(['index', 'store', 'update', 'destroy']);
