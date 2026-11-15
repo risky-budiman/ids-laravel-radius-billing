@@ -41,24 +41,25 @@
 </head>
 <body>
 <div class="wrap">
-    @if(session('success'))<div class="note ok">{{ session('success') }}</div>@endif
-    @if(session('error'))<div class="note err">{{ session('error') }}</div>@endif
+    @if(session('success'))<div class="note ok no-print">{{ session('success') }}</div>@endif
+    @if(session('error'))<div class="note err no-print">{{ session('error') }}</div>@endif
     @if($errors->any())
-        <div class="note err"><ul class="err-list">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
+        <div class="note err no-print"><ul class="err-list">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
     @endif
 
     @if($invoice && $invoice->status !== 'paid')
-        <div class="note warn">
+        <div class="note warn no-print">
             Biaya instalasi <strong>Rp {{ number_format((float) $invoice->amount, 0, ',', '.') }}</strong> belum dibayar.
             @if($grace) Mohon lunasi sebelum <strong>{{ $grace->locale('id')->translatedFormat('d M Y H:i') }}</strong> agar layanan tidak diisolir. @endif
             <a href="{{ route('portal.pay', $invoice->invoice_number) }}">Bayar sekarang</a>
         </div>
     @endif
 
-    <div class="card">@include('installation-reports._document')</div>
+    <div class="card ba-sheet">@include('installation-reports._document')</div>
+    <p class="no-print" style="text-align:right;margin:-6px 0 16px"><button type="button" onclick="window.print()" style="font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer">Cetak / simpan PDF</button></p>
 
     @if(! $report->customer_signature)
-        <form method="POST" action="{{ route('installation-report.public.sign', $report->sign_token) }}" class="card">
+        <form method="POST" action="{{ route('installation-report.public.sign', $report->sign_token) }}" class="card no-print">
             @csrf
             <h3>Tanda tangan pelanggan</h3>
             <div class="field">
@@ -70,7 +71,7 @@
             <button class="btn">Tanda tangani</button>
         </form>
     @else
-        <div class="note ok">Berita Acara ini sudah Anda tanda tangani. Simpan tautan ini sebagai bukti.</div>
+        <div class="note ok no-print">Berita Acara ini sudah Anda tanda tangani. Simpan tautan ini sebagai bukti.</div>
     @endif
 </div>
 </body>

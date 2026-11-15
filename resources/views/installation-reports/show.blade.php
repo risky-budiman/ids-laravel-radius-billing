@@ -50,7 +50,7 @@
         @endif
 
         <div class="space-y-6">
-            <div class="card"><div class="card-body">@include('installation-reports._document')</div></div>
+            <div class="card ba-sheet"><div class="card-body">@include('installation-reports._document')</div></div>
 
             <div class="grid gap-4 md:grid-cols-2 no-print">
                 <div class="card md:col-span-2">

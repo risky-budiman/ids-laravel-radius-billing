@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.118] - 2026-11-15
+
+### Perbaikan
+- **ba:** Printed installation report fits one A4 page without a blank first sheet
+
 ## [v1.5.117] - 2026-11-15
 
 ### Perbaikan

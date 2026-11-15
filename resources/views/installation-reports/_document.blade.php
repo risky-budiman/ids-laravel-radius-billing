@@ -82,6 +82,7 @@
         <div class="ba-terms">{!! nl2br(e($report->terms)) !!}</div>
     @endif
 
+    <div class="ba-closing">
     <p>Dengan ditandatanganinya Berita Acara ini, kedua pihak menyatakan pemasangan telah selesai dan layanan berfungsi dengan baik.</p>
 
     <div class="ba-signs">
@@ -101,5 +102,6 @@
                 @endif
             </div>
         @endforeach
+    </div>
     </div>
 </article>

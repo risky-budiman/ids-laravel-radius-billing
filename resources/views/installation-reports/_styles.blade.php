@@ -28,5 +28,31 @@
     .sig-hint { opacity: .7; }
     .ba-scroll { overflow-x: auto; }
     @media (max-width: 480px) { .ba-kv th { width: 40%; } .ba-signs { gap: 14px; } .ba-doc { font-size: 13px; } }
-    @media print { .no-print { display: none !important; } .ba-doc { max-width: none; } }
+    .ba-closing { break-inside: avoid; page-break-inside: avoid; }
+
+    /* Cetak: satu lembar A4. Kop cetak bawaan aplikasi & judul halaman tidak dipakai (BA punya kop
+       sendiri), dan kartu pembungkus boleh terpotong — aturan umum "kartu tidak boleh terpotong"
+       dulu mendorong seluruh BA ke lembar kedua sehingga lembar pertama kosong. */
+    @page { size: A4; margin: 12mm 14mm; }
+    @media print {
+        .no-print, body:has(.ba-doc) .print-letterhead, body:has(.ba-doc) .page-header { display: none !important; }
+        html, body { background: #fff !important; color: #0f172a !important; }
+        .ba-sheet { break-inside: auto !important; border: 0 !important; padding: 0 !important; margin: 0 !important; box-shadow: none !important; background: none !important; }
+        .ba-sheet > .card-body { padding: 0 !important; }
+        .ba-doc { max-width: none; font-size: 11.5px; line-height: 1.4; color: #0f172a; }
+        .ba-head { padding-bottom: 8px; margin-bottom: 10px; }
+        .ba-logo { height: 36px; }
+        .ba-company { font-size: 14px; }
+        .ba-title { font-size: 15px; margin-top: 4px; }
+        .ba-doc h2 { font-size: 10.5px; margin: 10px 0 3px; }
+        .ba-doc p { margin: 6px 0; }
+        .ba-kv th, .ba-kv td { padding-top: 1.5px; padding-bottom: 1.5px; }
+        .ba-grid th, .ba-grid td { padding: 3px 6px; }
+        .ba-mono { font-size: 10.5px; }
+        .ba-terms { font-size: 10px; padding: 6px 8px; line-height: 1.35; }
+        .ba-signs { margin-top: 12px; }
+        .ba-sign-box { height: 80px; }
+        .ba-sign-box img { max-height: 76px; }
+        tr { break-inside: avoid; }
+    }
 </style>
