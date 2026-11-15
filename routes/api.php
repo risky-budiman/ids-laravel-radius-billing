@@ -87,6 +87,8 @@ Route::prefix('v1/admin')->name('api.admin.')->group(function () {
             Route::get('/customers/{id}/dismantle', [$w, 'dismantleForm'])->whereNumber('id');
             Route::post('/customers/{id}/dismantle', [$w, 'dismantle'])->whereNumber('id');
             Route::post('/customers/{id}/request-dismantle', [$w, 'requestDismantle'])->whereNumber('id');
+            Route::get('/customers/{id}/installation-report', [$w, 'installationReport'])->whereNumber('id');
+            Route::post('/installation-reports/{id}/sign', [$w, 'signInstallationReport'])->whereNumber('id');
         });
         Route::delete('/customers/{customer}', [AdminCustomerController::class, 'destroy'])
             ->middleware('admin.role:administrator,admin')->name('customers.destroy');

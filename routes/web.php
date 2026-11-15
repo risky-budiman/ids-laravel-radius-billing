@@ -42,6 +42,12 @@ Route::get('/isolir', \App\Http\Controllers\IsolationPageController::class)
     ->middleware('throttle:60,1')
     ->name('isolation.page');
 
+// Berita Acara Instalasi — tautan tanda tangan untuk pelanggan (token acak)
+Route::get('/ba/{token}', [\App\Http\Controllers\InstallationReportController::class, 'publicShow'])
+    ->middleware('throttle:60,1')->where('token', '[A-Za-z0-9]{20,80}')->name('installation-report.public');
+Route::post('/ba/{token}/sign', [\App\Http\Controllers\InstallationReportController::class, 'publicSign'])
+    ->middleware('throttle:10,1')->where('token', '[A-Za-z0-9]{20,80}')->name('installation-report.public.sign');
+
 // Public Customer Portal & Dynamic Payment Link
 Route::get('/pay/{invoice}', [\App\Http\Controllers\PortalController::class, 'pay'])
     ->middleware('throttle:60,1')
@@ -131,6 +137,11 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::post('customers/{customer}/request-dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'requestDismantle'])->name('customers.request-dismantle');
         Route::get('customers/{customer}/dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'dismantleForm'])->name('customers.dismantle');
         Route::post('customers/{customer}/dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'processDismantle'])->name('customers.dismantle.store');
+
+        // Berita Acara Instalasi (tanda tangan digital)
+        Route::get('installation-reports/{report}', [\App\Http\Controllers\InstallationReportController::class, 'show'])->name('installation-reports.show');
+        Route::post('installation-reports/{report}/sign', [\App\Http\Controllers\InstallationReportController::class, 'sign'])->name('installation-reports.sign');
+        Route::post('installation-reports/{report}/send-link', [\App\Http\Controllers\InstallationReportController::class, 'sendLink'])->name('installation-reports.send-link');
 
         // NOC CENTER (Technician & Administrator Only)
         Route::middleware('role:administrator,teknisi')->group(function () {
@@ -382,6 +393,8 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::post('settings/isolation', [\App\Http\Controllers\IsolationSettingsController::class, 'update'])->name('settings.isolation.update');
         Route::post('settings/isolation/dismantle', [\App\Http\Controllers\IsolationSettingsController::class, 'updateDismantle'])->name('settings.isolation.dismantle');
         Route::get('settings/isolation/mikrotik.rsc', [\App\Http\Controllers\IsolationSettingsController::class, 'script'])->name('settings.isolation.script');
+        Route::get('settings/installation', [\App\Http\Controllers\InstallationSettingsController::class, 'index'])->name('settings.installation');
+        Route::post('settings/installation', [\App\Http\Controllers\InstallationSettingsController::class, 'update'])->name('settings.installation.update');
 
         // Invoice Template Builder
         Route::resource('invoice-templates', \App\Http\Controllers\InvoiceTemplateController::class);

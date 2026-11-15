@@ -48,9 +48,19 @@ class CustomerActivationController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        if ($result['installation_invoice']) {
-            return redirect()->route('invoices.show', $result['installation_invoice'])
-                ->with('success', 'Aktivasi tertunda. Silakan selesaikan pembayaran instalasi via Gateway.');
+        $invoice = $result['installation_invoice'];
+        $unpaid = $invoice && $invoice->status !== 'paid';
+
+        // BA aktif -> lanjut ke tanda tangan pelanggan & teknisi
+        if ($result['installation_report'] ?? null) {
+            return redirect()->route('installation-reports.show', $result['installation_report'])
+                ->with('success', 'Pelanggan diaktifkan. Silakan tanda tangani Berita Acara Instalasi.'
+                    . ($unpaid ? ' Invoice instalasi belum dibayar.' : ''));
+        }
+
+        if ($unpaid && auth()->user()->hasRole(['administrator', 'admin', 'kasir'])) {
+            return redirect()->route('invoices.show', $invoice)
+                ->with('success', 'Pelanggan diaktifkan. Invoice instalasi menunggu pembayaran.');
         }
 
         return redirect()->route('customers.index')->with('success', 'Pelanggan diaktifkan dan perangkat tercatat.');

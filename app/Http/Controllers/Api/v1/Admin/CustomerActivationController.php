@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\v1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\InstallationReport;
 use App\Services\CustomerActivationService;
 use App\Services\CustomerLifecycleService;
+use App\Services\InstallationService;
 use Illuminate\Http\Request;
 
 /**
@@ -16,12 +18,14 @@ use Illuminate\Http\Request;
  *   GET  /api/v1/admin/customers/{id}/dismantle         perangkat terpasang di pelanggan
  *   POST /api/v1/admin/customers/{id}/dismantle         tarik perangkat & cabut layanan
  *   POST /api/v1/admin/customers/{id}/request-dismantle  ajukan dismantle (membuat tiket)
+ *   GET  /api/v1/admin/customers/{id}/installation-report  BA instalasi terakhir pelanggan
+ *   POST /api/v1/admin/installation-reports/{id}/sign    tanda tangan BA (pelanggan / teknisi)
  *
  * Hak akses: administrator, admin, teknisi (rute). Aturan & efeknya sama persis dengan wizard web.
  */
 class CustomerActivationController extends Controller
 {
-    public function __construct(private CustomerActivationService $wizard)
+    public function __construct(private CustomerActivationService $wizard, private InstallationService $installation)
     {
     }
 
@@ -59,15 +63,69 @@ class CustomerActivationController extends Controller
         }
 
         $inv = $result['installation_invoice'];
+        $unpaid = $inv && $inv->status !== 'paid';
+        $grace = $result['customer']->activation_grace_expires_at;
 
         return response()->json([
-            'message' => $inv ? 'Aktivasi tercatat. Selesaikan pembayaran instalasi dalam 1 jam.' : 'Pelanggan berhasil diaktivasi.',
+            'message' => 'Pelanggan berhasil diaktivasi.' . ($unpaid
+                ? ' Invoice instalasi belum dibayar' . ($grace ? ' (batas ' . $grace->format('d/m/Y H:i') . ').' : '.') : ''),
             'customer' => $this->customerPayload($result['customer']),
             'installation_invoice' => $inv ? [
                 'id' => $inv->id, 'invoice_number' => $inv->invoice_number, 'amount' => (float) $inv->amount,
-                'payment_link' => route('portal.pay', $inv->invoice_number),
+                'status' => $inv->status, 'payment_link' => route('portal.pay', $inv->invoice_number),
+                'grace_expires_at' => $grace?->toIso8601String(),
             ] : null,
+            'installation_report' => $result['installation_report'] ? $this->reportPayload($result['installation_report']) : null,
         ]);
+    }
+
+    /** BA instalasi terakhir milik pelanggan (404 bila belum ada). */
+    public function installationReport(int $id)
+    {
+        $report = InstallationReport::where('customer_id', $id)->latest('id')->firstOrFail();
+
+        return response()->json(['installation_report' => $this->reportPayload($report, true)]);
+    }
+
+    /** Tanda tangan BA dari aplikasi: role customer (di HP teknisi) atau technician; signature = PNG data-URL. */
+    public function signInstallationReport(Request $request, int $id)
+    {
+        $report = InstallationReport::findOrFail($id);
+        $data = $request->validate([
+            'role' => 'required|in:customer,technician',
+            'signature' => 'required|string|max:700000',
+            'signer_name' => 'nullable|string|max:120',
+            'latitude' => 'nullable|numeric', 'longitude' => 'nullable|numeric',
+        ]);
+
+        try {
+            $report = $this->installation->sign($report, $data['role'], $data['signature'], $data['signer_name'] ?? null, [
+                'by_user' => $request->user()?->id, 'ip' => $request->ip(), 'via' => 'api',
+                'latitude' => $data['latitude'] ?? null, 'longitude' => $data['longitude'] ?? null, 'at' => now()->toIso8601String(),
+            ]);
+        } catch (\DomainException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['message' => 'Tanda tangan tersimpan.', 'installation_report' => $this->reportPayload($report)]);
+    }
+
+    private function reportPayload(InstallationReport $r, bool $withSnapshot = false): array
+    {
+        $out = [
+            'id' => $r->id, 'number' => $r->number, 'sign_url' => $r->signUrl(),
+            'customer_signed_at' => $r->customer_signed_at?->toIso8601String(),
+            'customer_signer_name' => $r->customer_signer_name,
+            'technician_signed_at' => $r->technician_signed_at?->toIso8601String(),
+            'fully_signed' => $r->isFullySigned(),
+            'created_at' => $r->created_at?->toIso8601String(),
+        ];
+        if ($withSnapshot) {
+            $out['snapshot'] = $r->snapshot;
+            $out['terms'] = $r->terms;
+        }
+
+        return $out;
     }
 
     public function dismantleForm(int $id)

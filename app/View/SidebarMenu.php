@@ -143,6 +143,7 @@ class SidebarMenu
             $sections[] = ['label' => 'Pengaturan & Keamanan', 'items' => [
                 self::link('Kelola Staf', 'users.index', 'user-cog', ['users.*']),
                 self::link('Pengaturan Isolir', 'settings.isolation', 'shield-check', ['settings.isolation*']),
+                self::link('Pengaturan Instalasi', 'settings.installation', 'document', ['settings.installation*']),
                 self::group('Data Master', 'globe', [
                     self::link('Data Wilayah', 'locations.regions'),
                     self::link('Data STO', 'locations.stos'),

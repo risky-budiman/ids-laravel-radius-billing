@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BankAccount;
 use App\Models\BankTransaction;
 use App\Models\Customer;
+use App\Models\InstallationReport;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\InventoryStock;
@@ -87,7 +88,7 @@ class CustomerActivationService
     /**
      * @param  array<string, mixed>  $data  input tervalidasi
      * @param  array<string, UploadedFile|null>  $photos
-     * @return array{customer: Customer, installation_invoice: ?Invoice}
+     * @return array{customer: Customer, installation_invoice: ?Invoice, installation_report: ?InstallationReport}
      *
      * @throws \DomainException bila status/perangkat tidak memenuhi syarat
      */
@@ -107,14 +108,18 @@ class CustomerActivationService
 
         $method = $data['payment_method'] ?? null;
         $invoice = null;
+        $installation = app(InstallationService::class);
+        $invoiceMode = $installation->invoiceEnabled();   // selalu terbitkan invoice instalasi (opsional)
+        $graceHours = $installation->graceHours();
 
-        DB::transaction(function () use ($customer, $data, $by, $photos, $modem, $method) {
+        DB::transaction(function () use ($customer, $data, $by, $photos, $modem, $method, $invoiceMode, $graceHours) {
             $update = [
                 'is_active' => true,
                 'status' => Customer::STATUS_ACTIVE,
                 'activated_at' => ! empty($data['activated_at']) ? \Carbon\Carbon::parse($data['activated_at']) : now(),
-                'installation_paid_at' => $method === 'pg' ? null : now(),
-                'activation_grace_expires_at' => $method === 'pg' ? now()->addHour() : null,
+                // Mode invoice: lunas ditandai oleh pembayaran invoice (InvoiceService), bukan di sini
+                'installation_paid_at' => ($invoiceMode || $method === 'pg') ? null : now(),
+                'activation_grace_expires_at' => (! $invoiceMode && $method === 'pg' && $graceHours > 0) ? now()->addHours($graceHours) : null,
                 'installation_bank_account_id' => $data['bank_account_id'] ?? null,
             ];
             foreach (self::FIELDS as $f) {
@@ -132,8 +137,8 @@ class CustomerActivationService
             }
             $customer->update($update);
 
-            // Biaya instalasi tunai/transfer langsung masuk Kas & Bank
-            if ($customer->installation_fee > 0 && in_array($method, ['cash', 'transfer'], true)) {
+            // Biaya instalasi tunai/transfer langsung masuk Kas & Bank (mode lama, tanpa invoice)
+            if (! $invoiceMode && $customer->installation_fee > 0 && in_array($method, ['cash', 'transfer'], true)) {
                 $accountId = $data['bank_account_id'] ?? null;
                 if ($method === 'cash' && ! $accountId) {
                     $accountId = BankAccount::firstOrCreate(['bank_name' => 'KAS TUNAI'],
@@ -171,8 +176,11 @@ class CustomerActivationService
             }
         });
 
-        // Biaya instalasi lewat gateway: invoice instalasi, pelanggan punya masa tenggang 1 jam
-        if ($method === 'pg' && $customer->installation_fee > 0) {
+        if ($invoiceMode) {
+            // Selalu terbit: lunas di lokasi (tunai/transfer) atau belum dibayar dengan batas waktu
+            $invoice = $installation->issueInstallationInvoice($customer->fresh(), $method, $data['bank_account_id'] ?? null);
+        } elseif ($method === 'pg' && $customer->installation_fee > 0) {
+            // Mode lama: invoice hanya untuk pembayaran lewat gateway
             $invoice = Invoice::create([
                 'invoice_number' => Invoice::generateUniqueInvoiceNumber('INV-INST'),
                 'customer_id' => $customer->id, 'amount' => $customer->installation_fee, 'subtotal' => $customer->installation_fee,
@@ -180,7 +188,10 @@ class CustomerActivationService
             ]);
         }
 
-        return ['customer' => $customer->fresh(), 'installation_invoice' => $invoice];
+        $report = $installation->baEnabled() ? $installation->createReport($customer->fresh(), $by, $invoice) : null;
+        $installation->notifyCustomer($customer->fresh(), $report, $invoice?->fresh());
+
+        return ['customer' => $customer->fresh(), 'installation_invoice' => $invoice?->fresh(), 'installation_report' => $report];
     }
 
     /** Perangkat terpasang di pelanggan (untuk form dismantle). */
