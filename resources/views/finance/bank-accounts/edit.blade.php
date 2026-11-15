@@ -89,7 +89,7 @@
 
                     <div class="flex justify-end pt-6 border-t border-gray-100 dark:border-gray-700">
                         <button type="submit" class="inline-flex items-center px-8 py-3 bg-emerald-600 border border-transparent rounded-xl font-bold text-white  hover:bg-emerald-700 active:bg-emerald-900 focus:outline-none focus:border-emerald-900 focus:ring ring-emerald-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm">
-                            Update Rekening
+                            Perbarui Rekening
                         </button>
                     </div>
                 </form>

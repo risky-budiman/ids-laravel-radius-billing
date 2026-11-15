@@ -57,7 +57,7 @@
         <div class="p-6 border-b border-gray-200 dark:border-gray-700">
             <form method="GET" action="{{ route('auth-logs.index') }}" class="flex flex-col md:flex-row gap-3">
                 <div class="flex-1">
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by username..." 
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari username..." 
                         class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
                 </div>
                 <div>
@@ -70,19 +70,19 @@
                 <div>
                     <input type="date" name="date_from" value="{{ request('date_from') }}" 
                         class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                        placeholder="From date">
+                        placeholder="Dari tanggal">
                 </div>
                 <div>
                     <input type="date" name="date_to" value="{{ request('date_to') }}" 
                         class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                        placeholder="To date">
+                        placeholder="Sampai tanggal">
                 </div>
                 <div class="flex gap-2">
                     <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm shadow-indigo-500/30">
                         Filter
                     </button>
                     <a href="{{ route('auth-logs.index') }}" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 text-sm font-medium rounded-xl transition-colors">
-                        Reset
+                        Atur ulang
                     </a>
                 </div>
             </form>
@@ -125,7 +125,7 @@
                                 @elseif($log->reply === 'Access-Reject')
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
                                         <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                        Reject
+                                        Tolak
                                     </span>
                                 @else
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">

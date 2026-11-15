@@ -3,7 +3,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h2 class="font-bold text-2xl text-gray-900 dark:text-white tracking-tight">
-                    Chart of Accounts (Bagan Akun)
+                    Bagan Akun (COA)
                 </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     Struktur keuangan untuk pencatatan Jurnal Umum dan Laporan Keuangan.
@@ -106,15 +106,15 @@
                 <div>
                     <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Tipe</label>
                     <select name="type" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900">
-                        <option value="asset">Asset (Harta)</option>
+                        <option value="asset">Aset (Harta)</option>
                         <option value="liability">Liability (Kewajiban)</option>
                         <option value="equity">Equity (Modal)</option>
-                        <option value="income">Income (Pendapatan)</option>
-                        <option value="expense">Expense (Beban)</option>
+                        <option value="income">Pendapatan</option>
+                        <option value="expense">Beban</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Induk (Optional)</label>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Induk (Opsional)</label>
                     <select name="parent_id" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900">
                         <option value="">-- Tanpa Induk --</option>
                         @php
@@ -159,15 +159,15 @@
                 <div>
                     <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Tipe</label>
                     <select name="type" x-model="editAccount.type" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900">
-                        <option value="asset">Asset (Harta)</option>
+                        <option value="asset">Aset (Harta)</option>
                         <option value="liability">Liability (Kewajiban)</option>
                         <option value="equity">Equity (Modal)</option>
-                        <option value="income">Income (Pendapatan)</option>
-                        <option value="expense">Expense (Beban)</option>
+                        <option value="income">Pendapatan</option>
+                        <option value="expense">Beban</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Induk (Optional)</label>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Induk (Opsional)</label>
                     <select name="parent_id" x-model="editAccount.parent_id" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900">
                         <option value="">-- Tanpa Induk --</option>
                         @php

@@ -43,8 +43,8 @@
                     </div>
                 </div>
                 <div class="flex items-center justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <a href="{{ route('nas.index') }}" class="mr-4 text-gray-600 hover:underline">Cancel</a>
-                    <x-primary-button>Update NAS</x-primary-button>
+                    <a href="{{ route('nas.index') }}" class="mr-4 text-gray-600 hover:underline">Batal</a>
+                    <x-primary-button>Perbarui NAS</x-primary-button>
                 </div>
             </form>
         </div>
@@ -59,7 +59,7 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Secara otomatis menyesuaikan dengan secret yang Anda masukkan pada form.</p>
 
                 <div class="mb-4">
-                    <x-input-label value="Radius Server IP Address (Active)" />
+                    <x-input-label value="Alamat IP Server RADIUS (Aktif)" />
                     <x-text-input type="text" x-model="radiusIp" class="mt-1 w-full text-xs bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400" readonly disabled />
                 </div>
 

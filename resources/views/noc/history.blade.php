@@ -18,7 +18,7 @@
             <!-- Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p class="text-xs font-bold text-gray-400 ">Current Status</p>
+                    <p class="text-xs font-bold text-gray-400 ">Status Saat Ini</p>
                     <div class="mt-2 flex items-center gap-2">
                         @php
                             $lastLog = $logs->last();
@@ -28,13 +28,13 @@
                     </div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p class="text-xs font-bold text-gray-400 ">Average (30 Days)</p>
+                    <p class="text-xs font-bold text-gray-400 ">Rata-rata (30 Hari)</p>
                     <div class="mt-2">
                         <span class="text-2xl font-semibold text-indigo-600">{{ round($logs->avg('rx_power'), 2) }} dBm</span>
                     </div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p class="text-xs font-bold text-gray-400 ">OLT Source</p>
+                    <p class="text-xs font-bold text-gray-400 ">OLT Sumber</p>
                     <div class="mt-2">
                         <span class="text-lg font-bold text-gray-700 dark:text-gray-300">{{ $customer->olt->name }}</span>
                     </div>
@@ -43,7 +43,7 @@
 
             <!-- Chart -->
             <div class="bg-white dark:bg-gray-800 p-8 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                <h3 class="font-bold text-gray-900 dark:text-white mb-6">Optical Power Trend (Rx)</h3>
+                <h3 class="font-bold text-gray-900 dark:text-white mb-6">Tren Daya Optik (Rx)</h3>
                 <div class="h-[400px]">
                     <canvas id="signalChart"></canvas>
                 </div>
@@ -52,14 +52,14 @@
             <!-- Data Table -->
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                 <div class="px-8 py-5 border-b border-gray-100 dark:border-gray-700">
-                    <h3 class="font-bold text-gray-900 dark:text-white">Recent Logs</h3>
+                    <h3 class="font-bold text-gray-900 dark:text-white">Log Terbaru</h3>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
                         <thead>
                             <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
                                 <th class="px-8 py-4 font-bold text-gray-400">Timestamp</th>
-                                <th class="px-8 py-4 font-bold text-gray-400">Rx Power</th>
+                                <th class="px-8 py-4 font-bold text-gray-400">Daya Rx</th>
                                 <th class="px-8 py-4 font-bold text-gray-400">Status</th>
                             </tr>
                         </thead>

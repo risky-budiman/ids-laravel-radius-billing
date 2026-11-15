@@ -46,7 +46,7 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <x-input-label value="Product / Item" />
+                        <x-input-label value="Barang" />
                         <select name="inventory_item_id" required @change="updateProduct" class="mt-1 input">
                             <option value="">Pilih Barang</option>
                             @foreach($items as $item)
@@ -83,8 +83,8 @@
                         </select>
                     </div>
                     <div>
-                        <x-input-label value="Reference / Invoice No." />
-                        <x-text-input name="reference" class="mt-1 w-full" placeholder="e.g. INV/2026/001" />
+                        <x-input-label value="Referensi / No. Faktur" />
+                        <x-text-input name="reference" class="mt-1 w-full" placeholder="mis. INV/2026/001" />
                     </div>
                 </div>
 
@@ -94,7 +94,7 @@
                         <x-text-input name="unit_price" type="number" step="any" min="0" class="mt-1 w-full" :value="old('unit_price', 0)" placeholder="0" />
                     </div>
                     <div>
-                        <x-input-label value="Pajak Pembelian (Tax Input)" />
+                        <x-input-label value="Pajak Pembelian (Masukan)" />
                         <select name="tax_id" class="mt-1 input">
                             <option value="">Tanpa Pajak</option>
                             @foreach(\App\Models\Tax::where('is_active', true)->get() as $tax)
@@ -122,7 +122,7 @@
 
                 <!-- Dynamic Serial Number Input Section -->
                 <div x-show="trackSerial" x-transition class="bg-indigo-50/50 dark:bg-indigo-900/10 p-6 rounded-xl border border-dashed border-indigo-200 dark:border-indigo-800 space-y-4">
-                    <p class="text-xs font-semibold text-indigo-600 ">Serial Number Tracking</p>
+                    <p class="text-xs font-semibold text-indigo-600 ">Pelacakan Nomor Seri</p>
                     <div class="flex justify-between items-center">
                         <p class="text-xs text-gray-500">Masukkan Serial Number untuk setiap unit barang yang masuk.</p>
                         <x-barcode-scanner />
@@ -132,20 +132,20 @@
                         <template x-for="i in (parseInt(quantity) || 0)" :key="i">
                             <div class="animate-in fade-in slide-in- duration-300">
                                 <label class="text-xs text-gray-400 font-bold ml-1">SN Unit <span x-text="i"></span></label>
-                                <input type="text" name="serials[]" required class="uppercase input" placeholder="Enter SN...">
+                                <input type="text" name="serials[]" required class="uppercase input" placeholder="Masukkan SN...">
                             </div>
                         </template>
                     </div>
                 </div>
 
                 <div>
-                    <x-input-label value="Notes" />
+                    <x-input-label value="Catatan" />
                     <textarea name="notes" class="mt-1 input" rows="2"></textarea>
                 </div>
 
                 <div class="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <a href="{{ route('inventory.index') }}" class="px-6 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">Cancel</a>
-                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-10 py-2 rounded-xl text-sm font-bold shadow-sm transition-all">Submit Stock In</button>
+                    <a href="{{ route('inventory.index') }}" class="px-6 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">Batal</a>
+                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-10 py-2 rounded-xl text-sm font-bold shadow-sm transition-all">Simpan Barang Masuk</button>
                 </div>
             </form>
         </div>

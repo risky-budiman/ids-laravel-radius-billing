@@ -5,7 +5,7 @@
                 {{ __('Fixed Assets') }}
             </h2>
             <a href="{{ route('fixed-assets.create') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm shadow-indigo-500/30">
-                + Register Asset
+                + Daftarkan Aset
             </a>
         </div>
     </x-slot>
@@ -27,13 +27,13 @@
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
                     <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Asset Code</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Purchase Value</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Net Book Value</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Kode Aset</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nama</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nilai Perolehan</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nilai Buku</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Useful Life</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -57,24 +57,24 @@
                             </td>
                             <td class="px-6 py-4">
                                 @if($asset->status === 'active')
-                                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">Active</span>
+                                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">Aktif</span>
                                 @else
                                     <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">Disposed</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-right">
-                                <a href="{{ route('fixed-assets.edit', $asset) }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 text-sm font-medium mr-3">Edit</a>
+                                <a href="{{ route('fixed-assets.edit', $asset) }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 text-sm font-medium mr-3">Ubah</a>
                                 <form action="{{ route('fixed-assets.destroy', $asset) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this asset?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium">Delete</button>
+                                    <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium">Hapus</button>
                                 </form>
                             </td>
                         </tr>
                     @empty
                         <tr>
                             <td colspan="7" class="px-6 py-12 text-center text-gray-500">
-                                No Fixed Assets found.
+                                Belum ada aset tetap.
                             </td>
                         </tr>
                     @endforelse

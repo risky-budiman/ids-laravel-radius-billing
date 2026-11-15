@@ -13,8 +13,8 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                     </div>
                     <div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Company Profile</h3>
-                        <p class="text-sm text-gray-500">Manage your business identity and automation rules.</p>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Profil Perusahaan</h3>
+                        <p class="text-sm text-gray-500">Kelola identitas usaha dan aturan otomatis.</p>
                     </div>
                 </div>
 
@@ -108,8 +108,8 @@
                                 <div class="bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
                                     <div class="flex items-center justify-between mb-4">
                                         <div>
-                                            <h5 class="text-sm font-bold text-gray-900 dark:text-white">B2B Partner Management</h5>
-                                            <p class="text-xs text-gray-500 mt-1">Enable agent/reseller system.</p>
+                                            <h5 class="text-sm font-bold text-gray-900 dark:text-white">Manajemen Mitra B2B</h5>
+                                            <p class="text-xs text-gray-500 mt-1">Aktifkan sistem agen/reseller.</p>
                                         </div>
                                         <div class="flex items-center space-x-3">
                                             <input type="checkbox" id="enable_partner_module" name="enable_partner_module" value="1" {{ (isset($settings['enable_partner_module']) && $settings['enable_partner_module']->value == '1') ? 'checked' : '' }} class="w-6 h-6 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 cursor-pointer">
@@ -126,7 +126,7 @@
                                             <x-input-label for="commission_type" :value="__('Type')" />
                                             <select name="commission_type" class="mt-1 input">
                                                 <option value="percentage" {{ ($settings['commission_type']->value ?? 'percentage') == 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
-                                                <option value="fixed" {{ ($settings['commission_type']->value ?? 'percentage') == 'fixed' ? 'selected' : '' }}>Fixed Amount</option>
+                                                <option value="fixed" {{ ($settings['commission_type']->value ?? 'percentage') == 'fixed' ? 'selected' : '' }}>Nominal Tetap</option>
                                             </select>
                                         </div>
                                     </div>
@@ -137,7 +137,7 @@
                                     <div class="flex items-center justify-between mb-4">
                                         <div>
                                             <h5 class="text-sm font-bold text-gray-900 dark:text-white">FUP & Quota Management</h5>
-                                            <p class="text-xs text-gray-500 mt-1">Enable usage tracking and speed reduction.</p>
+                                            <p class="text-xs text-gray-500 mt-1">Aktifkan pencatatan pemakaian dan penurunan kecepatan.</p>
                                         </div>
                                         <div class="flex items-center space-x-3">
                                             <input type="checkbox" id="enable_fup_module" name="enable_fup_module" value="1" {{ (isset($settings['enable_fup_module']) && $settings['enable_fup_module']->value == '1') ? 'checked' : '' }} class="w-6 h-6 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 cursor-pointer">
@@ -152,7 +152,7 @@
                                     <div class="flex items-center justify-between mb-4">
                                         <div>
                                             <h5 class="text-sm font-bold text-gray-900 dark:text-white">Internal Sales Incentive</h5>
-                                            <p class="text-xs text-gray-500 mt-1">Enable commission for internal sales staff.</p>
+                                            <p class="text-xs text-gray-500 mt-1">Aktifkan komisi untuk sales internal.</p>
                                         </div>
                                         <div class="flex items-center space-x-3">
                                             <input type="checkbox" id="enable_sales_commission_module" name="enable_sales_commission_module" value="1" {{ (isset($settings['enable_sales_commission_module']) && $settings['enable_sales_commission_module']->value == '1') ? 'checked' : '' }} class="w-6 h-6 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 cursor-pointer">
@@ -169,7 +169,7 @@
                                             <x-input-label for="default_sales_commission_type" :value="__('Type')" />
                                             <select name="default_sales_commission_type" class="mt-1 input">
                                                 <option value="percentage" {{ ($settings['default_sales_commission_type']->value ?? 'percentage') == 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
-                                                <option value="fixed" {{ ($settings['default_sales_commission_type']->value ?? 'percentage') == 'fixed' ? 'selected' : '' }}>Fixed Amount</option>
+                                                <option value="fixed" {{ ($settings['default_sales_commission_type']->value ?? 'percentage') == 'fixed' ? 'selected' : '' }}>Nominal Tetap</option>
                                             </select>
                                         </div>
                                     </div>
@@ -180,7 +180,7 @@
                             <div class="md:col-span-2 mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
                                 <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center">
                                     <svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path></svg>
-                                    WhatsApp Ticket Notifications (Group IDs)
+                                    Notifikasi Tiket WhatsApp (ID Grup)
                                 </h4>
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     <div class="md:col-span-1 lg:col-span-1">

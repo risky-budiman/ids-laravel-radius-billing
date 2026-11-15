@@ -62,13 +62,13 @@
                     <div class="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center shadow-inner mr-4 text-white">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-surface-900 dark:text-white">Add Regional Division</h3>
+                    <h3 class="text-lg font-semibold text-surface-900 dark:text-white">Tambah Wilayah</h3>
                 </div>
 
                 <form action="{{ route('locations.region.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
                     @csrf
                     <div class="md:col-span-1 group">
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Region Name</label>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Nama Wilayah</label>
                         <input type="text" name="name" placeholder="E.g. Jabodetabek" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all px-4 py-3" required />
                     </div>
                     <div class="md:col-span-1 group relative">
@@ -84,7 +84,7 @@
                     </div>
                     <div>
                         <button type="submit" class="w-full bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-sm transform  transition-all">
-                            Save Region
+                            Simpan Wilayah
                         </button>
                     </div>
                 </form>
@@ -98,9 +98,9 @@
                     <thead class="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
                         <tr>
                             <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">#</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Code</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Region Name</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Coordinates</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Kode</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Nama Wilayah</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Koordinat</th>
                             <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Child STOs</th>
                             <th class="px-6 py-4 text-right"></th>
                         </tr>
@@ -124,7 +124,7 @@
                                     <span class="block">Lat: {{ $r->latitude }}</span>
                                     <span class="block">Lon: {{ $r->longitude }}</span>
                                 @else
-                                    <span class="italic">Not Set</span>
+                                    <span class="italic">Belum diatur</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4">
@@ -138,12 +138,12 @@
                                         @click='editRegion = @json($r); editModalOpen = true'
                                         class="text-indigo-600 hover:text-indigo-900 font-bold text-sm"
                                     >
-                                        Edit
+                                        Ubah
                                     </button>
                                     <form action="{{ route('locations.region.destroy', $r) }}" method="POST">
                                         @csrf @method('DELETE')
                                         <button class="text-red-500 hover:text-red-700 font-bold text-sm" onclick="return confirm('Ensure no active STOs exist under this Region before deleting!');">
-                                            Delete
+                                            Hapus
                                         </button>
                                     </form>
                                 </div>
@@ -160,14 +160,14 @@
             <div class="flex items-center justify-center min-h-screen px-4">
                 <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="editModalOpen = false"></div>
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-lg p-8 relative z-10 border border-gray-100 dark:border-gray-700">
-                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Edit Region: <span x-text="editRegion.code" class="text-indigo-500"></span></h3>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Ubah Wilayah: <span x-text="editRegion.code" class="text-indigo-500"></span></h3>
                     
                     <form :action="`{{ url('admin/locations/regions') }}/${editRegion.id}`" method="POST" class="space-y-4">
                         @csrf
                         @method('PUT')
                         
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Region Name</label>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Nama Wilayah</label>
                             <input type="text" name="name" x-model="editRegion.name" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 px-4 py-3" required />
                         </div>
                         
@@ -186,8 +186,8 @@
                         </div>
 
                         <div class="flex justify-end gap-3 mt-8">
-                            <button type="button" @click="editModalOpen = false" class="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Cancel</button>
-                            <button type="submit" class="px-10 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg">Update Region</button>
+                            <button type="button" @click="editModalOpen = false" class="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Batal</button>
+                            <button type="submit" class="px-10 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg">Perbarui Wilayah</button>
                         </div>
                     </form>
                 </div>
@@ -200,13 +200,13 @@
                 <div class="fixed inset-0 bg-gray-900/80 backdrop-blur-md" @click="mapPickerOpen = false"></div>
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-4xl h-[80vh] flex flex-col relative z-10 overflow-hidden border border-gray-100 dark:border-gray-700">
                     <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Pick Location</h3>
-                        <p class="text-sm text-gray-500">Click on map or drag marker to set position</p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Pilih Lokasi</h3>
+                        <p class="text-sm text-gray-500">Klik peta atau geser penanda untuk menentukan posisi</p>
                     </div>
                     <div id="map-picker-container" class="flex-grow"></div>
                     <div class="p-6 bg-gray-50 dark:bg-gray-900/50 flex justify-end gap-3">
-                        <button type="button" @click="mapPickerOpen = false" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg font-bold">Cancel</button>
-                        <button type="button" @click="confirmPick()" class="px-10 py-2 bg-indigo-600 text-white rounded-lg font-bold shadow-lg">Confirm Location</button>
+                        <button type="button" @click="mapPickerOpen = false" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg font-bold">Batal</button>
+                        <button type="button" @click="confirmPick()" class="px-10 py-2 bg-indigo-600 text-white rounded-lg font-bold shadow-lg">Konfirmasi Lokasi</button>
                     </div>
                 </div>
             </div>

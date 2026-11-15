@@ -61,7 +61,7 @@
 
                             <div class="space-y-4">
                                 <div>
-                                    <label for="region_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Region</label>
+                                    <label for="region_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Wilayah</label>
                                     <select id="region_code" name="region_code" class="input">
                                         <option value="">-- Semua Region --</option>
                                         @foreach($regions as $r)
@@ -95,10 +95,10 @@
                                     <select id="status" name="status" class="input">
                                         <option value="">-- Semua Status --</option>
                                         <option value="active">Active (Aktif)</option>
-                                        <option value="suspended">Suspended (Isolir)</option>
-                                        <option value="waiting_activation">Waiting Activation</option>
-                                        <option value="unpaid">Menunggak (Unpaid Invoice)</option>
-                                        <option value="paid">Lunas (Paid/No Unpaid Invoice)</option>
+                                        <option value="suspended">Terisolir</option>
+                                        <option value="waiting_activation">Menunggu Aktivasi</option>
+                                        <option value="unpaid">Menunggak (ada tagihan)</option>
+                                        <option value="paid">Lunas (tidak ada tagihan)</option>
                                     </select>
                                     <p class="mt-1 text-xs text-gray-500">Pesan hanya akan dikirim ke pelanggan yang memiliki nomor WhatsApp.</p>
                                 </div>

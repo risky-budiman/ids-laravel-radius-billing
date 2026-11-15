@@ -33,7 +33,7 @@
                     @endif
                     <div class="mt-3 flex items-center justify-between text-xs text-surface-400">
                         <span>{{ $ticket->created_at->locale('id')->translatedFormat('d M Y, H:i') }}</span>
-                        <span class="inline-flex items-center gap-1 font-medium text-primary-600 dark:text-primary-400">Detail <x-icon name="chevron-right" class="w-3.5 h-3.5" /></span>
+                        <span class="inline-flex items-center gap-1 font-medium text-primary-600 dark:text-primary-400">Rincian <x-icon name="chevron-right" class="w-3.5 h-3.5" /></span>
                     </div>
                 </a>
             @empty

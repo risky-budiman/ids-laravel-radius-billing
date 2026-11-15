@@ -23,7 +23,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="md:col-span-1">
                             <div class="flex flex-col items-center">
-                                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-center w-full">Current Logo</p>
+                                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-center w-full">Logo Saat Ini</p>
                                 <div class="w-32 h-32 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-900/50">
                                     @if(get_setting('company_logo'))
                                         <img src="{{ asset('storage/' . get_setting('company_logo')) }}" alt="Logo" class="max-w-full max-h-full object-contain p-2">
@@ -79,7 +79,7 @@
                 <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
                         <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Invoice Settings
+                        Pengaturan Invoice
                     </h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">

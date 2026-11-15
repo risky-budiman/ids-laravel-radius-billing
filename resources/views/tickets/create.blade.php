@@ -19,7 +19,7 @@
                             <div>
                                 <x-input-label for="customer_id" :value="__('Subscriber / Customer')" />
                                 <select id="customer_id" name="customer_id" class="mt-1 input">
-                                    <option value="">-- No Customer (Internal Ticket) --</option>
+                                    <option value="">-- Tanpa Pelanggan (Tiket Internal) --</option>
                                     @foreach($customers as $customer)
                                         <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
                                             {{ $customer->name }} ({{ $customer->username }})
@@ -32,7 +32,7 @@
                             <!-- Subject -->
                             <div>
                                 <x-input-label for="subject" :value="__('Subject')" />
-                                <x-text-input id="subject" name="subject" type="text" class="mt-1 block w-full !rounded-xl" :value="old('subject')" required placeholder="Brief description of the issue or request" />
+                                <x-text-input id="subject" name="subject" type="text" class="mt-1 block w-full !rounded-xl" :value="old('subject')" required placeholder="Ringkasan masalah atau permintaan" />
                                 <x-input-error :messages="$errors->get('subject')" class="mt-2" />
                             </div>
 
@@ -53,7 +53,7 @@
                                 <div>
                                     <x-input-label for="assigned_to" :value="__('Assign to Staff')" />
                                     <select id="assigned_to" name="assigned_to" class="mt-1 input">
-                                        <option value="">-- Unassigned --</option>
+                                        <option value="">-- Belum ditugaskan --</option>
                                         @foreach($users as $user)
                                             <option value="{{ $user->id }}" {{ old('assigned_to') == $user->id ? 'selected' : '' }}>
                                                 {{ $user->name }}
@@ -67,7 +67,7 @@
                             <!-- Description -->
                             <div>
                                 <x-input-label for="description" :value="__('Detailed Description')" />
-                                <textarea id="description" name="description" rows="5" class="mt-1 input" required placeholder="Describe the activation details, error reports, or dismantle reasons...">{{ old('description') }}</textarea>
+                                <textarea id="description" name="description" rows="5" class="mt-1 input" required placeholder="Jelaskan rincian aktivasi, laporan gangguan, atau alasan dismantle...">{{ old('description') }}</textarea>
                                 <x-input-error :messages="$errors->get('description')" class="mt-2" />
                             </div>
 

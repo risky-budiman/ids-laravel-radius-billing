@@ -29,7 +29,7 @@
                 </div>
                 <div>
                     <h2 class="page-title !text-2xl">Buat Invoice</h2>
-                    <p class="text-sm font-bold text-gray-500 dark:text-gray-400 mt-1">Manual billing creation for subscribers.</p>
+                    <p class="text-sm font-bold text-gray-500 dark:text-gray-400 mt-1">Pembuatan tagihan manual untuk pelanggan.</p>
                 </div>
             </div>
 
@@ -39,9 +39,9 @@
                 <div class="lg:col-span-8 space-y-8">
                     <!-- Subscriber Selection -->
                     <div class="bg-white dark:bg-gray-900 rounded-xl p-8 md:p-10 border border-gray-100 dark:border-gray-800 shadow-sm">
-                        <label class="block text-xs font-semibold text-gray-400 dark:text-gray-500 mb-4 px-2">1. Target Subscriber</label>
+                        <label class="block text-xs font-semibold text-gray-400 dark:text-gray-500 mb-4 px-2">1. Pelanggan Tujuan</label>
                         <select id="customer_id" name="customer_id" class="input" required>
-                            <option value="">-- Choose Subscriber --</option>
+                            <option value="">-- Pilih Pelanggan --</option>
                             @foreach($customers as $customer)
                                 <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}
                                     data-price="{{ $customer->package->price ?? 0 }}"
@@ -63,31 +63,31 @@
                         
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
-                                <label class="block text-xs font-bold text-indigo-500 mb-2 px-1">Duration</label>
+                                <label class="block text-xs font-bold text-indigo-500 mb-2 px-1">Durasi</label>
                                 <select id="billing_duration" name="billing_period" class="input">
                                     @for ($i = 1; $i <= 12; $i++)
                                         <option value="{{ $i }} Month{{ $i > 1 ? 's' : '' }}" data-months="{{ $i }}" {{ $i == 1 ? 'selected' : '' }}>
                                             {{ $i }} Month{{ $i > 1 ? 's' : '' }}
                                         </option>
                                     @endfor
-                                    <option value="Custom">Custom Range</option>
+                                    <option value="Custom">Rentang Khusus</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-400 mb-2 px-1">Start Date</label>
+                                <label class="block text-xs font-bold text-gray-400 mb-2 px-1">Tanggal Mulai</label>
                                 <input id="period_start" name="period_start" value="{{ old('period_start') }}" type="date" class="input" required />
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-400 mb-2 px-1">End Date</label>
+                                <label class="block text-xs font-bold text-gray-400 mb-2 px-1">Tanggal Akhir</label>
                                 <input id="period_end" name="period_end" value="{{ old('period_end') }}" type="date" class="input" required />
                             </div>
                         </div>
 
                         <div class="mt-8 pt-8 border-t border-gray-50 dark:border-gray-800">
-                            <label class="block text-xs font-semibold text-rose-500 mb-4 px-2">3. Settlement Due Date</label>
+                            <label class="block text-xs font-semibold text-rose-500 mb-4 px-2">3. Jatuh Tempo Pelunasan</label>
                             <div class="max-w-xs">
                                 <input id="due_date" name="due_date" value="{{ old('due_date') }}" type="date" class="input" required />
-                                <p class="mt-3 text-xs text-gray-400 px-2 italic">Automatically synced with subscriber cycle</p>
+                                <p class="mt-3 text-xs text-gray-400 px-2 italic">Mengikuti siklus tagihan pelanggan secara otomatis</p>
                             </div>
                         </div>
                     </div>
@@ -98,13 +98,13 @@
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                             <div>
-                                <label class="block text-xs font-bold text-gray-400 mb-2 px-1">Base Amount (Rp)</label>
+                                <label class="block text-xs font-bold text-gray-400 mb-2 px-1">Harga Dasar (Rp)</label>
                                 <input id="amount" name="amount" value="{{ old('amount') }}" type="number" class="input" placeholder="0" required />
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-400 mb-2 px-1">Tax Scheme</label>
                                 <select id="tax_id" name="tax_id" class="input">
-                                    <option value="">No Tax Applied</option>
+                                    <option value="">Tanpa Pajak</option>
                                     @foreach($taxes as $tax)
                                         <option value="{{ $tax->id }}" data-rate="{{ $tax->rate }}">{{ $tax->name }} ({{ $tax->rate }}%)</option>
                                     @endforeach
@@ -112,8 +112,8 @@
                             </div>
                         </div>
 
-                        <label class="block text-xs font-semibold text-gray-400 dark:text-gray-500 mb-4 px-2">5. Notes & Keterangan</label>
-                        <textarea id="notes" name="notes" rows="4" class="input" placeholder="Enter invoice details...">{{ old('notes') }}</textarea>
+                        <label class="block text-xs font-semibold text-gray-400 dark:text-gray-500 mb-4 px-2">5. Catatan</label>
+                        <textarea id="notes" name="notes" rows="4" class="input" placeholder="Isi rincian invoice...">{{ old('notes') }}</textarea>
                     </div>
                 </div>
 

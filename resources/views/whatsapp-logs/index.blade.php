@@ -91,7 +91,7 @@
                         <div class="w-full sm:w-48">
                             <select name="status" class="input" onchange="this.form.submit()">
                                 <option value="">Semua Status</option>
-                                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Waiting (Antrean)</option>
+                                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Menunggu (Antrean)</option>
                                 <option value="sent" {{ request('status') === 'sent' ? 'selected' : '' }}>Terkirim</option>
                                 <option value="failed" {{ request('status') === 'failed' ? 'selected' : '' }}>Gagal</option>
                             </select>
@@ -176,7 +176,7 @@
                                     @elseif($log->status === 'failed')
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800/50" title="{{ $log->error_reason }}">
                                             <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" /></svg>
-                                            Failed
+                                            Gagal
                                         </span>
                                     @else
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50">

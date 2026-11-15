@@ -368,8 +368,9 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::post('acs-devices/{deviceId}/refresh', [\App\Http\Controllers\AcsServerController::class, 'refreshDevice'])->name('acs-servers.refresh-device')->where('deviceId', '[a-zA-Z0-9\-\.]+');
         Route::post('acs-devices/{deviceId}/update-tags', [\App\Http\Controllers\AcsServerController::class, 'updateDeviceTags'])->name('acs-servers.update-tags')->where('deviceId', '[a-zA-Z0-9\-\.]+');
         Route::get('acs-devices', [\App\Http\Controllers\AcsServerController::class, 'devices'])->name('acs-servers.devices');
-        // Tanpa 'show': controller tidak punya method show() (sebelumnya /acs-servers/{id} = error 500)
-        Route::resource('acs-servers', \App\Http\Controllers\AcsServerController::class)->except(['show']);
+        // Tambah/edit lewat modal di halaman daftar; controller tidak punya show/create/edit
+        // (sebelumnya membuka URL-nya langsung = error 500)
+        Route::resource('acs-servers', \App\Http\Controllers\AcsServerController::class)->except(['show', 'create', 'edit']);
         Route::get('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'index'])->name('settings.company');
         Route::post('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'update'])->name('settings.company.update');
         Route::get('settings/isolation', [\App\Http\Controllers\IsolationSettingsController::class, 'index'])->name('settings.isolation');

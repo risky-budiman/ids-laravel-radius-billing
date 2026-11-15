@@ -68,7 +68,7 @@
                     <div class="w-10 h-10 rounded-xl bg-cyan-500 flex items-center justify-center shadow-inner mr-4 text-white">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-surface-900 dark:text-white">Add ODP Point</h3>
+                    <h3 class="text-lg font-semibold text-surface-900 dark:text-white">Tambah Titik ODP</h3>
                 </div>
 
                 <form action="{{ route('locations.odp.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-7 gap-6 items-end">
@@ -87,8 +87,8 @@
                         <input type="text" name="id" placeholder="ODP-BDG-01" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all px-4 py-3 font-mono" required />
                     </div>
                     <div class="md:col-span-1">
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">ODP Name</label>
-                        <input type="text" name="name" placeholder="Name" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all px-4 py-3" required />
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Nama ODP</label>
+                        <input type="text" name="name" placeholder="Nama" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all px-4 py-3" required />
                     </div>
                     <div class="md:col-span-1 relative">
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Latitude</label>
@@ -102,12 +102,12 @@
                         <input type="text" name="longitude" id="create_lon" placeholder="106.123" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all px-4 py-3" />
                     </div>
                     <div class="md:col-span-1">
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Ports</label>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Port</label>
                         <input type="number" name="total_ports" placeholder="16" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all px-4 py-3" />
                     </div>
                     <div class="md:col-span-1">
                         <button type="submit" class="w-full bg-cyan-600 text-white px-4 py-3 rounded-xl font-bold shadow-sm transition-all">
-                            Save
+                            Simpan
                         </button>
                     </div>
                 </form>
@@ -121,11 +121,11 @@
                     <thead class="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
                         <tr>
                             <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">#</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">ID / Code</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">ODP Name</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">ID / Kode</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Nama ODP</th>
                             <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Parent ODC</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Coordinates</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Ports</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Koordinat</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Port</th>
                             <th class="px-6 py-4 text-right"></th>
                         </tr>
                     </thead>
@@ -148,7 +148,7 @@
                                     <span class="inline-flex items-center text-xs text-indigo-400 font-mono mr-1">[{{ $p->odc->id }}]</span> 
                                     {{ $p->odc->name }}
                                 @else
-                                    <span class="text-red-400 italic">No ODC</span>
+                                    <span class="text-red-400 italic">Tanpa ODC</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-xs font-mono text-gray-500">
@@ -156,7 +156,7 @@
                                     <span class="block">Lat: {{ $p->latitude }}</span>
                                     <span class="block">Lon: {{ $p->longitude }}</span>
                                 @else
-                                    <span class="italic text-gray-400 text-xs">No Coordinates</span>
+                                    <span class="italic text-gray-400 text-xs">Belum ada koordinat</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
@@ -168,12 +168,12 @@
                                         @click='editOdp = @json($p); editModalOpen = true'
                                         class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 font-bold text-sm"
                                     >
-                                        Edit
+                                        Ubah
                                     </button>
                                     <form action="{{ route('locations.odp.destroy', $p) }}" method="POST">
                                         @csrf @method('DELETE')
                                         <button class="text-red-500 hover:text-red-700 font-bold text-sm" onclick="return confirm('Delete ODP?');">
-                                            Delete
+                                            Hapus
                                         </button>
                                     </form>
                                 </div>
@@ -190,7 +190,7 @@
             <div class="flex items-center justify-center min-h-screen px-4">
                 <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="editModalOpen = false"></div>
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-lg p-8 relative z-10 border border-gray-100 dark:border-gray-700">
-                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Edit ODP: <span x-text="editOdp.id" class="text-cyan-500"></span></h3>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Ubah ODP: <span x-text="editOdp.id" class="text-cyan-500"></span></h3>
                     
                     <form :action="`{{ url('admin/locations/odps') }}/${editOdp.id}`" method="POST" class="space-y-4">
                         @csrf
@@ -206,7 +206,7 @@
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">ODP Name</label>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Nama ODP</label>
                             <input type="text" name="name" x-model="editOdp.name" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 px-4 py-3" required />
                         </div>
                         
@@ -225,13 +225,13 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Total Ports</label>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Total Port</label>
                             <input type="number" name="total_ports" x-model="editOdp.total_ports" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 px-4 py-3" />
                         </div>
 
                         <div class="flex justify-end gap-3 mt-8">
-                            <button type="button" @click="editModalOpen = false" class="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Cancel</button>
-                            <button type="submit" class="px-10 py-3 bg-cyan-600 text-white rounded-xl font-bold shadow-sm">Update ODP</button>
+                            <button type="button" @click="editModalOpen = false" class="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Batal</button>
+                            <button type="submit" class="px-10 py-3 bg-cyan-600 text-white rounded-xl font-bold shadow-sm">Perbarui ODP</button>
                         </div>
                     </form>
                 </div>
@@ -244,13 +244,13 @@
                 <div class="fixed inset-0 bg-gray-900/80 backdrop-blur-md" @click="mapPickerOpen = false"></div>
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-4xl h-[80vh] flex flex-col relative z-10 overflow-hidden border border-gray-100 dark:border-gray-700">
                     <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Pick Location</h3>
-                        <p class="text-sm text-gray-500">Click on map or drag marker to set position</p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Pilih Lokasi</h3>
+                        <p class="text-sm text-gray-500">Klik peta atau geser penanda untuk menentukan posisi</p>
                     </div>
                     <div id="map-picker-container" class="flex-grow"></div>
                     <div class="p-6 bg-gray-50 dark:bg-gray-900/50 flex justify-end gap-3">
-                        <button type="button" @click="mapPickerOpen = false" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg font-bold">Cancel</button>
-                        <button type="button" @click="confirmPick()" class="px-10 py-2 bg-cyan-600 text-white rounded-lg font-bold shadow-lg">Confirm Location</button>
+                        <button type="button" @click="mapPickerOpen = false" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg font-bold">Batal</button>
+                        <button type="button" @click="confirmPick()" class="px-10 py-2 bg-cyan-600 text-white rounded-lg font-bold shadow-lg">Konfirmasi Lokasi</button>
                     </div>
                 </div>
             </div>

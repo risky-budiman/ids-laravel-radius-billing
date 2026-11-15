@@ -8,7 +8,7 @@
                 <h2 class="font-bold text-2xl text-gray-900 dark:text-white leading-tight">
                     {{ __('Create New Package') }}
                 </h2>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Define a new internet service plan</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Buat paket layanan internet baru</p>
             </div>
         </div>
     </x-slot>
@@ -25,21 +25,21 @@
                             <div class="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl mr-4 text-indigo-600 dark:text-indigo-400">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </div>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">General Information</h3>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Informasi Umum</h3>
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <x-input-label for="name" :value="__('Plan Name (Internal)')" />
-                                <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" required placeholder="e.g. Home Basic 10M" />
+                                <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" required placeholder="mis. Home Basic 10M" />
                             </div>
                             <div>
                                 <x-input-label for="mikrotik_group" :value="__('MikroTik Profile / Group')" />
-                                <x-text-input id="mikrotik_group" name="mikrotik_group" type="text" class="mt-1 block w-full" placeholder="e.g. pppoe-10M" />
+                                <x-text-input id="mikrotik_group" name="mikrotik_group" type="text" class="mt-1 block w-full" placeholder="mis. pppoe-10M" />
                             </div>
                             <div class="md:col-span-2">
                                 <x-input-label for="description" :value="__('Public Description')" />
-                                <textarea id="description" name="description" rows="3" class="mt-1 block w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900/50 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 dark:text-gray-300 transition-all" placeholder="Tell your customers about this plan..."></textarea>
+                                <textarea id="description" name="description" rows="3" class="mt-1 block w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900/50 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 dark:text-gray-300 transition-all" placeholder="Jelaskan paket ini kepada pelanggan..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -50,13 +50,13 @@
                             <div class="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl mr-4 text-blue-600 dark:text-blue-400">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             </div>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Bandwidth Profile</h3>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Profil Bandwidth</h3>
                         </div>
 
                         <div class="space-y-8">
                             <!-- Basic Speed -->
                             <div class="bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
-                                <span class="text-xs font-bold text-gray-400  block mb-4">Base Speed (Rx/Tx)</span>
+                                <span class="text-xs font-bold text-gray-400  block mb-4">Kecepatan Dasar (Rx/Tx)</span>
                                 <div class="grid grid-cols-2 gap-6">
                                     <div class="relative">
                                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -80,8 +80,8 @@
                                         <span class="w-2 h-2 bg-indigo-500 rounded-full mr-2"></span> Burst Configuration
                                     </h4>
                                     <div class="grid grid-cols-2 gap-4">
-                                        <x-text-input name="burst_limit_up" placeholder="Limit Up" class="text-sm py-2" />
-                                        <x-text-input name="burst_limit_down" placeholder="Limit Down" class="text-sm py-2" />
+                                        <x-text-input name="burst_limit_up" placeholder="Batas Unggah" class="text-sm py-2" />
+                                        <x-text-input name="burst_limit_down" placeholder="Batas Unduh" class="text-sm py-2" />
                                         <x-text-input name="burst_threshold_up" placeholder="Thresh Up" class="text-sm py-2" />
                                         <x-text-input name="burst_threshold_down" placeholder="Thresh Down" class="text-sm py-2" />
                                         <x-text-input name="burst_time_up" placeholder="Time Up (s)" class="text-sm py-2" />
@@ -90,11 +90,11 @@
                                 </div>
                                 <div class="space-y-4">
                                     <h4 class="text-xs font-bold text-gray-500 uppercase flex items-center">
-                                        <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span> Priority & CIR
+                                        <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span> Prioritas & CIR
                                     </h4>
                                     <div class="space-y-4">
                                         <div>
-                                            <x-input-label for="priority" value="Traffic Priority (1-8)" />
+                                            <x-input-label for="priority" value="Prioritas Trafik (1-8)" />
                                             <select name="priority" id="priority" class="mt-1 block w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl text-sm focus:ring-indigo-500">
                                                 @for($i=1; $i<=8; $i++)
                                                     <option value="{{ $i }}" {{ $i == 8 ? 'selected' : '' }}>{{ $i }} {{ $i == 1 ? '(Highest)' : ($i == 8 ? '(Lowest)' : '') }}</option>
@@ -126,7 +126,7 @@
                             <span class="absolute left-0 top-1/2 -translate-y-1/2 text-indigo-300 font-bold text-lg ml-4">Rp</span>
                             <input type="number" name="price" required class="block w-full bg-white/10 border-none rounded-xl py-4 pl-12 text-2xl font-semibold placeholder:text-indigo-300 focus:ring-2 focus:ring-white/30 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="0">
                         </div>
-                        <p class="text-xs text-indigo-200 mt-4 leading-relaxed">Tax calculations and prorata will be applied based on customer settings.</p>
+                        <p class="text-xs text-indigo-200 mt-4 leading-relaxed">Pajak dan prorata dihitung sesuai pengaturan pelanggan.</p>
                     </div>
 
                     <!-- Section: FUP Policy -->
@@ -147,12 +147,12 @@
                         
                         <div id="fup_details" class="space-y-4 animate-fade-in hidden">
                             <div>
-                                <x-input-label value="Quota Limit (GB)" />
-                                <x-text-input name="fup_limit_gb" type="number" class="mt-1 block w-full text-sm" placeholder="e.g. 500" />
+                                <x-input-label value="Batas Kuota (GB)" />
+                                <x-text-input name="fup_limit_gb" type="number" class="mt-1 block w-full text-sm" placeholder="mis. 500" />
                             </div>
                             <div>
-                                <x-input-label value="Throttled Speed" />
-                                <x-text-input name="fup_speed_limit" type="text" class="mt-1 block w-full text-sm" placeholder="e.g. 1M/2M" />
+                                <x-input-label value="Kecepatan Setelah FUP" />
+                                <x-text-input name="fup_speed_limit" type="text" class="mt-1 block w-full text-sm" placeholder="mis. 1M/2M" />
                             </div>
                         </div>
                     </div>
@@ -161,7 +161,7 @@
                     <!-- Submit Button -->
                     <div class="pt-4">
                         <button type="submit" class="w-full bg-gray-900 dark:bg-indigo-600 hover:bg-black dark:hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-sm transition-all ] ]">
-                            Create Service Plan
+                            Buat Paket Layanan
                         </button>
                     </div>
                 </div>

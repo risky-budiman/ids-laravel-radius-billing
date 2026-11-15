@@ -14,8 +14,8 @@
         <div class="glass bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="bg-indigo-600 px-8 py-6 text-white relative overflow-hidden">
                 <div class="absolute right-0 top-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-                <h3 class="font-bold text-xl relative z-10">Product Information</h3>
-                <p class="text-indigo-100 text-sm relative z-10">Register a new item in your inventory system.</p>
+                <h3 class="font-bold text-xl relative z-10">Informasi Barang</h3>
+                <p class="text-indigo-100 text-sm relative z-10">Daftarkan barang baru ke inventaris.</p>
             </div>
 
             <form action="{{ route('inventory.store') }}" method="POST" class="p-8 space-y-6">
@@ -23,9 +23,9 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2">
-                        <x-input-label value="Product Category" />
+                        <x-input-label value="Kategori Barang" />
                         <select name="category_id" required class="mt-1 input">
-                            <option value="">Select Category</option>
+                            <option value="">Pilih Kategori</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                             @endforeach
@@ -34,19 +34,19 @@
                     </div>
 
                     <div class="md:col-span-2">
-                        <x-input-label value="Product Name" />
-                        <x-text-input name="name" :value="old('name')" required class="mt-1 w-full" placeholder="e.g. ONU XPON GM220" />
+                        <x-input-label value="Nama Barang" />
+                        <x-text-input name="name" :value="old('name')" required class="mt-1 w-full" placeholder="mis. ONU XPON GM220" />
                         <x-input-error :messages="$errors->get('name')" class="mt-1" />
                     </div>
 
                     <div>
-                        <x-input-label value="SKU (Optional)" />
-                        <x-text-input name="sku" :value="old('sku')" class="mt-1 w-full uppercase" placeholder="e.g. ONU-001" />
+                        <x-input-label value="SKU (Opsional)" />
+                        <x-text-input name="sku" :value="old('sku')" class="mt-1 w-full uppercase" placeholder="mis. ONU-001" />
                         <x-input-error :messages="$errors->get('sku')" class="mt-1" />
                     </div>
 
                     <div>
-                        <x-input-label value="Unit of Measurement" />
+                        <x-input-label value="Satuan" />
                         <select name="unit" class="mt-1 input">
                             <option value="pcs" {{ old('unit') == 'pcs' ? 'selected' : '' }}>pcs</option>
                             <option value="meters" {{ old('unit') == 'meters' ? 'selected' : '' }}>meters</option>
@@ -57,31 +57,31 @@
                     </div>
 
                     <div>
-                        <x-input-label value="Minimum Stock Alert" />
+                        <x-input-label value="Peringatan Stok Minimum" />
                         <x-text-input name="min_stock" type="number" :value="old('min_stock', 10)" required class="mt-1 w-full" />
-                        <p class="text-xs text-gray-400 mt-1">Get notified when stock drops below this value.</p>
+                        <p class="text-xs text-gray-400 mt-1">Beri peringatan bila stok di bawah nilai ini.</p>
                         <x-input-error :messages="$errors->get('min_stock')" class="mt-1" />
                     </div>
 
                     <div class="flex items-center pt-6">
                         <label class="inline-flex items-center cursor-pointer">
                             <input type="checkbox" name="track_serial" value="1" {{ old('track_serial') ? 'checked' : '' }} class="rounded-lg border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 w-5 h-5">
-                            <span class="ml-3 text-sm font-bold text-gray-700 dark:text-gray-300">Track Serial Numbers</span>
+                            <span class="ml-3 text-sm font-bold text-gray-700 dark:text-gray-300">Lacak Nomor Seri</span>
                         </label>
                     </div>
                 </div>
 
                 <div>
-                    <x-input-label value="Description (Optional)" />
-                    <textarea name="description" rows="3" class="mt-1 input" placeholder="Technical specifications or notes...">{{ old('description') }}</textarea>
+                    <x-input-label value="Deskripsi (Opsional)" />
+                    <textarea name="description" rows="3" class="mt-1 input" placeholder="Spesifikasi teknis atau catatan...">{{ old('description') }}</textarea>
                 </div>
 
                 <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-100 dark:border-gray-700">
                     <a href="{{ route('inventory.index') }}" class="px-6 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">
-                        Cancel
+                        Batal
                     </a>
                     <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-2.5 rounded-xl font-bold transition-all shadow-sm transform ">
-                        Create Product
+                        Tambah Barang
                     </button>
                 </div>
             </form>

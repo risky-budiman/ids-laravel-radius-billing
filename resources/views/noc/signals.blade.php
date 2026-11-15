@@ -7,7 +7,7 @@
                 </a>
                 <div>
                     <h2 class="font-bold text-2xl text-gray-900 dark:text-white tracking-tight">
-                        Optical Signal Monitoring
+                        Pemantauan Sinyal Optik
                     </h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Pantau kualitas redaman (Optical Power) pelanggan secara real-time via SNMP.</p>
                 </div>
@@ -70,12 +70,12 @@
                         <table class="w-full text-left">
                             <thead>
                                 <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
-                                    <th class="px-8 py-5 text-xs text-gray-400">Customer</th>
-                                    <th class="px-8 py-5 text-xs text-gray-400">OLT Source</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400">Pelanggan</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400">OLT Sumber</th>
                                     <th class="px-8 py-5 text-xs text-gray-400">ONU Index</th>
-                                    <th class="px-8 py-5 text-xs text-gray-400">RX Power (OLT)</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400">Daya RX (OLT)</th>
                                     <th class="px-8 py-5 text-xs text-gray-400">Status</th>
-                                    <th class="px-8 py-5 text-xs text-gray-400 text-right">Action</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400 text-right">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -127,7 +127,7 @@
                                         <td class="px-8 py-5 text-right">
                                             <a href="{{ route('noc.history', $customer->id) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                                                History
+                                                Riwayat
                                             </a>
                                         </td>
                                     </tr>

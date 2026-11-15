@@ -13,7 +13,7 @@
                     
                     <div>
                         <x-input-label value="Nama Pajak (Contoh: PPN 12%)" />
-                        <x-text-input name="name" class="mt-1 w-full" required placeholder="e.g. PPN Jasa Internet" />
+                        <x-text-input name="name" class="mt-1 w-full" required placeholder="mis. PPN Jasa Internet" />
                     </div>
 
                     <div class="grid grid-cols-2 gap-6">

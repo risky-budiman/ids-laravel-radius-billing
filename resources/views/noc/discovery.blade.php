@@ -7,7 +7,7 @@
                 </a>
                 <div>
                     <h2 class="font-bold text-2xl text-gray-900 dark:text-white tracking-tight">
-                        ONU Auto Discovery
+                        Deteksi ONU Otomatis
                     </h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Mencari perangkat modem (ONT) baru di jaringan PON.</p>
                 </div>
@@ -56,11 +56,11 @@
                         <table class="w-full text-left">
                             <thead>
                                 <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
-                                    <th class="px-8 py-5 text-xs text-gray-400">Source OLT</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400">OLT Sumber</th>
                                     <th class="px-8 py-5 text-xs text-gray-400">Position</th>
-                                    <th class="px-8 py-5 text-xs text-gray-400">Serial Number</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400">Nomor Seri</th>
                                     <th class="px-8 py-5 text-xs text-gray-400">Discovery Mode</th>
-                                    <th class="px-8 py-5 text-xs text-gray-400 text-right">Actions</th>
+                                    <th class="px-8 py-5 text-xs text-gray-400 text-right">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -87,11 +87,11 @@
                                             <span class="font-mono font-bold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-lg" x-text="onu.sn"></span>
                                         </td>
                                         <td class="px-8 py-5">
-                                            <span class="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded">SNMP Auto-Scan</span>
+                                            <span class="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded">Pindai Otomatis SNMP</span>
                                         </td>
                                         <td class="px-8 py-5 text-right">
                                             <a :href="'{{ route('customers.create') }}?sn=' + onu.sn + '&olt_id=' + onu.olt_id + '&pos=' + onu.full_index + '&onu_type=' + (onu.type || 'ALL')" class="inline-flex items-center px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs rounded-xl transition-all shadow-sm">
-                                                Register
+                                                Daftar
                                             </a>
                                         </td>
                                     </tr>

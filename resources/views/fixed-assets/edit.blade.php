@@ -16,34 +16,34 @@
             @method('PUT')
             
             <div class="glass bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-100 dark:border-gray-700">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-6">Edit Details</h3>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-6">Ubah Rincian</h3>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2">
-                        <x-input-label for="name" value="Asset Name" />
+                        <x-input-label for="name" value="Nama Aset" />
                         <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" value="{{ $fixedAsset->name }}" required />
                     </div>
 
                     <div>
-                        <x-input-label for="useful_life_months" value="Useful Life (Months)" />
+                        <x-input-label for="useful_life_months" value="Masa Manfaat (Bulan)" />
                         <x-text-input id="useful_life_months" name="useful_life_months" type="number" min="1" class="mt-1 block w-full" value="{{ $fixedAsset->useful_life_months }}" required />
                     </div>
 
                     <div>
-                        <x-input-label for="salvage_value" value="Salvage Value (Rp)" />
+                        <x-input-label for="salvage_value" value="Nilai Sisa (Rp)" />
                         <x-text-input id="salvage_value" name="salvage_value" type="number" min="0" class="mt-1 block w-full" value="{{ (int)$fixedAsset->salvage_value }}" required />
                     </div>
 
                     <div>
                         <x-input-label for="status" value="Status" />
                         <select name="status" id="status" class="mt-1 input" required>
-                            <option value="active" {{ $fixedAsset->status === 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="active" {{ $fixedAsset->status === 'active' ? 'selected' : '' }}>Aktif</option>
                             <option value="disposed" {{ $fixedAsset->status === 'disposed' ? 'selected' : '' }}>Disposed / Sold</option>
                         </select>
                     </div>
 
                     <div class="md:col-span-2">
-                        <x-input-label for="description" value="Notes" />
+                        <x-input-label for="description" value="Catatan" />
                         <textarea id="description" name="description" class="mt-1 input" rows="3">{{ $fixedAsset->description }}</textarea>
                     </div>
                 </div>
@@ -51,10 +51,10 @@
 
             <div class="flex justify-end gap-4">
                 <a href="{{ route('fixed-assets.index') }}" class="px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
-                    Cancel
+                    Batal
                 </a>
                 <button type="submit" class="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-sm">
-                    Update Asset
+                    Perbarui Aset
                 </button>
             </div>
         </form>

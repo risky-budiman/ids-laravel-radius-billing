@@ -36,7 +36,7 @@
                             </select>
                             @if($user->id === auth()->id())
                                 <input type="hidden" name="role" value="{{ $user->role }}">
-                                <p class="mt-2 text-xs text-amber-600">You cannot change your own root role here.</p>
+                                <p class="mt-2 text-xs text-amber-600">Anda tidak bisa mengubah peran akun Anda sendiri di sini.</p>
                             @endif
                             <x-input-error :messages="$errors->get('role')" class="mt-2" />
                         </div>
@@ -48,30 +48,30 @@
                                     <input type="checkbox" name="is_sales" value="1" class="sr-only peer" {{ $user->is_sales || $user->role === 'sales' ? 'checked' : '' }}>
                                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
                                 </div>
-                                <span class="ml-3 text-sm font-bold text-gray-700 dark:text-gray-300 ">Enable Sales Functionality</span>
+                                <span class="ml-3 text-sm font-bold text-gray-700 dark:text-gray-300 ">Aktifkan Fungsi Sales</span>
                             </label>
-                            <p class="mt-2 text-xs text-gray-400 leading-tight">If enabled, this user can be selected as a Sales Referral for new customers and earn commissions, regardless of their primary role.</p>
+                            <p class="mt-2 text-xs text-gray-400 leading-tight">Bila aktif, pengguna ini bisa dipilih sebagai referal sales untuk pelanggan baru dan mendapat komisi, apa pun perannya.</p>
                         </div>
 
                         <!-- Partner Fields (Conditional) -->
                         <div id="partner_fields" class="{{ $user->role === 'mitra' ? '' : 'hidden' }} p-6 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-xl border border-emerald-100 dark:border-emerald-800/30 space-y-4">
                             <div class="flex items-center space-x-2 text-emerald-600 dark:text-emerald-400 mb-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                <span class="text-xs font-semibold ">Partner Configuration</span>
+                                <span class="text-xs font-semibold ">Konfigurasi Mitra</span>
                             </div>
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <x-input-label for="commission_rate" value="{{ __('Default Commission Rate') }}" class="font-bold text-xs  text-gray-400 mb-2" />
                                     <x-text-input id="commission_rate" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-emerald-500" type="number" step="0.01" name="commission_rate" :value="old('commission_rate', $user->commission_rate)" />
-                                    <p class="mt-1 text-xs text-gray-400">Default rate for this partner.</p>
+                                    <p class="mt-1 text-xs text-gray-400">Tarif default untuk mitra ini.</p>
                                 </div>
 
                                 <div>
                                     <x-input-label for="commission_type" value="{{ __('Commission Type') }}" class="font-bold text-xs  text-gray-400 mb-2" />
                                     <select id="commission_type" name="commission_type" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:border-emerald-500 focus:ring-emerald-500 shadow-sm transition-all">
                                         <option value="percentage" {{ old('commission_type', $user->commission_type) == 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
-                                        <option value="fixed" {{ old('commission_type', $user->commission_type) == 'fixed' ? 'selected' : '' }}>Fixed Amount (Rp)</option>
+                                        <option value="fixed" {{ old('commission_type', $user->commission_type) == 'fixed' ? 'selected' : '' }}>Nominal Tetap (Rp)</option>
                                     </select>
                                 </div>
 
@@ -106,7 +106,7 @@
                         <div class="p-6 bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700 space-y-4">
                             <div class="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400 mb-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                                <span class="text-xs font-semibold ">Password Reset (Optional)</span>
+                                <span class="text-xs font-semibold ">Atur Ulang Kata Sandi (Opsional)</span>
                             </div>
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -121,7 +121,7 @@
                                     <x-text-input id="password_confirmation" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-indigo-500" type="password" name="password_confirmation" autocomplete="new-password" />
                                 </div>
                             </div>
-                            <p class="text-xs text-gray-400">Leave blank if you don't want to change the password.</p>
+                            <p class="text-xs text-gray-400">Kosongkan bila tidak ingin mengganti kata sandi.</p>
                         </div>
 
                         <div class="flex items-center justify-end mt-10 pt-6 border-t border-gray-50 dark:border-gray-700">

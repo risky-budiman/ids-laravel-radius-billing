@@ -5,7 +5,7 @@
                 {{ __('Purchase Orders') }}
             </h2>
             <a href="{{ route('purchase-orders.create') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm shadow-indigo-500/30">
-                + Create PO
+                + Buat PO
             </a>
         </div>
     </x-slot>
@@ -21,10 +21,10 @@
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
                     <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">PO Number</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Supplier</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Amount</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nomor PO</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tanggal</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pemasok</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                     </tr>
                 </thead>
@@ -52,7 +52,7 @@
                     @empty
                         <tr>
                             <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                                No Purchase Orders found.
+                                Belum ada pesanan pembelian.
                             </td>
                         </tr>
                     @endforelse

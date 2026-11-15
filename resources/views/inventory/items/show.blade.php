@@ -11,7 +11,7 @@
             </div>
             <div class="flex space-x-3">
                 <a href="{{ route('inventory.stock-in', ['item_id' => $item->id]) }}" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">
-                    Restock Item
+                    Tambah Stok
                 </a>
             </div>
         </div>
@@ -27,15 +27,15 @@
                 
                 <div class="space-y-4">
                     <div>
-                        <p class="text-xs text-gray-400 font-semibold tracking-widest">Category</p>
+                        <p class="text-xs text-gray-400 font-semibold tracking-widest">Kategori</p>
                         <p class="text-gray-900 dark:text-white font-bold">{{ $item->category->name }}</p>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-400 font-semibold tracking-widest">SKU Number</p>
+                        <p class="text-xs text-gray-400 font-semibold tracking-widest">Nomor SKU</p>
                         <p class="text-gray-700 dark:text-gray-300 font-mono text-sm uppercase">{{ $item->sku ?? 'NO-SKU' }}</p>
                     </div>
                     <div class="pt-4 border-t border-gray-100 dark:border-gray-700">
-                        <p class="text-xs text-gray-400 font-semibold tracking-widest">Description</p>
+                        <p class="text-xs text-gray-400 font-semibold tracking-widest">Deskripsi</p>
                         <p class="text-gray-600 dark:text-gray-400 text-xs leading-relaxed mt-1">{{ $item->description ?? 'No description provided for this product.' }}</p>
                     </div>
                 </div>
@@ -43,13 +43,13 @@
 
             <!-- Current Status Stats -->
             <div class="glass bg-white dark:bg-gray-800 p-8 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm text-center">
-                <p class="text-xs text-gray-400 font-semibold tracking-widest">Current Inventory</p>
+                <p class="text-xs text-gray-400 font-semibold tracking-widest">Stok Saat Ini</p>
                 <h3 class="text-5xl font-semibold text-indigo-600 mt-2">{{ $item->stock_count }}</h3>
                 <p class="text-xs text-gray-500 font-bold uppercase mt-1">{{ $item->unit }} Available</p>
                 
                 <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-around">
                     <div>
-                        <p class="text-xs text-gray-400">Min Stock</p>
+                        <p class="text-xs text-gray-400">Stok Min.</p>
                         <p class="font-bold text-gray-900 dark:text-white">{{ $item->min_stock }}</p>
                     </div>
                     <div>
@@ -74,7 +74,7 @@
                         <thead>
                             <tr class="text-xs text-gray-400 font-bold border-b border-gray-100 dark:border-gray-700">
                                 <th class="px-8 py-4 text-left">#</th>
-                                <th class="px-8 py-4">Serial Number / MAC</th>
+                                <th class="px-8 py-4">Nomor Seri / MAC</th>
                                 <th class="px-8 py-4">Condition</th>
                                 <th class="px-8 py-4">Status</th>
                                 <th class="px-8 py-4">Installed At</th>
@@ -112,7 +112,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-8 py-12 text-center text-gray-400 italic font-medium">No units tracked for this item.</td>
+                                    <td colspan="4" class="px-8 py-12 text-center text-gray-400 italic font-medium">Belum ada unit tercatat untuk barang ini.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -124,7 +124,7 @@
             <!-- Movement Log -->
             <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                 <div class="px-8 py-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50">
-                    <h3 class="font-semibold text-xs  text-gray-800 dark:text-gray-200">Stock Mutation History</h3>
+                    <h3 class="font-semibold text-xs  text-gray-800 dark:text-gray-200">Riwayat Mutasi Stok</h3>
                 </div>
                 <div class="px-8 py-6 space-y-6">
                     @forelse($item->movements as $movement)
@@ -159,7 +159,7 @@
                             </div>
                         </div>
                     @empty
-                        <p class="py-6 text-center text-gray-400 italic font-medium">No movement history for this item.</p>
+                        <p class="py-6 text-center text-gray-400 italic font-medium">Belum ada mutasi untuk barang ini.</p>
                     @endforelse
                 </div>
             </div>

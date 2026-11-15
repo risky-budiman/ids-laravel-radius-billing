@@ -30,7 +30,7 @@
             </button>
         </div>
         @else
-            <span class="text-xs text-gray-400 italic">View Only</span>
+            <span class="text-xs text-gray-400 italic">Hanya Lihat</span>
         @endif
     </td>
 </tr>

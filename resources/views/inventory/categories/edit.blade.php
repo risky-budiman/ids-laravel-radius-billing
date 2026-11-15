@@ -14,8 +14,8 @@
         <div class="glass bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="bg-amber-500 px-8 py-6 text-white relative overflow-hidden">
                 <div class="absolute right-0 top-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-                <h3 class="font-bold text-xl relative z-10">Update Category</h3>
-                <p class="text-amber-100 text-sm relative z-10">Modify category name or description.</p>
+                <h3 class="font-bold text-xl relative z-10">Perbarui Kategori</h3>
+                <p class="text-amber-100 text-sm relative z-10">Ubah nama atau deskripsi kategori.</p>
             </div>
 
             <form action="{{ route('inventory.category.update', $category) }}" method="POST" class="p-8 space-y-6">
@@ -23,22 +23,22 @@
                 @method('PUT')
                 
                 <div>
-                    <x-input-label value="Category Name" />
+                    <x-input-label value="Nama Kategori" />
                     <x-text-input name="name" :value="old('name') ?? $category->name" required class="mt-1 w-full" />
                     <x-input-error :messages="$errors->get('name')" class="mt-1" />
                 </div>
 
                 <div>
-                    <x-input-label value="Description" />
+                    <x-input-label value="Deskripsi" />
                     <textarea name="description" rows="4" class="mt-1 input">{{ old('description') ?? $category->description }}</textarea>
                 </div>
 
                 <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-100 dark:border-gray-700">
                     <a href="{{ route('inventory.categories') }}" class="px-6 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">
-                        Cancel
+                        Batal
                     </a>
                     <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white px-10 py-2.5 rounded-xl font-bold transition-all shadow-sm transform ">
-                        Update Category
+                        Perbarui Kategori
                     </button>
                 </div>
             </form>

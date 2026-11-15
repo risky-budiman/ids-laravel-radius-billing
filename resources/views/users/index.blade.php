@@ -6,7 +6,7 @@
             </h2>
             <a href="{{ route('users.create') }}" class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-xl font-bold text-xs text-white  hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                Add New Staff
+                Tambah Staf
             </a>
         </div>
     </x-slot>
@@ -20,12 +20,12 @@
                             <thead>
                                 <tr class="border-b border-gray-100 dark:border-gray-700">
                                     <th class="px-6 py-4 text-xs font-semibold text-gray-400 ">#</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 ">User Profile</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400  text-center">Role</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 ">Profil Pengguna</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400  text-center">Peran</th>
                                     <th class="px-6 py-4 text-xs font-semibold text-gray-400  text-center">Status</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400  text-center">Login Devices</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400  text-center">Last Active</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400  text-center">Actions</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400  text-center">Perangkat Login</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400  text-center">Terakhir Aktif</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400  text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
@@ -60,11 +60,11 @@
                                     <td class="px-6 py-5 text-center">
                                         @if($user->is_active)
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 animate-pulse-slow">
-                                                Active
+                                                Aktif
                                             </span>
                                         @else
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                                                Inactive
+                                                Nonaktif
                                             </span>
                                         @endif
                                     </td>
@@ -94,7 +94,7 @@
 
                                             <form action="{{ route('users.reset-sessions', $user) }}" method="POST" onsubmit="return confirm('Reset all active sessions for this user? They will be logged out from all devices.')">
                                                 @csrf
-                                                <button type="submit" class="p-2 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all shadow-sm border border-transparent hover:border-indigo-200" title="Reset All Sessions">
+                                                <button type="submit" class="p-2 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all shadow-sm border border-transparent hover:border-indigo-200" title="Atur Ulang Semua Sesi">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>
                                                 </button>
                                             </form>

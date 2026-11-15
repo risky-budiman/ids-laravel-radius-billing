@@ -6,17 +6,17 @@
             </h2>
             <div class="flex space-x-3">
                 <a href="{{ route('inventory.stock-in') }}" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">
-                    + Stock In
+                    + Barang Masuk
                 </a>
                 <a href="{{ route('inventory.stock-out') }}" class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">
-                    - Stock Out
+                    - Barang Keluar
                 </a>
                 @if(auth()->user()->isAdmin())
                 <a href="{{ route('inventory.outflow') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold transition-all">
                     Audit Log
                 </a>
                 <a href="{{ route('inventory.create') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">
-                    + New Product
+                    + Barang Baru
                 </a>
                 @endif
             </div>
@@ -27,12 +27,12 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden">
             <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl"></div>
-            <p class="text-xs font-bold text-gray-400 tracking-wider">Total Items</p>
+            <p class="text-xs font-bold text-gray-400 tracking-wider">Total Barang</p>
             <h3 class="text-3xl font-semibold text-gray-900 dark:text-white mt-1">{{ $totalItems }}</h3>
         </div>
         <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden">
             <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl"></div>
-            <p class="text-xs font-bold text-gray-400 tracking-wider">Low Stock Alerts</p>
+            <p class="text-xs font-bold text-gray-400 tracking-wider">Peringatan Stok Menipis</p>
             <h3 class="text-3xl font-semibold text-amber-500 mt-1">{{ $lowStockItems }}</h3>
         </div>
     </div>
@@ -55,12 +55,12 @@
                 <thead>
                     <tr class="bg-gray-50/50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">
                         <th class="px-6 py-4 font-bold">#</th>
-                        <th class="px-6 py-4 font-bold">Product Name</th>
-                        <th class="px-6 py-4 font-bold">Category</th>
+                        <th class="px-6 py-4 font-bold">Nama Barang</th>
+                        <th class="px-6 py-4 font-bold">Kategori</th>
                         <th class="px-6 py-4 font-bold">SKU</th>
-                        <th class="px-6 py-4 font-bold">Curr. Stock</th>
-                        <th class="px-6 py-4 font-bold">Min. Stock</th>
-                        <th class="px-6 py-4 font-bold text-right">Actions</th>
+                        <th class="px-6 py-4 font-bold">Stok Kini</th>
+                        <th class="px-6 py-4 font-bold">Stok Min.</th>
+                        <th class="px-6 py-4 font-bold text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -102,15 +102,15 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center space-x-3">
-                                    <a href="{{ route('inventory.show', $item) }}" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold" title="View Details">Details</a>
+                                    <a href="{{ route('inventory.show', $item) }}" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold" title="Lihat Rincian">Rincian</a>
                                     
                                     @if(auth()->user()->isAdministrator())
-                                        <a href="{{ route('inventory.edit', $item) }}" class="text-amber-500 hover:text-amber-700 text-xs font-bold" title="Edit Product">Edit</a>
+                                        <a href="{{ route('inventory.edit', $item) }}" class="text-amber-500 hover:text-amber-700 text-xs font-bold" title="Ubah Barang">Ubah</a>
                                         
                                         <form action="{{ route('inventory.destroy', $item) }}" method="POST" onsubmit="return confirm('Delete this product?')" class="inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-bold" title="Delete Product">Delete</button>
+                                            <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-bold" title="Hapus Barang">Hapus</button>
                                         </form>
                                     @endif
                                 </div>
@@ -118,7 +118,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-gray-500 italic">No products found.</td>
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500 italic">Belum ada barang.</td>
                         </tr>
                     @endforelse
                 </tbody>

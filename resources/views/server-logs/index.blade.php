@@ -11,7 +11,7 @@
                     <h2 class="font-bold text-2xl text-gray-900 dark:text-white leading-tight">
                         {{ __('System & Server Logs') }}
                     </h2>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">MikroTik-style system package manager, auto-updater, and live syslog</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Pengelola paket sistem, pembaruan otomatis, dan syslog langsung</p>
                 </div>
             </div>
 
@@ -24,7 +24,7 @@
                     @method('DELETE')
                     <button type="submit" class="inline-flex items-center px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-xl font-bold text-xs  transition-all shadow-sm shadow-rose-500/30">
                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        Clear Syslog
+                        Bersihkan Syslog
                     </button>
                 </form>
             </div>
@@ -53,14 +53,14 @@
             <div class="px-6 py-4 bg-slate-900 text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div class="flex items-center space-x-3">
                     <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 font-mono">
-                        System Package
+                        Paket Sistem
                     </span>
-                    <span class="font-bold text-sm tracking-wide">RouterOS-Style Auto Upgrade</span>
+                    <span class="font-bold text-sm tracking-wide">Pembaruan Otomatis</span>
                 </div>
                 <div class="text-xs text-gray-400 font-mono flex items-center space-x-2">
                     <span>Channel: <strong class="text-white">main (stable)</strong></span>
                     <span class="text-gray-600">•</span>
-                    <span>Last Checked: <strong class="text-indigo-300" x-text="lastChecked || 'Not checked yet'"></strong></span>
+                    <span>Terakhir dicek: <strong class="text-indigo-300" x-text="lastChecked || 'Not checked yet'"></strong></span>
                 </div>
             </div>
 
@@ -78,14 +78,14 @@
 
                     <!-- Latest Available Version -->
                     <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
-                        <span class="block text-xs text-gray-400 mb-1">Latest on Remote</span>
+                        <span class="block text-xs text-gray-400 mb-1">Terbaru di Server Git</span>
                         <div class="flex items-baseline space-x-2">
                             <template x-if="isChecking">
                                 <span class="text-sm font-bold text-indigo-600 animate-pulse">Checking remote...</span>
                             </template>
                             <template x-if="!isChecking">
                                 <span class="text-xl font-semibold font-mono" :class="isUpdateAvailable ? 'text-amber-500' : 'text-emerald-500'" x-text="remoteCommit ? (isUpdateAvailable ? 'Update Ready' : 'Up to Date') : 'Unknown'">
-                                    Up to Date
+                                    Terbaru
                                 </span>
                             </template>
                         </div>
@@ -97,7 +97,7 @@
                         <div class="flex items-center space-x-2 mt-1">
                             <div class="w-2.5 h-2.5 rounded-full" :class="isUpdateAvailable ? 'bg-amber-500 animate-ping' : 'bg-emerald-500'"></div>
                             <span class="text-xs font-bold font-mono" :class="isUpdateAvailable ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'" x-text="statusMessage">
-                                System is up to date
+                                Sistem sudah versi terbaru
                             </span>
                         </div>
                     </div>
@@ -143,7 +143,7 @@
 
                 <!-- Expandable Commits List -->
                 <div x-show="showCommits" x-collapse class="mt-4 p-4 bg-gray-900 text-gray-300 rounded-xl border border-gray-800 text-xs font-mono space-y-1.5 overflow-x-auto">
-                    <span class="block text-xs text-gray-500 font-bold tracking-wider mb-2">Recent Commits / What's New:</span>
+                    <span class="block text-xs text-gray-500 font-bold tracking-wider mb-2">Perubahan Terbaru:</span>
                     <template x-for="commit in newCommits" :key="commit">
                         <div class="flex items-center space-x-2 text-emerald-400">
                             <span>•</span>
@@ -170,7 +170,7 @@
                 <div class="flex items-center space-x-3 text-xs">
                     <button onclick="window.location.reload()" class="px-2.5 py-1 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-300 transition-colors font-mono flex items-center">
                         <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                        Refresh Logs
+                        Muat Ulang Log
                     </button>
                 </div>
             </div>
@@ -178,7 +178,7 @@
             <!-- Terminal Body -->
             <div class="p-6 bg-slate-950 text-gray-300 overflow-x-auto overflow-y-auto font-mono text-xs leading-relaxed" style="max-height: 65vh;" id="log-container">
                 @if(empty(trim($logs)))
-                    <div class="text-gray-600 italic py-8 text-center">Log file is currently empty.</div>
+                    <div class="text-gray-600 italic py-8 text-center">File log masih kosong.</div>
                 @else
                     <pre class="font-mono text-emerald-400 whitespace-pre-wrap break-all select-text leading-5">{{ $logs }}</pre>
                 @endif
@@ -207,7 +207,7 @@
                         <template x-if="isUpdating">
                             <div class="flex items-center text-xs text-indigo-400 font-mono animate-pulse">
                                 <svg class="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                <span>Running upgrade steps, please wait...</span>
+                                <span>Menjalankan pembaruan, mohon tunggu...</span>
                             </div>
                         </template>
 

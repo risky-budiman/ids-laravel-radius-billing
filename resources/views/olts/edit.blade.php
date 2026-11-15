@@ -14,36 +14,36 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Basic Info Section -->
                     <div class="md:col-span-2">
-                        <h3 class="text-sm font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">Basic Information</h3>
+                        <h3 class="text-sm font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">Informasi Dasar</h3>
                     </div>
 
                     <div class="space-y-2">
-                        <label for="name" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">OLT Name</label>
-                        <input type="text" name="name" id="name" value="{{ old('name', $olt->name) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="e.g. OLT STO JKT-01" required>
+                        <label for="name" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Nama OLT</label>
+                        <input type="text" name="name" id="name" value="{{ old('name', $olt->name) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="mis. OLT STO JKT-01" required>
                         @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="space-y-2">
-                        <label for="olt_type" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">OLT Type</label>
+                        <label for="olt_type" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Tipe OLT</label>
                         <select name="olt_type" id="olt_type" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
                             <option value="HSGQ_EPON" {{ $olt->olt_type == 'HSGQ_EPON' ? 'selected' : '' }}>HSGQ EPON (E04ID / E08L / Generic)</option>
                             <option value="ZTE_C320" {{ $olt->olt_type == 'ZTE_C320' ? 'selected' : '' }}>ZTE ZXA10 C320</option>
                             <option value="ZTE_C300" {{ $olt->olt_type == 'ZTE_C300' ? 'selected' : '' }}>ZTE ZXA10 C300</option>
                             <option value="HIOSO" {{ $olt->olt_type == 'HIOSO' ? 'selected' : '' }}>Hioso (Generic)</option>
-                            <option value="OTHER" {{ $olt->olt_type == 'OTHER' ? 'selected' : '' }}>Other / Generic</option>
+                            <option value="OTHER" {{ $olt->olt_type == 'OTHER' ? 'selected' : '' }}>Lainnya / Umum</option>
                         </select>
                         @error('olt_type') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="space-y-2">
-                        <label for="ip_address" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Management IP Address</label>
+                        <label for="ip_address" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Alamat IP Manajemen</label>
                         <input type="text" name="ip_address" id="ip_address" value="{{ old('ip_address', $olt->ip_address) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="10.10.10.2" required>
                         @error('ip_address') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="space-y-2">
-                        <label for="description" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Description / Location</label>
-                        <input type="text" name="description" id="description" value="{{ old('description', $olt->description) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="Optional notes">
+                        <label for="description" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Deskripsi / Lokasi</label>
+                        <input type="text" name="description" id="description" value="{{ old('description', $olt->description) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="Catatan opsional">
                     </div>
 
                     <div class="space-y-2">
@@ -90,11 +90,11 @@
 
                     <!-- CLI / Telnet Section (Optional) -->
                     <div class="md:col-span-2 mt-4">
-                        <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">CLI / Telnet Configuration (Optional - For Provisioning only)</h3>
+                        <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">Konfigurasi CLI / Telnet (Opsional, hanya untuk provisioning)</h3>
                     </div>
 
                     <div class="space-y-2">
-                        <label for="telnet_port" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Telnet Port (Optional)</label>
+                        <label for="telnet_port" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Port Telnet (Opsional)</label>
                         <input type="number" name="telnet_port" id="telnet_port" value="{{ old('telnet_port', $olt->telnet_port) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
                         @error('telnet_port') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
@@ -106,23 +106,23 @@
 
                     <div class="space-y-2">
                         <label for="password" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Login Password</label>
-                        <input type="password" name="password" id="password" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="Leave blank to keep current">
+                        <input type="password" name="password" id="password" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="Kosongkan untuk tetap memakai yang lama">
                     </div>
 
                     <div class="space-y-2">
                         <label for="enable_password" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Enable Password</label>
-                        <input type="password" name="enable_password" id="enable_password" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="Leave blank to keep current">
+                        <input type="password" name="enable_password" id="enable_password" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="Kosongkan untuk tetap memakai yang lama">
                     </div>
 
                     <div class="flex items-center space-x-3 mt-4">
                         <input type="checkbox" name="is_active" id="is_active" value="1" {{ old('is_active', $olt->is_active) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                        <label for="is_active" class="text-sm font-semibold text-gray-700 dark:text-gray-300">Enable Device</label>
+                        <label for="is_active" class="text-sm font-semibold text-gray-700 dark:text-gray-300">Aktifkan Perangkat</label>
                     </div>
                 </div>
 
                 <div class="mt-10 flex justify-end space-x-4 border-t border-gray-100 dark:border-gray-700 pt-6">
-                    <a href="{{ route('olts.index') }}" class="px-6 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 transition-all">Cancel</a>
-                    <button type="submit" class="px-10 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-sm transition-all">Update OLT Device</button>
+                    <a href="{{ route('olts.index') }}" class="px-6 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 transition-all">Batal</a>
+                    <button type="submit" class="px-10 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-sm transition-all">Perbarui Perangkat OLT</button>
                 </div>
             </form>
 
@@ -130,7 +130,7 @@
                 <form action="{{ route('olts.destroy', $olt->id) }}" method="POST" onsubmit="return confirm('WARNING: Are you sure you want to delete this OLT? This will NOT delete subscribers but will break their OLT link.');">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="text-red-500 text-xs font-bold uppercase hover:underline">Delete Device Permanently</button>
+                    <button type="submit" class="text-red-500 text-xs font-bold uppercase hover:underline">Hapus Perangkat Permanen</button>
                 </form>
             </div>
         </div>

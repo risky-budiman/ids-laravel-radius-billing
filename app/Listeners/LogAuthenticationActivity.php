@@ -41,8 +41,8 @@ class LogAuthenticationActivity
         } else {
             $userId = $user->id;
             $description = $action === 'login'
-                ? "User {$user->name} logged into the system"
-                : "User {$user->name} logged out of the system";
+                ? "Pengguna {$user->name} masuk ke sistem"
+                : "Pengguna {$user->name} keluar dari sistem";
         }
 
         ActivityLog::create([

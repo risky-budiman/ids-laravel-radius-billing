@@ -63,7 +63,7 @@
             <div class="flex items-center space-x-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
                 <button @click="activeTab = 'summary'" :class="activeTab === 'summary' ? 'bg-primary-600 text-white font-medium shadow-sm' : 'bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 text-surface-600 dark:text-surface-300 font-medium hover:bg-surface-50'" class="px-3.5 py-2 rounded-lg text-sm transition-colors shrink-0 flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    <span>1. Tax Summary Report</span>
+                    <span>1. Ringkasan Pajak</span>
                 </button>
 
                 <button @click="activeTab = 'history'" :class="activeTab === 'history' ? 'bg-primary-600 text-white font-medium shadow-sm' : 'bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 text-surface-600 dark:text-surface-300 font-medium hover:bg-surface-50'" class="px-3.5 py-2 rounded-lg text-sm transition-colors shrink-0 flex items-center gap-2">
@@ -256,7 +256,7 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 text-right space-x-2">
-                                            <a href="{{ route('accounting.taxes.edit', $tax) }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 font-bold text-xs ">Edit</a>
+                                            <a href="{{ route('accounting.taxes.edit', $tax) }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 font-bold text-xs ">Ubah</a>
                                             <form action="{{ route('accounting.taxes.destroy', $tax) }}" method="POST" class="inline">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="text-rose-500 hover:text-rose-700 font-bold text-xs " onclick="return confirm('Hapus pajak ini?')">Hapus</button>

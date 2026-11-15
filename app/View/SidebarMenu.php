@@ -48,58 +48,58 @@ class SidebarMenu
         ]];
 
         // ---- Network Operations
-        $sections[] = ['label' => 'Network Operations', 'items' => self::when($isTeknisi || $isAdministrator, [
+        $sections[] = ['label' => 'Operasional Jaringan', 'items' => self::when($isTeknisi || $isAdministrator, [
             self::group('NOC Center', 'chart-bar', [
-                self::link('Network Overview', 'noc.index'),
-                self::link('Optical Signals', 'noc.signals', null, ['noc.signals', 'noc.history']),
-                self::link('Mass Discovery', 'noc.discovery'),
+                self::link('Ringkasan Jaringan', 'noc.index'),
+                self::link('Sinyal Optik', 'noc.signals', null, ['noc.signals', 'noc.history']),
+                self::link('Pencarian ONU Massal', 'noc.discovery'),
             ]),
-            self::link('OLT Master', 'olts.index', 'server', ['olts.*']),
+            self::link('Data OLT', 'olts.index', 'server', ['olts.*']),
             self::link('GenieACS', 'acs-servers.devices', 'chip', ['acs-servers.devices', 'acs-servers.device-details']),
         ])];
 
         // ---- Management
         $management = [];
         if ($isSales) {
-            $management[] = self::link('Sales Dashboard', 'sales.dashboard', 'bolt');
-            $management[] = self::link('My Referrals', 'sales.customers', 'users');
-            $management[] = self::link('My Wallet / Ledger', 'sales.ledger', 'cash');
+            $management[] = self::link('Dashboard Sales', 'sales.dashboard', 'bolt');
+            $management[] = self::link('Referal Saya', 'sales.customers', 'users');
+            $management[] = self::link('Dompet & Mutasi Saya', 'sales.ledger', 'cash');
         }
         if ($isAdmin || $isSales || $isTeknisi) {
-            $management[] = self::link('Subscribers', 'customers.index', 'users', [
+            $management[] = self::link('Pelanggan', 'customers.index', 'users', [
                 'customers.index', 'customers.create', 'customers.edit', 'customers.show',
                 'customers.import.*', 'customers.activate', 'customers.dismantle',
             ]);
         }
         if (get_setting('enable_partner_module') == '1' && ($isAdmin || $isMitra)) {
             $management[] = $isMitra
-                ? self::link('Partners & Resellers', 'partners.show', 'user-group', ['partners.*'], [$u->id])
-                : self::link('Partners & Resellers', 'partners.index', 'user-group', ['partners.*']);
+                ? self::link('Mitra & Reseller', 'partners.show', 'user-group', ['partners.*'], [$u->id])
+                : self::link('Mitra & Reseller', 'partners.index', 'user-group', ['partners.*']);
         }
         if ($isAdministrator) {
-            $management[] = self::link('Packages', 'packages.index', 'cube', ['packages.*']);
-            $management[] = self::link('Routers (NAS)', 'nas.index', 'server', ['nas.*']);
+            $management[] = self::link('Paket', 'packages.index', 'cube', ['packages.*']);
+            $management[] = self::link('Router (NAS)', 'nas.index', 'server', ['nas.*']);
         }
         if ($isAdmin || $isTeknisi || $isSales) {
-            $management[] = self::link('Tickets', 'tickets.index', 'ticket', ['tickets.index', 'tickets.create', 'tickets.show', 'tickets.edit']);
+            $management[] = self::link('Tiket', 'tickets.index', 'ticket', ['tickets.index', 'tickets.create', 'tickets.show', 'tickets.edit']);
         }
         if ($isAdmin) {
             $management[] = self::link('Rekap Tiket', 'tickets.recap', 'chart-bar', ['tickets.recap*']);
         }
-        $sections[] = ['label' => 'Management', 'items' => $management];
+        $sections[] = ['label' => 'Manajemen', 'items' => $management];
 
         // ---- Billing & Status
         $billing = [];
         if ($isAdmin || $isKasir) {
-            $billing[] = self::link('Invoices', 'invoices.index', 'document', ['invoices.*']);
+            $billing[] = self::link('Invoice', 'invoices.index', 'document', ['invoices.*']);
             $billing[] = self::link('Piutang', 'receivables.index', 'receipt', ['receivables.*']);
-            $billing[] = self::link('Invoice Builder', 'invoice-templates.index', 'template', ['invoice-templates.*']);
+            $billing[] = self::link('Desain Invoice', 'invoice-templates.index', 'template', ['invoice-templates.*']);
         }
         if ($isAdmin || $isTeknisi) {
-            $billing[] = self::link('Online Users', 'online-users.index', 'signal', ['online-users.*']);
-            $billing[] = self::link('Auth Logs', 'auth-logs.index', 'shield-check', ['auth-logs.*']);
+            $billing[] = self::link('Pengguna Online', 'online-users.index', 'signal', ['online-users.*']);
+            $billing[] = self::link('Log Autentikasi', 'auth-logs.index', 'shield-check', ['auth-logs.*']);
         }
-        $sections[] = ['label' => 'Billing & Status', 'items' => $billing];
+        $sections[] = ['label' => 'Tagihan & Status', 'items' => $billing];
 
         // ---- Finance & Accounting
         $finance = [];
@@ -109,52 +109,52 @@ class SidebarMenu
         }
         // Route accounting.* hanya untuk administrator & admin.
         if ($isAdmin) {
-            $finance[] = self::link('Chart of Accounts', 'accounting.coa.index', 'book', ['accounting.coa.*']);
+            $finance[] = self::link('Bagan Akun (COA)', 'accounting.coa.index', 'book', ['accounting.coa.*']);
             $finance[] = self::group('Laporan Keuangan', 'presentation', [
-                self::link('General Ledger', 'accounting.journals.index', null, ['accounting.journals.*']),
-                self::link('Profit & Loss', 'accounting.reports.profit-loss'),
-                self::link('Balance Sheet', 'accounting.reports.balance-sheet'),
-                self::link('Cash Flow', 'accounting.reports.cash-flow'),
+                self::link('Jurnal Umum', 'accounting.journals.index', null, ['accounting.journals.*']),
+                self::link('Laba Rugi', 'accounting.reports.profit-loss'),
+                self::link('Neraca', 'accounting.reports.balance-sheet'),
+                self::link('Arus Kas', 'accounting.reports.cash-flow'),
                 self::link('Pusat Pajak PPN', 'accounting.taxes.index', null, ['accounting.taxes.*', 'accounting.reports.tax-summary', 'accounting.tax-settings*']),
-                self::link('Closing Period', 'accounting.closing.index', null, ['accounting.closing*']),
+                self::link('Tutup Buku', 'accounting.closing.index', null, ['accounting.closing*']),
             ]);
-            $finance[] = self::link('Sales Force Ledger', 'sales-commissions.index', 'cash', ['sales-commissions.*']);
+            $finance[] = self::link('Komisi Sales', 'sales-commissions.index', 'cash', ['sales-commissions.*']);
         }
-        $sections[] = ['label' => 'Finance & Accounting', 'items' => $finance];
+        $sections[] = ['label' => 'Keuangan & Akuntansi', 'items' => $finance];
 
         // ---- Inventory & Assets
-        $sections[] = ['label' => 'Inventory & Assets', 'items' => self::when($isAdmin || $isTeknisi, [
-            self::group('Warehouse', 'archive', [
-                self::link('Product Stock', 'inventory.index', null, ['inventory.index', 'inventory.show', 'inventory.create', 'inventory.edit']),
-                self::link('Suppliers', 'suppliers.index', null, ['suppliers.*']),
-                self::link('Purchase Orders', 'purchase-orders.index', null, ['purchase-orders.*']),
-                self::link('Categories', 'inventory.categories'),
-                self::link('Stock In', 'inventory.stock-in'),
-                self::link('Issue Item (Out)', 'inventory.stock-out'),
-                self::link('Audit Outflow', 'inventory.outflow'),
+        $sections[] = ['label' => 'Inventaris & Aset', 'items' => self::when($isAdmin || $isTeknisi, [
+            self::group('Gudang', 'archive', [
+                self::link('Stok Barang', 'inventory.index', null, ['inventory.index', 'inventory.show', 'inventory.create', 'inventory.edit']),
+                self::link('Pemasok', 'suppliers.index', null, ['suppliers.*']),
+                self::link('Pesanan Pembelian (PO)', 'purchase-orders.index', null, ['purchase-orders.*']),
+                self::link('Kategori Barang', 'inventory.categories'),
+                self::link('Barang Masuk', 'inventory.stock-in'),
+                self::link('Barang Keluar', 'inventory.stock-out'),
+                self::link('Audit Barang Keluar', 'inventory.outflow'),
             ]),
-            self::link('Fixed Assets', 'fixed-assets.index', 'office', ['fixed-assets.*']),
-            self::link('Customer Maps', 'customers.map', 'map'),
+            self::link('Aset Tetap', 'fixed-assets.index', 'office', ['fixed-assets.*']),
+            self::link('Peta Pelanggan', 'customers.map', 'map'),
         ])];
 
         // ---- Administrator only
         if ($isAdministrator) {
-            $sections[] = ['label' => 'Settings & Security', 'items' => [
-                self::link('Manage Staff', 'users.index', 'user-cog', ['users.*']),
+            $sections[] = ['label' => 'Pengaturan & Keamanan', 'items' => [
+                self::link('Kelola Staf', 'users.index', 'user-cog', ['users.*']),
                 self::link('Pengaturan Isolir', 'settings.isolation', 'shield-check', ['settings.isolation*']),
                 self::group('Data Master', 'globe', [
-                    self::link('Regional Data', 'locations.regions'),
-                    self::link('STO Data', 'locations.stos'),
-                    self::link('STB Data', 'locations.stbs'),
-                    self::link('ODC Data', 'locations.odcs'),
-                    self::link('ODP Data', 'locations.odps'),
-                    self::link('System Settings', 'settings.index', null, ['settings.index', 'settings.update', 'settings.company*']),
+                    self::link('Data Wilayah', 'locations.regions'),
+                    self::link('Data STO', 'locations.stos'),
+                    self::link('Data STB', 'locations.stbs'),
+                    self::link('Data ODC', 'locations.odcs'),
+                    self::link('Data ODP', 'locations.odps'),
+                    self::link('Pengaturan Sistem', 'settings.index', null, ['settings.index', 'settings.update', 'settings.company*']),
                 ]),
-                self::group('Integrations', 'puzzle', [
-                    self::link('Payment Gateways', 'integrations.payment'),
+                self::group('Integrasi', 'puzzle', [
+                    self::link('Payment Gateway', 'integrations.payment'),
                     self::link('WhatsApp Gateway', 'integrations.whatsapp'),
-                    self::link('GenieACS Servers', 'acs-servers.index', null, ['acs-servers.index', 'acs-servers.create', 'acs-servers.edit']),
-                    self::link('NOC Bot Integration', 'integrations.noc-bot'),
+                    self::link('Server GenieACS', 'acs-servers.index', null, ['acs-servers.index', 'acs-servers.create', 'acs-servers.edit']),
+                    self::link('Bot NOC', 'integrations.noc-bot'),
                 ]),
             ]];
 
@@ -164,18 +164,18 @@ class SidebarMenu
                 self::link('Riwayat Pesan', 'whatsapp-logs.index', 'inbox', ['whatsapp-logs.*']),
             ]];
 
-            $sections[] = ['label' => 'System Audit', 'items' => [
-                self::link('Activity Logs', 'activity-logs.index', 'clock', ['activity-logs.*']),
-                self::link('System & Logs', 'server-logs.index', 'terminal', ['server-logs.*'], [], 'Update'),
+            $sections[] = ['label' => 'Audit Sistem', 'items' => [
+                self::link('Log Aktivitas', 'activity-logs.index', 'clock', ['activity-logs.*']),
+                self::link('Sistem & Log', 'server-logs.index', 'terminal', ['server-logs.*'], [], 'Pembaruan'),
             ]];
         }
 
         // ---- Application
-        $app = [self::link('App Changelog', 'changelog.index', 'book-open', ['changelog.*'])];
+        $app = [self::link('Catatan Rilis', 'changelog.index', 'book-open', ['changelog.*'])];
         if ($isAdministrator) {
             $app[] = self::link('Backup & Restore', 'backup.index', 'database', ['backup.*']);
         }
-        $sections[] = ['label' => 'Application', 'items' => $app];
+        $sections[] = ['label' => 'Aplikasi', 'items' => $app];
 
         return self::finalize($sections);
     }

@@ -31,7 +31,7 @@
                         <label class="relative flex items-start p-6 border-2 rounded-xl cursor-pointer transition-all {{ $taxMode === 'individual' ? 'border-indigo-600 bg-indigo-50/30 dark:bg-indigo-900/10' : 'border-gray-100 dark:border-gray-700 hover:border-indigo-200' }}">
                             <input type="radio" name="tax_mode" value="individual" class="mt-1 h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-600" {{ $taxMode === 'individual' ? 'checked' : '' }}>
                             <div class="ml-4">
-                                <span class="block text-sm font-semibold text-gray-900 dark:text-white ">Per-Pelanggan (Optional)</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-white ">Per-Pelanggan (Opsional)</span>
                                 <span class="block text-xs text-gray-500 mt-1">PPN hanya akan diterapkan jika opsi "Kenakan Pajak" diaktifkan pada profil masing-masing pelanggan.</span>
                             </div>
                         </label>

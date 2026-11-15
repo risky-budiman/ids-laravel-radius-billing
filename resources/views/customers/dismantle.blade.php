@@ -52,12 +52,12 @@
                 <div class="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 p-4 rounded-xl flex items-start">
                     <svg class="w-5 h-5 text-amber-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                     <div class="text-xs text-amber-700 dark:text-amber-500 leading-relaxed font-medium">
-                        <strong>Perhatian:</strong> Dengan memproses dismantle, status pelanggan akan berubah menjadi non-aktif dan perangkat yang dipilih akan kembali ke inventaris gudang dengan status <strong>Dismantled</strong>.
+                        <strong>Perhatian:</strong> Dengan memproses dismantle, status pelanggan akan berubah menjadi non-aktif dan perangkat yang dipilih akan kembali ke inventaris gudang dengan status <strong>Dicabut</strong>.
                     </div>
                 </div>
 
                 <div class="flex justify-end pt-4 space-x-3 border-t border-gray-100 dark:border-gray-700">
-                    <a href="{{ route('customers.show', $customer) }}" class="px-6 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">Cancel</a>
+                    <a href="{{ route('customers.show', $customer) }}" class="px-6 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">Batal</a>
                     <button type="submit" 
                         class="bg-rose-600 hover:bg-rose-700 text-white px-10 py-3 rounded-xl text-sm font-bold shadow-sm transition-all transform ">
                         Proses Penarikan Barang (Dismantle)

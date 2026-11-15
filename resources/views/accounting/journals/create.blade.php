@@ -37,7 +37,7 @@
                         <!-- Status Balance Card -->
                         <div :class="isBalanced ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-800' : 'bg-rose-50 border-rose-100 dark:bg-rose-900/10 dark:border-rose-800'" class="rounded-xl p-6 border transition-colors">
                             <div class="flex items-center justify-between mb-4">
-                                <h3 :class="isBalanced ? 'text-emerald-900 dark:text-emerald-400' : 'text-rose-900 dark:text-rose-400'" class="font-bold">Status Balance</h3>
+                                <h3 :class="isBalanced ? 'text-emerald-900 dark:text-emerald-400' : 'text-rose-900 dark:text-rose-400'" class="font-bold">Status Saldo</h3>
                                 <template x-if="isBalanced">
                                     <svg class="w-6 h-6 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
                                 </template>

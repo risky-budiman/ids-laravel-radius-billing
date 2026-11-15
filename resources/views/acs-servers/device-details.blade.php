@@ -5,25 +5,25 @@
                 <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5 font-semibold">
                     <a href="{{ route('acs-servers.devices') }}" class="hover:text-indigo-600 dark:hover:text-indigo-400">ONT Management</a>
                     <span>/</span>
-                    <span class="text-indigo-500 dark:text-indigo-400">Device Details</span>
+                    <span class="text-indigo-500 dark:text-indigo-400">Rincian Perangkat</span>
                 </div>
                 <h2 class="font-semibold text-3xl text-gray-800 dark:text-gray-100 tracking-tight leading-none">
                     {{ $device['_id'] ?? 'Unknown Device' }}
                 </h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">Configure and diagnose subscriber customer premises equipment via TR-069 protocol</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">Atur dan diagnosis perangkat pelanggan (CPE) lewat protokol TR-069</p>
             </div>
             
             <div class="flex flex-wrap items-center gap-3">
                 <a href="javascript:history.back()" class="px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold hover:bg-gray-50 dark:hover:bg-gray-700/50 shadow-sm transition-all flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    Back to List
+                    Kembali ke Daftar
                 </a>
                 <a href="{{ route('acs-servers.show-device', ['deviceId' => $deviceId, 'server_id' => $server->id]) }}" target="_blank" class="px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400 rounded-xl text-xs font-bold hover:bg-indigo-50 dark:hover:bg-indigo-950/30 shadow-sm transition-all">
-                    View Raw JSON
+                    Lihat JSON Mentah
                 </a>
                 <button onclick="window.location.reload()" class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-sm flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5"></path></svg>
-                    Refresh View
+                    Muat Ulang
                 </button>
             </div>
         </div>
@@ -47,10 +47,10 @@
         @if(isset($error))
             <div class="p-8 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-md text-center max-w-lg mx-auto">
                 <svg class="w-12 h-12 text-rose-500 mx-auto mb-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">Connection Failed</h3>
+                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">Koneksi Gagal</h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">{{ $error }}</p>
                 <a href="javascript:history.back()" class="inline-flex px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-indigo-500/10">
-                    Return to Devices List
+                    Kembali ke Daftar Perangkat
                 </a>
             </div>
         @endif
@@ -152,13 +152,13 @@
             <!-- Modern Tabs Selector -->
             <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none flex flex-wrap gap-2">
                 <button onclick="switchTab('tab-overview')" id="btn-tab-overview" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md shadow-indigo-500/10 transition-all">
-                    System Overview
+                    Ringkasan Sistem
                 </button>
                 <button onclick="switchTab('tab-diagnostics')" id="btn-tab-diagnostics" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-all">
                     Diagnostics & Clients
                 </button>
                 <button onclick="switchTab('tab-wan')" id="btn-tab-wan" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-all">
-                    WAN Settings
+                    Pengaturan WAN
                 </button>
                 <button onclick="switchTab('tab-wireless')" id="btn-tab-wireless" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-all">
                     Wi-Fi Configuration
@@ -171,11 +171,11 @@
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none">
                     <h3 class="text-base font-extrabold text-gray-800 dark:text-gray-100 mb-5 flex items-center gap-2">
                         <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
-                        Device Identity
+                        Identitas Perangkat
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Serial Number</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Nomor Seri</p>
                             <p class="text-sm font-mono text-indigo-600 dark:text-indigo-400 font-extrabold">{{ $serial }}</p>
                         </div>
                         <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
@@ -187,7 +187,7 @@
                             <p class="text-sm font-bold text-gray-700 dark:text-gray-300">{{ $manufacturer }}</p>
                         </div>
                         <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Last Inform</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Inform Terakhir</p>
                             <p class="text-xs text-gray-600 dark:text-gray-400 font-semibold truncate">
                                 {{ isset($device['_lastInform']) ? \Carbon\Carbon::parse($device['_lastInform'])->diffForHumans() : 'Unknown' }}
                                 <span class="text-xs block text-gray-400 dark:text-gray-500 font-mono mt-0.5">{{ $device['_lastInform'] ?? '' }}</span>
@@ -221,7 +221,7 @@
                             </p>
                         </div>
                         <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold mb-1">Device Uptime</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold mb-1">Waktu Aktif Perangkat</p>
                             <p class="text-xs font-bold text-gray-700 dark:text-gray-300">
                                 @php
                                     $uptimeSeconds = $device['InternetGatewayDevice']['DeviceInfo']['UpTime']['_value']
@@ -257,11 +257,11 @@
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none">
                     <h3 class="text-base font-extrabold text-gray-800 dark:text-gray-100 mb-5 flex items-center gap-2">
                         <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
-                        Optical Transceiver Diagnostics (GPON/EPON)
+                        Diagnostik Transceiver Optik (GPON/EPON)
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Rx Optical Power</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Daya Optik Rx</p>
                             @if($rxPower !== null)
                                 @php
                                     $colorClass = 'text-green-600 dark:text-green-400';
@@ -279,7 +279,7 @@
                             @endif
                         </div>
                         <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Tx Optical Power</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Daya Optik Tx</p>
                             @if($txPower !== null)
                                 <p class="text-base font-mono font-extrabold text-indigo-600 dark:text-indigo-400">
                                     {{ number_format($txPower, 2) }} dBm
@@ -299,7 +299,7 @@
                             @endif
                         </div>
                         <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Laser Bias Current</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Arus Bias Laser</p>
                             @if($bias !== null)
                                 <p class="text-base font-mono font-extrabold text-gray-750 dark:text-gray-300">
                                     {{ number_format($bias, 2) }} mA
@@ -322,7 +322,7 @@
                         <div class="flex justify-between items-center mb-5">
                             <h3 class="text-base font-extrabold text-gray-800 dark:text-gray-100 flex items-center gap-2">
                                 <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
-                                Active WLAN Hosts
+                                Perangkat WLAN Aktif
                             </h3>
                             <span class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 rounded-lg text-xs font-extrabold">
                                 {{ $hostCount }} Connected
@@ -346,7 +346,7 @@
                                             </p>
                                             <p class="text-xs font-mono text-gray-400 mt-0.5">{{ $host['IPAddress']['_value'] ?? 'No IP' }} • {{ $host['MACAddress']['_value'] ?? 'No MAC' }}</p>
                                         </div>
-                                        <span class="text-xs px-2 py-0.5 bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 rounded-md border border-green-100/30">Active</span>
+                                        <span class="text-xs px-2 py-0.5 bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 rounded-md border border-green-100/30">Aktif</span>
                                     </div>
                                 @endif
                             @endfor
@@ -354,7 +354,7 @@
                             @if(!$foundHosts)
                                 <div class="text-center py-8">
                                     <svg class="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                    <p class="text-xs text-gray-400 italic">No connected clients details found.</p>
+                                    <p class="text-xs text-gray-400 italic">Tidak ada perangkat terhubung.</p>
                                 </div>
                             @endif
                         </div>
@@ -364,7 +364,7 @@
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none">
                         <h3 class="text-base font-extrabold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
                             <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
-                            Pending Queue Tasks
+                            Antrean Tugas
                         </h3>
                         <div class="space-y-3">
                             @forelse($tasks ?? [] as $task)
@@ -373,12 +373,12 @@
                                         <p class="text-xs font-extrabold text-amber-800 dark:text-amber-400 uppercase tracking-wide">{{ $task['name'] }}</p>
                                         <p class="text-xs text-amber-600/80 dark:text-amber-500/80 mt-0.5">Queued {{ \Carbon\Carbon::parse($task['timestamp'])->diffForHumans() }}</p>
                                     </div>
-                                    <span class="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 rounded text-xs font-extrabold border border-amber-200/20">Pending</span>
+                                    <span class="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 rounded text-xs font-extrabold border border-amber-200/20">Menunggu</span>
                                 </div>
                             @empty
                                 <div class="text-center py-6">
                                     <svg class="w-8 h-8 text-green-400/80 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <p class="text-xs text-gray-400 dark:text-gray-500 italic">No tasks queued. Device is in sync.</p>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 italic">Tidak ada antrean. Perangkat sudah sinkron.</p>
                                 </div>
                             @endforelse
                         </div>
@@ -410,7 +410,7 @@
                             <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
                             Detected WAN Interfaces ({{ count($wanList) }})
                         </h3>
-                        <span class="text-xs text-gray-400 font-medium">TR-069 WAN Data Model</span>
+                        <span class="text-xs text-gray-400 font-medium">Model Data WAN TR-069</span>
                     </div>
 
                     @if(!empty($wanList))
@@ -443,11 +443,11 @@
                                             <span class="font-mono font-extrabold text-indigo-600 dark:text-indigo-400">{{ $c['vlan_id'] ?? 'Untagged' }}</span>
                                         </div>
                                         <div class="flex justify-between py-1 border-b border-gray-200/40 dark:border-gray-800/40">
-                                            <span class="text-gray-400 text-[11px]">IP Address:</span>
+                                            <span class="text-gray-400 text-[11px]">Alamat IP:</span>
                                             <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ $c['ip'] ?: 'No IP' }}</span>
                                         </div>
                                         <div class="flex justify-between py-1">
-                                            <span class="text-gray-400 text-[11px]">Service Type:</span>
+                                            <span class="text-gray-400 text-[11px]">Tipe Layanan:</span>
                                             <span class="font-semibold text-gray-600 dark:text-gray-300">{{ $c['service_list'] }}</span>
                                         </div>
                                     </div>
@@ -519,7 +519,7 @@
                             <!-- Target WAN Interface Selector -->
                             <div class="lg:col-span-2">
                                 <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-                                    Target WAN Interface
+                                    Interface WAN Tujuan
                                 </label>
                                 <select name="wan_path" x-model="selectedPath" @change="onWanChange()" class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm font-semibold outline-none transition-all dark:text-gray-200">
                                     @foreach($wanList as $c)
@@ -528,7 +528,7 @@
                                         </option>
                                     @endforeach
                                     @if(empty($wanList))
-                                        <option value="">(Default WAN Connection)</option>
+                                        <option value="">(Koneksi WAN Default)</option>
                                     @endif
                                 </select>
                                 <p class="text-[11px] text-gray-400 mt-1">Saat memilih interface, semua isian formulir di bawah otomatis menyesuaikan dengan data interface tersebut.</p>
@@ -546,7 +546,7 @@
                                         <option value="0">🔴 Tidak Aktif (Disabled)</option>
                                     </select>
                                 </div>
-                                <p class="text-[11px] text-gray-400 mt-1">Mengontrol parameter <code class="font-mono text-xs text-indigo-500">Enable</code> koneksi WAN.</p>
+                                <p class="text-[11px] text-gray-400 mt-1">Mengontrol parameter <code class="font-mono text-xs text-indigo-500">Aktifkan</code> koneksi WAN.</p>
                             </div>
                         </div>
 
@@ -632,7 +632,7 @@
                                 <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">NAT Status</label>
                                 <select name="nat_enabled" x-model="natEnabled" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm font-semibold outline-none transition-all dark:text-gray-200">
                                     <option value="1">Enabled (Disarankan)</option>
-                                    <option value="0">Disabled</option>
+                                    <option value="0">Nonaktif</option>
                                 </select>
                                 <p class="text-[11px] text-gray-400 mt-1">Network Address Translation untuk koneksi WAN Internet.</p>
                             </div>
@@ -643,7 +643,7 @@
                             <div>
                                 <h4 class="text-xs font-extrabold text-gray-700 dark:text-gray-200 uppercase tracking-wider flex items-center gap-2">
                                     <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-                                    Bind Interface Local (Port Binding)
+                                    Binding Interface Lokal (Port)
                                 </h4>
                                 <p class="text-[11px] text-gray-400 mt-0.5">Pilih port LAN fisik dan Wireless SSID mana saja yang dibinding langsung ke interface WAN ini.</p>
                             </div>
@@ -652,7 +652,7 @@
                                 <!-- LAN Ports Binding -->
                                 <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700/80">
                                     <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                                        <span>🔌</span> Ethernet LAN Ports
+                                        <span>🔌</span> Port LAN Ethernet
                                     </p>
                                     <div class="grid grid-cols-2 gap-2.5">
                                         <template x-for="port in [1, 2, 3, 4]" :key="'lan' + port">
@@ -704,7 +704,7 @@
                                 <span x-text="submitting ? 'Mengirim ke ONT (GenieACS)...' : 'Push Konfigurasi PPPoE ke ONT'"></span>
                             </button>
                             <span class="text-[11px] text-gray-400 text-center sm:text-right">
-                                Direct RPC: Flash Save ONT + Wakeup Connection Request
+                                RPC Langsung: Simpan ke ONT + Connection Request
                             </span>
                         </div>
                     </form>
@@ -737,7 +737,7 @@
                             @if($wlanEnabled === '1' || $wlanEnabled === true || $wlanEnabled === 'true')
                                 <span class="px-2.5 py-1 bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 rounded-lg text-xs font-extrabold border border-green-100/20 flex items-center gap-1.5">
                                     <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                                    SSID Active
+                                    SSID Aktif
                                 </span>
                             @else
                                 <span class="px-2.5 py-1 bg-gray-50 dark:bg-gray-900 text-gray-400 rounded-lg text-xs font-extrabold border border-gray-100/30">
@@ -748,7 +748,7 @@
 
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                             <div class="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                                <p class="text-xs text-gray-400 dark:text-gray-500 font-bold mb-0.5">Active SSID Name</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 font-bold mb-0.5">Nama SSID Aktif</p>
                                 <p class="text-xs font-extrabold text-indigo-600 dark:text-indigo-400">{{ $ssid }}</p>
                             </div>
                             <div class="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
@@ -772,7 +772,7 @@
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Change SSID Name</label>
+                                    <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Ubah Nama SSID</label>
                                     <input type="text" name="wifi_ssid" value="{{ $ssid }}" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm outline-none transition-all dark:text-gray-200">
                                 </div>
                                 <div>
@@ -784,7 +784,7 @@
                             <div class="pt-2">
                                 <button type="submit" class="w-full md:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition-all shadow-md shadow-indigo-500/10 flex items-center justify-center gap-2 ">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                                    Save
+                                    Simpan
                                 </button>
                             </div>
                         </form>
@@ -797,7 +797,7 @@
         <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none mt-6">
             <h3 class="text-base font-extrabold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
                 <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
-                Quick Actions
+                Aksi Cepat
             </h3>
             <div class="flex flex-wrap gap-3">
                 <form action="{{ route('acs-servers.reboot', ['deviceId' => $deviceId]) }}" method="POST" class="inline">

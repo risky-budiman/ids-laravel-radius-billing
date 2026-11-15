@@ -6,7 +6,7 @@
             </h2>
             <a href="{{ route('sales-commissions.index') }}" class="text-sm font-bold text-gray-500 hover:text-indigo-600 transition-colors flex items-center">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Back to List
+                Kembali ke Daftar
             </a>
         </div>
     </x-slot>
@@ -22,18 +22,18 @@
                 <p class="text-sm text-gray-500 mb-6">{{ $sales->email }}</p>
 
                 <div class="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800 mb-6">
-                    <p class="text-xs font-bold text-slate-400 mb-1">Available Balance</p>
+                    <p class="text-xs font-bold text-slate-400 mb-1">Saldo Tersedia</p>
                     <h4 class="text-3xl font-semibold text-emerald-600">Rp {{ number_format($balance, 0, ',', '.') }}</h4>
                 </div>
 
                 <!-- Withdrawal Form -->
                 <div class="text-left">
-                    <h4 class="text-xs font-bold text-gray-900 dark:text-white mb-4  border-b pb-2">Process Withdrawal</h4>
+                    <h4 class="text-xs font-bold text-gray-900 dark:text-white mb-4  border-b pb-2">Proses Penarikan</h4>
                     <form action="{{ route('sales-commissions.withdrawals.store', $sales) }}" method="POST" class="space-y-4">
                         @csrf
                         <div>
                             <x-input-label for="amount" :value="__('Withdrawal Amount (Rp)')" />
-                            <x-text-input id="amount" name="amount" type="number" class="mt-1 block w-full" placeholder="e.g. 50000" required />
+                            <x-text-input id="amount" name="amount" type="number" class="mt-1 block w-full" placeholder="mis. 50000" required />
                             <x-input-error class="mt-2" :messages="$errors->get('amount')" />
                         </div>
 
@@ -49,7 +49,7 @@
 
                         <div>
                             <x-input-label for="reference_number" :value="__('Reference / Receipt #')" />
-                            <x-text-input id="reference_number" name="reference_number" type="text" class="mt-1 block w-full" placeholder="Optional" />
+                            <x-text-input id="reference_number" name="reference_number" type="text" class="mt-1 block w-full" placeholder="Opsional" />
                         </div>
 
                         <x-primary-button class="w-full justify-center py-3">
@@ -67,21 +67,21 @@
                 <div class="border-b border-gray-100 dark:border-gray-700 px-8 py-4 bg-slate-50/50 dark:bg-slate-900/50">
                     <h3 class="text-sm font-bold text-gray-900 dark:text-white  flex items-center">
                         <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Transaction History
+                        Riwayat Transaksi
                     </h3>
                 </div>
 
                 <!-- Earnings History -->
                 <div class="p-8">
-                    <h4 class="text-xs font-semibold text-slate-400  mb-4">Earnings (Commissions)</h4>
+                    <h4 class="text-xs font-semibold text-slate-400  mb-4">Pendapatan (Komisi)</h4>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="text-xs text-gray-400 border-b">
-                                    <th class="pb-3 uppercase">Date</th>
-                                    <th class="pb-3 uppercase">Source (Customer)</th>
+                                    <th class="pb-3 uppercase">Tanggal</th>
+                                    <th class="pb-3 uppercase">Sumber (Pelanggan)</th>
                                     <th class="pb-3 uppercase">Invoice</th>
-                                    <th class="pb-3 uppercase text-right">Amount</th>
+                                    <th class="pb-3 uppercase text-right">Jumlah</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700 text-sm">
@@ -97,7 +97,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="py-8 text-center text-gray-500 italic">No earnings recorded yet.</td>
+                                    <td colspan="4" class="py-8 text-center text-gray-500 italic">Belum ada pendapatan.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -109,13 +109,13 @@
                 </div>
 
                 <div class="border-t border-gray-100 dark:border-gray-700 p-8">
-                    <h4 class="text-xs font-semibold text-slate-400  mb-4">Managed Customers (Referrals)</h4>
+                    <h4 class="text-xs font-semibold text-slate-400  mb-4">Pelanggan Referal</h4>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="text-xs text-gray-400 border-b">
-                                    <th class="pb-3 uppercase">Customer</th>
-                                    <th class="pb-3 uppercase">Package</th>
+                                    <th class="pb-3 uppercase">Pelanggan</th>
+                                    <th class="pb-3 uppercase">Paket</th>
                                     <th class="pb-3 uppercase text-center">Status</th>
                                     <th class="pb-3 uppercase text-right">Registered</th>
                                 </tr>
@@ -134,7 +134,7 @@
                                     </td>
                                     <td class="py-4 text-center">
                                         @if($cust->is_active)
-                                            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded text-xs">ACTIVE</span>
+                                            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded text-xs">AKTIF</span>
                                         @else
                                             <span class="px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 rounded text-xs">OFF</span>
                                         @endif
@@ -145,7 +145,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="py-8 text-center text-gray-500 italic">No customers found for this staff.</td>
+                                    <td colspan="4" class="py-8 text-center text-gray-500 italic">Belum ada pelanggan untuk staf ini.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -157,15 +157,15 @@
                 </div>
 
                 <div class="border-t border-gray-100 dark:border-gray-700 p-8">
-                    <h4 class="text-xs font-semibold text-slate-400  mb-4">Withdrawals & Settlements</h4>
+                    <h4 class="text-xs font-semibold text-slate-400  mb-4">Penarikan & Pelunasan</h4>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="text-xs text-gray-400 border-b">
-                                    <th class="pb-3 uppercase">Date</th>
-                                    <th class="pb-3 uppercase">Method / Bank</th>
+                                    <th class="pb-3 uppercase">Tanggal</th>
+                                    <th class="pb-3 uppercase">Metode / Bank</th>
                                     <th class="pb-3 uppercase">Ref #</th>
-                                    <th class="pb-3 uppercase text-right">Amount</th>
+                                    <th class="pb-3 uppercase text-right">Jumlah</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700 text-sm">
@@ -181,7 +181,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="py-8 text-center text-gray-500 italic">No withdrawals recorded yet.</td>
+                                    <td colspan="4" class="py-8 text-center text-gray-500 italic">Belum ada penarikan.</td>
                                 </tr>
                                 @endforelse
                             </tbody>

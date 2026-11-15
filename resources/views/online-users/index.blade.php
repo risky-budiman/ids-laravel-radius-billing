@@ -20,7 +20,7 @@
 
     <div class="card overflow-hidden">
         <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">Live Connections Monitor</h3>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">Pemantauan Koneksi Langsung</h3>
             
             <div class="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl shadow-inner">
                 <a href="{{ route('online-users.index', ['status' => 'online']) }}" 
@@ -42,12 +42,12 @@
                     <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Username</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">IP Address</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">MAC Address</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Alamat IP</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Alamat MAC</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">NAS / Router</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Traffic (IN/OUT)</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Durasi</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Trafik (Masuk/Keluar)</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -71,7 +71,7 @@
                                 {{-- Primary Action: Try Disconnect via CoA --}}
                                 <form action="{{ route('online-users.kick', $session->radacctid) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-4 py-2 rounded-xl text-xs transition-all" title="Send CoA Disconnect Signal to Router">
+                                    <button type="submit" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-4 py-2 rounded-xl text-xs transition-all" title="Kirim Sinyal Putus (CoA) ke Router">
                                         Disconnect
                                     </button>
                                 </form>
@@ -80,15 +80,15 @@
                                 <form action="{{ route('online-users.kick', $session->radacctid) }}" method="POST" onsubmit="return confirm('WARNING: Force Close will stop this session in DB WITHOUT disconnecting the user from the router. This may lead to inconsistency. Continue?')">
                                     @csrf
                                     <input type="hidden" name="force" value="1">
-                                    <button type="submit" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2 rounded-xl text-xs transition-all" title="Manual Force Close in Database">
-                                        Force Close
+                                    <button type="submit" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2 rounded-xl text-xs transition-all" title="Tutup Paksa di Database">
+                                        Tutup Paksa
                                     </button>
                                 </form>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">No active dial-in sessions found.</td>
+                            <td colspan="7" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">Tidak ada sesi aktif.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -100,9 +100,9 @@
                     <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Username</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer Name</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Phone / Contact</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Package</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama Pelanggan</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">HP / Kontak</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Paket</th>
                         <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status Indicator</th>
                     </tr>
                 </thead>
@@ -124,7 +124,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">All registered subscribers are currently Online!</td>
+                            <td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">Semua pelanggan terdaftar sedang online!</td>
                         </tr>
                     @endforelse
                 </tbody>

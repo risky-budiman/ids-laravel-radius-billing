@@ -44,7 +44,7 @@
 
                     <div class="flex justify-end pt-4 space-x-3">
                         <a href="{{ route('accounting.taxes.index') }}" class="px-6 py-2 text-sm font-medium text-gray-500 hover:text-gray-700">Batal</a>
-                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-2 rounded-xl text-sm font-bold shadow-sm transition-all">Update Pajak</button>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-2 rounded-xl text-sm font-bold shadow-sm transition-all">Perbarui Pajak</button>
                     </div>
                 </form>
             </div>

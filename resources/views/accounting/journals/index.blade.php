@@ -306,7 +306,7 @@
                         @if(request()->anyFilled(['search', 'billing_code', 'billing_name', 'type', 'account_id', 'date_from', 'date_to']) && request('type') !== 'all')
                             <a href="{{ route('accounting.journals.index') }}" 
                                 class="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
-                                Reset Filter
+                                Atur Ulang Filter
                             </a>
                         @endif
                         <button type="submit" 

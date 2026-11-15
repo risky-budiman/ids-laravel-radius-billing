@@ -14,8 +14,8 @@
         <div class="glass bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="bg-amber-500 px-8 py-6 text-white relative overflow-hidden">
                 <div class="absolute right-0 top-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-                <h3 class="font-bold text-xl relative z-10">Update Information</h3>
-                <p class="text-amber-100 text-sm relative z-10">Modify product specifications and stock alerts.</p>
+                <h3 class="font-bold text-xl relative z-10">Perbarui Informasi</h3>
+                <p class="text-amber-100 text-sm relative z-10">Ubah spesifikasi barang dan peringatan stok.</p>
             </div>
 
             <form action="{{ route('inventory.update', $item) }}" method="POST" class="p-8 space-y-6">
@@ -24,7 +24,7 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2">
-                        <x-input-label value="Product Category" />
+                        <x-input-label value="Kategori Barang" />
                         <select name="category_id" required class="mt-1 input">
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}" {{ (old('category_id') ?? $item->category_id) == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
@@ -34,7 +34,7 @@
                     </div>
 
                     <div class="md:col-span-2">
-                        <x-input-label value="Product Name" />
+                        <x-input-label value="Nama Barang" />
                         <x-text-input name="name" :value="old('name') ?? $item->name" required class="mt-1 w-full" />
                         <x-input-error :messages="$errors->get('name')" class="mt-1" />
                     </div>
@@ -46,7 +46,7 @@
                     </div>
 
                     <div>
-                        <x-input-label value="Unit of Measurement" />
+                        <x-input-label value="Satuan" />
                         <select name="unit" class="mt-1 input">
                             @foreach(['pcs', 'meters', 'unit', 'roll'] as $u)
                                 <option value="{{ $u }}" {{ (old('unit') ?? $item->unit) == $u ? 'selected' : '' }}>{{ $u }}</option>
@@ -56,7 +56,7 @@
                     </div>
 
                     <div>
-                        <x-input-label value="Minimum Stock Alert" />
+                        <x-input-label value="Peringatan Stok Minimum" />
                         <x-text-input name="min_stock" type="number" :value="old('min_stock') ?? $item->min_stock" required class="mt-1 w-full" />
                         <x-input-error :messages="$errors->get('min_stock')" class="mt-1" />
                     </div>
@@ -64,22 +64,22 @@
                     <div class="flex items-center pt-6">
                         <label class="inline-flex items-center cursor-pointer">
                             <input type="checkbox" name="track_serial" value="1" {{ (old('track_serial') ?? $item->track_serial) ? 'checked' : '' }} class="rounded-lg border-gray-300 text-amber-600 shadow-sm focus:ring-amber-500 w-5 h-5">
-                            <span class="ml-3 text-sm font-bold text-gray-700 dark:text-gray-300">Track Serial Numbers</span>
+                            <span class="ml-3 text-sm font-bold text-gray-700 dark:text-gray-300">Lacak Nomor Seri</span>
                         </label>
                     </div>
                 </div>
 
                 <div>
-                    <x-input-label value="Description (Optional)" />
+                    <x-input-label value="Deskripsi (Opsional)" />
                     <textarea name="description" rows="3" class="mt-1 input">{{ old('description') ?? $item->description }}</textarea>
                 </div>
 
                 <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-100 dark:border-gray-700">
                     <a href="{{ route('inventory.index') }}" class="px-6 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">
-                        Cancel
+                        Batal
                     </a>
                     <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white px-10 py-2.5 rounded-xl font-bold transition-all shadow-sm transform ">
-                        Update Product
+                        Perbarui Barang
                     </button>
                 </div>
             </form>

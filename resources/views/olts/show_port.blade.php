@@ -15,7 +15,7 @@
             <div class="flex space-x-2">
                 <button @click="window.dispatchEvent(new CustomEvent('sync-onu-live'))" class="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm flex items-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    <span>Sync Live Data</span>
+                    <span>Sinkron Data Langsung</span>
                 </button>
             </div>
         </div>
@@ -36,7 +36,7 @@
                 <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400" x-text="onus.length"></span>
             </div>
             <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                <span class="block text-xs text-gray-400 uppercase font-bold mb-1">Board Type</span>
+                <span class="block text-xs text-gray-400 uppercase font-bold mb-1">Tipe Board</span>
                 <span class="font-bold text-gray-800 dark:text-gray-200">{{ $olt->olt_type }}</span>
             </div>
             <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
@@ -48,7 +48,7 @@
         <!-- ONU List Table -->
         <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
             <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                <h3 class="font-bold text-gray-900 dark:text-white">Registered ONUs on this Port</h3>
+                <h3 class="font-bold text-gray-900 dark:text-white">ONU Terdaftar di Port Ini</h3>
                 
                 <!-- Loading Indicator -->
                 <div class="flex items-center space-x-4">
@@ -57,7 +57,7 @@
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span>Fetching live ONU data...</span>
+                        <span>Mengambil data ONU langsung...</span>
                     </div>
                 </div>
             </div>
@@ -68,13 +68,13 @@
                         <tr class="bg-gray-50 dark:bg-gray-900/50">
                             <th class="p-4 text-xs font-bold text-gray-400 uppercase">Index</th>
                             <th class="p-4 text-xs font-bold text-gray-400 uppercase">Serial / MAC</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">ONU Name</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Description</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Type</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Signal</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Last Reason</th>
+                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Nama ONU</th>
+                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Deskripsi</th>
+                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Tipe</th>
+                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Sinyal</th>
+                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Alasan Terakhir</th>
                             <th class="p-4 text-xs font-bold text-gray-400 uppercase">Status</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Actions</th>
+                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -121,11 +121,11 @@
                                     <template x-if="loading">
                                         <div class="flex flex-col items-center">
                                             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2"></div>
-                                            Scanning ONU list in background... Please wait.
+                                            Memindai daftar ONU di latar belakang... Mohon tunggu.
                                         </div>
                                     </template>
                                     <template x-if="!loading">
-                                        No registered ONUs found on this port.
+                                        Belum ada ONU terdaftar di port ini.
                                     </template>
                                 </td>
                             </tr>
@@ -151,11 +151,11 @@
                             <div class="space-y-4">
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
-                                        <span class="text-xs font-bold text-gray-400 block mb-1">ONU Name</span>
+                                        <span class="text-xs font-bold text-gray-400 block mb-1">Nama ONU</span>
                                         <span class="text-base font-bold text-indigo-600 dark:text-indigo-400" x-text="selectedOnu.name"></span>
                                     </div>
                                     <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
-                                        <span class="text-xs font-bold text-gray-400 block mb-1">Description</span>
+                                        <span class="text-xs font-bold text-gray-400 block mb-1">Deskripsi</span>
                                         <span class="text-base font-bold text-gray-900 dark:text-white" x-text="selectedOnu.description || '-'"></span>
                                     </div>
                                 </div>
@@ -169,19 +169,19 @@
                                         <span class="font-bold uppercase text-xs" :class="['working', 'ready', 'online'].includes((selectedOnu.status || '').toLowerCase()) ? 'text-green-500' : 'text-red-500'" x-text="selectedOnu.status"></span>
                                     </div>
                                     <div>
-                                        <span class="text-xs font-bold text-gray-400 block">Signal</span>
+                                        <span class="text-xs font-bold text-gray-400 block">Sinyal</span>
                                         <span class="font-bold text-gray-900 dark:text-white" x-text="selectedOnu.signal === 'LOST' || selectedOnu.signal === 'N/A' ? 'No Signal' : selectedOnu.signal + ' dBm'"></span>
                                     </div>
                                     <div>
-                                        <span class="text-xs font-bold text-gray-400 block">Last Reason</span>
+                                        <span class="text-xs font-bold text-gray-400 block">Alasan Terakhir</span>
                                         <span class="font-bold text-gray-900 dark:text-white text-xs" x-text="selectedOnu.reason || '-'"></span>
                                     </div>
                                     <div>
-                                        <span class="text-xs font-bold text-gray-400 block">Register Time</span>
+                                        <span class="text-xs font-bold text-gray-400 block">Waktu Daftar</span>
                                         <span class="font-bold text-gray-900 dark:text-white text-xs font-mono" x-text="selectedOnu.reg_time || '-'"></span>
                                     </div>
                                     <div>
-                                        <span class="text-xs font-bold text-gray-400 block">Type</span>
+                                        <span class="text-xs font-bold text-gray-400 block">Tipe</span>
                                         <span class="font-bold text-gray-900 dark:text-white text-xs" x-text="selectedOnu.type"></span>
                                     </div>
                                 </div>

@@ -6,7 +6,7 @@
             </h2>
             <div class="flex items-center gap-2">
                 <a href="{{ route('tickets.edit', $ticket) }}" class="btn-secondary">
-                    Edit tiket
+                    Ubah tiket
                 </a>
                 @if(auth()->user()->isAdministrator())
                     <form action="{{ route('tickets.destroy', $ticket) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tiket ini beserta seluruh riwayat chat secara permanen?');" class="inline">
@@ -60,20 +60,20 @@
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-sm text-gray-500">Created At</p>
+                                    <p class="text-sm text-gray-500">Dibuat</p>
                                     <p class="font-medium text-gray-900 dark:text-white">{{ $ticket->created_at->format('d M Y, H:i') }}</p>
                                 </div>
                             </div>
 
                             <div class="prose dark:prose-invert max-w-none mb-8 bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800">
-                                <h4 class="text-sm font-bold text-gray-400  mb-4">Description</h4>
+                                <h4 class="text-sm font-bold text-gray-400  mb-4">Deskripsi</h4>
                                 <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ $ticket->description }}</p>
                                 
                                 @if($ticket->attachment)
                                     <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                                         <a href="{{ asset('storage/' . $ticket->attachment) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl text-xs font-bold transition-colors">
                                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.415 6.414a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                                            View Original Attachment
+                                            Lihat Lampiran Asli
                                         </a>
                                     </div>
                                 @endif
@@ -81,7 +81,7 @@
 
                             @if($ticket->resolution_notes)
                                 <div class="bg-surface-50/60 dark:bg-surface-800/30 p-6 rounded-xl border border-surface-200 dark:border-surface-800 mb-8">
-                                    <h4 class="text-sm font-bold text-indigo-600 dark:text-indigo-400  mb-4">Resolution Notes</h4>
+                                    <h4 class="text-sm font-bold text-indigo-600 dark:text-indigo-400  mb-4">Catatan Penyelesaian</h4>
                                     <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ $ticket->resolution_notes }}</p>
                                 </div>
                             @endif
@@ -149,7 +149,7 @@
                             }" x-init="initEcho()">
                                 <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center">
                                     <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-                                    Activity Log & Replies
+                                    Riwayat & Balasan
                                 </h4>
                                 
                                 <div id="replies-container" class="space-y-6 mb-8">
@@ -174,7 +174,7 @@
                                                         <div class="mt-4 pt-4 border-t border-gray-50 dark:border-gray-700/50">
                                                             <a href="{{ asset('storage/' . $reply->attachment) }}" target="_blank" class="inline-flex items-center text-xs text-indigo-600 hover:underline">
                                                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.415 6.414a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                                                                View Attachment
+                                                                Lihat Lampiran
                                                             </a>
                                                         </div>
                                                     @endif
@@ -182,7 +182,7 @@
                                             </div>
                                         </div>
                                     @empty
-                                        <p id="empty-replies-msg" class="text-center py-8 text-gray-400 italic text-sm">No replies yet. Be the first to reply.</p>
+                                        <p id="empty-replies-msg" class="text-center py-8 text-gray-400 italic text-sm">Belum ada balasan.</p>
                                     @endforelse
                                 </div>
 
@@ -191,7 +191,7 @@
                                     <form action="{{ route('tickets.reply', $ticket) }}" method="POST" enctype="multipart/form-data">
                                         @csrf
                                         <div class="space-y-4">
-                                            <textarea name="message" rows="4" class="block w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl text-sm transition-all" placeholder="Add a comment or update..." required></textarea>
+                                            <textarea name="message" rows="4" class="block w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl text-sm transition-all" placeholder="Tulis komentar atau perkembangan..." required></textarea>
                                             
                                             <div class="flex items-center justify-between">
                                                 <div class="relative">
@@ -202,7 +202,7 @@
                                                     </label>
                                                 </div>
                                                 <x-primary-button type="submit" class="rounded-xl">
-                                                    Post Reply
+                                                    Kirim Balasan
                                                 </x-primary-button>
                                             </div>
                                         </div>
@@ -221,7 +221,7 @@
                             
                             <div class="space-y-4">
                                 <div>
-                                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider">Subscriber</p>
+                                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider">Pelanggan</p>
                                     @if($ticket->customer)
                                         <p class="mt-1 font-semibold text-gray-900 dark:text-white">{{ $ticket->customer->name }}</p>
                                         <div class="flex items-center space-x-2 mt-1">
@@ -230,14 +230,14 @@
                                                 {{ str_replace('_', ' ', $ticket->customer->status) }}
                                             </span>
                                         </div>
-                                        <a href="{{ route('customers.show', $ticket->customer) }}" class="mt-2 text-xs text-indigo-600 hover:underline inline-block">View Customer Profile</a>
+                                        <a href="{{ route('customers.show', $ticket->customer) }}" class="mt-2 text-xs text-indigo-600 hover:underline inline-block">Lihat Profil Pelanggan</a>
                                     @else
-                                        <p class="mt-1 font-semibold text-gray-400">Internal / Not Specific</p>
+                                        <p class="mt-1 font-semibold text-gray-400">Internal / Umum</p>
                                     @endif
                                 </div>
 
                                 <div class="pt-4 border-t border-gray-100 dark:border-gray-700">
-                                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider">Priority</p>
+                                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider">Prioritas</p>
                                     <div class="mt-2 flex items-center">
                                         @php
                                             $priorityColors = [
@@ -254,7 +254,7 @@
                                 </div>
 
                                 <div class="pt-4 border-t border-gray-100 dark:border-gray-700">
-                                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider">Assigned Staff</p>
+                                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider">Petugas</p>
                                     <div class="mt-2 flex items-center">
                                         <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs mr-3">
                                             {{ substr($ticket->assignee->name ?? '?', 0, 1) }}
@@ -279,7 +279,7 @@
 
                     <!-- Quick Actions -->
                     <div class="bg-gray-900 text-white overflow-hidden shadow-sm sm:rounded-xl border border-gray-800 p-6">
-                        <h4 class="text-lg font-bold mb-4">Quick Update</h4>
+                        <h4 class="text-lg font-bold mb-4">Pembaruan Cepat</h4>
                         <form action="{{ route('tickets.update', $ticket) }}" method="POST">
                             @csrf
                             @method('PATCH')
@@ -295,21 +295,21 @@
                                 <div>
                                     <label class="text-xs text-gray-400 uppercase font-bold tracking-wider">Change Status</label>
                                     <select name="status" class="mt-2 block w-full bg-gray-800 border-gray-700 text-gray-300 rounded-xl focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200">
-                                        <option value="open" {{ $ticket->status == 'open' ? 'selected' : '' }}>Open</option>
+                                        <option value="open" {{ $ticket->status == 'open' ? 'selected' : '' }}>Terbuka</option>
                                         <option value="in_progress" {{ $ticket->status == 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                        <option value="resolved" {{ $ticket->status == 'resolved' ? 'selected' : '' }}>Resolved</option>
-                                        <option value="closed" {{ $ticket->status == 'closed' ? 'selected' : '' }}>Closed</option>
-                                        <option value="canceled" {{ $ticket->status == 'canceled' ? 'selected' : '' }}>Canceled</option>
+                                        <option value="resolved" {{ $ticket->status == 'resolved' ? 'selected' : '' }}>Selesai</option>
+                                        <option value="closed" {{ $ticket->status == 'closed' ? 'selected' : '' }}>Ditutup</option>
+                                        <option value="canceled" {{ $ticket->status == 'canceled' ? 'selected' : '' }}>Batal</option>
                                     </select>
                                 </div>
 
                                 <div>
-                                    <label class="text-xs text-gray-400 uppercase font-bold tracking-wider">Add/Edit Resolution Notes</label>
-                                    <textarea name="resolution_notes" rows="3" class="mt-2 block w-full bg-gray-800 border-gray-700 text-gray-300 rounded-xl focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200" placeholder="Type resolution details here...">{{ $ticket->resolution_notes }}</textarea>
+                                    <label class="text-xs text-gray-400 uppercase font-bold tracking-wider">Tambah/Ubah Catatan Penyelesaian</label>
+                                    <textarea name="resolution_notes" rows="3" class="mt-2 block w-full bg-gray-800 border-gray-700 text-gray-300 rounded-xl focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200" placeholder="Tulis rincian penyelesaian di sini...">{{ $ticket->resolution_notes }}</textarea>
                                 </div>
 
                                 <button type="submit" class="w-full py-3 px-4 bg-indigo-500 hover:bg-indigo-400 text-white rounded-xl font-bold transition-colors">
-                                    Update Ticket Status
+                                    Perbarui Status Tiket
                                 </button>
                             </div>
                         </form>

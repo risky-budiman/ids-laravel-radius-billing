@@ -11,7 +11,7 @@
             </div>
             <div class="flex space-x-2">
                 <a href="{{ route('olts.edit', $olt->id) }}" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
-                    Edit OLT
+                    Ubah OLT
                 </a>
             </div>
         </div>
@@ -21,7 +21,7 @@
         <!-- OLT Info Sidebar -->
         <div class="lg:col-span-1 space-y-6">
             <div class="glass bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-                <h3 class="text-sm font-bold text-gray-400  mb-4">Device Status</h3>
+                <h3 class="text-sm font-bold text-gray-400  mb-4">Status Perangkat</h3>
                 <div class="flex items-center mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
                     <div class="w-3 h-3 rounded-full {{ $olt->is_active ? 'bg-green-500 animate-pulse' : 'bg-gray-400' }} mr-3"></div>
                     <span class="font-bold text-gray-900 dark:text-white">{{ $olt->is_active ? 'ACTIVE & OPERATIONAL' : 'INACTIVE' }}</span>
@@ -33,7 +33,7 @@
                         <span class="font-mono text-indigo-600 dark:text-indigo-400 font-bold">{{ $olt->ip_address }}</span>
                     </div>
                     <div>
-                        <span class="block text-xs text-gray-400 uppercase">Model / Type</span>
+                        <span class="block text-xs text-gray-400 uppercase">Model / Tipe</span>
                         <span class="font-bold text-gray-800 dark:text-gray-200">{{ $olt->olt_type }}</span>
                     </div>
                     <div>
@@ -45,20 +45,20 @@
 
             <!-- Generate Ports Card -->
             <div class="glass bg-indigo-600 rounded-xl p-6 text-white shadow-sm">
-                <h3 class="font-bold text-lg mb-2">Initialize PON Ports</h3>
-                <p class="text-indigo-100 text-sm mb-6">Generate PON ports for this OLT to start monitoring subscribers.</p>
+                <h3 class="font-bold text-lg mb-2">Buat Port PON</h3>
+                <p class="text-indigo-100 text-sm mb-6">Buat port PON untuk OLT ini agar pelanggan bisa dipantau.</p>
                 
                 <form action="{{ route('olts.auto-discover-ports', $olt->id) }}" method="POST" class="mb-4">
                     @csrf
                     <button type="submit" class="w-full py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-indigo-50 transition-all shadow-lg flex items-center justify-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        Auto Discover Ports
+                        Deteksi Port Otomatis
                     </button>
                 </form>
 
                 <div class="flex items-center my-4">
                     <div class="flex-grow border-t border-indigo-400"></div>
-                    <span class="mx-3 text-xs text-indigo-200 uppercase font-bold">Or Manual</span>
+                    <span class="mx-3 text-xs text-indigo-200 uppercase font-bold">Atau Manual</span>
                     <div class="flex-grow border-t border-indigo-400"></div>
                 </div>
                 
@@ -69,7 +69,7 @@
                         <input type="number" name="slot" value="1" class="w-full bg-indigo-500 border-none rounded-xl text-white placeholder-indigo-300 focus:ring-white transition-all" required>
                     </div>
                     <div>
-                        <label class="block text-xs text-indigo-200 uppercase mb-1">Port Count</label>
+                        <label class="block text-xs text-indigo-200 uppercase mb-1">Jumlah Port</label>
                         <select name="port_count" class="w-full bg-indigo-500 border-none rounded-xl text-white focus:ring-white transition-all">
                             <option value="8">8 Ports</option>
                             <option value="16" selected>16 Ports</option>
@@ -88,8 +88,8 @@
                 <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                     <h3 class="font-bold text-gray-900 dark:text-white">Physical PON Ports ({{ $olt->ponPorts->count() }})</h3>
                     <div class="flex space-x-2">
-                        <span class="flex items-center text-xs text-green-500"><span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span> Active</span>
-                        <span class="flex items-center text-xs text-gray-400"><span class="w-2 h-2 bg-gray-300 rounded-full mr-1"></span> Empty</span>
+                        <span class="flex items-center text-xs text-green-500"><span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span> Aktif</span>
+                        <span class="flex items-center text-xs text-gray-400"><span class="w-2 h-2 bg-gray-300 rounded-full mr-1"></span> Kosong</span>
                     </div>
                 </div>
 
@@ -108,14 +108,14 @@
                                 
                                 <!-- Tooltip/Hover effect -->
                                 <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-indigo-600/10 rounded-xl">
-                                    <span class="bg-indigo-600 text-white text-xs px-2 py-1 rounded-md font-bold shadow-lg">VIEW ONU</span>
+                                    <span class="bg-indigo-600 text-white text-xs px-2 py-1 rounded-md font-bold shadow-lg">LIHAT ONU</span>
                                 </div>
                             </a>
                         @endforeach
 
                         @if($olt->ponPorts->isEmpty())
                             <div class="col-span-full py-12 text-center">
-                                <p class="text-gray-500 dark:text-gray-400 italic">No ports generated for this OLT yet.</p>
+                                <p class="text-gray-500 dark:text-gray-400 italic">Port untuk OLT ini belum dibuat.</p>
                             </div>
                         @endif
                     </div>
@@ -127,18 +127,18 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <button class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl text-left hover:bg-gray-100 transition-all group">
                         <span class="block font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600">Scan Unconfigured ONUs</span>
-                        <span class="text-xs text-gray-500">Detect new modems via SNMP walk</span>
+                        <span class="text-xs text-gray-500">Deteksi modem baru lewat SNMP walk</span>
                     </button>
                     <form action="{{ route('olts.sync-all-ports', $olt->id) }}" method="POST" class="w-full">
                         @csrf
                         <button type="submit" class="w-full p-4 bg-gray-50 dark:bg-gray-900 rounded-xl text-left hover:bg-gray-100 transition-all group">
-                            <span class="block font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600">Sync Port Status</span>
-                            <span class="text-xs text-gray-500">Refresh physical port metrics in background</span>
+                            <span class="block font-bold text-gray-800 dark:text-gray-200 group-hover:text-indigo-600">Sinkron Status Port</span>
+                            <span class="text-xs text-gray-500">Perbarui metrik port fisik di latar belakang</span>
                         </button>
                     </form>
                     <button onclick="document.getElementById('manual-delete-modal').classList.remove('hidden')" class="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-xl text-left hover:bg-rose-100 transition-all group md:col-span-2">
-                        <span class="block font-bold text-rose-700 dark:text-rose-400 group-hover:text-rose-800">Manual Delete ONU</span>
-                        <span class="text-xs text-rose-500">Force delete an ONU configuration directly from OLT</span>
+                        <span class="block font-bold text-rose-700 dark:text-rose-400 group-hover:text-rose-800">Hapus ONU Manual</span>
+                        <span class="text-xs text-rose-500">Hapus paksa konfigurasi ONU langsung dari OLT</span>
                     </button>
                 </div>
             </div>
@@ -150,8 +150,8 @@
         <div class="bg-white dark:bg-gray-800 rounded-xl p-8 max-w-md w-full mx-4 shadow-sm border border-gray-100 dark:border-gray-700">
             <div class="flex justify-between items-start mb-6">
                 <div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Force Delete ONU</h3>
-                    <p class="text-sm text-gray-500 mt-1">WARNING: This action bypasses billing data and deletes the ONU directly from the OLT.</p>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Hapus Paksa ONU</h3>
+                    <p class="text-sm text-gray-500 mt-1">PERINGATAN: Tindakan ini melewati data billing dan menghapus ONU langsung dari OLT.</p>
                 </div>
                 <button onclick="document.getElementById('manual-delete-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -163,14 +163,14 @@
                 <div class="space-y-4 mb-8">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">ONU Index (Position)</label>
-                        <input type="text" name="onu_index" placeholder="e.g. .1.1.1.1" required class="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-rose-500 focus:border-rose-500 font-mono">
+                        <input type="text" name="onu_index" placeholder="mis. .1.1.1.1" required class="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-rose-500 focus:border-rose-500 font-mono">
                         <p class="text-xs text-gray-500 mt-1">Format: .shelf.slot.port.onu_id</p>
                     </div>
                 </div>
                 
                 <div class="flex space-x-3">
-                    <button type="button" onclick="document.getElementById('manual-delete-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 transition-colors">Cancel</button>
-                    <button type="submit" onclick="return confirm('Are you absolutely sure you want to delete this ONU from the OLT?');" class="flex-1 py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-colors shadow-sm">Delete ONU</button>
+                    <button type="button" onclick="document.getElementById('manual-delete-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 transition-colors">Batal</button>
+                    <button type="submit" onclick="return confirm('Are you absolutely sure you want to delete this ONU from the OLT?');" class="flex-1 py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-colors shadow-sm">Hapus ONU</button>
                 </div>
             </form>
         </div>

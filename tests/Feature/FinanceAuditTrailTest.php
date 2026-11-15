@@ -70,7 +70,7 @@ class FinanceAuditTrailTest extends TestCase
         $all = json_encode(ActivityLog::all()->pluck('properties'));
         $this->assertStringNotContainsString('rahasia', $all);
         $this->assertStringContainsString('[disembunyikan]', json_encode($this->logsFor(Gateway::class, $g->id)->last()->properties));
-        $this->assertCount(1, $this->logsFor(Setting::class)->where('description', 'Created Setting: company_name'));
+        $this->assertCount(1, $this->logsFor(Setting::class)->where('description', 'Menambah pengaturan: company_name'));
     }
 
     public function test_routine_backup_status_settings_are_not_logged(): void

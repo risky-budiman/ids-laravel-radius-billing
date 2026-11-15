@@ -18,11 +18,11 @@ class AppShellRenderTest extends TestCase
     public static function roles(): array
     {
         return [
-            'administrator' => ['administrator', ['Manage Staff', 'Chart of Accounts', 'Backup &amp; Restore'], []],
-            'admin' => ['admin', ['Subscribers', 'Invoices', 'Chart of Accounts'], ['Manage Staff', 'Backup &amp; Restore']],
-            'teknisi' => ['teknisi', ['OLT Master', 'Online Users', 'Warehouse'], ['Invoices', 'Chart of Accounts']],
-            'kasir' => ['kasir', ['Invoices', 'Kas &amp; Bank'], ['Chart of Accounts', 'Subscribers', 'Laporan Keuangan']],
-            'sales' => ['sales', ['Sales Dashboard', 'Subscribers', 'Tickets'], ['Invoices', 'Manage Staff']],
+            'administrator' => ['administrator', ['Kelola Staf', 'Bagan Akun (COA)', 'Backup &amp; Restore'], []],
+            'admin' => ['admin', ['Pelanggan', 'Desain Invoice', 'Bagan Akun (COA)'], ['Kelola Staf', 'Backup &amp; Restore']],
+            'teknisi' => ['teknisi', ['Data OLT', 'Pengguna Online', 'Gudang'], ['Desain Invoice', 'Bagan Akun (COA)']],
+            'kasir' => ['kasir', ['Desain Invoice', 'Kas &amp; Bank'], ['Bagan Akun (COA)', 'Pelanggan', 'Laporan Keuangan']],
+            'sales' => ['sales', ['Dashboard Sales', 'Pelanggan', 'Tiket'], ['Desain Invoice', 'Kelola Staf']],
         ];
     }
 

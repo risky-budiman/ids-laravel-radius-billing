@@ -13,7 +13,7 @@ trait LogsActivity
         static::created(function ($model) {
             $identifier = $model->getModelIdentifier();
             $label = $identifier ? ": " . $identifier : "";
-            $model->logAction('created', "Created " . class_basename($model) . $label);
+            $model->logAction('created', "Menambah " . $model->activityModelLabel() . $label);
         });
 
         static::updated(function ($model) {
@@ -24,7 +24,7 @@ trait LogsActivity
             $identifier = $model->getModelIdentifier();
             $label = $identifier ? ": " . $identifier : "";
 
-            $model->logAction('updated', "Updated " . class_basename($model) . $label, [
+            $model->logAction('updated', "Mengubah " . $model->activityModelLabel() . $label, [
                 'old' => array_intersect_key($model->getOriginal(), $changes),
                 'new' => $changes
             ]);
@@ -33,10 +33,23 @@ trait LogsActivity
         static::deleted(function ($model) {
             $identifier = $model->getModelIdentifier();
             $label = $identifier ? ": " . $identifier : "";
-            $model->logAction('deleted', "Deleted " . class_basename($model) . $label, [
+            $model->logAction('deleted', "Menghapus " . $model->activityModelLabel() . $label, [
                 'old' => $model->getOriginal() // Keep full record for deleted items
             ]);
         });
+    }
+
+    /** Nama jenis data yang tampil di Activity Log (bahasa Indonesia). */
+    public function activityModelLabel(): string
+    {
+        return [
+            'Customer' => 'pelanggan', 'Invoice' => 'invoice', 'Ticket' => 'tiket', 'Journal' => 'jurnal', 'Payment' => 'pembayaran',
+            'Nas' => 'NAS', 'Region' => 'wilayah', 'Sto' => 'STO', 'Stb' => 'STB', 'Supplier' => 'pemasok', 'User' => 'pengguna',
+            'InventoryItem' => 'barang', 'InventoryCategory' => 'kategori barang', 'BankAccount' => 'rekening',
+            'BankTransaction' => 'transaksi kas', 'ChartOfAccount' => 'akun COA', 'Package' => 'paket', 'Gateway' => 'gateway',
+            'Setting' => 'pengaturan', 'Tax' => 'pajak', 'FixedAsset' => 'aset tetap', 'PartnerWithdrawal' => 'penarikan mitra',
+            'SalesWithdrawal' => 'penarikan sales',
+        ][class_basename($this)] ?? class_basename($this);
     }
 
     public function getModelIdentifier()

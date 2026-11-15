@@ -50,7 +50,7 @@
                                     <div class="bg-blue-50 dark:bg-blue-900/20 border border-dashed border-blue-400 dark:border-blue-500 p-6 rounded-xl shadow-sm group">
                                         <div class="flex items-center justify-between mb-4">
                                             <h3 class="text-xl font-bold text-blue-800 dark:text-blue-300">{{ $log->version }}</h3>
-                                            <span class="text-xs text-blue-600 dark:text-blue-400">Update</span>
+                                            <span class="text-xs text-blue-600 dark:text-blue-400">Perbarui</span>
                                         </div>
 
                                         <div class="space-y-2">
@@ -94,7 +94,7 @@
                                     <div class="bg-blue-50 dark:bg-blue-900/20 border border-dashed border-blue-400 dark:border-blue-500 p-6 rounded-xl shadow-sm group">
                                         <div class="flex items-center justify-between mb-4">
                                             <h3 class="text-xl font-bold text-blue-800 dark:text-blue-300">{{ $log->version }}</h3>
-                                            <span class="text-xs text-blue-600 dark:text-blue-400">Update</span>
+                                            <span class="text-xs text-blue-600 dark:text-blue-400">Perbarui</span>
                                         </div>
 
                                         <div class="space-y-2">
@@ -150,7 +150,7 @@
                         </div>
                     @empty
                         <div class="text-center py-20 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                            <p class="text-gray-400 font-medium italic">No updates recorded yet.</p>
+                            <p class="text-gray-400 font-medium italic">Belum ada catatan pembaruan.</p>
                         </div>
                     @endforelse
                 </div>
@@ -163,26 +163,26 @@
     <x-modal name="add-changelog" focusable>
         <form method="post" action="{{ route('changelog.store') }}" class="p-8">
             @csrf
-            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">New Application Release</h2>
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Rilis Aplikasi Baru</h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                    <x-input-label for="version" value="Version (e.g. v1.0.1)" class="font-bold text-xs uppercase text-gray-500 mb-2" />
+                    <x-input-label for="version" value="Versi (mis. v1.0.1)" class="font-bold text-xs uppercase text-gray-500 mb-2" />
                     <x-text-input id="version" name="version" type="text" class="block w-full border-gray-300 rounded-lg" placeholder="v1.0.1" required />
                 </div>
                 <div>
-                    <x-input-label for="release_date" value="Release Date" class="font-bold text-xs uppercase text-gray-500 mb-2" />
+                    <x-input-label for="release_date" value="Tanggal Rilis" class="font-bold text-xs uppercase text-gray-500 mb-2" />
                     <x-text-input id="release_date" name="release_date" type="date" class="block w-full border-gray-300 rounded-lg" value="{{ date('Y-m-d') }}" required />
                 </div>
             </div>
 
             <div class="mb-6">
-                <x-input-label for="title" value="Update Title" class="font-bold text-xs uppercase text-gray-500 mb-2" />
-                <x-text-input id="title" name="title" type="text" class="block w-full border-gray-300 rounded-lg" placeholder="Brief summary of this release" required />
+                <x-input-label for="title" value="Judul Pembaruan" class="font-bold text-xs uppercase text-gray-500 mb-2" />
+                <x-text-input id="title" name="title" type="text" class="block w-full border-gray-300 rounded-lg" placeholder="Ringkasan rilis ini" required />
             </div>
 
             <div class="mb-6">
-                <x-input-label for="type" value="Category" class="font-bold text-xs uppercase text-gray-500 mb-2" />
+                <x-input-label for="type" value="Kategori" class="font-bold text-xs uppercase text-gray-500 mb-2" />
                 <select id="type" name="type" class="input">
                     <option value="feature">✨ New Feature</option>
                     <option value="fix">🐛 Bug Fix</option>
@@ -191,8 +191,8 @@
             </div>
 
             <div class="mb-8">
-                <x-input-label for="description" value="Details (One per line)" class="font-bold text-xs uppercase text-gray-500 mb-2" />
-                <textarea id="description" name="description" rows="5" class="input" placeholder="List the changes here..." required></textarea>
+                <x-input-label for="description" value="Rincian (satu per baris)" class="font-bold text-xs uppercase text-gray-500 mb-2" />
+                <textarea id="description" name="description" rows="5" class="input" placeholder="Tulis daftar perubahan di sini..." required></textarea>
             </div>
 
             <div class="flex justify-end space-x-3">

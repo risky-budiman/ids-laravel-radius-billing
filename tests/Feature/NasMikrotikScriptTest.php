@@ -40,13 +40,13 @@ class NasMikrotikScriptTest extends TestCase
 
         // Verification of Get Script and Edit actions
         $response->assertSee('Get Script');
-        $response->assertSee('Edit');
+        $response->assertSee('Ubah');
         $response->assertSee('10.10.10.1');
         $response->assertSee('RouterTest');
         $response->assertSee('openScriptModal'); // Alpine action check
 
         // Verify active IP label and read-only input
-        $response->assertSee('Radius Server IP Address (Active)');
+        $response->assertSee('Alamat IP Server RADIUS (Aktif)');
         $response->assertSee('readonly');
         $response->assertSee('disabled');
     }
@@ -72,7 +72,7 @@ class NasMikrotikScriptTest extends TestCase
         $response->assertSee('radiusIp');
 
         // Verify active IP label and read-only input on edit view
-        $response->assertSee('Radius Server IP Address (Active)');
+        $response->assertSee('Alamat IP Server RADIUS (Aktif)');
         $response->assertSee('readonly');
         $response->assertSee('disabled');
     }

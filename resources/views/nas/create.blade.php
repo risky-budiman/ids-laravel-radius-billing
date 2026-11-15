@@ -12,7 +12,7 @@
                 <div>
                     <x-input-label for="nasname" :value="__('NAS IP Address (nasname)')" />
                     <x-text-input id="nasname" name="nasname" type="text" class="mt-1 block w-full" required />
-                    <p class="mt-1 text-xs text-gray-500">The IP address of the Mikrotik/Router.</p>
+                    <p class="mt-1 text-xs text-gray-500">Alamat IP MikroTik/router.</p>
                 </div>
                 <div>
                     <x-input-label for="shortname" :value="__('Shortname')" />
@@ -28,8 +28,8 @@
                 </div>
             </div>
             <div class="flex items-center justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
-                <a href="{{ route('nas.index') }}" class="mr-4 text-gray-600 hover:underline">Cancel</a>
-                <x-primary-button>Save NAS</x-primary-button>
+                <a href="{{ route('nas.index') }}" class="mr-4 text-gray-600 hover:underline">Batal</a>
+                <x-primary-button>Simpan NAS</x-primary-button>
             </div>
         </form>
     </div>

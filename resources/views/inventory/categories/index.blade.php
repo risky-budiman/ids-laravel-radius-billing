@@ -6,7 +6,7 @@
             </h2>
             @if(auth()->user()->isAdmin())
             <a href="{{ route('inventory.category.create') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">
-                + Add Category
+                + Tambah Kategori
             </a>
             @endif
         </div>
@@ -54,11 +54,11 @@
                         <span class="text-xs text-gray-400 font-bold tracking-wider">Total Products</span>
                         <p class="text-xl font-semibold text-indigo-600">{{ $category->items_count }}</p>
                     </div>
-                    <a href="{{ route('inventory.index', ['category' => $category->id]) }}" class="text-xs font-bold text-gray-400 hover:text-indigo-600 transition-colors">View Items →</a>
+                    <a href="{{ route('inventory.index', ['category' => $category->id]) }}" class="text-xs font-bold text-gray-400 hover:text-indigo-600 transition-colors">Lihat Barang →</a>
                 </div>
             </div>
         @empty
-            <div class="col-span-full py-12 text-center text-gray-500 italic">No categories created yet.</div>
+            <div class="col-span-full py-12 text-center text-gray-500 italic">Belum ada kategori.</div>
         @endforelse
     </div>
 </x-app-layout>

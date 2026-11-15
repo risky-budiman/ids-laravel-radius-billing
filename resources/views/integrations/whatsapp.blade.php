@@ -79,16 +79,16 @@
                         <input type="hidden" name="type" value="whatsapp">
                         
                         <div>
-                            <x-input-label value="API Security Token" />
+                            <x-input-label value="Token Keamanan API" />
                             <x-text-input name="credentials[token]" value="{{ $f->credentials['token'] ?? '' }}" class="mt-1 w-full" type="password" />
-                            <p class="text-xs text-gray-500 mt-1">Found in your Fonnte Dashboard -> API Tokens.</p>
+                            <p class="text-xs text-gray-500 mt-1">Ada di Dashboard Fonnte -> API Tokens.</p>
                         </div>
                         <div class="pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
                             <label class="flex items-center text-sm">
                                 <input type="checkbox" name="is_active" value="1" {{ ($f->is_active ?? false) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                                <span class="ml-2 text-gray-600 dark:text-gray-400">Set as Active WhatsApp Gateway</span>
+                                <span class="ml-2 text-gray-600 dark:text-gray-400">Jadikan WhatsApp Gateway Aktif</span>
                             </label>
-                            <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Save Settings</button>
+                            <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Simpan Pengaturan</button>
                         </div>
                     </form>
                 </div>
@@ -115,15 +115,15 @@
                             <x-text-input name="credentials[domain]" value="{{ $w->credentials['domain'] ?? 'https://console.wablas.com' }}" class="mt-1 w-full" placeholder="https://console.wablas.com" />
                         </div>
                         <div>
-                            <x-input-label value="API Security Token" />
+                            <x-input-label value="Token Keamanan API" />
                             <x-text-input name="credentials[token]" value="{{ $w->credentials['token'] ?? '' }}" class="mt-1 w-full" type="password" />
                         </div>
                         <div class="pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
                             <label class="flex items-center text-sm">
                                 <input type="checkbox" name="is_active" value="1" {{ ($w->is_active ?? false) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                                <span class="ml-2 text-gray-600 dark:text-gray-400">Set as Active WhatsApp Gateway</span>
+                                <span class="ml-2 text-gray-600 dark:text-gray-400">Jadikan WhatsApp Gateway Aktif</span>
                             </label>
-                            <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Save Settings</button>
+                            <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Simpan Pengaturan</button>
                         </div>
                     </form>
                 </div>
@@ -152,9 +152,9 @@
                         <div class="pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
                             <label class="flex items-center text-sm">
                                 <input type="checkbox" name="is_active" value="1" {{ ($s->is_active ?? false) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                                <span class="ml-2 text-gray-600 dark:text-gray-400">Set as Active WhatsApp Gateway</span>
+                                <span class="ml-2 text-gray-600 dark:text-gray-400">Jadikan WhatsApp Gateway Aktif</span>
                             </label>
-                            <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Save Settings</button>
+                            <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Simpan Pengaturan</button>
                         </div>
                     </form>
                 </div>
@@ -186,7 +186,7 @@
                                 <x-text-input name="credentials[channel_id]" value="{{ $m->credentials['channel_id'] ?? '' }}" class="mt-1 w-full" placeholder="UUID Channel Mekari" />
                             </div>
                             <div class="md:col-span-2">
-                                <x-input-label value="Default Template ID (Optional)" />
+                                <x-input-label value="ID Template Default (Opsional)" />
                                 <x-text-input name="credentials[template_id]" value="{{ $m->credentials['template_id'] ?? '' }}" class="mt-1 w-full" placeholder="Template ID for simple notifications" />
                             </div>
                         </div>
@@ -194,9 +194,9 @@
                         <div class="pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
                             <label class="flex items-center text-sm">
                                 <input type="checkbox" name="is_active" value="1" {{ ($m->is_active ?? false) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                                <span class="ml-2 text-gray-600 dark:text-gray-400">Set as Active WhatsApp Gateway</span>
+                                <span class="ml-2 text-gray-600 dark:text-gray-400">Jadikan WhatsApp Gateway Aktif</span>
                             </label>
-                            <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Save Settings</button>
+                            <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Simpan Pengaturan</button>
                         </div>
                     </form>
                 </div>
@@ -221,12 +221,12 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <x-input-label value="Phone Number ID" />
-                                <x-text-input name="credentials[phone_number_id]" value="{{ $meta->credentials['phone_number_id'] ?? '' }}" class="mt-1 w-full" placeholder="e.g. 109283746561728" />
+                                <x-text-input name="credentials[phone_number_id]" value="{{ $meta->credentials['phone_number_id'] ?? '' }}" class="mt-1 w-full" placeholder="mis. 109283746561728" />
                                 <p class="text-xs text-gray-500 mt-1">Dapat ditemukan di Facebook Developer Console.</p>
                             </div>
                             <div>
                                 <x-input-label value="WABA ID (WhatsApp Business Account ID)" />
-                                <x-text-input name="credentials[waba_id]" value="{{ $meta->credentials['waba_id'] ?? '' }}" class="mt-1 w-full" placeholder="e.g. 987654321098765" />
+                                <x-text-input name="credentials[waba_id]" value="{{ $meta->credentials['waba_id'] ?? '' }}" class="mt-1 w-full" placeholder="mis. 987654321098765" />
                                 <p class="text-xs text-gray-500 mt-1">ID Akun WhatsApp Business Anda.</p>
                             </div>
                             <div class="md:col-span-2">
@@ -235,8 +235,8 @@
                                 <p class="text-xs text-gray-500 mt-1">Token akses permanen dari Meta Business Suite.</p>
                             </div>
                             <div class="md:col-span-2">
-                                <x-input-label value="Default Template Name (Opsional)" />
-                                <x-text-input name="credentials[template_name]" value="{{ $meta->credentials['template_name'] ?? '' }}" class="mt-1 w-full" placeholder="e.g. notification_alert" />
+                                <x-input-label value="Nama Template Default (Opsional)" />
+                                <x-text-input name="credentials[template_name]" value="{{ $meta->credentials['template_name'] ?? '' }}" class="mt-1 w-full" placeholder="mis. notification_alert" />
                                 <p class="text-xs text-gray-500 mt-1">Nama template yang sudah disetujui di Meta. Jika diisi, semua pesan akan dikirim sebagai pesan template dengan menempatkan teks pesan ke parameter body <code>{{1}}</code>.</p>
                             </div>
                         </div>
@@ -244,9 +244,9 @@
                         <div class="pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
                             <label class="flex items-center text-sm">
                                 <input type="checkbox" name="is_active" value="1" {{ ($meta->is_active ?? false) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                                <span class="ml-2 text-gray-600 dark:text-gray-400">Set as Active WhatsApp Gateway</span>
+                                <span class="ml-2 text-gray-600 dark:text-gray-400">Jadikan WhatsApp Gateway Aktif</span>
                             </label>
-                            <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Save Settings</button>
+                            <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Simpan Pengaturan</button>
                         </div>
                     </form>
                 </div>

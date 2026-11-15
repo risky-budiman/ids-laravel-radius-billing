@@ -5,11 +5,11 @@
                 <h2 class="font-bold text-3xl text-gray-900 dark:text-white tracking-tight">
                     {{ __('Service Packages') }}
                 </h2>
-                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Manage billing plans and bandwidth profiles</p>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Kelola paket tagihan dan profil bandwidth</p>
             </div>
             <a href="{{ route('packages.create') }}" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm ] ]">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                New Package
+                Paket Baru
             </a>
         </div>
     </x-slot>
@@ -37,11 +37,11 @@
             <table class="w-full text-left">
                 <thead>
                     <tr class="bg-gray-50/50 dark:bg-gray-900/40 border-b border-gray-100 dark:border-gray-700">
-                        <th class="px-8 py-5 text-xs font-bold text-gray-400 ">Plan Details</th>
-                        <th class="px-6 py-5 text-xs font-bold text-gray-400  text-center">Speed Profile</th>
-                        <th class="px-6 py-5 text-xs font-bold text-gray-400 ">MikroTik Group</th>
+                        <th class="px-8 py-5 text-xs font-bold text-gray-400 ">Rincian Paket</th>
+                        <th class="px-6 py-5 text-xs font-bold text-gray-400  text-center">Profil Kecepatan</th>
+                        <th class="px-6 py-5 text-xs font-bold text-gray-400 ">Grup MikroTik</th>
                         <th class="px-6 py-5 text-xs font-bold text-gray-400 ">Monthly Rate</th>
-                        <th class="px-8 py-5 text-xs font-bold text-gray-400  text-right">Actions</th>
+                        <th class="px-8 py-5 text-xs font-bold text-gray-400  text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
@@ -54,7 +54,7 @@
                                     </div>
                                     <div>
                                         <div class="font-bold text-gray-900 dark:text-white text-base">{{ $package->name }}</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1 max-w-xs">{{ $package->description ?: 'No additional notes' }}</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1 max-w-xs">{{ $package->description ?: 'Tanpa catatan tambahan' }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -100,7 +100,7 @@
                                         {{ $package->mikrotik_group }}
                                     </span>
                                 @else
-                                    <span class="text-xs text-gray-400 italic">None</span>
+                                    <span class="text-xs text-gray-400 italic">Tidak ada</span>
                                 @endif
                             </td>
                             <td class="px-6 py-6">
@@ -110,12 +110,12 @@
                             </td>
                             <td class="px-8 py-6 text-right">
                                 <div class="flex items-center justify-end space-x-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <a href="{{ route('packages.edit', $package) }}" class="p-2 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30 rounded-lg transition-colors" title="Edit Package">
+                                    <a href="{{ route('packages.edit', $package) }}" class="p-2 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30 rounded-lg transition-colors" title="Ubah Paket">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                     </a>
                                     <form action="{{ route('packages.destroy', $package) }}" method="POST" onsubmit="return confirm('Delete this package? Ensure no active subscribers are using it.');">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="p-2 text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Delete Package">
+                                        <button type="submit" class="p-2 text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Hapus Paket">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>
                                     </form>
@@ -129,9 +129,9 @@
                                     <div class="w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
                                         <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
                                     </div>
-                                    <h3 class="text-gray-900 dark:text-white font-bold text-lg">No Packages Found</h3>
-                                    <p class="text-gray-500 max-w-xs mt-1">Get started by creating your first internet service package.</p>
-                                    <a href="{{ route('packages.create') }}" class="mt-6 text-indigo-600 font-bold hover:underline">+ Add New Package</a>
+                                    <h3 class="text-gray-900 dark:text-white font-bold text-lg">Belum Ada Paket</h3>
+                                    <p class="text-gray-500 max-w-xs mt-1">Mulai dengan membuat paket internet pertama Anda.</p>
+                                    <a href="{{ route('packages.create') }}" class="mt-6 text-indigo-600 font-bold hover:underline">+ Tambah Paket</a>
                                 </div>
                             </td>
                         </tr>

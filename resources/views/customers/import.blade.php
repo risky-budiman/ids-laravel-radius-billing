@@ -136,7 +136,7 @@
                             <label class="flex items-start gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-emerald-400 transition-all">
                                 <input type="radio" name="duplicate_action" value="update" class="mt-1 text-emerald-600 focus:ring-emerald-500">
                                 <div>
-                                    <span class="font-bold text-sm text-gray-900 dark:text-white block">Perbarui (Update)</span>
+                                    <span class="font-bold text-sm text-gray-900 dark:text-white block">Perbarui</span>
                                     <span class="text-xs text-gray-400">Memperbarui paket, password, diskon, dan data pelanggan lama sesuai file.</span>
                                 </div>
                             </label>

@@ -5,7 +5,7 @@
                 {{ __('Inventory: Suppliers') }}
             </h2>
             <button onclick="document.getElementById('addSupplierModal').classList.remove('hidden')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">
-                + Add Supplier
+                + Tambah Pemasok
             </button>
         </div>
     </x-slot>
@@ -22,11 +22,11 @@
                 <thead>
                     <tr class="bg-gray-50/50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">
                         <th class="px-6 py-4 font-bold">#</th>
-                        <th class="px-6 py-4 font-bold">Supplier Name</th>
+                        <th class="px-6 py-4 font-bold">Nama Pemasok</th>
                         <th class="px-6 py-4 font-bold">Contact Person</th>
-                        <th class="px-6 py-4 font-bold">Phone / Email</th>
+                        <th class="px-6 py-4 font-bold">HP / Email</th>
                         <th class="px-6 py-4 font-bold">Status</th>
-                        <th class="px-6 py-4 font-bold text-right">Actions</th>
+                        <th class="px-6 py-4 font-bold text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -48,24 +48,24 @@
                             </td>
                             <td class="px-6 py-4">
                                 @if($supplier->is_active)
-                                    <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-lg">Active</span>
+                                    <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-lg">Aktif</span>
                                 @else
-                                    <span class="px-2 py-1 bg-gray-100 text-gray-400 text-xs font-bold rounded-lg">Inactive</span>
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-400 text-xs font-bold rounded-lg">Nonaktif</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center space-x-3">
-                                    <button class="text-indigo-600 hover:text-indigo-800 text-xs font-bold">Edit</button>
+                                    <button class="text-indigo-600 hover:text-indigo-800 text-xs font-bold">Ubah</button>
                                     <form action="{{ route('suppliers.destroy', $supplier) }}" method="POST" onsubmit="return confirm('Delete this supplier?')">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-bold">Delete</button>
+                                        <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-bold">Hapus</button>
                                     </form>
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-gray-500 italic">No suppliers found.</td>
+                            <td colspan="5" class="px-6 py-12 text-center text-gray-500 italic">Belum ada pemasok.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -82,22 +82,22 @@
     <div id="addSupplierModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="glass bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-lg border border-white/20 overflow-hidden transform transition-all">
             <div class="bg-indigo-600 px-6 py-4 text-white">
-                <h3 class="font-bold text-lg">Add New Supplier</h3>
+                <h3 class="font-bold text-lg">Tambah Pemasok</h3>
             </div>
             <form action="{{ route('suppliers.store') }}" method="POST" class="p-6 space-y-4">
                 @csrf
                 <div class="grid grid-cols-1 gap-4">
                     <div>
-                        <x-input-label value="Supplier Name" />
-                        <x-text-input name="name" required class="mt-1 w-full" placeholder="e.g. PT. Fiber Jaya" />
+                        <x-input-label value="Nama Pemasok" />
+                        <x-text-input name="name" required class="mt-1 w-full" placeholder="mis. PT. Fiber Jaya" />
                     </div>
                     <div>
-                        <x-input-label value="Contact Person" />
-                        <x-text-input name="contact_person" class="mt-1 w-full" placeholder="e.g. Mr. John Doe" />
+                        <x-input-label value="Kontak" />
+                        <x-text-input name="contact_person" class="mt-1 w-full" placeholder="mis. Mr. John Doe" />
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <x-input-label value="Phone" />
+                            <x-input-label value="No. HP" />
                             <x-text-input name="phone" class="mt-1 w-full" placeholder="081..." />
                         </div>
                         <div>
@@ -106,13 +106,13 @@
                         </div>
                     </div>
                     <div>
-                        <x-input-label value="Address" />
+                        <x-input-label value="Alamat" />
                         <textarea name="address" class="mt-1 input" rows="3"></textarea>
                     </div>
                 </div>
                 <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="document.getElementById('addSupplierModal').classList.add('hidden')" class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">Cancel</button>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-sm">Save Supplier</button>
+                    <button type="button" onclick="document.getElementById('addSupplierModal').classList.add('hidden')" class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">Batal</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-sm">Simpan Pemasok</button>
                 </div>
             </form>
         </div>

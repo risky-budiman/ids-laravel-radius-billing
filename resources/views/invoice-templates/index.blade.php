@@ -53,7 +53,7 @@
                         <div class="transform scale-[0.35] origin-top-left w-[286%] h-[286%] p-8 pointer-events-none">
                             {!! str_replace(
                                 ['{nama_perusahaan}','{nomor_invoice}','{nama_pelanggan}','{rp_total}','{status}','{tanggal_invoice}','{tanggal_jatuh_tempo}','{periode_tagihan}','{alamat_perusahaan}','{telepon_perusahaan}','{email_perusahaan}','{alamat_pelanggan}','{telepon_pelanggan}','{username_pelanggan}','{paket_pelanggan}','{subtotal}','{rp_subtotal}','{nama_pajak}','{jumlah_pajak}','{rp_pajak}','{total}','{catatan}','{periode_awal}','{periode_akhir}','{catatan_footer}','{tanggal_cetak}','{logo_perusahaan}','{status_badge}'],
-                                [get_setting('company_name','ISP'),'INV-SAMPLE','Ahmad Budiman','Rp 388.500','UNPAID',now()->format('d M Y'),now()->addDays(14)->format('d M Y'),'1 Month',get_setting('company_address','-'),get_setting('company_phone','-'),get_setting('company_email','-'),'Jl. Contoh','0856xxx','ahmad','Fiber 30Mbps','350.000','Rp 350.000','PPN 11%','38.500','Rp 38.500','388.500','Internet Service',now()->startOfMonth()->format('d M Y'),now()->endOfMonth()->format('d M Y'),'Thank you',now()->format('d/m/Y H:i'),'<strong>'.get_setting('company_name','ISP').'</strong>','<span style="color:red;font-weight:bold;">UNPAID</span>'],
+                                [get_setting('company_name','ISP'),'INV-SAMPLE','Ahmad Budiman','Rp 388.500','UNPAID',now()->format('d M Y'),now()->addDays(14)->format('d M Y'),'1 Month',get_setting('company_address','-'),get_setting('company_phone','-'),get_setting('company_email','-'),'Jl. Contoh','0856xxx','ahmad','Fiber 30Mbps','350.000','Rp 350.000','PPN 11%','38.500','Rp 38.500','388.500','Internet Service',now()->startOfMonth()->format('d M Y'),now()->endOfMonth()->format('d M Y'),'Thank you',now()->format('d/m/Y H:i'),'<strong>'.get_setting('company_name','ISP').'</strong>','<span style="color:red;font-weight:bold;">BELUM LUNAS</span>'],
                                 $template->html_content
                             ) !!}
                         </div>
@@ -61,7 +61,7 @@
                         <!-- Overlay -->
                         <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
                             <a href="{{ route('invoice-templates.edit', $template) }}" class="px-4 py-2 bg-white text-gray-800 rounded-lg text-xs font-bold shadow-lg hover:bg-gray-100 transition-colors">
-                                Edit Template
+                                Ubah Template
                             </a>
                         </div>
                     </div>
@@ -87,7 +87,7 @@
                                     </button>
                                 </form>
                                 @endif
-                                <a href="{{ route('invoice-templates.edit', $template) }}" class="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all" title="Edit">
+                                <a href="{{ route('invoice-templates.edit', $template) }}" class="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all" title="Ubah">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 </a>
                                 @if(!$template->is_default)

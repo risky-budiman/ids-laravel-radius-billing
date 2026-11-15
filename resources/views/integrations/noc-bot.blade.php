@@ -17,7 +17,7 @@
                             <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.96 1.25-5.54 3.69-.52.35-.97.52-1.33.51-.4-.01-1.18-.23-1.75-.42-.71-.23-1.28-.35-1.23-.74.03-.2.31-.4.83-.61 3.23-1.4 5.39-2.33 6.47-2.78 3.07-1.28 3.71-1.5 4.13-1.51.09 0 .3.02.44.13.11.09.15.22.16.31.01.05.02.16 0 .25z"/></svg>
                         </div>
                         <div>
-                            <h3 class="font-bold text-gray-900 dark:text-white">Telegram Bot Settings</h3>
+                            <h3 class="font-bold text-gray-900 dark:text-white">Pengaturan Bot Telegram</h3>
                             <p class="text-xs text-gray-500">Gunakan BotFather untuk mendapatkan Token dan cari Chat ID grup Anda.</p>
                         </div>
                     </div>
@@ -29,7 +29,7 @@
                                 <x-text-input name="telegram_bot_token" :value="get_setting('telegram_bot_token')" class="mt-1 w-full" placeholder="123456789:ABCDE..." />
                             </div>
                             <div>
-                                <x-input-label value="Telegram NOC Chat ID" />
+                                <x-input-label value="Chat ID NOC Telegram" />
                                 <x-text-input name="telegram_noc_chat_id" :value="get_setting('telegram_noc_chat_id')" class="mt-1 w-full" placeholder="-100123456789" />
                             </div>
                         </div>

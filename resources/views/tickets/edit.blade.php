@@ -30,10 +30,10 @@
                                 <div>
                                     <x-input-label for="status" :value="__('Status')" />
                                     <select id="status" name="status" class="mt-1 input">
-                                        <option value="open" {{ old('status', $ticket->status) == 'open' ? 'selected' : '' }}>Open</option>
+                                        <option value="open" {{ old('status', $ticket->status) == 'open' ? 'selected' : '' }}>Terbuka</option>
                                         <option value="in_progress" {{ old('status', $ticket->status) == 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                        <option value="resolved" {{ old('status', $ticket->status) == 'resolved' ? 'selected' : '' }}>Resolved</option>
-                                        <option value="closed" {{ old('status', $ticket->status) == 'closed' ? 'selected' : '' }}>Closed</option>
+                                        <option value="resolved" {{ old('status', $ticket->status) == 'resolved' ? 'selected' : '' }}>Selesai</option>
+                                        <option value="closed" {{ old('status', $ticket->status) == 'closed' ? 'selected' : '' }}>Ditutup</option>
                                     </select>
                                     <x-input-error :messages="$errors->get('status')" class="mt-2" />
                                 </div>
@@ -43,7 +43,7 @@
                             <div>
                                 <x-input-label for="customer_id" :value="__('Subscriber / Customer')" />
                                 <select id="customer_id" name="customer_id" class="mt-1 input">
-                                    <option value="">-- No Customer (Internal Ticket) --</option>
+                                    <option value="">-- Tanpa Pelanggan (Tiket Internal) --</option>
                                     @foreach($customers as $customer)
                                         <option value="{{ $customer->id }}" {{ old('customer_id', $ticket->customer_id) == $customer->id ? 'selected' : '' }}>
                                             {{ $customer->name }} ({{ $customer->username }})
@@ -77,7 +77,7 @@
                                 <div>
                                     <x-input-label for="assigned_to" :value="__('Assign to Staff')" />
                                     <select id="assigned_to" name="assigned_to" class="mt-1 input">
-                                        <option value="">-- Unassigned --</option>
+                                        <option value="">-- Belum ditugaskan --</option>
                                         @foreach($users as $user)
                                             <option value="{{ $user->id }}" {{ old('assigned_to', $ticket->assigned_to) == $user->id ? 'selected' : '' }}>
                                                 {{ $user->name }}
@@ -98,7 +98,7 @@
                             <!-- Resolution Notes -->
                             <div>
                                 <x-input-label for="resolution_notes" :value="__('Resolution Notes (Optional)')" />
-                                <textarea id="resolution_notes" name="resolution_notes" rows="3" class="mt-1 input" placeholder="Describe how the ticket was resolved...">{{ old('resolution_notes', $ticket->resolution_notes) }}</textarea>
+                                <textarea id="resolution_notes" name="resolution_notes" rows="3" class="mt-1 input" placeholder="Jelaskan cara tiket diselesaikan...">{{ old('resolution_notes', $ticket->resolution_notes) }}</textarea>
                                 <x-input-error :messages="$errors->get('resolution_notes')" class="mt-2" />
                             </div>
 

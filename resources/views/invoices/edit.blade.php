@@ -31,7 +31,7 @@
                                     {{ $val }}
                                 </option>
                             @endfor
-                            <option value="Custom" data-months="1" {{ !preg_match('/^\d+ Month/', $invoice->billing_period) ? 'selected' : '' }}>Custom Range</option>
+                            <option value="Custom" data-months="1" {{ !preg_match('/^\d+ Month/', $invoice->billing_period) ? 'selected' : '' }}>Rentang Khusus</option>
                         </select>
                     </div>
                     <div>
@@ -142,8 +142,8 @@
                 </div>
             </div>
             <div class="flex items-center justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
-                <a href="{{ route('invoices.index') }}" class="mr-4 text-gray-600 hover:underline">Cancel</a>
-                <x-primary-button>Update Invoice</x-primary-button>
+                <a href="{{ route('invoices.index') }}" class="mr-4 text-gray-600 hover:underline">Batal</a>
+                <x-primary-button>Perbarui Invoice</x-primary-button>
             </div>
         </form>
     </div>

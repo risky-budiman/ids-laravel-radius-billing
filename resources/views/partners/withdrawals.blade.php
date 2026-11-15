@@ -11,15 +11,15 @@
                 <table class="w-full text-left">
                     <thead>
                         <tr class="bg-gray-50/50 dark:bg-gray-900/50">
-                            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Tanggal</th>
                             @if(auth()->user()->isAdmin())
-                                <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Partner</th>
+                                <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Mitra</th>
                             @endif
-                            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Jumlah</th>
                             <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Bank Info</th>
                             <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Status</th>
                             @if(auth()->user()->isAdmin())
-                                <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Action</th>
+                                <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Aksi</th>
                             @endif
                         </tr>
                     </thead>
@@ -54,28 +54,28 @@
                             <td class="px-6 py-4 text-right">
                                 @if($wd->status === 'pending')
                                 <button x-data="" @click="$dispatch('open-modal', 'process-wd-{{ $wd->id }}')" class="text-xs font-bold text-indigo-600 hover:underline">
-                                    Process
+                                    Proses
                                 </button>
 
                                 <x-modal name="process-wd-{{ $wd->id }}" focusable>
                                     <form method="post" action="{{ route('partners.withdrawals.process', $wd) }}" class="p-8 text-left">
                                         @csrf
                                         <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-6">
-                                            Process Withdrawal Request
+                                            Proses Pengajuan Penarikan
                                         </h2>
 
                                         <div class="space-y-4">
                                             <div>
-                                                <x-input-label for="status" value="Action" />
+                                                <x-input-label for="status" value="Aksi" />
                                                 <select name="status" class="mt-1 input">
-                                                    <option value="paid">Pay Now (Confirm & Journal)</option>
-                                                    <option value="approved">Approve (Pending Payment)</option>
-                                                    <option value="rejected">Reject</option>
+                                                    <option value="paid">Bayar Sekarang (Konfirmasi & Jurnal)</option>
+                                                    <option value="approved">Setujui (Menunggu Pembayaran)</option>
+                                                    <option value="rejected">Tolak</option>
                                                 </select>
                                             </div>
 
                                             <div>
-                                                <x-input-label for="bank_account_id" value="Source Fund Account (If Paid)" />
+                                                <x-input-label for="bank_account_id" value="Rekening Sumber Dana (Bila Dibayar)" />
                                                 <select name="bank_account_id" class="mt-1 input">
                                                     @foreach(\App\Models\BankAccount::where('is_active', true)->get() as $acc)
                                                         <option value="{{ $acc->id }}">{{ $acc->bank_name }} - {{ $acc->account_name }}</option>
@@ -84,7 +84,7 @@
                                             </div>
 
                                             <div>
-                                                <x-input-label for="notes" value="Notes" />
+                                                <x-input-label for="notes" value="Catatan" />
                                                 <textarea name="notes" rows="2" class="mt-1 input"></textarea>
                                             </div>
                                         </div>

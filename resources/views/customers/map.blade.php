@@ -6,10 +6,10 @@
                     <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                         <div>
                             <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                                Customer Location Map
+                                Peta Lokasi Pelanggan
                             </h2>
                             <p class="mt-2 text-gray-500 dark:text-gray-400">
-                                Visualizing all active customer locations across the network.
+                                Sebaran lokasi seluruh pelanggan aktif di jaringan.
                             </p>
                         </div>
                         <div class="flex flex-col sm:flex-row items-center gap-3">

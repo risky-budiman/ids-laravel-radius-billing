@@ -5,7 +5,7 @@
                 {{ __('Routers (NAS)') }}
             </h2>
             <a href="{{ route('nas.create') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm shadow-indigo-500/30">
-                + Add NAS
+                + Tambah NAS
             </a>
         </div>
     </x-slot>
@@ -45,11 +45,11 @@
                     <thead>
                         <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
                             <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
-                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">IP Address</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Alamat IP</th>
                             <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Shortname</th>
                             <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Secret</th>
-                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
-                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Actions</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Deskripsi</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -65,17 +65,17 @@
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center space-x-3">
                                         <button type="button" @click="openScriptModal('{{ $router->nasname }}', '{{ $router->secret }}', '{{ $router->shortname }}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 text-sm font-semibold transition-colors">Get Script</button>
-                                        <a href="{{ route('nas.edit', $router->id) }}" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 text-sm font-semibold transition-colors">Edit</a>
+                                        <a href="{{ route('nas.edit', $router->id) }}" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 text-sm font-semibold transition-colors">Ubah</a>
                                         <form action="{{ route('nas.destroy', $router->id) }}" method="POST" onsubmit="return confirm('Delete this NAS?');" class="inline">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="text-rose-600 hover:text-rose-900 dark:text-rose-400 dark:hover:text-rose-300 text-sm font-semibold transition-colors">Delete</button>
+                                            <button type="submit" class="text-rose-600 hover:text-rose-900 dark:text-rose-400 dark:hover:text-rose-300 text-sm font-semibold transition-colors">Hapus</button>
                                         </form>
                                     </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">No Routers found.</td>
+                                <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">Belum ada router.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -101,7 +101,7 @@
                         </button>
                     </div>
                     <div class="p-6 space-y-4">
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Copy and paste this script directly into Mikrotik Terminal (New Terminal) to connect your Mikrotik with the Radius Server.</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Salin dan tempel skrip ini ke Terminal MikroTik (New Terminal) untuk menghubungkan MikroTik dengan server RADIUS.</p>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/30 p-4 rounded-xl border border-slate-100 dark:border-slate-800/50">
                             <div>
                                 <span class="block text-xs font-bold text-gray-500 dark:text-gray-400">Router IP / NAS IP</span>
@@ -113,12 +113,12 @@
                             </div>
                         </div>
                         <div>
-                            <x-input-label value="Radius Server IP Address (Active)" />
+                            <x-input-label value="Alamat IP Server RADIUS (Aktif)" />
                             <x-text-input type="text" x-model="radiusIp" class="mt-1 w-full bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400" readonly disabled />
                             <p class="text-xs text-gray-500 mt-1">IP server Radius aktif saat ini (dideteksi secara otomatis oleh sistem).</p>
                         </div>
                         <div>
-                            <x-input-label value="Mikrotik Terminal Script" />
+                            <x-input-label value="Skrip Terminal MikroTik" />
                             <div class="relative mt-1">
                                 <textarea readonly x-text="script" rows="6" class="w-full font-mono text-xs bg-slate-950 text-emerald-400 border border-slate-800 rounded-xl p-4 focus:ring-0 focus:border-slate-800 cursor-text select-all"></textarea>
                                 <div class="absolute right-3 bottom-3" x-data="{ copied: false }">
@@ -134,7 +134,7 @@
                         </div>
                     </div>
                     <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-700/50 flex justify-end">
-                        <button type="button" @click="modalOpen = false" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg text-sm font-semibold transition-all">Close</button>
+                        <button type="button" @click="modalOpen = false" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg text-sm font-semibold transition-all">Tutup</button>
                     </div>
                 </div>
             </div>

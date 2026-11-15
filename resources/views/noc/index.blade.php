@@ -3,7 +3,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h2 class="font-bold text-2xl text-gray-900 dark:text-white tracking-tight">
-                    NOC Center (Network Operations)
+                    NOC Center (Operasional Jaringan)
                 </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     Pusat pemantauan infrastruktur jaringan dan perangkat pelanggan secara real-time.
@@ -12,7 +12,7 @@
             <div class="flex gap-3">
                 <a href="{{ route('noc.index', ['refresh' => 1]) }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm shadow-indigo-500/20">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    Refresh Status
+                    Muat Ulang Status
                 </a>
             </div>
         </div>
@@ -34,7 +34,7 @@
                             <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                         </span>
                     </div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">User Online</p>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Pengguna Online</p>
                     <h3 class="text-3xl font-semibold text-gray-900 dark:text-white tabular-nums">{{ $stats['online'] }}</h3>
                 </div>
 
@@ -45,7 +45,7 @@
                             <svg class="w-6 h-6 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-3.536 5 5 0 015-5m-9.193 9.193a9 9 0 01-2.121-6.364 9 9 0 019-9"></path></svg>
                         </div>
                     </div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">User Offline</p>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Pengguna Offline</p>
                     <h3 class="text-3xl font-semibold text-rose-600 dark:text-rose-400 tabular-nums">{{ $stats['offline'] }}</h3>
                 </div>
 
@@ -67,7 +67,7 @@
                         <div class="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-xl text-rose-600">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2"></path></svg>
                         </div>
-                        <span class="text-xs font-bold text-rose-600 group-hover:underline">Monitor</span>
+                        <span class="text-xs font-bold text-rose-600 group-hover:underline">Pantau</span>
                     </div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Sinyal Lemah</p>
                     <h3 class="text-3xl font-semibold text-gray-900 dark:text-white tabular-nums">{{ $stats['critical_signals'] }}</h3>
@@ -93,9 +93,9 @@
                         <div class="p-6 border-b border-gray-50 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
                             <h3 class="font-bold text-gray-900 dark:text-white flex items-center">
                                 <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
-                                Live Infrastructure Monitoring
+                                Pemantauan Infrastruktur Langsung
                             </h3>
-                            <span class="text-xs text-gray-500 font-mono">Last Sync: {{ now()->format('H:i:s') }}</span>
+                            <span class="text-xs text-gray-500 font-mono">Sinkron terakhir: {{ now()->format('H:i:s') }}</span>
                         </div>
                         @if($olts->isEmpty())
                         <div class="p-12 text-center">
@@ -153,7 +153,7 @@
                                         </div>
                                         <div class="mt-4">
                                             <a href="{{ route('olts.show', $olt->id) }}" class="block w-full py-2 bg-white dark:bg-gray-800 text-center text-xs font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-100 transition-colors border border-gray-100 dark:border-gray-700">
-                                                DETAILS
+                                                RINCIAN
                                             </a>
                                         </div>
                                     </div>
@@ -170,7 +170,7 @@
                     <div class="bg-gray-900 rounded-xl p-6 text-white shadow-sm">
                         <h3 class="font-bold mb-4 flex items-center">
                             <svg class="w-5 h-5 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            Auto Discovery
+                            Deteksi Otomatis
                         </h3>
                         <div class="p-4 bg-white/5 rounded-xl border border-white/10 text-center">
                             <p class="text-xs text-indigo-200 mb-4">Mencari ONU baru yang terdeteksi di PON Port OLT...</p>
@@ -185,7 +185,7 @@
 
                     <!-- Network Tools -->
                     <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                        <h3 class="font-bold text-gray-900 dark:text-white mb-4">Technician Tools</h3>
+                        <h3 class="font-bold text-gray-900 dark:text-white mb-4">Alat Teknisi</h3>
                         <div class="space-y-3">
                             <button class="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors group">
                                 <div class="flex items-center">

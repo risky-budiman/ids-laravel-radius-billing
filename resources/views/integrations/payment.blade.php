@@ -23,7 +23,7 @@
                 <div class="bg-indigo-50/50 dark:bg-indigo-900/20 px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                     <h3 class="font-bold text-gray-900 dark:text-gray-100">Midtrans</h3>
                     <span class="px-2 py-1 rounded text-xs font-bold {{ ($m->is_active ?? false) ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600' }}">
-                        {{ ($m->is_active ?? false) ? 'ACTIVE' : 'INACTIVE' }}
+                        {{ ($m->is_active ?? false) ? 'AKTIF' : 'NONAKTIF' }}
                     </span>
                 </div>
                 <form action="{{ route('integrations.update') }}" method="POST" class="p-6 space-y-4">
@@ -32,7 +32,7 @@
                     <input type="hidden" name="type" value="payment">
                     
                     <div>
-                        <x-input-label value="Environment" />
+                        <x-input-label value="Mode" />
                         <select name="credentials[environment]" class="mt-1 input">
                             <option value="sandbox" {{ ($m->credentials['environment'] ?? '') == 'sandbox' ? 'selected' : '' }}>Sandbox (Test)</option>
                             <option value="production" {{ ($m->credentials['environment'] ?? '') == 'production' ? 'selected' : '' }}>Production (Live)</option>
@@ -56,7 +56,7 @@
                         <div class="space-y-3">
                             <!-- Payment Notification URL -->
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">Payment Notification URL *</label>
+                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">URL Notifikasi Pembayaran *</label>
                                 <div class="mt-1 flex rounded-md shadow-sm">
                                     <input type="text" id="url_pay_notif" readonly value="{{ url('/webhooks/midtrans') }}" class="flex-1 min-w-0 block w-full px-3 py-1.5 rounded-none rounded-l-md text-xs font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 focus:ring-indigo-500 focus:border-indigo-500 select-all" />
                                     <button type="button" onclick="copyUrl('url_pay_notif', 'btn_pay_notif')" id="btn_pay_notif" class="inline-flex items-center px-3 py-1.5 border border-l-0 border-gray-200 dark:border-gray-700 rounded-r-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 text-xs font-semibold">Copy</button>
@@ -74,7 +74,7 @@
 
                             <!-- Pay Account Notification URL -->
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">Pay Account Notification URL *</label>
+                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">URL Notifikasi Pay Account *</label>
                                 <div class="mt-1 flex rounded-md shadow-sm">
                                     <input type="text" id="url_acc_notif" readonly value="{{ url('/webhooks/midtrans') }}" class="flex-1 min-w-0 block w-full px-3 py-1.5 rounded-none rounded-l-md text-xs font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 focus:ring-indigo-500 focus:border-indigo-500 select-all" />
                                     <button type="button" onclick="copyUrl('url_acc_notif', 'btn_acc_notif')" id="btn_acc_notif" class="inline-flex items-center px-3 py-1.5 border border-l-0 border-gray-200 dark:border-gray-700 rounded-r-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 text-xs font-semibold">Copy</button>
@@ -101,7 +101,7 @@
 
                             <!-- Error Redirect URL -->
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">Error Redirect URL *</label>
+                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">URL Redirect Gagal *</label>
                                 <div class="mt-1 flex rounded-md shadow-sm">
                                     <input type="text" id="url_error_redir" readonly value="{{ url('/client/invoices') }}" class="flex-1 min-w-0 block w-full px-3 py-1.5 rounded-none rounded-l-md text-xs font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 focus:ring-indigo-500 focus:border-indigo-500 select-all" />
                                     <button type="button" onclick="copyUrl('url_error_redir', 'btn_error_redir')" id="btn_error_redir" class="inline-flex items-center px-3 py-1.5 border border-l-0 border-gray-200 dark:border-gray-700 rounded-r-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 text-xs font-semibold">Copy</button>
@@ -116,9 +116,9 @@
                     <div class="pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
                         <label class="flex items-center text-sm">
                             <input type="checkbox" name="is_active" value="1" {{ ($m->is_active ?? false) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                            <span class="ml-2 text-gray-600 dark:text-gray-400">Set as Active Gateway</span>
+                            <span class="ml-2 text-gray-600 dark:text-gray-400">Jadikan Gateway Aktif</span>
                         </label>
-                        <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Save Settings</button>
+                        <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Simpan Pengaturan</button>
                     </div>
                 </form>
             </div>
@@ -129,7 +129,7 @@
                 <div class="bg-blue-50/50 dark:bg-blue-900/20 px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                     <h3 class="font-bold text-gray-900 dark:text-gray-100">Xendit</h3>
                     <span class="px-2 py-1 rounded text-xs font-bold {{ ($x->is_active ?? false) ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600' }}">
-                        {{ ($x->is_active ?? false) ? 'ACTIVE' : 'INACTIVE' }}
+                        {{ ($x->is_active ?? false) ? 'AKTIF' : 'NONAKTIF' }}
                     </span>
                 </div>
                 <form action="{{ route('integrations.update') }}" method="POST" class="p-6 space-y-4">
@@ -142,7 +142,7 @@
                         <x-text-input name="credentials[secret_key]" value="{{ $x->credentials['secret_key'] ?? '' }}" class="mt-1 w-full" type="password" />
                     </div>
                     <div>
-                        <x-input-label value="Callback Token (Verification)" />
+                        <x-input-label value="Callback Token (Verifikasi)" />
                         <x-text-input name="credentials[callback_token]" value="{{ $x->credentials['callback_token'] ?? '' }}" class="mt-1 w-full" />
                     </div>
                     <div class="mt-4 p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-xl space-y-2">
@@ -152,15 +152,15 @@
                             <button type="button" onclick="copyUrl('url_xendit_webhook', 'btn_xendit_webhook')" id="btn_xendit_webhook" class="inline-flex items-center px-3 py-1.5 border border-l-0 border-gray-200 dark:border-gray-700 rounded-r-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 text-xs font-semibold">Copy</button>
                         </div>
                         <p class="text-xs text-gray-500 dark:text-gray-400 leading-normal">
-                            Masukkan URL ini di dashboard Xendit (Configuration > Webhooks) untuk events **Invoice Paid** dan **Invoice Settled**.
+                            Masukkan URL ini di dashboard Xendit (Configuration > Webhooks) untuk event **Invoice Paid** dan **Invoice Settled**.
                         </p>
                     </div>
                     <div class="pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
                         <label class="flex items-center text-sm">
                             <input type="checkbox" name="is_active" value="1" {{ ($x->is_active ?? false) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                            <span class="ml-2 text-gray-600 dark:text-gray-400">Set as Active Gateway</span>
+                            <span class="ml-2 text-gray-600 dark:text-gray-400">Jadikan Gateway Aktif</span>
                         </label>
-                        <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Save Settings</button>
+                        <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Simpan Pengaturan</button>
                     </div>
                 </form>
             </div>
@@ -180,7 +180,7 @@
                     <input type="hidden" name="type" value="payment">
                     
                     <div>
-                        <x-input-label value="Environment" />
+                        <x-input-label value="Mode" />
                         <select name="credentials[environment]" class="mt-1 input">
                             <option value="sandbox" {{ ($d->credentials['environment'] ?? '') == 'sandbox' ? 'selected' : '' }}>Sandbox (Test)</option>
                             <option value="production" {{ ($d->credentials['environment'] ?? '') == 'production' ? 'selected' : '' }}>Production (Live)</option>
@@ -207,9 +207,9 @@
                     <div class="pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
                         <label class="flex items-center text-sm">
                             <input type="checkbox" name="is_active" value="1" {{ ($d->is_active ?? false) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                            <span class="ml-2 text-gray-600 dark:text-gray-400">Set as Active Gateway</span>
+                            <span class="ml-2 text-gray-600 dark:text-gray-400">Jadikan Gateway Aktif</span>
                         </label>
-                        <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Save Settings</button>
+                        <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Simpan Pengaturan</button>
                     </div>
                 </form>
             </div>
@@ -233,7 +233,7 @@
                         <x-text-input name="credentials[api_token]" value="{{ $mo->credentials['api_token'] ?? '' }}" class="mt-1 w-full" type="password" />
                     </div>
                     <div>
-                        <x-input-label value="Bank ID (Optional/Default)" />
+                        <x-input-label value="Bank ID (Opsional/Default)" />
                         <x-text-input name="credentials[bank_id]" value="{{ $mo->credentials['bank_id'] ?? '' }}" class="mt-1 w-full" />
                     </div>
                     <div>
@@ -254,9 +254,9 @@
                     <div class="pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
                         <label class="flex items-center text-sm">
                             <input type="checkbox" name="is_active" value="1" {{ ($mo->is_active ?? false) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                            <span class="ml-2 text-gray-600 dark:text-gray-400">Set as Active Gateway</span>
+                            <span class="ml-2 text-gray-600 dark:text-gray-400">Jadikan Gateway Aktif</span>
                         </label>
-                        <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Save Settings</button>
+                        <button type="submit" class="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-semibold">Simpan Pengaturan</button>
                     </div>
                 </form>
             </div>

@@ -14,7 +14,7 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-gray-500 ">Total Sales Staff</p>
+                        <p class="text-xs font-bold text-gray-500 ">Total Sales</p>
                         <h3 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ $salesStaff->count() }}</h3>
                     </div>
                 </div>
@@ -26,7 +26,7 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m.599-1H11.401M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-gray-500 ">Total Outstanding Balance</p>
+                        <p class="text-xs font-bold text-gray-500 ">Total Saldo Terutang</p>
                         <h3 class="text-2xl font-semibold text-gray-900 dark:text-white">Rp {{ number_format($salesStaff->sum('balance'), 0, ',', '.') }}</h3>
                     </div>
                 </div>
@@ -38,7 +38,7 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 00-2 2v2a2 2 0 002 2h10a2 2 0 002-2v-2a2 2 0 00-2-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-gray-500 ">Total Incentive Paid Out</p>
+                        <p class="text-xs font-bold text-gray-500 ">Total Insentif Dicairkan</p>
                         <h3 class="text-2xl font-semibold text-gray-900 dark:text-white">Rp {{ number_format($salesStaff->sum('total_withdrawn'), 0, ',', '.') }}</h3>
                     </div>
                 </div>
@@ -48,17 +48,17 @@
         <!-- Sales Staff List -->
         <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
             <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Sales Staff Performance</h3>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Kinerja Sales</h3>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-50 dark:bg-gray-900/50">
-                            <th class="p-4 text-xs font-bold text-gray-500 ">Staff Name</th>
+                            <th class="p-4 text-xs font-bold text-gray-500 ">Nama Staf</th>
                             <th class="p-4 text-xs font-bold text-gray-500  text-right">Total Earned</th>
-                            <th class="p-4 text-xs font-bold text-gray-500  text-right">Paid Out</th>
-                            <th class="p-4 text-xs font-bold text-gray-500  text-right">Current Balance</th>
-                            <th class="p-4 text-xs font-bold text-gray-500  text-center">Action</th>
+                            <th class="p-4 text-xs font-bold text-gray-500  text-right">Sudah Dicairkan</th>
+                            <th class="p-4 text-xs font-bold text-gray-500  text-right">Saldo Saat Ini</th>
+                            <th class="p-4 text-xs font-bold text-gray-500  text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -88,13 +88,13 @@
                             </td>
                             <td class="p-4 text-center">
                                 <a href="{{ route('sales-commissions.show', $staff) }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold  rounded-xl transition-all shadow-sm">
-                                    View Ledger
+                                    Lihat Buku Komisi
                                 </a>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="p-8 text-center text-gray-500 italic">No sales staff found with role 'sales'.</td>
+                            <td colspan="5" class="p-8 text-center text-gray-500 italic">Belum ada staf dengan peran sales.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -105,17 +105,17 @@
         <!-- Recent Commissions -->
         <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
             <div class="p-6 border-b border-gray-100 dark:border-gray-700">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Recent Incentive Records</h3>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Catatan Insentif Terbaru</h3>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-50 dark:bg-gray-900/50">
-                            <th class="p-4 text-xs font-bold text-gray-500 ">Date</th>
-                            <th class="p-4 text-xs font-bold text-gray-500 ">Staff</th>
-                            <th class="p-4 text-xs font-bold text-gray-500 ">Customer</th>
+                            <th class="p-4 text-xs font-bold text-gray-500 ">Tanggal</th>
+                            <th class="p-4 text-xs font-bold text-gray-500 ">Staf</th>
+                            <th class="p-4 text-xs font-bold text-gray-500 ">Pelanggan</th>
                             <th class="p-4 text-xs font-bold text-gray-500 ">Invoice</th>
-                            <th class="p-4 text-xs font-bold text-gray-500  text-right">Amount</th>
+                            <th class="p-4 text-xs font-bold text-gray-500  text-right">Jumlah</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700 text-sm">

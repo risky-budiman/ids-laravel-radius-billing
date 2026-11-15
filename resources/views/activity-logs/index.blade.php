@@ -20,9 +20,9 @@
                     <div class="mb-8 p-6 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
                         <form action="{{ route('activity-logs.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4">
                             <div>
-                                <label class="block text-xs font-semibold text-gray-400 mb-2 ml-1">User</label>
+                                <label class="block text-xs font-semibold text-gray-400 mb-2 ml-1">Pengguna</label>
                                 <select name="user_id" class="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                    <option value="">All Users</option>
+                                    <option value="">Semua Pengguna</option>
                                     @foreach($users as $user)
                                         <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
                                     @endforeach
@@ -30,28 +30,28 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-400 mb-2 ml-1">Action</label>
+                                <label class="block text-xs font-semibold text-gray-400 mb-2 ml-1">Aksi</label>
                                 <select name="action" class="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                    <option value="">All Actions</option>
-                                    <option value="created" {{ request('action') == 'created' ? 'selected' : '' }}>Created</option>
-                                    <option value="updated" {{ request('action') == 'updated' ? 'selected' : '' }}>Updated</option>
+                                    <option value="">Semua Aksi</option>
+                                    <option value="created" {{ request('action') == 'created' ? 'selected' : '' }}>Dibuat</option>
+                                    <option value="updated" {{ request('action') == 'updated' ? 'selected' : '' }}>Diperbarui</option>
                                     <option value="deleted" {{ request('action') == 'deleted' ? 'selected' : '' }}>Deleted</option>
                                     <option value="login" {{ request('action') == 'login' ? 'selected' : '' }}>Login</option>
                                     <option value="logout" {{ request('action') == 'logout' ? 'selected' : '' }}>Logout</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-400 mb-2 ml-1">Date Start</label>
+                                <label class="block text-xs font-semibold text-gray-400 mb-2 ml-1">Tanggal Mulai</label>
                                 <input type="date" name="date_start" value="{{ request('date_start') }}" class="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-400 mb-2 ml-1">Date End</label>
+                                <label class="block text-xs font-semibold text-gray-400 mb-2 ml-1">Tanggal Akhir</label>
                                 <input type="date" name="date_end" value="{{ request('date_end') }}" class="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                             <div class="flex items-end space-x-2">
                                 <div class="flex-grow">
-                                    <label class="block text-xs font-semibold text-gray-400 mb-2 ml-1">Search</label>
-                                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Search description..." class="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                    <label class="block text-xs font-semibold text-gray-400 mb-2 ml-1">Cari</label>
+                                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari deskripsi..." class="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500">
                                 </div>
                                 <button type="submit" class="p-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -68,11 +68,11 @@
                             <thead>
                                 <tr class="border-b border-gray-100 dark:border-gray-700">
                                     <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">#</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">User</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">Action</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">Description</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">IP Address</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">Date</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">Pengguna</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">Aksi</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">Deskripsi</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">Alamat IP</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">Tanggal</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
@@ -91,9 +91,9 @@
                                         </td>
                                         <td class="px-6 py-5 whitespace-nowrap">
                                             @if($activity->action === 'created')
-                                                <span class="px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs rounded-full">Created</span>
+                                                <span class="px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs rounded-full">Dibuat</span>
                                             @elseif($activity->action === 'updated')
-                                                <span class="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs rounded-full">Updated</span>
+                                                <span class="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs rounded-full">Diperbarui</span>
                                             @elseif($activity->action === 'deleted')
                                                 <span class="px-3 py-1 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs rounded-full">Deleted</span>
                                             @else
@@ -151,7 +151,7 @@
                                         <td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                                             <div class="flex flex-col items-center">
                                                 <svg class="w-12 h-12 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                <p>No activity logs found.</p>
+                                                <p>Belum ada log aktivitas.</p>
                                             </div>
                                         </td>
                                     </tr>

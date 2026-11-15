@@ -62,22 +62,22 @@
                     <div class="w-10 h-10 rounded-xl bg-fuchsia-500 flex items-center justify-center shadow-inner mr-4 text-white">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-surface-900 dark:text-white">Add STO (Branch Office)</h3>
+                    <h3 class="text-lg font-semibold text-surface-900 dark:text-white">Tambah STO (Kantor Cabang)</h3>
                 </div>
 
                 <form action="{{ route('locations.sto.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-6 gap-6 items-end">
                     @csrf
                     <div class="md:col-span-1">
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Parent Region</label>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Wilayah Induk</label>
                         <select name="region_id" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-fuchsia-500 focus:ring-4 focus:ring-fuchsia-500/10 transition-all px-4 py-3" required>
-                            <option value="">-- Region --</option>
+                            <option value="">-- Wilayah --</option>
                             @foreach($regions as $r)
                                 <option value="{{ $r->id }}">[{{ $r->code }}] {{ $r->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="md:col-span-1">
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">STO Name</label>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Nama STO</label>
                         <input type="text" name="name" placeholder="E.g. Jakarta Selatan" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-fuchsia-500 focus:ring-4 focus:ring-fuchsia-500/10 transition-all px-4 py-3" required />
                     </div>
                     <div class="md:col-span-1 relative">
@@ -93,7 +93,7 @@
                     </div>
                     <div class="md:col-span-2">
                         <button type="submit" class="w-full bg-fuchsia-600 text-white px-6 py-3 rounded-xl font-bold shadow-sm transform  transition-all outline-none focus:ring-4 focus:ring-fuchsia-500/30 whitespace-nowrap">
-                            Save STO
+                            Simpan STO
                         </button>
                     </div>
                 </form>
@@ -107,10 +107,10 @@
                     <thead class="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
                         <tr>
                             <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">#</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Code</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">STO Name</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Coordinates</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Region Master</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Kode</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Nama STO</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Koordinat</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Data Wilayah</th>
                             <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Child STBs</th>
                             <th class="px-6 py-4 text-right"></th>
                         </tr>
@@ -134,7 +134,7 @@
                                     <span class="block">Lat: {{ $s->latitude }}</span>
                                     <span class="block">Lon: {{ $s->longitude }}</span>
                                 @else
-                                    <span class="italic text-gray-400 text-xs">No Coordinates</span>
+                                    <span class="italic text-gray-400 text-xs">Belum ada koordinat</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
@@ -142,7 +142,7 @@
                                     <span class="inline-flex items-center text-xs text-gray-400 font-mono mr-1">[{{ $s->region->code }}]</span> 
                                     {{ $s->region->name }}
                                 @else
-                                    <span class="text-red-400 italic">No Region</span>
+                                    <span class="text-red-400 italic">Tanpa Wilayah</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4">
@@ -156,12 +156,12 @@
                                         @click='editSto = @json($s); editModalOpen = true'
                                         class="text-rose-600 hover:text-rose-900 font-bold text-sm"
                                     >
-                                        Edit
+                                        Ubah
                                     </button>
                                     <form action="{{ route('locations.sto.destroy', $s) }}" method="POST">
                                         @csrf @method('DELETE')
                                         <button class="text-red-500 hover:text-red-700 font-bold text-sm" onclick="return confirm('Delete STO? Ensure no dependent STBs exist!');">
-                                            Delete
+                                            Hapus
                                         </button>
                                     </form>
                                 </div>
@@ -178,14 +178,14 @@
             <div class="flex items-center justify-center min-h-screen px-4">
                 <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="editModalOpen = false"></div>
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-lg p-8 relative z-10 border border-gray-100 dark:border-gray-700">
-                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Edit STO: <span x-text="editSto.code" class="text-rose-500"></span></h3>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Ubah STO: <span x-text="editSto.code" class="text-rose-500"></span></h3>
                     
                     <form :action="`{{ url('admin/locations/stos') }}/${editSto.id}`" method="POST" class="space-y-4">
                         @csrf
                         @method('PUT')
                         
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Parent Region</label>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Wilayah Induk</label>
                             <select name="region_id" x-model="editSto.region_id" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 px-4 py-3" required>
                                 @foreach($regions as $r)
                                     <option value="{{ $r->id }}">[{{ $r->code }}] {{ $r->name }}</option>
@@ -194,7 +194,7 @@
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">STO Name</label>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Nama STO</label>
                             <input type="text" name="name" x-model="editSto.name" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 px-4 py-3" required />
                         </div>
                         
@@ -213,8 +213,8 @@
                         </div>
 
                         <div class="flex justify-end gap-3 mt-8">
-                            <button type="button" @click="editModalOpen = false" class="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Cancel</button>
-                            <button type="submit" class="px-10 py-3 bg-rose-600 text-white rounded-xl font-bold shadow-lg">Update STO</button>
+                            <button type="button" @click="editModalOpen = false" class="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Batal</button>
+                            <button type="submit" class="px-10 py-3 bg-rose-600 text-white rounded-xl font-bold shadow-lg">Perbarui STO</button>
                         </div>
                     </form>
                 </div>
@@ -227,13 +227,13 @@
                 <div class="fixed inset-0 bg-gray-900/80 backdrop-blur-md" @click="mapPickerOpen = false"></div>
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-4xl h-[80vh] flex flex-col relative z-10 overflow-hidden border border-gray-100 dark:border-gray-700">
                     <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Pick Location</h3>
-                        <p class="text-sm text-gray-500">Click on map or drag marker to set position</p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Pilih Lokasi</h3>
+                        <p class="text-sm text-gray-500">Klik peta atau geser penanda untuk menentukan posisi</p>
                     </div>
                     <div id="map-picker-container" class="flex-grow"></div>
                     <div class="p-6 bg-gray-50 dark:bg-gray-900/50 flex justify-end gap-3">
-                        <button type="button" @click="mapPickerOpen = false" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg font-bold">Cancel</button>
-                        <button type="button" @click="confirmPick()" class="px-10 py-2 bg-rose-600 text-white rounded-lg font-bold shadow-lg">Confirm Location</button>
+                        <button type="button" @click="mapPickerOpen = false" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg font-bold">Batal</button>
+                        <button type="button" @click="confirmPick()" class="px-10 py-2 bg-rose-600 text-white rounded-lg font-bold shadow-lg">Konfirmasi Lokasi</button>
                     </div>
                 </div>
             </div>

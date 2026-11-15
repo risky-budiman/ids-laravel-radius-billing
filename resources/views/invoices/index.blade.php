@@ -116,7 +116,7 @@
                 </div>
                 <div class="md:col-span-2 flex gap-2">
                     <button type="submit" class="btn-primary flex-1 !h-10">Terapkan</button>
-                    <a href="{{ route('invoices.index') }}" class="btn-secondary btn-icon !h-10 !w-10" title="Reset filter" aria-label="Reset filter">
+                    <a href="{{ route('invoices.index') }}" class="btn-secondary btn-icon !h-10 !w-10" title="Atur ulang filter" aria-label="Reset filter">
                         <x-icon name="x" class="w-4 h-4" />
                     </a>
                 </div>
@@ -292,7 +292,7 @@
              x-cloak>
             <div @click.away="showPaymentModal = false" class="bg-white dark:bg-surface-900 rounded-xl w-full max-w-lg overflow-hidden relative border border-surface-200 dark:border-surface-800 shadow-elevated">
                 <div class="bg-emerald-600 px-6 py-6 text-white relative">
-                    <h3 class="font-bold text-xl tracking-tight">Manual Payment</h3>
+                    <h3 class="font-bold text-xl tracking-tight">Pembayaran Manual</h3>
                     <p class="text-emerald-100 text-xs font-bold uppercase tracking-wide mt-1 opacity-80">Recording external transaction</p>
                     <button @click="showPaymentModal = false" class="absolute top-8 right-8 text-white/50 hover:text-white transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -310,31 +310,31 @@
                             <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="activeInvoiceNumber"></p>
                         </div>
                         <div class="p-5 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                            <label class="block text-xs font-semibold text-emerald-500 mb-1">Total Due</label>
+                            <label class="block text-xs font-semibold text-emerald-500 mb-1">Total Tagihan</label>
                             <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="'Rp ' + activeInvoiceAmount"></p>
                         </div>
                     </div>
 
                     <div class="mb-8">
-                        <label class="block text-xs font-semibold text-gray-400 mb-3">Receiving Bank Account</label>
+                        <label class="block text-xs font-semibold text-gray-400 mb-3">Rekening Penerima</label>
                         <select name="bank_account_id" class="w-full py-2.5 rounded-lg border-gray-100 dark:border-gray-700 dark:bg-gray-900/50 text-sm font-bold focus:ring-emerald-500 focus:border-emerald-500 transition-all" required>
-                            <option value="">Select Account...</option>
+                            <option value="">Pilih Akun...</option>
                             @foreach($bankAccounts as $acc)
                                 <option value="{{ $acc->id }}">{{ $acc->bank_name }} - {{ $acc->account_name }}</option>
                             @endforeach
                         </select>
                         <p class="mt-3 text-xs text-gray-400 font-medium italic px-2 leading-relaxed">
                             <span class="text-emerald-500 font-semibold mr-1">NOTE:</span>
-                            Payment will be automatically logged to the general ledger and the customer service will be reactivated if currently suspended.
+                            Pembayaran otomatis dicatat ke jurnal umum, dan layanan pelanggan dibuka kembali bila sedang terisolir.
                         </p>
                     </div>
 
                     <div class="flex flex-col gap-3">
                         <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl shadow-sm transition-all transform">
-                            CONFIRM PAYMENT
+                            KONFIRMASI PEMBAYARAN
                         </button>
                         <button type="button" @click="showPaymentModal = false" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 font-bold py-4 rounded-xl transition-all">
-                            CANCEL
+                            BATAL
                         </button>
                     </div>
                 </form>
@@ -353,9 +353,9 @@
              x-cloak>
             <div @click.away="showBulkPayModal = false" class="bg-white dark:bg-surface-900 rounded-xl w-full max-w-lg overflow-hidden relative border border-surface-200 dark:border-surface-800 shadow-elevated">
                 <div class="bg-emerald-600 px-6 py-6 text-white relative">
-                    <h3 class="font-bold text-xl tracking-tight">Bulk Payment</h3>
+                    <h3 class="font-bold text-xl tracking-tight">Pembayaran Massal</h3>
                     <p class="text-emerald-100 text-xs font-bold uppercase tracking-wide mt-1 opacity-80">
-                        Marking <span x-text="selectedIds.length" class="text-white"></span> invoices as paid
+                        Sebanyak <span x-text="selectedIds.length" class="text-white"></span> invoice akan ditandai lunas
                     </p>
                     <button @click="showBulkPayModal = false" class="absolute top-8 right-8 text-white/50 hover:text-white transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -420,10 +420,10 @@
                         </div>
                         <div>
                             <div class="flex items-center space-x-3">
-                                <h2 class="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">Generate Invoice</h2>
+                                <h2 class="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">Buat Invoice</h2>
                                 <span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">Billing Engine</span>
                             </div>
-                            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Manual billing creation for active subscribers.</p>
+                            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Pembuatan tagihan manual untuk pelanggan aktif.</p>
                         </div>
                     </div>
                     <button @click="showCreateModal = false" type="button" class="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full p-2.5 hover:rotate-90 transition-transform">
@@ -441,10 +441,10 @@
                             <div class="bg-white dark:bg-slate-900 rounded-xl p-7 border border-slate-200 dark:border-slate-800 shadow-sm">
                                 <div class="flex items-center space-x-2.5 mb-4">
                                     <span class="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400"></span>
-                                    <label class="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wide">1. Target Subscriber</label>
+                                    <label class="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wide">1. Pelanggan Tujuan</label>
                                 </div>
                                 <select id="customer_id" name="customer_id" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-4 px-5 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" required>
-                                    <option value="" class="dark:bg-slate-900 dark:text-white">-- Select Subscriber --</option>
+                                    <option value="" class="dark:bg-slate-900 dark:text-white">-- Pilih Pelanggan --</option>
                                     @foreach($customers as $customer)
                                         <option value="{{ $customer->id }}" class="dark:bg-slate-900 dark:text-white" {{ old('customer_id') == $customer->id ? 'selected' : '' }}
                                             data-price="{{ $customer->package->price ?? 0 }}"
@@ -469,22 +469,22 @@
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 px-1">Duration</label>
+                                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 px-1">Durasi</label>
                                         <select id="billing_duration" name="billing_period" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-4 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
                                             @for ($i = 1; $i <= 12; $i++)
                                                 <option value="{{ $i }} Month{{ $i > 1 ? 's' : '' }}" class="dark:bg-slate-900 dark:text-white" data-months="{{ $i }}" {{ $i == 1 ? 'selected' : '' }}>
                                                     {{ $i }} Month{{ $i > 1 ? 's' : '' }}
                                                 </option>
                                             @endfor
-                                            <option value="Custom" class="dark:bg-slate-900 dark:text-white">Custom Range</option>
+                                            <option value="Custom" class="dark:bg-slate-900 dark:text-white">Rentang Khusus</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 px-1">Start Date</label>
+                                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 px-1">Tanggal Mulai</label>
                                         <input id="period_start" name="period_start" value="{{ old('period_start') }}" type="date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-4 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" required />
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 px-1">End Date</label>
+                                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 px-1">Tanggal Akhir</label>
                                         <input id="period_end" name="period_end" value="{{ old('period_end') }}" type="date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-4 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" required />
                                     </div>
                                 </div>
@@ -492,11 +492,11 @@
                                 <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
                                     <div class="flex items-center space-x-2.5 mb-3">
                                         <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                                        <label class="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wide">Settlement Due Date</label>
+                                        <label class="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wide">Jatuh Tempo Pelunasan</label>
                                     </div>
                                     <div class="max-w-xs">
                                         <input id="due_date" name="due_date" value="{{ old('due_date') }}" type="date" class="w-full bg-rose-50/60 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 rounded-lg py-3.5 px-5 text-sm font-bold text-rose-700 dark:text-rose-300 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all" required />
-                                        <p class="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium px-1">Synced automatically with subscriber cycle.</p>
+                                        <p class="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium px-1">Mengikuti siklus tagihan pelanggan secara otomatis.</p>
                                     </div>
                                 </div>
                             </div>
@@ -510,7 +510,7 @@
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 px-1">Base Amount (Rp)</label>
+                                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 px-1">Harga Dasar (Rp)</label>
                                         <div class="relative">
                                             <span class="absolute left-4 top-3.5 font-bold text-sm text-slate-400 dark:text-slate-500">Rp</span>
                                             <input id="amount" name="amount" value="{{ old('amount') }}" type="number" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 pl-11 pr-5 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" placeholder="0" required />
@@ -519,7 +519,7 @@
                                     <div>
                                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 px-1">Tax Scheme</label>
                                         <select id="tax_id" name="tax_id" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-5 text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
-                                            <option value="" class="dark:bg-slate-900 dark:text-white">No Tax Applied</option>
+                                            <option value="" class="dark:bg-slate-900 dark:text-white">Tanpa Pajak</option>
                                             @foreach($taxes as $tax)
                                                 <option value="{{ $tax->id }}" class="dark:bg-slate-900 dark:text-white" data-rate="{{ $tax->rate }}">{{ $tax->name }} ({{ $tax->rate }}%)</option>
                                             @endforeach
@@ -529,9 +529,9 @@
 
                                 <div class="flex items-center space-x-2.5 mb-2.5">
                                     <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-                                    <label class="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wide">Notes & Remarks</label>
+                                    <label class="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wide">Catatan</label>
                                 </div>
-                                <textarea id="notes" name="notes" rows="3" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-5 text-sm font-medium text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" placeholder="Enter optional notes for customer...">{{ old('notes') }}</textarea>
+                                <textarea id="notes" name="notes" rows="3" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-5 text-sm font-medium text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" placeholder="Catatan opsional untuk pelanggan...">{{ old('notes') }}</textarea>
                             </div>
                         </div>
 
@@ -544,7 +544,7 @@
                                 <div class="flex items-center justify-between mb-7 relative z-10">
                                     <div class="flex items-center space-x-2">
                                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                        <span class="text-xs font-semibold text-indigo-100 dark:text-indigo-300">Audit Summary</span>
+                                        <span class="text-xs font-semibold text-indigo-100 dark:text-indigo-300">Ringkasan Audit</span>
                                     </div>
                                     <div class="p-2 bg-white/15 dark:bg-slate-800 rounded-xl text-white dark:text-indigo-400 border border-white/20 dark:border-slate-700">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>

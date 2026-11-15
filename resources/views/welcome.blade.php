@@ -42,7 +42,7 @@
                             <a
                                 href="{{ route('register') }}"
                                 class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] border-[#19140035] hover:border-[#1915014a] border text-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#62605b] rounded-sm text-sm leading-normal">
-                                Register
+                                Daftar
                             </a>
                         @endif
                     @endauth
@@ -62,7 +62,7 @@
                                 </span>
                             </span>
                             <span>
-                                Read the
+                                Baca
                                 <a href="https://laravel.com/docs" target="_blank" class="inline-flex items-center space-x-1 font-medium underline underline-offset-4 text-[#f53003] dark:text-[#FF4433] ml-1">
                                     <span>Documentation</span>
                                     <svg
@@ -121,7 +121,7 @@
                     <p class="mt-6 lg:mt-10 text-[#706f6c] dark:text-[#A1A09A]">
                         v{{ app()->version() }}
                         <a href="https://github.com/laravel/laravel/blob/13.x/CHANGELOG.md" target="_blank" class="inline-flex items-center space-x-1 font-medium underline underline-offset-4 text-[#f53003] dark:text-[#FF4433] ml-1">
-                            <span>View changelog</span>
+                            <span>Lihat catatan rilis</span>
                             <svg
                                 width="10"
                                 height="11"

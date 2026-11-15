@@ -15,7 +15,7 @@
                     <div class="space-y-6">
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
                             <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                            Partner Account
+                            Akun Mitra
                         </h3>
                         
                         <div>
@@ -46,7 +46,7 @@
                     <div class="space-y-6">
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
                             <svg class="w-5 h-5 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            Commission & Payout
+                            Komisi & Pencairan
                         </h3>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -58,14 +58,14 @@
                                 <x-input-label for="commission_type" :value="__('Rate Type')" />
                                 <select id="commission_type" name="commission_type" class="mt-1 input">
                                     <option value="percentage" {{ old('commission_type', get_setting('default_commission_type')) === 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
-                                    <option value="fixed" {{ old('commission_type') === 'fixed' ? 'selected' : '' }}>Fixed Amount</option>
+                                    <option value="fixed" {{ old('commission_type') === 'fixed' ? 'selected' : '' }}>Nominal Tetap</option>
                                 </select>
                             </div>
                         </div>
 
                         <div>
                             <x-input-label for="bank_name" :value="__('Bank Name')" />
-                            <x-text-input id="bank_name" name="bank_name" type="text" class="mt-1 block w-full" :value="old('bank_name')" placeholder="e.g. BCA, Mandiri" />
+                            <x-text-input id="bank_name" name="bank_name" type="text" class="mt-1 block w-full" :value="old('bank_name')" placeholder="mis. BCA, Mandiri" />
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">

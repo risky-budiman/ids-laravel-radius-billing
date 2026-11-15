@@ -67,7 +67,7 @@
                     <div class="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center shadow-inner mr-4 text-white">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-surface-900 dark:text-white">Add ODC Cabinet</h3>
+                    <h3 class="text-lg font-semibold text-surface-900 dark:text-white">Tambah Kabinet ODC</h3>
                 </div>
 
                 <form action="{{ route('locations.odc.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-7 gap-6 items-end">
@@ -82,12 +82,12 @@
                         </select>
                     </div>
                     <div class="md:col-span-1">
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">ODC Code</label>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Kode ODC</label>
                         <input type="text" name="id" placeholder="ODC-BDG-01" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all px-4 py-3 font-mono" required />
                     </div>
                     <div class="md:col-span-1">
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Cabinet Name</label>
-                        <input type="text" name="name" placeholder="Name" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all px-4 py-3" required />
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Nama Kabinet</label>
+                        <input type="text" name="name" placeholder="Nama" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all px-4 py-3" required />
                     </div>
                     <div class="md:col-span-1 relative">
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Latitude</label>
@@ -101,12 +101,12 @@
                         <input type="text" name="longitude" id="create_lon" placeholder="106.123" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all px-4 py-3" />
                     </div>
                     <div class="md:col-span-1">
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Ports</label>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Port</label>
                         <input type="number" name="total_ports" placeholder="288" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all px-4 py-3" />
                     </div>
                     <div class="md:col-span-1">
                         <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg transition-all">
-                            Save
+                            Simpan
                         </button>
                     </div>
                 </form>
@@ -120,10 +120,10 @@
                     <thead class="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
                         <tr>
                             <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">#</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">ID / Code</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Cabinet Name</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">ID / Kode</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Nama Kabinet</th>
                             <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Parent STB</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Coordinates</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Koordinat</th>
                             <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Capacity</th>
                             <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Total ODPs</th>
                             <th class="px-6 py-4 text-right"></th>
@@ -148,7 +148,7 @@
                                     <span class="inline-flex items-center text-xs text-gray-400 font-mono mr-1">[{{ $o->stb->code }}]</span> 
                                     {{ $o->stb->name }}
                                 @else
-                                    <span class="text-red-400 italic">No STB</span>
+                                    <span class="text-red-400 italic">Tanpa STB</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-xs font-mono text-gray-500">
@@ -156,11 +156,11 @@
                                     <span class="block text-indigo-500">Lat: {{ $o->latitude }}</span>
                                     <span class="block text-indigo-500">Lon: {{ $o->longitude }}</span>
                                 @else
-                                    <span class="italic text-gray-400 text-xs">No Coordinates</span>
+                                    <span class="italic text-gray-400 text-xs">Belum ada koordinat</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                                {{ $o->total_ports ?? '-' }} Ports
+                                {{ $o->total_ports ?? '-' }} port
                             </td>
                             <td class="px-6 py-4">
                                 <span class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-md text-xs font-bold">
@@ -173,12 +173,12 @@
                                         @click='editOdc = @json($o); editModalOpen = true'
                                         class="text-indigo-600 hover:text-indigo-900 font-bold text-sm"
                                     >
-                                        Edit
+                                        Ubah
                                     </button>
                                     <form action="{{ route('locations.odc.destroy', $o) }}" method="POST">
                                         @csrf @method('DELETE')
                                         <button class="text-red-500 hover:text-red-700 font-bold text-sm" onclick="return confirm('Delete ODC Cabinet?');">
-                                            Delete
+                                            Hapus
                                         </button>
                                     </form>
                                 </div>
@@ -195,7 +195,7 @@
             <div class="flex items-center justify-center min-h-screen px-4">
                 <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="editModalOpen = false"></div>
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-lg p-8 relative z-10 border border-gray-100 dark:border-gray-700">
-                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Edit ODC: <span x-text="editOdc.id" class="text-indigo-500"></span></h3>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Ubah ODC: <span x-text="editOdc.id" class="text-indigo-500"></span></h3>
                     
                     <form :action="`{{ url('admin/locations/odcs') }}/${editOdc.id}`" method="POST" class="space-y-4">
                         @csrf
@@ -211,7 +211,7 @@
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Cabinet Name</label>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Nama Kabinet</label>
                             <input type="text" name="name" x-model="editOdc.name" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 px-4 py-3" required />
                         </div>
                         
@@ -230,13 +230,13 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Total Ports</label>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Total Port</label>
                             <input type="number" name="total_ports" x-model="editOdc.total_ports" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 px-4 py-3" />
                         </div>
 
                         <div class="flex justify-end gap-3 mt-8">
-                            <button type="button" @click="editModalOpen = false" class="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Cancel</button>
-                            <button type="submit" class="px-10 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-sm">Update ODC</button>
+                            <button type="button" @click="editModalOpen = false" class="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Batal</button>
+                            <button type="submit" class="px-10 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-sm">Perbarui ODC</button>
                         </div>
                     </form>
                 </div>
@@ -249,13 +249,13 @@
                 <div class="fixed inset-0 bg-gray-900/80 backdrop-blur-md" @click="mapPickerOpen = false"></div>
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-4xl h-[80vh] flex flex-col relative z-10 overflow-hidden border border-gray-100 dark:border-gray-700">
                     <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Pick Location</h3>
-                        <p class="text-sm text-gray-500">Click on map or drag marker to set position</p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Pilih Lokasi</h3>
+                        <p class="text-sm text-gray-500">Klik peta atau geser penanda untuk menentukan posisi</p>
                     </div>
                     <div id="map-picker-container" class="flex-grow"></div>
                     <div class="p-6 bg-gray-50 dark:bg-gray-900/50 flex justify-end gap-3">
-                        <button type="button" @click="mapPickerOpen = false" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg font-bold">Cancel</button>
-                        <button type="button" @click="confirmPick()" class="px-10 py-2 bg-indigo-600 text-white rounded-lg font-bold shadow-lg">Confirm Location</button>
+                        <button type="button" @click="mapPickerOpen = false" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg font-bold">Batal</button>
+                        <button type="button" @click="confirmPick()" class="px-10 py-2 bg-indigo-600 text-white rounded-lg font-bold shadow-lg">Konfirmasi Lokasi</button>
                     </div>
                 </div>
             </div>

@@ -9,13 +9,13 @@
                     <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
                         {{ $partner->name }}
                     </h2>
-                    <p class="text-sm text-gray-500">Partner Performance Dashboard</p>
+                    <p class="text-sm text-gray-500">Dashboard Kinerja Mitra</p>
                 </div>
             </div>
             @if(auth()->user()->isMitra())
                 <button x-data="" @click="$dispatch('open-modal', 'request-withdrawal')" class="inline-flex items-center px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-emerald-200 dark:shadow-none">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    Request Withdrawal
+                    Ajukan Penarikan
                 </button>
             @endif
         </div>
@@ -29,7 +29,7 @@
                 <p class="text-2xl font-semibold text-gray-900 dark:text-white mt-2">Rp {{ number_format($stats['total_earned'], 0, ',', '.') }}</p>
             </div>
             <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm border-l-4 border-l-indigo-500">
-                <p class="text-xs font-bold text-indigo-500 ">Current Balance</p>
+                <p class="text-xs font-bold text-indigo-500 ">Saldo Saat Ini</p>
                 <p class="text-2xl font-semibold text-gray-900 dark:text-white mt-2">Rp {{ number_format($stats['balance'], 0, ',', '.') }}</p>
             </div>
             <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
@@ -37,7 +37,7 @@
                 <p class="text-2xl font-semibold text-gray-900 dark:text-white mt-2">Rp {{ number_format($stats['total_withdrawn'], 0, ',', '.') }}</p>
             </div>
             <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                <p class="text-xs font-bold text-gray-400 ">Active Subscribers</p>
+                <p class="text-xs font-bold text-gray-400 ">Pelanggan Aktif</p>
                 <p class="text-2xl font-semibold text-gray-900 dark:text-white mt-2">{{ $stats['customer_count'] }}</p>
             </div>
         </div>
@@ -47,17 +47,17 @@
             <div class="lg:col-span-2 space-y-6">
                 <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between">
-                        <h3 class="font-bold text-gray-900 dark:text-white">Recent Commissions</h3>
-                        <span class="text-xs text-gray-400">Last 50 transactions</span>
+                        <h3 class="font-bold text-gray-900 dark:text-white">Komisi Terbaru</h3>
+                        <span class="text-xs text-gray-400">50 transaksi terakhir</span>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
                             <thead>
                                 <tr class="bg-gray-50/50 dark:bg-gray-900/50 text-xs font-bold text-gray-500">
-                                    <th class="px-6 py-3">Date</th>
-                                    <th class="px-6 py-3">Subscriber</th>
+                                    <th class="px-6 py-3">Tanggal</th>
+                                    <th class="px-6 py-3">Pelanggan</th>
                                     <th class="px-6 py-3">Invoice</th>
-                                    <th class="px-6 py-3 text-right">Amount</th>
+                                    <th class="px-6 py-3 text-right">Jumlah</th>
                                     <th class="px-6 py-3 text-center">Status</th>
                                 </tr>
                             </thead>
@@ -78,7 +78,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-12 text-center text-gray-400 italic">No commissions earned yet.</td>
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-400 italic">Belum ada komisi.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -91,7 +91,7 @@
             <div class="space-y-6">
                 <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-50 dark:border-gray-700">
-                        <h3 class="font-bold text-gray-900 dark:text-white">Your Subscribers</h3>
+                        <h3 class="font-bold text-gray-900 dark:text-white">Pelanggan Anda</h3>
                     </div>
                     <div class="p-2">
                         <div class="space-y-1">
@@ -113,7 +113,7 @@
                                 </div>
                             </div>
                             @empty
-                            <div class="p-6 text-center text-gray-400 italic text-sm">No subscribers linked yet.</div>
+                            <div class="p-6 text-center text-gray-400 italic text-sm">Belum ada pelanggan terhubung.</div>
                             @endforelse
                         </div>
                     </div>
@@ -130,7 +130,7 @@
                             <span class="font-bold">{{ $partner->bank_name ?? '-' }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-slate-400">Account #</span>
+                            <span class="text-slate-400">No. Akun</span>
                             <span class="font-bold">{{ $partner->bank_account_number ?? '-' }}</span>
                         </div>
                         <div class="flex justify-between">
@@ -148,11 +148,11 @@
         <form method="post" action="{{ route('partners.withdrawals.request') }}" class="p-8">
             @csrf
             <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">
-                Request Payout
+                Ajukan Pencairan
             </h2>
 
             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Your current balance is <strong>Rp {{ number_format($stats['balance'], 0, ',', '.') }}</strong>.
+                Saldo Anda saat ini <strong>Rp {{ number_format($stats['balance'], 0, ',', '.') }}</strong>.
             </p>
 
             <div class="mt-6">

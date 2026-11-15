@@ -5,7 +5,7 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             </a>
             <h2 class="font-semibold text-2xl text-gray-900 dark:text-white tracking-tight">
-                Register Fixed Asset
+                Daftarkan Aset Tetap
             </h2>
         </div>
     </x-slot>
@@ -15,32 +15,32 @@
             @csrf
             
             <div class="glass bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-100 dark:border-gray-700">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-6">Asset Details</h3>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-6">Rincian Aset</h3>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2">
-                        <x-input-label for="name" value="Asset Name" />
-                        <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" placeholder="e.g. Server Mikrotik CCR1036" required />
+                        <x-input-label for="name" value="Nama Aset" />
+                        <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" placeholder="mis. Server Mikrotik CCR1036" required />
                     </div>
 
                     <div>
-                        <x-input-label for="purchase_date" value="Purchase Date" />
+                        <x-input-label for="purchase_date" value="Tanggal Beli" />
                         <x-text-input id="purchase_date" name="purchase_date" type="date" class="mt-1 block w-full" value="{{ date('Y-m-d') }}" required />
                     </div>
 
                     <div>
-                        <x-input-label for="useful_life_months" value="Useful Life (Months)" />
-                        <x-text-input id="useful_life_months" name="useful_life_months" type="number" min="1" class="mt-1 block w-full" placeholder="e.g. 60 (5 years)" required />
+                        <x-input-label for="useful_life_months" value="Masa Manfaat (Bulan)" />
+                        <x-text-input id="useful_life_months" name="useful_life_months" type="number" min="1" class="mt-1 block w-full" placeholder="mis. 60 (5 years)" required />
                         <p class="text-xs text-gray-500 mt-1">Estimasi umur barang sebelum nilainya habis.</p>
                     </div>
 
                     <div>
-                        <x-input-label for="purchase_price" value="Purchase Price (Rp)" />
+                        <x-input-label for="purchase_price" value="Harga Beli (Rp)" />
                         <x-text-input id="purchase_price" name="purchase_price" type="number" min="0" class="mt-1 block w-full" placeholder="Total harga beli" required />
                     </div>
 
                     <div>
-                        <x-input-label for="salvage_value" value="Salvage Value (Rp)" />
+                        <x-input-label for="salvage_value" value="Nilai Sisa (Rp)" />
                         <x-text-input id="salvage_value" name="salvage_value" type="number" min="0" value="0" class="mt-1 block w-full" placeholder="Nilai sisa di akhir umur" required />
                         <p class="text-xs text-gray-500 mt-1">Nilai sisa aset di akhir umur ekonomisnya (bisa 0).</p>
                     </div>
@@ -58,9 +58,9 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2">
-                        <x-input-label for="asset_account_id" value="Asset Account (Debit)" />
+                        <x-input-label for="asset_account_id" value="Akun Aset (Debit)" />
                         <select name="asset_account_id" id="asset_account_id" class="mt-1 input" required>
-                            <option value="">Select Asset Account (e.g. 1210 - Peralatan Kantor)...</option>
+                            <option value="">Pilih Akun Aset (mis. 1210 - Peralatan Kantor)...</option>
                             @foreach($accounts as $account)
                                 @if($account->type === 'asset')
                                     <option value="{{ $account->id }}">{{ $account->code }} - {{ $account->name }}</option>
@@ -70,9 +70,9 @@
                     </div>
 
                     <div>
-                        <x-input-label for="depreciation_account_id" value="Depreciation Expense Account" />
+                        <x-input-label for="depreciation_account_id" value="Akun Beban Penyusutan" />
                         <select name="depreciation_account_id" id="depreciation_account_id" class="mt-1 input" required>
-                            <option value="">Select Expense Account (e.g. 6xxx)...</option>
+                            <option value="">Pilih Akun Beban (mis. 6xxx)...</option>
                             @foreach($accounts as $account)
                                 @if($account->type === 'expense')
                                     <option value="{{ $account->id }}">{{ $account->code }} - {{ $account->name }}</option>
@@ -82,9 +82,9 @@
                     </div>
 
                     <div>
-                        <x-input-label for="accumulated_account_id" value="Accumulated Depreciation Account" />
+                        <x-input-label for="accumulated_account_id" value="Akun Akumulasi Penyusutan" />
                         <select name="accumulated_account_id" id="accumulated_account_id" class="mt-1 input" required>
-                            <option value="">Select Contra-Asset Account...</option>
+                            <option value="">Pilih Akun Akumulasi Penyusutan...</option>
                             @foreach($accounts as $account)
                                 @if($account->type === 'asset' || $account->type === 'liability')
                                     <option value="{{ $account->id }}">{{ $account->code }} - {{ $account->name }}</option>
@@ -97,10 +97,10 @@
 
             <div class="flex justify-end gap-4">
                 <a href="{{ route('fixed-assets.index') }}" class="px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
-                    Cancel
+                    Batal
                 </a>
                 <button type="submit" class="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-sm">
-                    Register Asset
+                    Daftarkan Aset
                 </button>
             </div>
         </form>

@@ -10,15 +10,15 @@
             <div class="flex items-center gap-3">
                 <a href="{{ route('customers.export') }}" class="btn-secondary">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Export Data (Excel)
+                    Ekspor Data (Excel)
                 </a>
                 <a href="{{ route('customers.import.index') }}" class="btn-secondary">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    Import Data (Excel)
+                    Impor Data (Excel)
                 </a>
                 <a href="{{ route('customers.create') }}" class="btn-primary">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Add Subscriber
+                    Tambah Pelanggan
                 </a>
             </div>
         </div>
@@ -41,7 +41,7 @@
         <!-- Card 1: Total -->
         <div class="card p-5 flex items-center justify-between">
             <div>
-                <span class="block text-sm font-medium text-surface-500 dark:text-surface-400">Total Subscribers</span>
+                <span class="block text-sm font-medium text-surface-500 dark:text-surface-400">Total Pelanggan</span>
                 <span class="block text-2xl font-semibold tabular-nums text-slate-800 dark:text-slate-100 mt-2">{{ number_format($stats['total'] ?? 0) }}</span>
             </div>
             <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl">
@@ -52,7 +52,7 @@
         <!-- Card 2: Active -->
         <div class="card p-5 flex items-center justify-between">
             <div>
-                <span class="block text-sm font-medium text-surface-500 dark:text-surface-400">Active</span>
+                <span class="block text-sm font-medium text-surface-500 dark:text-surface-400">Aktif</span>
                 <span class="block text-2xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400 mt-2">{{ number_format($stats['active'] ?? 0) }}</span>
             </div>
             <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
@@ -63,7 +63,7 @@
         <!-- Card 3: Waiting Activation -->
         <div class="card p-5 flex items-center justify-between">
             <div>
-                <span class="block text-sm font-medium text-surface-500 dark:text-surface-400">Waiting Activation</span>
+                <span class="block text-sm font-medium text-surface-500 dark:text-surface-400">Menunggu Aktivasi</span>
                 <span class="block text-2xl font-semibold tabular-nums text-amber-600 dark:text-amber-400 mt-2">{{ number_format($stats['waiting_activation'] ?? 0) }}</span>
             </div>
             <div class="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl">
@@ -74,7 +74,7 @@
         <!-- Card 4: Suspended -->
         <div class="card p-5 flex items-center justify-between">
             <div>
-                <span class="block text-sm font-medium text-surface-500 dark:text-surface-400">Suspended</span>
+                <span class="block text-sm font-medium text-surface-500 dark:text-surface-400">Terisolir</span>
                 <span class="block text-2xl font-semibold tabular-nums text-rose-600 dark:text-rose-400 mt-2">{{ number_format($stats['suspended'] ?? 0) }}</span>
             </div>
             <div class="p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-xl">
@@ -103,13 +103,13 @@
 
                     <select name="status" onchange="filterCustomers()" class="w-full md:w-auto pl-3 pr-8 py-2 bg-gray-50/50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-700 dark:text-slate-300">
                         <option value="">Semua Status</option>
-                        <option value="new" {{ request('status') == 'new' ? 'selected' : '' }}>New</option>
-                        <option value="waiting_activation" {{ request('status') == 'waiting_activation' ? 'selected' : '' }}>Waiting Activation</option>
-                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                        <option value="suspended" {{ request('status') == 'suspended' ? 'selected' : '' }}>Suspended</option>
-                        <option value="waiting_dismantle" {{ request('status') == 'waiting_dismantle' ? 'selected' : '' }}>Waiting Dismantle</option>
-                        <option value="dismantled" {{ request('status') == 'dismantled' ? 'selected' : '' }}>Dismantled</option>
-                        <option value="canceled" {{ request('status') == 'canceled' ? 'selected' : '' }}>Canceled</option>
+                        <option value="new" {{ request('status') == 'new' ? 'selected' : '' }}>Baru</option>
+                        <option value="waiting_activation" {{ request('status') == 'waiting_activation' ? 'selected' : '' }}>Menunggu Aktivasi</option>
+                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Aktif</option>
+                        <option value="suspended" {{ request('status') == 'suspended' ? 'selected' : '' }}>Terisolir</option>
+                        <option value="waiting_dismantle" {{ request('status') == 'waiting_dismantle' ? 'selected' : '' }}>Menunggu Dismantle</option>
+                        <option value="dismantled" {{ request('status') == 'dismantled' ? 'selected' : '' }}>Dicabut</option>
+                        <option value="canceled" {{ request('status') == 'canceled' ? 'selected' : '' }}>Batal</option>
                     </select>
 
                     <select name="package_id" onchange="filterCustomers()" class="w-full md:w-auto pl-3 pr-8 py-2 bg-gray-50/50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-700 dark:text-slate-300">
@@ -120,12 +120,12 @@
                     </select>
                     
                     @if(request('status') || request('package_id') || request('search'))
-                        <a href="{{ route('customers.index') }}" class="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline">Clear Filters</a>
+                        <a href="{{ route('customers.index') }}" class="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline">Hapus Filter</a>
                     @endif
                 </div>
                 
                 <div class="text-xs font-medium text-surface-500 dark:text-surface-400">
-                    Total: {{ $customers->total() }} Subscribers
+                    Total: {{ $customers->total() }} pelanggan
                 </div>
             </div>
 
@@ -154,13 +154,13 @@
                                 <input type="checkbox" id="select-all" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
                             </th>
                             <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">#</th>
-                        <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">Customer ID</th>
+                        <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">ID Pelanggan</th>
                         <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">Username</th>
                         <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">Password</th>
-                        <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">Subscriber Name</th>
-                        <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">Package</th>
+                        <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">Nama Pelanggan</th>
+                        <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">Paket</th>
                         <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800">Status</th>
-                        <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800 text-center">Actions</th>
+                        <th class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-800 text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -189,13 +189,13 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="font-medium text-gray-900 dark:text-gray-100">{{ $customer->name }}</div>
-                                <div class="text-[10px] text-gray-500 dark:text-gray-400">{{ $customer->phone ?: 'No phone' }}</div>
+                                <div class="text-[10px] text-gray-500 dark:text-gray-400">{{ $customer->phone ?: 'Tanpa HP' }}</div>
                             </td>
                             <td class="px-6 py-4 text-gray-600 dark:text-gray-300">
                                 @if($customer->package)
                                     <span class="px-3 py-1 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 rounded-full text-xs font-medium">{{ $customer->package->name }}</span>
                                 @else
-                                    <span class="text-gray-400 italic">Unassigned</span>
+                                    <span class="text-gray-400 italic">Belum ditugaskan</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4">
@@ -241,8 +241,8 @@
                                                 </a>
                                             @endif
 
-                                            <a href="{{ route('customers.show', $customer) }}" class="text-gray-400 hover:text-indigo-600 dark:text-gray-500 dark:hover:text-indigo-400 text-xs font-bold transition-colors">Details</a>
-                                            <a href="{{ route('customers.edit', $customer) }}" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 text-xs font-bold transition-colors">Edit</a>
+                                            <a href="{{ route('customers.show', $customer) }}" class="text-gray-400 hover:text-indigo-600 dark:text-gray-500 dark:hover:text-indigo-400 text-xs font-bold transition-colors">Rincian</a>
+                                            <a href="{{ route('customers.edit', $customer) }}" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 text-xs font-bold transition-colors">Ubah</a>
                                             
                                             @if(auth()->user()->isAdmin())
                                             <form action="{{ route('customers.destroy', $customer) }}" method="POST" onsubmit="return confirm('Hapus pelanggan ini secara permanen?')">
@@ -262,7 +262,7 @@
                                 <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                 </svg>
-                                No subscribers found. Click "Add Subscriber" to create one.
+                                Belum ada pelanggan. Klik "Tambah Pelanggan" untuk menambahkan.
                             </td>
                         </tr>
                     @endforelse

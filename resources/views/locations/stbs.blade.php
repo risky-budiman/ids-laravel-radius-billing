@@ -67,7 +67,7 @@
                     <div class="w-10 h-10 rounded-xl bg-cyan-500 flex items-center justify-center shadow-inner mr-4 text-white">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-surface-900 dark:text-white">Add STB (Distribution Box)</h3>
+                    <h3 class="text-lg font-semibold text-surface-900 dark:text-white">Tambah STB (Kotak Distribusi)</h3>
                 </div>
 
                 <form action="{{ route('locations.stb.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-6 gap-6 items-end">
@@ -82,7 +82,7 @@
                         </select>
                     </div>
                     <div class="md:col-span-1">
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">STB Name</label>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Nama STB</label>
                         <input type="text" name="name" placeholder="E.g. Distribution Box" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all px-4 py-3" required />
                     </div>
                     <div class="md:col-span-1 relative">
@@ -98,7 +98,7 @@
                     </div>
                     <div class="md:col-span-2">
                         <button type="submit" class="w-full bg-cyan-600 text-white px-6 py-3 rounded-xl font-bold shadow-sm transform  transition-all">
-                            Save STB
+                            Simpan STB
                         </button>
                     </div>
                 </form>
@@ -112,11 +112,11 @@
                     <thead class="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
                         <tr>
                             <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">#</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Code</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">STB Name</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Coordinates</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Kode</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Nama STB</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Koordinat</th>
                             <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">STO Master</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Usage Status</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold tracking-wider text-gray-500 uppercase">Status Pemakaian</th>
                             <th class="px-6 py-4 text-right"></th>
                         </tr>
                     </thead>
@@ -139,7 +139,7 @@
                                     <span class="block">Lat: {{ $t->latitude }}</span>
                                     <span class="block">Lon: {{ $t->longitude }}</span>
                                 @else
-                                    <span class="italic text-gray-400 text-xs">No Coordinates</span>
+                                    <span class="italic text-gray-400 text-xs">Belum ada koordinat</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
@@ -147,7 +147,7 @@
                                     <span class="inline-flex items-center text-xs text-gray-400 font-mono mr-1">[{{ $t->sto->code }}]</span> 
                                     {{ $t->sto->name }}
                                 @else
-                                    <span class="text-red-400 italic">No STO</span>
+                                    <span class="text-red-400 italic">Tanpa STO</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4">
@@ -162,12 +162,12 @@
                                         @click='editStb = @json($t); editModalOpen = true'
                                         class="text-cyan-600 hover:text-cyan-900 font-bold text-sm"
                                     >
-                                        Edit
+                                        Ubah
                                     </button>
                                     <form action="{{ route('locations.stb.destroy', $t) }}" method="POST">
                                         @csrf @method('DELETE')
                                         <button class="text-red-500 hover:text-red-700 font-bold text-sm" onclick="return confirm('Delete STB?');">
-                                            Delete
+                                            Hapus
                                         </button>
                                     </form>
                                 </div>
@@ -184,7 +184,7 @@
             <div class="flex items-center justify-center min-h-screen px-4">
                 <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="editModalOpen = false"></div>
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-lg p-8 relative z-10 border border-gray-100 dark:border-gray-700">
-                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Edit STB: <span x-text="editStb.code" class="text-cyan-500"></span></h3>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Ubah STB: <span x-text="editStb.code" class="text-cyan-500"></span></h3>
                     
                     <form :action="`{{ url('admin/locations/stbs') }}/${editStb.id}`" method="POST" class="space-y-4">
                         @csrf
@@ -200,7 +200,7 @@
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">STB Name</label>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Nama STB</label>
                             <input type="text" name="name" x-model="editStb.name" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-gray-300 px-4 py-3" required />
                         </div>
                         
@@ -219,8 +219,8 @@
                         </div>
 
                         <div class="flex justify-end gap-3 mt-8">
-                            <button type="button" @click="editModalOpen = false" class="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Cancel</button>
-                            <button type="submit" class="px-10 py-3 bg-cyan-600 text-white rounded-xl font-bold shadow-lg">Update STB</button>
+                            <button type="button" @click="editModalOpen = false" class="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Batal</button>
+                            <button type="submit" class="px-10 py-3 bg-cyan-600 text-white rounded-xl font-bold shadow-lg">Perbarui STB</button>
                         </div>
                     </form>
                 </div>
@@ -233,13 +233,13 @@
                 <div class="fixed inset-0 bg-gray-900/80 backdrop-blur-md" @click="mapPickerOpen = false"></div>
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-4xl h-[80vh] flex flex-col relative z-10 overflow-hidden border border-gray-100 dark:border-gray-700">
                     <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Pick Location</h3>
-                        <p class="text-sm text-gray-500">Click on map or drag marker to set position</p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Pilih Lokasi</h3>
+                        <p class="text-sm text-gray-500">Klik peta atau geser penanda untuk menentukan posisi</p>
                     </div>
                     <div id="map-picker-container" class="flex-grow"></div>
                     <div class="p-6 bg-gray-50 dark:bg-gray-900/50 flex justify-end gap-3">
-                        <button type="button" @click="mapPickerOpen = false" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg font-bold">Cancel</button>
-                        <button type="button" @click="confirmPick()" class="px-10 py-2 bg-cyan-600 text-white rounded-lg font-bold shadow-lg">Confirm Location</button>
+                        <button type="button" @click="mapPickerOpen = false" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg font-bold">Batal</button>
+                        <button type="button" @click="confirmPick()" class="px-10 py-2 bg-cyan-600 text-white rounded-lg font-bold shadow-lg">Konfirmasi Lokasi</button>
                     </div>
                 </div>
             </div>

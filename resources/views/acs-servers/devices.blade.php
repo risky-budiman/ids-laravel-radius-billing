@@ -11,7 +11,7 @@
                 <h2 class="font-semibold text-3xl text-gray-800 dark:text-gray-100 tracking-tight leading-none">
                     {{ __('ONT Device Management') }}
                 </h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">Monitor and manage subscriber customer premises equipment via GenieACS protocol</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">Pantau dan kelola perangkat pelanggan (CPE) lewat GenieACS</p>
             </div>
             
             <div class="flex items-center gap-3">
@@ -35,7 +35,7 @@
                 </div>
                 <a href="{{ route('acs-servers.devices', ['server_id' => request('server_id'), 'q' => request('q'), 'limit' => request('limit')]) }}" class="inline-flex items-center px-3 py-1 bg-white dark:bg-gray-800 hover:bg-rose-50 dark:hover:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold transition-all border border-rose-200 dark:border-rose-800">
                     <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    Clear Tag Filter
+                    Hapus Filter Tag
                 </a>
             </div>
         @endif
@@ -53,11 +53,11 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
                     <input type="text" name="q" value="{{ $search }}" 
-                        placeholder="Search by ID Pelanggan (Username), Tag, Serial Number, or IP..." 
+                        placeholder="Cari ID Pelanggan (username), tag, nomor seri, atau IP..." 
                         class="w-full pl-12 pr-10 py-3.5 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl text-sm dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none" autocomplete="off">
                     
                     @if($search)
-                        <a href="{{ route('acs-servers.devices', ['server_id' => request('server_id'), 'tag' => request('tag'), 'limit' => request('limit')]) }}" class="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-rose-500 transition-colors" title="Clear Search">
+                        <a href="{{ route('acs-servers.devices', ['server_id' => request('server_id'), 'tag' => request('tag'), 'limit' => request('limit')]) }}" class="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-rose-500 transition-colors" title="Hapus Pencarian">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </a>
                     @endif
@@ -93,7 +93,7 @@
                 <!-- Submit Button -->
                 <button type="submit" class="w-full md:w-auto px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700  text-white rounded-xl font-bold text-sm transition-all shadow-sm flex items-center justify-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z"></path></svg>
-                    Apply Filter
+                    Terapkan Filter
                 </button>
             </form>
         </div>
@@ -113,12 +113,12 @@
                         <tr class="bg-gray-50/50 dark:bg-gray-900/30 border-b border-gray-100 dark:border-gray-700/50">
                             <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">IDPEL</th>
                             <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tags</th>
-                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Device ID / Serial</th>
+                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">ID / Serial Perangkat</th>
                             <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Product Class</th>
-                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">IP Address</th>
-                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Rx Power</th>
-                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Last Inform</th>
-                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-center">Actions</th>
+                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Alamat IP</th>
+                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Daya Rx</th>
+                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Inform Terakhir</th>
+                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
@@ -215,18 +215,18 @@
                                         @if(!empty($tags))
                                             <div class="flex flex-wrap gap-1 max-w-[170px]">
                                                 @foreach($tags as $tag)
-                                                    <a href="{{ route('acs-servers.devices', ['server_id' => $selectedServer->id, 'tag' => trim($tag)]) }}" class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold tracking-tight bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:bg-indigo-900/40 dark:hover:bg-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60 font-mono transition-all duration-150" title="Click to filter by tag '{{ trim($tag) }}'">
+                                                    <a href="{{ route('acs-servers.devices', ['server_id' => $selectedServer->id, 'tag' => trim($tag)]) }}" class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold tracking-tight bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:bg-indigo-900/40 dark:hover:bg-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60 font-mono transition-all duration-150" title="Klik untuk memfilter tag '{{ trim($tag) }}'">
                                                         {{ trim($tag) }}
                                                     </a>
                                                 @endforeach
                                             </div>
-                                            <button type="button" @click="openTagModal('{{ addslashes($id) }}', {{ json_encode(array_values((array)$tags)) }}, '{{ addslashes($serial) }}')" class="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all" title="Edit Tags">
+                                            <button type="button" @click="openTagModal('{{ addslashes($id) }}', {{ json_encode(array_values((array)$tags)) }}, '{{ addslashes($serial) }}')" class="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all" title="Ubah Tag">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                             </button>
                                         @else
                                             <button type="button" @click="openTagModal('{{ addslashes($id) }}', [], '{{ addslashes($serial) }}')" class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-300 bg-gray-50 hover:bg-indigo-50 dark:bg-gray-800 dark:hover:bg-indigo-950/40 border border-dashed border-gray-200 dark:border-gray-700 transition-colors">
                                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                                Add Tag
+                                                Tambah Tag
                                             </button>
                                         @endif
                                     </div>
@@ -267,10 +267,10 @@
                                 <td class="px-6 py-4.5">
                                     <div class="flex justify-center items-center gap-4">
                                         <a href="{{ route('acs-servers.show-device', ['deviceId' => $id, 'server_id' => $selectedServer->id]) }}" target="_blank" class="px-3 py-1.5 text-xs text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 font-bold bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-indigo-100 dark:hover:border-indigo-900/30 transition-all">
-                                            View Raw
+                                            Lihat Data Mentah
                                         </a>
                                         <a href="{{ route('acs-servers.device-details', ['deviceId' => $id, 'server_id' => $selectedServer->id]) }}" class="px-4 py-1.5 text-xs text-white bg-indigo-600 hover:bg-indigo-700 font-bold rounded-xl shadow-md shadow-indigo-500/10 transition-all ">
-                                            Manage CPE
+                                            Kelola CPE
                                         </a>
                                     </div>
                                 </td>
@@ -279,7 +279,7 @@
                             <tr>
                                 <td colspan="5" class="px-6 py-16 text-center">
                                     <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">No Devices Found</h4>
+                                    <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Belum Ada Perangkat</h4>
                                     <p class="text-xs text-gray-400">
                                         @if($selectedServer)
                                             Try adjusting your filter or search query.
@@ -325,13 +325,13 @@
                         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                             <div>
                                 <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                                    Showing
+                                    Menampilkan
                                     <span class="font-extrabold text-gray-800 dark:text-gray-200">{{ $paginatedDevices->firstItem() }}</span>
-                                    to
+                                    sampai
                                     <span class="font-extrabold text-gray-800 dark:text-gray-200">{{ $paginatedDevices->lastItem() }}</span>
-                                    of
+                                    dari
                                     <span class="font-extrabold text-gray-800 dark:text-gray-200">{{ $paginatedDevices->total() }}</span>
-                                    devices
+                                    perangkat
                                 </p>
                             </div>
 
@@ -343,7 +343,7 @@
                                             &laquo;
                                         </span>
                                     @else
-                                        <a href="{{ $paginatedDevices->url(1) }}" class="relative inline-flex items-center px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 rounded-xl transition-all" title="First Page">
+                                        <a href="{{ $paginatedDevices->url(1) }}" class="relative inline-flex items-center px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 rounded-xl transition-all" title="Halaman Pertama">
                                             &laquo;
                                         </a>
                                     @endif
@@ -354,7 +354,7 @@
                                             &lsaquo;
                                         </span>
                                     @else
-                                        <a href="{{ $paginatedDevices->previousPageUrl() }}" class="relative inline-flex items-center px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 rounded-xl transition-all" title="Previous Page">
+                                        <a href="{{ $paginatedDevices->previousPageUrl() }}" class="relative inline-flex items-center px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 rounded-xl transition-all" title="Halaman Sebelumnya">
                                             &lsaquo;
                                         </a>
                                     @endif
@@ -390,7 +390,7 @@
 
                                     {{-- Next Page Link --}}
                                     @if($paginatedDevices->hasMorePages())
-                                        <a href="{{ $paginatedDevices->nextPageUrl() }}" class="relative inline-flex items-center px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 rounded-xl transition-all" title="Next Page">
+                                        <a href="{{ $paginatedDevices->nextPageUrl() }}" class="relative inline-flex items-center px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 rounded-xl transition-all" title="Halaman Berikutnya">
                                             &rsaquo;
                                         </a>
                                     @else
@@ -401,7 +401,7 @@
 
                                     {{-- Last Page Link --}}
                                     @if($paginatedDevices->hasMorePages())
-                                        <a href="{{ $paginatedDevices->url($paginatedDevices->lastPage()) }}" class="relative inline-flex items-center px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 rounded-xl transition-all" title="Last Page">
+                                        <a href="{{ $paginatedDevices->url($paginatedDevices->lastPage()) }}" class="relative inline-flex items-center px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 rounded-xl transition-all" title="Halaman Terakhir">
                                             &raquo;
                                         </a>
                                     @else
@@ -423,7 +423,7 @@
                 <!-- Modal Header -->
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Edit Device Tags</h3>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Ubah Tag Perangkat</h3>
                         <p class="text-xs text-gray-500 font-mono" x-text="'Device: ' + (activeSerial || activeDeviceId)"></p>
                     </div>
                     <button type="button" @click="showTagModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold">&times;</button>
@@ -431,7 +431,7 @@
 
                 <!-- Current Tags list / pills -->
                 <div class="mb-4">
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Assigned Tags</label>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tag Terpasang</label>
                     <div class="p-3 bg-gray-50 dark:bg-gray-900/60 rounded-xl border border-gray-100 dark:border-gray-800 min-h-[50px] flex flex-wrap gap-1.5 items-center">
                         <template x-for="(tag, index) in activeTags" :key="tag">
                             <span class="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-mono">
@@ -440,18 +440,18 @@
                             </span>
                         </template>
                         <template x-if="activeTags.length === 0">
-                            <span class="text-xs text-gray-400 italic">No tags assigned. Type below to add.</span>
+                            <span class="text-xs text-gray-400 italic">Belum ada tag. Ketik di bawah untuk menambah.</span>
                         </template>
                     </div>
                 </div>
 
                 <!-- Add New Tag Input -->
                 <div class="mb-4">
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Add New Tag</label>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tambah Tag Baru</label>
                     <div class="flex gap-2">
-                        <input type="text" x-model="newTagInput" @keydown.enter.prevent="addInputTag()" placeholder="Enter tag name..." class="flex-grow px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl text-sm font-semibold dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <input type="text" x-model="newTagInput" @keydown.enter.prevent="addInputTag()" placeholder="Nama tag..." class="flex-grow px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl text-sm font-semibold dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none">
                         <button type="button" @click="addInputTag()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
-                            Add
+                            Tambah
                         </button>
                     </div>
                 </div>
@@ -471,11 +471,11 @@
                 <!-- Action Buttons -->
                 <div class="flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                     <button type="button" @click="showTagModal = false" class="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
-                        Cancel
+                        Batal
                     </button>
                     <button type="button" @click="saveTags()" :disabled="isSaving" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700  text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center disabled:opacity-50">
                         <svg x-show="isSaving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        <span x-text="isSaving ? 'Saving...' : 'Save Tags'">Save Tags</span>
+                        <span x-text="isSaving ? 'Menyimpan...' : 'Simpan Tag'">Simpan Tag</span>
                     </button>
                 </div>
             </div>

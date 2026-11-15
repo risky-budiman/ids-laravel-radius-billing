@@ -120,13 +120,13 @@
                                             @if($period->is_closed)
                                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                                                     <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
-                                                    CLOSED
+                                                    DITUTUP
                                                 </span>
                                                 <div class="text-xs text-gray-400 mt-1">Oleh: {{ $period->user->name ?? 'System' }}</div>
                                             @else
                                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                                                     <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H15V7a5 5 0 00-5-5zM8 7a2 2 0 114 0v2H8V7z"></path></svg>
-                                                    OPEN
+                                                    TERBUKA
                                                 </span>
                                             @endif
                                         </td>
@@ -137,7 +137,7 @@
                                                 </div>
                                                 <div class="text-xs text-gray-400">Equity Snapshot: Rp {{ number_format($period->total_equity, 0, ',', '.') }}</div>
                                             @else
-                                                <span class="text-gray-300 italic text-sm">Waiting...</span>
+                                                <span class="text-gray-300 italic text-sm">Menunggu...</span>
                                             @endif
                                         </td>
                                         <td class="px-8 py-6 text-right">

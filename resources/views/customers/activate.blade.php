@@ -13,7 +13,7 @@
                     <p class="text-indigo-100 text-xs mt-1">Lengkapi data pemasangan perangkat untuk mengaktifkan pelanggan.</p>
                 </div>
                 <div class="text-right">
-                    <p class="text-xs font-semibold tracking-widest opacity-70">Customer ID</p>
+                    <p class="text-xs font-semibold tracking-widest opacity-70">ID Pelanggan</p>
                     <p class="font-mono font-bold">{{ $customer->customer_code }}</p>
                 </div>
             </div>
@@ -32,7 +32,7 @@
                         <div>
                             <x-input-label for="olt_id" :value="__('Source OLT')" />
                             <select id="olt_id" name="olt_id" class="mt-1 input">
-                                <option value="">-- Manual Configuration (No OLT) --</option>
+                                <option value="">-- Konfigurasi Manual (Tanpa OLT) --</option>
                                 @foreach($olts as $olt)
                                     <option value="{{ $olt->id }}" {{ old('olt_id', $customer->olt_id) == $olt->id ? 'selected' : '' }}>{{ $olt->name }} ({{ $olt->ip_address }})</option>
                                 @endforeach
@@ -50,12 +50,12 @@
                                 <x-input-label for="onu_sn" :value="__('ONU Serial Number')" />
                                 <div class="flex items-center space-x-2">
                                     <span id="sn-sync-badge" class="hidden text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                                        Synced with Inventory
+                                        Tersinkron dengan Inventaris
                                     </span>
                                     <x-barcode-scanner targetInputId="onu_sn" />
                                 </div>
                             </div>
-                            <x-text-input id="onu_sn" name="onu_sn" type="text" class="mt-1 block w-full font-mono uppercase" :value="old('onu_sn', $customer->onu_sn)" placeholder="e.g. ZTEGC000..." />
+                            <x-text-input id="onu_sn" name="onu_sn" type="text" class="mt-1 block w-full font-mono uppercase" :value="old('onu_sn', $customer->onu_sn)" placeholder="mis. ZTEGC000..." />
                             <p class="text-xs text-gray-400 mt-1 italic">Dapat diisi manual atau otomatis dari pilihan stok di bawah.</p>
                         </div>
 
@@ -72,7 +72,7 @@
                                 <option value="ZTE F609" {{ old('onu_type', $customer->onu_type) == 'ZTE F609' ? 'selected' : '' }}>ZTE F609</option>
                                 <option value="HG6243C" {{ old('onu_type', $customer->onu_type) == 'HG6243C' ? 'selected' : '' }}>HG6243C (FiberHome)</option>
                                 <option value="HG6145D" {{ old('onu_type', $customer->onu_type) == 'HG6145D' ? 'selected' : '' }}>HG6145D (FiberHome)</option>
-                                <option value="Other" {{ old('onu_type', $customer->onu_type) == 'Other' ? 'selected' : '' }}>Other / Generic</option>
+                                <option value="Other" {{ old('onu_type', $customer->onu_type) == 'Other' ? 'selected' : '' }}>Lainnya / Umum</option>
                             </select>
                         </div>
                     </div>
@@ -225,7 +225,7 @@
                                     </div>
                                     <div id="ocr-result-container" class="hidden text-xs bg-white/50 p-2 rounded border border-amber-200/50">
                                         <span class="font-bold text-gray-700">Terdeteksi di Foto:</span>
-                                        <span id="ocr-detected-sn" class="font-mono text-indigo-600 bg-indigo-50 px-1 rounded ml-1 tracking-wider">NONE</span>
+                                        <span id="ocr-detected-sn" class="font-mono text-indigo-600 bg-indigo-50 px-1 rounded ml-1 tracking-wider">TIDAK ADA</span>
                                     </div>
                                 </div>
                             </div>
@@ -344,7 +344,7 @@
                 </div>
 
                 <div class="flex justify-end pt-6 space-x-3">
-                    <a href="{{ route('customers.index') }}" class="px-6 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">Cancel</a>
+                    <a href="{{ route('customers.index') }}" class="px-6 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">Batal</a>
                     <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-3 rounded-xl text-sm font-bold shadow-sm transition-all transform hover:-translate-y-0.5">
                         Aktifkan Pelanggan & Simpan Inventaris
                     </button>
