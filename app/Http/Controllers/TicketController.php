@@ -61,7 +61,7 @@ class TicketController extends Controller
 
     public function create(Request $request)
     {
-        $customers = \App\Models\Customer::all();
+        $customers = collect();   // pelanggan dicari lewat x-customer-picker (dulu seluruh pelanggan dimuat)
         $users = \App\Models\User::all();
         $type = $request->type ?? 'gangguan';
 
@@ -95,7 +95,7 @@ class TicketController extends Controller
 
     public function edit(\App\Models\Ticket $ticket)
     {
-        $customers = \App\Models\Customer::all();
+        $customers = collect();   // pelanggan dicari lewat x-customer-picker (dulu seluruh pelanggan dimuat)
         $users = \App\Models\User::all();
 
         return view('tickets.edit', compact('ticket', 'customers', 'users'));

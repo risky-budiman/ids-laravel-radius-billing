@@ -37,6 +37,31 @@ class InventoryItem extends Model
         return $this->hasMany(InventoryMovement::class);
     }
 
+    /** Diisi oleh withStockCounts() agar daftar tidak menghitung stok per produk (2 query tiap produk). */
+    public ?float $preloadedStock = null;
+
+    /**
+     * Hitung stok banyak produk sekaligus (2 query total) dan simpan di masing-masing produk.
+     *
+     * @param  iterable<InventoryItem>  $items
+     */
+    public static function withStockCounts(iterable $items): void
+    {
+        $items = collect($items);
+        $ids = $items->pluck('id');
+        if ($ids->isEmpty()) {
+            return;
+        }
+        $serial = InventoryStock::available()->whereIn('inventory_item_id', $ids)
+            ->selectRaw('inventory_item_id, COUNT(*) c')->groupBy('inventory_item_id')->pluck('c', 'inventory_item_id');
+        $ledger = InventoryMovement::whereIn('inventory_item_id', $ids)
+            ->selectRaw("inventory_item_id, SUM(CASE WHEN type = 'out' THEN -quantity ELSE quantity END) q")
+            ->groupBy('inventory_item_id')->pluck('q', 'inventory_item_id');
+        foreach ($items as $item) {
+            $item->preloadedStock = $item->track_serial ? (float) ($serial[$item->id] ?? 0) : round((float) ($ledger[$item->id] ?? 0), 2);
+        }
+    }
+
     /**
      * Stok tersedia di gudang.
      *  - Barang ber-SN: jumlah unit berstatus tersedia (InventoryStock::AVAILABLE_STATUSES).
@@ -44,6 +69,9 @@ class InventoryItem extends Model
      */
     public function getStockCountAttribute()
     {
+        if ($this->preloadedStock !== null) {
+            return $this->track_serial ? (int) $this->preloadedStock : $this->preloadedStock;
+        }
         if ($this->track_serial) {
             return $this->stocks()->available()->count();
         }

@@ -42,14 +42,7 @@
                             <!-- Customer Selection -->
                             <div>
                                 <x-input-label for="customer_id" :value="__('Subscriber / Customer')" />
-                                <select id="customer_id" name="customer_id" class="mt-1 input">
-                                    <option value="">-- Tanpa Pelanggan (Tiket Internal) --</option>
-                                    @foreach($customers as $customer)
-                                        <option value="{{ $customer->id }}" {{ old('customer_id', $ticket->customer_id) == $customer->id ? 'selected' : '' }}>
-                                            {{ $customer->name }} ({{ $customer->username }})
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <x-customer-picker name="customer_id" :value="old('customer_id', $ticket->customer_id)" empty-label="tiket internal (tanpa pelanggan)" />
                                 <x-input-error :messages="$errors->get('customer_id')" class="mt-2" />
                             </div>
 

@@ -206,6 +206,39 @@ class InventoryIntegrityTest extends TestCase
         $this->assertEquals(0, $this->onu->serialDiscrepancy());
     }
 
+    public function test_bulk_stock_counts_match_per_item_counts_and_serial_tracking_is_locked(): void
+    {
+        $this->svc()->stockIn($this->onu, ['quantity' => 2, 'serials' => ['B-1', 'B-2']], $this->admin);
+        $this->svc()->stockIn($this->cable, ['quantity' => 50.5], $this->admin);
+        $this->svc()->stockOut($this->cable, ['quantity' => 10], $this->admin);
+
+        $items = InventoryItem::whereIn('id', [$this->onu->id, $this->cable->id])->get();
+        InventoryItem::withStockCounts($items);
+        $this->assertSame(2, $items->firstWhere('id', $this->onu->id)->stock_count);
+        $this->assertEquals(40.5, $items->firstWhere('id', $this->cable->id)->stock_count);
+        $this->assertEquals(40.5, InventoryItem::find($this->cable->id)->stock_count, 'sama dengan hitungan per produk');
+
+        $this->actingAs($this->admin)->get(route('inventory.index'))->assertOk();
+
+        // Lacak SN tidak bisa diubah setelah ada riwayat stok
+        $this->put(route('inventory.update', $this->cable), [
+            'category_id' => $this->cat->id, 'name' => 'Kabel', 'unit' => 'meter', 'min_stock' => 0, 'track_serial' => '1',
+        ])->assertSessionHas('error');
+        $this->assertFalse((bool) $this->cable->fresh()->track_serial);
+        $this->get(route('inventory.edit', $this->cable))->assertOk()->assertSee('Tidak bisa diubah');
+    }
+
+    public function test_customer_lookup_for_forms(): void
+    {
+        Customer::create(['customer_code' => '001001009999', 'username' => 'siti', 'name' => 'Siti Aminah', 'phone' => '0811']);
+        $this->actingAs($this->admin)->getJson(route('api.customers.lookup', ['q' => 'amin']))
+            ->assertOk()->assertJsonPath('0.label', 'Siti Aminah');
+        $this->getJson(route('api.customers.lookup', ['q' => '9999']))->assertJsonCount(1);
+        $this->getJson(route('api.customers.lookup', ['q' => 'a']))->assertJsonCount(0);
+        $this->get(route('tickets.create'))->assertOk()->assertSee('Ketik nama, ID pelanggan', false);
+        $this->get(route('inventory.stock-in'))->assertOk();
+    }
+
     public function test_concurrent_activation_cannot_reuse_a_modem(): void
     {
         $modem = InventoryStock::create(['inventory_item_id' => $this->onu->id, 'serial_number' => 'M-1', 'status' => 'ready']);

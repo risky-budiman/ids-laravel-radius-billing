@@ -62,12 +62,7 @@
                         
                         <div x-show="isExisting" x-transition class="mt-4">
                             <x-input-label value="Pilih Pelanggan" />
-                            <select name="customer_id" :required="isExisting" class="mt-1 input">
-                                <option value="">Pilih Pelanggan</option>
-                                @foreach($customers as $customer)
-                                    <option value="{{ $customer->id }}">{{ $customer->name }} ({{ $customer->customer_code }})</option>
-                                @endforeach
-                            </select>
+                            <x-customer-picker name="customer_id" :value="old('customer_id')" />
                         </div>
                     </div>
                 </div>

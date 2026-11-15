@@ -61,11 +61,19 @@
                         <x-input-error :messages="$errors->get('min_stock')" class="mt-1" />
                     </div>
 
-                    <div class="flex items-center pt-6">
-                        <label class="inline-flex items-center cursor-pointer">
-                            <input type="checkbox" name="track_serial" value="1" {{ (old('track_serial') ?? $item->track_serial) ? 'checked' : '' }} class="rounded-lg border-gray-300 text-amber-600 shadow-sm focus:ring-amber-500 w-5 h-5">
+                    @php $serialLocked = $item->movements()->exists() || $item->stocks()->exists(); @endphp
+                    <div class="pt-6">
+                        <label class="inline-flex items-center {{ $serialLocked ? 'opacity-60' : 'cursor-pointer' }}">
+                            @if($serialLocked)
+                                {{-- Terkunci: kirim nilai saat ini (checkbox disabled tidak ikut terkirim) --}}
+                                @if($item->track_serial)<input type="hidden" name="track_serial" value="1">@endif
+                            @endif
+                            <input type="checkbox" @if(! $serialLocked) name="track_serial" @endif value="1" {{ (old('track_serial') ?? $item->track_serial) ? 'checked' : '' }} @disabled($serialLocked) class="rounded-lg border-gray-300 text-amber-600 shadow-sm focus:ring-amber-500 w-5 h-5">
                             <span class="ml-3 text-sm font-bold text-gray-700 dark:text-gray-300">Lacak Nomor Seri</span>
                         </label>
+                        @if($serialLocked)
+                            <p class="help-text">Tidak bisa diubah: produk sudah punya riwayat stok.</p>
+                        @endif
                     </div>
                 </div>
 

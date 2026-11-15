@@ -431,6 +431,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
     Route::get('api/regions/{region}/stos', [\App\Http\Controllers\LocationDataController::class, 'apiStos']);
     Route::get('api/stos/{sto}/stbs', [\App\Http\Controllers\LocationDataController::class, 'apiStbs']);
     Route::get('api/search', [\App\Http\Controllers\SearchController::class, 'apiSearch'])->name('api.search');
+    Route::get('api/customers/lookup', [\App\Http\Controllers\SearchController::class, 'customerLookup'])->middleware('throttle:120,1')->name('api.customers.lookup');
     Route::get('api/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('api.notifications');
     Route::post('api/notifications/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('api.notifications.read');
     // Settings

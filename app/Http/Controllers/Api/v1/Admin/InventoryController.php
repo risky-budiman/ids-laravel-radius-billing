@@ -31,6 +31,7 @@ class InventoryController extends Controller
         }
 
         $items = $query->paginate(20);
+        InventoryItem::withStockCounts($items->getCollection());
 
         $data = $items->getCollection()->map(function ($item) {
             $stock = $item->stock_count;
@@ -41,7 +42,7 @@ class InventoryController extends Controller
                 'unit' => $item->unit,
                 'category_name' => $item->category ? $item->category->name : 'Uncategorized',
                 'min_stock' => (int) $item->min_stock,
-                'stock_count' => (int) $stock,
+                'stock_count' => $item->track_serial ? (int) $stock : (float) $stock,   // kabel per meter bisa desimal
                 'is_low_stock' => $stock <= $item->min_stock,
                 'track_serial' => (bool) $item->track_serial,
                 'description' => $item->description,
@@ -53,7 +54,12 @@ class InventoryController extends Controller
         return response()->json([
             'stats' => [
                 'total_items' => InventoryItem::count(),
-                'low_stock_count' => InventoryItem::all()->filter(fn ($i) => $i->stock_count <= $i->min_stock)->count(),
+                'low_stock_count' => (function () {
+                    $all = InventoryItem::get(['id', 'track_serial', 'min_stock']);
+                    InventoryItem::withStockCounts($all);
+
+                    return $all->filter(fn ($i) => $i->stock_count <= $i->min_stock)->count();
+                })(),
                 'total_categories' => $categories->count(),
             ],
             'categories' => $categories,

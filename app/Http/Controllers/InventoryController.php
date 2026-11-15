@@ -16,11 +16,13 @@ class InventoryController extends Controller
     public function index()
     {
         $items = InventoryItem::with('category')->paginate(10);
+        InventoryItem::withStockCounts($items->getCollection());
         $categories = InventoryCategory::all();
         $totalItems = InventoryItem::count();
-        $lowStockItems = InventoryItem::all()->filter(function($item) {
-            return $item->stock_count <= $item->min_stock;
-        })->count();
+        // Stok semua produk dihitung sekaligus (dulu 2 query per produk setiap halaman dibuka)
+        $all = InventoryItem::get(['id', 'track_serial', 'min_stock']);
+        InventoryItem::withStockCounts($all);
+        $lowStockItems = $all->filter(fn ($item) => $item->stock_count <= $item->min_stock)->count();
         
         return view('inventory.items.index', compact('items', 'categories', 'totalItems', 'lowStockItems'));
     }
@@ -45,7 +47,7 @@ class InventoryController extends Controller
 
         $validated['track_serial'] = $request->has('track_serial');
         InventoryItem::create($validated);
-        return redirect()->route('inventory.index')->with('success', 'Product created successfully.');
+        return redirect()->route('inventory.index')->with('success', 'Produk ditambahkan.');
     }
 
     public function categories()
@@ -62,13 +64,13 @@ class InventoryController extends Controller
         ]);
 
         InventoryCategory::create($validated);
-        return redirect()->route('inventory.categories')->with('success', 'Category created successfully.');
+        return redirect()->route('inventory.categories')->with('success', 'Kategori ditambahkan.');
     }
 
     public function updateCategory(Request $request, InventoryCategory $category)
     {
         if (!auth()->user()->isAdministrator()) {
-            return redirect()->back()->with('error', 'Unauthorized action. Only administrators can edit categories.');
+            return redirect()->back()->with('error', 'Hanya administrator yang dapat mengubah kategori.');
         }
 
         $validated = $request->validate([
@@ -77,13 +79,13 @@ class InventoryController extends Controller
         ]);
 
         $category->update($validated);
-        return redirect()->route('inventory.categories')->with('success', 'Category updated successfully.');
+        return redirect()->route('inventory.categories')->with('success', 'Kategori diperbarui.');
     }
 
     public function destroyCategory(InventoryCategory $category)
     {
         if (!auth()->user()->isAdministrator()) {
-            return redirect()->back()->with('error', 'Unauthorized action. Only administrators can delete categories.');
+            return redirect()->back()->with('error', 'Hanya administrator yang dapat menghapus kategori.');
         }
 
         // Termasuk produk arsip: menghapus kategori menghapus produknya beserta riwayat (cascade)
@@ -92,15 +94,14 @@ class InventoryController extends Controller
         }
 
         $category->delete();
-        return redirect()->route('inventory.categories')->with('success', 'Category deleted successfully.');
+        return redirect()->route('inventory.categories')->with('success', 'Kategori dihapus.');
     }
 
     public function stockIn()
     {
         $items = InventoryItem::orderBy('name')->get();
         $suppliers = Supplier::where('is_active', true)->get();
-        $customers = \App\Models\Customer::orderBy('name')->get();
-        return view('inventory.stock-in', compact('items', 'suppliers', 'customers'));
+        return view('inventory.stock-in', compact('items', 'suppliers'));
     }
 
     public function storeStockIn(Request $request)
@@ -234,7 +235,7 @@ class InventoryController extends Controller
         $outflows = InventoryMovement::with(['item', 'user', 'customer'])
             ->where('type', 'out')
             ->orderBy('created_at', 'desc')
-            ->paginate(1000); // Set high enough to avoid pagination in audit reports
+            ->paginate(100)->withQueryString();   // dulu 1000 baris sekaligus
             
         return view('inventory.outflow', compact('outflows'));
     }
@@ -251,7 +252,7 @@ class InventoryController extends Controller
     public function edit(InventoryItem $item)
     {
         if (!auth()->user()->isAdministrator()) {
-            return redirect()->route('inventory.index')->with('error', 'Unauthorized action.');
+            return redirect()->route('inventory.index')->with('error', 'Hanya administrator yang dapat melakukan ini.');
         }
         $categories = InventoryCategory::all();
         return view('inventory.items.edit', compact('item', 'categories'));
@@ -260,7 +261,7 @@ class InventoryController extends Controller
     public function createCategory()
     {
         if (!auth()->user()->isAdministrator()) {
-            return redirect()->route('inventory.categories')->with('error', 'Unauthorized action.');
+            return redirect()->route('inventory.categories')->with('error', 'Hanya administrator yang dapat melakukan ini.');
         }
         return view('inventory.categories.create');
     }
@@ -268,7 +269,7 @@ class InventoryController extends Controller
     public function editCategory(InventoryCategory $category)
     {
         if (!auth()->user()->isAdministrator()) {
-            return redirect()->route('inventory.categories')->with('error', 'Unauthorized action.');
+            return redirect()->route('inventory.categories')->with('error', 'Hanya administrator yang dapat melakukan ini.');
         }
         return view('inventory.categories.edit', compact('category'));
     }
@@ -276,7 +277,7 @@ class InventoryController extends Controller
     public function update(Request $request, InventoryItem $item)
     {
         if (!auth()->user()->isAdministrator()) {
-            return redirect()->back()->with('error', 'Unauthorized action. Only administrators can edit products.');
+            return redirect()->back()->with('error', 'Hanya administrator yang dapat mengubah produk.');
         }
 
         $validated = $request->validate([
@@ -290,14 +291,18 @@ class InventoryController extends Controller
         ]);
 
         $validated['track_serial'] = $request->has('track_serial');
+        // Cara hitung stok bergantung pada pelacakan SN; mengubahnya setelah ada stok membuat angka stok berubah drastis
+        if ($validated['track_serial'] !== (bool) $item->track_serial && ($item->movements()->exists() || $item->stocks()->exists())) {
+            return back()->withInput()->with('error', 'Pelacakan SN tidak bisa diubah karena produk sudah punya riwayat stok. Buat produk baru bila perlu.');
+        }
         $item->update($validated);
-        return redirect()->route('inventory.index')->with('success', 'Product updated successfully.');
+        return redirect()->route('inventory.index')->with('success', 'Produk diperbarui.');
     }
 
     public function destroy(InventoryItem $item)
     {
         if (!auth()->user()->isAdministrator()) {
-            return redirect()->back()->with('error', 'Unauthorized action. Only administrators can delete products.');
+            return redirect()->back()->with('error', 'Hanya administrator yang dapat mengarsipkan produk.');
         }
 
         if ($item->stock_count > 0) {

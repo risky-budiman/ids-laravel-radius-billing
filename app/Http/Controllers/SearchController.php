@@ -9,6 +9,22 @@ use Illuminate\Http\Request;
 
 class SearchController extends Controller
 {
+    /** Pencarian pelanggan untuk isian formulir (komponen x-customer-picker). */
+    public function customerLookup(Request $request)
+    {
+        $q = trim((string) $request->get('q'));
+        if (mb_strlen($q) < 2) {
+            return response()->json([]);
+        }
+        $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $q) . '%';
+
+        return response()->json(Customer::where(fn ($w) => $w->where('name', 'like', $like)
+                ->orWhere('customer_code', 'like', $like)->orWhere('username', 'like', $like)->orWhere('phone', 'like', $like))
+            ->orderBy('name')->limit(20)
+            ->get(['id', 'name', 'customer_code', 'username', 'status'])
+            ->map(fn ($c) => ['id' => $c->id, 'label' => $c->name, 'detail' => trim($c->customer_code . ' · ' . $c->username . ' · ' . $c->status, ' ·')]));
+    }
+
     public function apiSearch(Request $request)
     {
         $query = $request->get('q');
