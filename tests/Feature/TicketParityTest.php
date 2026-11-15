@@ -120,6 +120,30 @@ class TicketParityTest extends TestCase
         ])->assertStatus(422)->assertJsonValidationErrors('type');
     }
 
+    public function test_unassigned_ticket_is_credited_to_the_staff_who_resolves_it(): void
+    {
+        $teknisi = $this->staff('teknisi');
+        $other = $this->staff('teknisi');
+        $unassigned = $this->ticket('gangguan');
+        $assigned = $this->ticket('gangguan');
+        $assigned->update(['assigned_to' => $other->id]);
+
+        Sanctum::actingAs($teknisi);
+        $this->postJson("/api/v1/admin/tickets/{$unassigned->id}/close")->assertOk();
+        $this->postJson("/api/v1/admin/tickets/{$assigned->id}/close")->assertOk();
+
+        $this->assertSame($teknisi->id, $unassigned->fresh()->assigned_to);
+        $this->assertSame($other->id, $assigned->fresh()->assigned_to, 'petugas yang sudah ditugaskan tidak diganti');
+    }
+
+    public function test_system_auto_close_does_not_assign_anyone(): void
+    {
+        $t = $this->ticket('gangguan');
+        $t->update(['status' => 'resolved']);   // tanpa login (mis. scheduler)
+
+        $this->assertNull($t->fresh()->assigned_to);
+    }
+
     public function test_staff_get_exactly_one_notification_per_new_ticket(): void
     {
         Notification::fake();

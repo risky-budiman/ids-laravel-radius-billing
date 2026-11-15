@@ -114,6 +114,16 @@ class Ticket extends Model
             } elseif (! $done) {
                 $ticket->resolved_at = null;
             }
+
+            // Tiket yang diselesaikan tanpa petugas dicatat atas nama staf yang menyelesaikannya,
+            // agar rekap kinerja tim tidak berisi "Belum ditugaskan". Penutupan otomatis sistem
+            // (tanpa login) dan pelanggan tidak dihitung.
+            if ($done && ! $ticket->assigned_to) {
+                $user = auth('web')->user() ?? auth('sanctum')->user();
+                if ($user instanceof User && $user->role !== User::ROLE_CUSTOMER) {
+                    $ticket->assigned_to = $user->id;
+                }
+            }
         });
 
         static::created(function ($ticket) {
