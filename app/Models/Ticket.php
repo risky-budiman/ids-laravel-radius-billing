@@ -113,6 +113,11 @@ class Ticket extends Model
                 $ticket->resolved_at = now();
             } elseif (! $done) {
                 $ticket->resolved_at = null;
+                // Dibuka ulang: peringatan SLA/belum diambil boleh dikirim lagi
+                if ($wasDone) {
+                    $ticket->sla_alerted_at = null;
+                    $ticket->unclaimed_alerted_at = null;
+                }
             }
 
             // Tiket yang diselesaikan tanpa petugas dicatat atas nama staf yang menyelesaikannya,

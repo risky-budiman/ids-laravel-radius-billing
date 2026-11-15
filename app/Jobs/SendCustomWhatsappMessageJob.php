@@ -13,8 +13,8 @@ class SendCustomWhatsappMessageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $target;
-    protected $message;
+    public $target;
+    public $message;
 
     /**
      * Create a new job instance.
