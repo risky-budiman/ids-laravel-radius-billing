@@ -21,7 +21,15 @@ Akses menu **Broadband > Packages > Add New**.
 - **Profile**: Nama profil yang harus sama dengan yang ada di Router MikroTik (jika menggunakan integrasi API).
 - **Shared Users**: Jumlah perangkat yang diizinkan menggunakan satu akun secara bersamaan (biasanya 1).
 
+### 4. Profil T-CONT OLT (opsional)
+Nama profil T-CONT di OLT ZTE untuk paket ini (lihat di OLT dengan `show gpon profile tcont`), satu kata, mis. `UP-20M`.
+- Dipakai saat ONU pelanggan didaftarkan ke OLT.
+- Saat paket pelanggan diganti, ONU otomatis dipindah ke profil paket baru.
+- Kosongkan bila kecepatan cukup diatur lewat RADIUS/MikroTik.
+
 ## Manajemen Paket
+
+Paket hanya bisa ditambah, diubah dan dihapus oleh **admin & administrator**; role lain hanya bisa melihat. Paket pelanggan diganti lewat **Pengajuan Ganti Paket** (lihat *Pelanggan*).
 
 Anda dapat mengubah harga atau kecepatan paket yang sudah ada, namun perlu diingat:
 - Perubahan harga hanya akan berdampak pada **Invoice Baru**.

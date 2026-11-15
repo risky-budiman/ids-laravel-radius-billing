@@ -282,7 +282,7 @@ class CustomerActivationService
         });
 
         if ($customer->olt_id && $customer->onu_index && $customer->onu_sn) {
-            \App\Jobs\DeprovisionOnuJob::dispatch($customer->olt_id, $customer->onu_index, $customer->onu_sn);
+            \App\Jobs\DeprovisionOnuJob::dispatch($customer->olt_id, $customer->onu_index, $customer->onu_sn, $by?->id);
         }
         if ($username) {
             $this->lifecycle->removeRadiusAccount($username);   // radcheck, radreply, radusergroup

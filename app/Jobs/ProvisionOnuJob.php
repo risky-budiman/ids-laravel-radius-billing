@@ -24,7 +24,7 @@ class ProvisionOnuJob implements ShouldQueue
 
     public function handle()
     {
-        $customer = Customer::with('olt')->find($this->customerId);
+        $customer = Customer::with('olt', 'package')->find($this->customerId);
         if (!$customer || !$customer->olt || !$customer->onu_sn) {
             Log::warning("Provisioning Job: Missing data for customer ID {$this->customerId}");
             return;
@@ -34,30 +34,29 @@ class ProvisionOnuJob implements ShouldQueue
 
         $gateway = new OltGateway($customer->olt);
         
-        // Parse shelf/slot/port from onu_index (.1.1.7.1)
-        $pos = $customer->onu_index; 
-        $parts = explode('.', trim($pos, '.'));
-        
-        if (count($parts) < 3) {
+        // Port PON dari onu_index: ".1.1.7", "1.1.7.5", "1/1/7" atau "1/1/7:5" (dulu hanya format titik)
+        $pos = (string) $customer->onu_index;
+        $parts = preg_split('/[.\/:]/', trim($pos, '.'), -1, PREG_SPLIT_NO_EMPTY);
+
+        if (count($parts) < 3 || array_filter(array_slice($parts, 0, 3), fn ($p) => ! ctype_digit($p))) {
             Log::error("Invalid ONU index format for provisioning: {$pos}");
             return;
         }
 
-        $shelf = $parts[0];
-        $slot = $parts[1];
-        $port = $parts[2];
+        [$shelf, $slot, $port] = array_map('intval', array_slice($parts, 0, 3));
 
-        // Default VLAN 100
-        $vlan = 100;
-        
+        // VLAN dari isian aktivasi (dulu selalu 100); profil T-CONT dari paket (dulu selalu UP-100M)
+        $vlan = (int) ($customer->vlan_id ?: 100);
+
         $result = $gateway->provisionOnu(
-            $shelf, 
-            $slot, 
-            $port, 
-            $customer->onu_sn, 
+            $shelf,
+            $slot,
+            $port,
+            $customer->onu_sn,
             $customer->onu_type ?: 'ZTE-ONU',
             $vlan,
-            $customer->name
+            $customer->customer_code ?: $customer->name,
+            $customer->package?->olt_tcont_profile
         );
 
         if ($result) {

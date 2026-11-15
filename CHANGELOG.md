@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.127] - 2026-11-16
+
+### Perbaikan
+- **olt:** ONU write actions check the serial first; speed changes use the package T-CONT profile
+
 ## [v1.5.126] - 2026-11-16
 
 ### Fitur baru

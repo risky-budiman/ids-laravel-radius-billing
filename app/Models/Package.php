@@ -17,6 +17,7 @@ class Package extends Model
         'price',
         'upload_speed',
         'download_speed',
+        'olt_tcont_profile',
         'burst_limit_up',
         'burst_limit_down',
         'burst_threshold_up',

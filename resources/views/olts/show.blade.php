@@ -163,14 +163,19 @@
                 <div class="space-y-4 mb-8">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">ONU Index (Position)</label>
-                        <input type="text" name="onu_index" placeholder="mis. .1.1.1.1" required class="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-rose-500 focus:border-rose-500 font-mono">
-                        <p class="text-xs text-gray-500 mt-1">Format: .shelf.slot.port.onu_id</p>
+                        <input type="text" name="onu_index" placeholder="mis. 1/1/7:5" required class="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-rose-500 focus:border-rose-500 font-mono">
+                        <p class="text-xs text-gray-500 mt-1">Format: shelf/slot/port:onu (1/1/7:5) atau .1.1.7.5</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">SN ONU</label>
+                        <input type="text" name="onu_sn" placeholder="mis. ZTEGC1234567" required pattern="[A-Za-z0-9]+" class="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-rose-500 focus:border-rose-500 font-mono uppercase">
+                        <p class="text-xs text-gray-500 mt-1">ONU hanya dihapus bila SN di posisi tersebut sama. Hasilnya (berhasil / dibatalkan) tercatat di Log Aktivitas.</p>
                     </div>
                 </div>
                 
                 <div class="flex space-x-3">
                     <button type="button" onclick="document.getElementById('manual-delete-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 transition-colors">Batal</button>
-                    <button type="submit" onclick="return confirm('Are you absolutely sure you want to delete this ONU from the OLT?');" class="flex-1 py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-colors shadow-sm">Hapus ONU</button>
+                    <button type="submit" onclick="return confirm('Hapus ONU ini dari OLT? Layanan internet pada ONU tersebut akan terputus.');" class="flex-1 py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-colors shadow-sm">Hapus ONU</button>
                 </div>
             </form>
         </div>

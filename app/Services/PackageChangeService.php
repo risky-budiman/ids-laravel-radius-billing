@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
  * Ganti paket lewat pengajuan: CS mengajukan, admin/administrator menyetujui atau menolak.
  * Saat disetujui paket langsung berganti: grup RADIUS paket baru (kecuali sedang terisolir — isolir
  * memulihkan paket terbaru saat dibuka), sesi diputus agar kecepatan baru berlaku, kecepatan ONU
- * diperbarui. Tagihan berikutnya memakai harga paket baru.
+ * diperbarui (profil T-CONT paket, bila diisi). Tagihan berikutnya memakai harga paket baru.
  */
 class PackageChangeService
 {
@@ -92,8 +92,8 @@ class PackageChangeService
                 Log::warning("Putus sesi setelah ganti paket {$customer->username} gagal: " . $e->getMessage());
             }
         }
-        if ($customer->olt_id && $customer->onu_index) {
-            \App\Jobs\UpdateOnuJob::dispatch($customer->olt_id, $customer->onu_index, 'update_speed', $package->speed_limit_down ?? 102400);
+        if ($customer->olt_id && $customer->onu_index && $package->olt_tcont_profile) {
+            \App\Jobs\UpdateOnuJob::dispatch($customer->olt_id, $customer->onu_index, 'update_speed', $package->olt_tcont_profile, $customer->onu_sn);
         }
     }
 }

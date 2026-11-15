@@ -110,8 +110,21 @@ class ZteOltProvisioningService
     /**
      * Provision (Activate) an ONU on the OLT
      */
-    public function provisionOnu($shelf, $slot, $port, $sn, $onuType, $vlan = 100, $description = 'NextLink-Customer')
+    public function provisionOnu($shelf, $slot, $port, $sn, $onuType, $vlan = 100, $description = 'NextLink-Customer', ?string $tcontProfile = null)
     {
+        // Nilai yang masuk ke perintah CLI: SN/tipe/profil satu kata, VLAN angka, nama tanpa spasi.
+        // Baris baru atau spasi di nilai ini bisa memecah/menyisipkan perintah OLT.
+        $sn = strtoupper(trim((string) $sn));
+        if (! preg_match('/^[A-Z0-9]{8,16}$/', $sn) || ! preg_match('/^[A-Za-z0-9_.\-]{1,40}$/', (string) $onuType)) {
+            Log::error("Provisioning ditolak: SN '{$sn}' atau tipe ONU '{$onuType}' tidak valid.");
+
+            return false;
+        }
+        $vlan = max(1, min(4094, (int) $vlan));
+        $tcontProfile = $tcontProfile && preg_match('/^[A-Za-z0-9_.\-]{1,50}$/', $tcontProfile) ? $tcontProfile : 'UP-100M';
+        $description = trim(preg_replace('/[^A-Za-z0-9_.\-]+/', '_', (string) $description), '_') ?: 'Customer';
+        $description = substr($description, 0, 32);
+
         try {
             if (!$this->connect()) return false;
             
@@ -130,7 +143,7 @@ class ZteOltProvisioningService
                 "name {$description}",
                 "description {$description}",
                 "sn-bind enable sn",
-                "tcont 1 profile UP-100M", // Assuming default profile exists
+                "tcont 1 profile {$tcontProfile}",
                 "gemport 1 tcont 1",
                 "gemport 1 traffic-limit upstream default downstream default",
                 "exit",

@@ -586,6 +586,57 @@ class OltGateway
     /**
      * Reboot an ONU via SNMP SET.
      */
+    /**
+     * SN ONU yang saat ini terdaftar di posisi tertentu (dibaca lewat SNMP).
+     * Null = tidak ada ONU di posisi itu. Exception = tabel SN tidak bisa dibaca (jangan lanjutkan aksi).
+     */
+    public function serialAt(int $shelf, int $slot, int $port, int $onuId): ?string
+    {
+        foreach (ZteOids::ONU_SN_TABLES as $tableOid) {
+            $map = $this->snmp()->walkSafe($tableOid);
+            if (empty($map)) {
+                continue;
+            }
+            foreach ($map as $oid => $raw) {
+                $d = ZteOids::parseOidIndex($oid);
+                if ($d && $d['slot'] === $slot && $d['port'] === $port && $d['onu_id'] === $onuId && ($d['shelf'] === $shelf || $shelf === 0)) {
+                    return strtoupper(trim((string) ZteOids::parseSn($raw)));
+                }
+            }
+
+            return null;
+        }
+
+        throw new \RuntimeException('Tabel SN ONU tidak bisa dibaca lewat SNMP (cek community & koneksi OLT).');
+    }
+
+    /**
+     * Pastikan ONU di posisi itu adalah SN yang dimaksud sebelum aksi tulis (hapus/isolir/ubah profil).
+     * Mencegah aksi mengenai ONU pelanggan lain bila indeks sudah dipakai ulang.
+     *
+     * @return array{ok: bool, reason: string, actual: ?string}
+     */
+    public function verifyOnuSerial(int $shelf, int $slot, int $port, int $onuId, ?string $expectedSn): array
+    {
+        $expected = strtoupper(trim((string) $expectedSn));
+        if ($expected === '') {
+            return ['ok' => false, 'reason' => 'SN ONU yang diharapkan kosong — aksi dibatalkan demi keamanan.', 'actual' => null];
+        }
+        try {
+            $actual = $this->serialAt($shelf, $slot, $port, $onuId);
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'reason' => $e->getMessage(), 'actual' => null];
+        }
+        if ($actual === null) {
+            return ['ok' => false, 'reason' => "Tidak ada ONU di posisi {$shelf}/{$slot}/{$port}:{$onuId}.", 'actual' => null];
+        }
+        if ($actual !== $expected) {
+            return ['ok' => false, 'reason' => "Posisi {$shelf}/{$slot}/{$port}:{$onuId} berisi SN {$actual}, bukan {$expected}.", 'actual' => $actual];
+        }
+
+        return ['ok' => true, 'reason' => 'SN cocok.', 'actual' => $actual];
+    }
+
     public function rebootOnu(string $index): bool
     {
         try {
@@ -621,10 +672,10 @@ class OltGateway
     // PROVISIONING WRITE OPERATIONS (Telnet CLI)
     // ═════════════════════════════════════════════════════
 
-    public function provisionOnu(int $shelf, int $slot, int $port, string $sn, string $onuType, int $vlan = 100, string $description = 'NextLink-Customer'): string|false
+    public function provisionOnu(int $shelf, int $slot, int $port, string $sn, string $onuType, int $vlan = 100, string $description = 'NextLink-Customer', ?string $tcontProfile = null): string|false
     {
         $service = new ZteOltProvisioningService($this->olt);
-        return $service->provisionOnu($shelf, $slot, $port, $sn, $onuType, $vlan, $description);
+        return $service->provisionOnu($shelf, $slot, $port, $sn, $onuType, $vlan, $description, $tcontProfile);
     }
 
     public function deprovisionOnu(int $shelf, int $slot, int $port, int $onuId): bool

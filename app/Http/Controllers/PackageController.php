@@ -28,6 +28,8 @@ class PackageController extends Controller
             'price' => 'required|numeric|min:0',
             'download_speed' => 'nullable|string',
             'upload_speed' => 'nullable|string',
+            // Nama profil T-CONT di OLT (satu kata) — dikirim apa adanya ke perintah OLT
+            'olt_tcont_profile' => ['nullable', 'string', 'max:50', 'regex:/^[A-Za-z0-9_.\-]+$/'],
             'burst_limit_up' => 'nullable|string',
             'burst_limit_down' => 'nullable|string',
             'burst_threshold_up' => 'nullable|string',
@@ -84,6 +86,8 @@ class PackageController extends Controller
             'price' => 'required|numeric|min:0',
             'download_speed' => 'nullable|string',
             'upload_speed' => 'nullable|string',
+            // Nama profil T-CONT di OLT (satu kata) — dikirim apa adanya ke perintah OLT
+            'olt_tcont_profile' => ['nullable', 'string', 'max:50', 'regex:/^[A-Za-z0-9_.\-]+$/'],
             'burst_limit_up' => 'nullable|string',
             'burst_limit_down' => 'nullable|string',
             'burst_threshold_up' => 'nullable|string',

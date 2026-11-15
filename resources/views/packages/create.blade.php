@@ -71,6 +71,11 @@
                                         <x-text-input id="download_speed" name="download_speed" type="text" class="block w-full pl-10" placeholder="Download (e.g. 10M)" />
                                     </div>
                                 </div>
+                                <div class="mt-4">
+                                    <label for="olt_tcont_profile" class="text-xs font-bold text-gray-400 block mb-1">Profil T-CONT OLT (opsional)</label>
+                                    <x-text-input id="olt_tcont_profile" name="olt_tcont_profile" type="text" class="block w-full font-mono" :value="old('olt_tcont_profile', '')" placeholder="mis. UP-20M" />
+                                    <p class="text-xs text-gray-400 mt-1">Nama profil di OLT (ZTE: <span class="font-mono">show gpon profile tcont</span>). Dipakai saat ONU didaftarkan & saat paket pelanggan diganti. Kosongkan bila kecepatan cukup diatur RADIUS/MikroTik.</p>
+                                </div>
                             </div>
 
                             <!-- Advanced QoS (Collapsible or just clean) -->

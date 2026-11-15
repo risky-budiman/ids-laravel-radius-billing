@@ -242,16 +242,19 @@ class OltController extends Controller
      */
     public function manualDeleteOnu(Request $request, Olt $olt)
     {
-        $request->validate([
-            'onu_index' => 'required|string',
-        ]);
+        $data = $request->validate([
+            'onu_index' => 'required|string|max:40',
+            'onu_sn' => 'required|string|max:32|regex:/^[A-Za-z0-9]+$/',
+        ], [], ['onu_index' => 'indeks ONU', 'onu_sn' => 'SN ONU']);
 
-        $index = $request->onu_index;
-        
-        // This will dispatch the job we created earlier
-        \App\Jobs\DeprovisionOnuJob::dispatch($olt->id, $index, "Manual Delete");
+        if (! \App\Services\Network\ZteOids::parseOnuPosition($data['onu_index'])) {
+            return back()->with('error', 'Format indeks ONU tidak dikenali. Contoh: 1/1/7:5 atau .1.1.7.5');
+        }
 
-        return back()->with('success', "Deprovisioning job for ONU {$index} has been queued.");
+        // ONU hanya dihapus bila SN di posisi itu sama dengan SN yang diisi (hasilnya tercatat di Log Aktivitas)
+        \App\Jobs\DeprovisionOnuJob::dispatch($olt->id, $data['onu_index'], strtoupper($data['onu_sn']), $request->user()?->id);
+
+        return back()->with('success', "Penghapusan ONU {$data['onu_sn']} di posisi {$data['onu_index']} diantrekan. Hasilnya tercatat di Log Aktivitas.");
     }
     /**
      * Show details for a specific PON port (Scan ONUs via SNMP immediately)

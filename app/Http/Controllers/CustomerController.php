@@ -506,15 +506,14 @@ class CustomerController extends Controller
         if ($customer->olt_id && $customer->onu_index) {
             // Check status change
             if ($oldStatus && !$isActive) {
-                \App\Jobs\UpdateOnuJob::dispatch($customer->olt_id, $customer->onu_index, 'suspend');
+                \App\Jobs\UpdateOnuJob::dispatch($customer->olt_id, $customer->onu_index, 'suspend', null, $customer->onu_sn);
             } elseif (!$oldStatus && $isActive) {
-                \App\Jobs\UpdateOnuJob::dispatch($customer->olt_id, $customer->onu_index, 'resume');
+                \App\Jobs\UpdateOnuJob::dispatch($customer->olt_id, $customer->onu_index, 'resume', null, $customer->onu_sn);
             }
 
-            // Check package change for bandwidth update
-            if ($isPackageChanged) {
-                $bandwidth = $package->speed_limit_down ?? 102400;
-                \App\Jobs\UpdateOnuJob::dispatch($customer->olt_id, $customer->onu_index, 'update_speed', $bandwidth);
+            // Ganti paket: profil T-CONT paket baru (bila diisi). Dulu dikirim angka bandwidth -> selalu gagal.
+            if ($isPackageChanged && $package->olt_tcont_profile) {
+                \App\Jobs\UpdateOnuJob::dispatch($customer->olt_id, $customer->onu_index, 'update_speed', $package->olt_tcont_profile, $customer->onu_sn);
             }
         }
 

@@ -135,6 +135,28 @@ class ZteOids
     }
 
     /**
+     * Posisi ONU dari indeks yang disimpan di data pelanggan. Menerima semua format yang dipakai sistem:
+     * ".1.1.7.5" / "1.1.7.5" (aktivasi lama) dan "1/1/7:5" / "gpon-onu_1/1/7:5" (diperbarui NOC).
+     * Dulu job hapus/isolir ONU hanya mengenali format titik sehingga indeks dari NOC selalu gagal.
+     *
+     * @return array{shelf:int, slot:int, port:int, onu_id:int}|null
+     */
+    public static function parseOnuPosition(?string $index): ?array
+    {
+        $clean = preg_replace('/^[a-z\-_]*onu_/i', '', trim((string) $index));
+        $parts = preg_split('/[.\/:]/', trim($clean, '.'), -1, PREG_SPLIT_NO_EMPTY);
+        if (count($parts) !== 4 || array_filter($parts, fn ($p) => ! ctype_digit($p))) {
+            return null;
+        }
+        [$shelf, $slot, $port, $onuId] = array_map('intval', $parts);
+        if ($onuId < 1 || $onuId > 256 || $slot > 64 || $port > 64) {
+            return null;
+        }
+
+        return ['shelf' => $shelf, 'slot' => $slot, 'port' => $port, 'onu_id' => $onuId];
+    }
+
+    /**
      * Decode an OID string into [shelf, slot, port, onu_id].
      * Handles 2-part integer index (.portIdx.onuId), 4-part (.shelf.slot.port.onuId), and 5-part tails.
      */
