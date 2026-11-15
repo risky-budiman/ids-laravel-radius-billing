@@ -49,8 +49,12 @@ class PortalOtpService
 
         $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $company = get_setting('company_name', config('app.name'));
-        $sent = $this->whatsapp->sendMessage($customer->phone,
-            "*{$code}* adalah kode masuk Portal Pelanggan {$company}. Berlaku 5 menit.\n\nJangan berikan kode ini kepada siapa pun, termasuk yang mengaku petugas.");
+        $text = "*{$code}* adalah kode masuk Portal Pelanggan {$company}. Berlaku 5 menit.\n\nJangan berikan kode ini kepada siapa pun, termasuk yang mengaku petugas.";
+        // Riwayat Pesan WhatsApp hanya menyimpan versi tersamar: staf (mis. CS) yang membuka riwayat
+        // tidak boleh bisa membaca kode lalu masuk sebagai pelanggan.
+        $log = \App\Models\WhatsappLog::create(['target_phone' => $customer->phone, 'status' => 'pending',
+            'message' => str_replace($code, '••••••', $text)]);
+        $sent = $this->whatsapp->sendMessage($customer->phone, $text, $log->id);
         if (! $sent) {
             throw new \DomainException('Kode tidak dapat dikirim ke WhatsApp saat ini. Silakan coba lagi nanti atau hubungi admin.');
         }

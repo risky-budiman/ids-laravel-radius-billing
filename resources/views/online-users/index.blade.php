@@ -69,14 +69,17 @@
                             </td>
                             <td class="px-6 py-4 text-right flex justify-end gap-2">
                                 {{-- Primary Action: Try Disconnect via CoA --}}
+                                @unless(auth()->user()->isCs())
                                 <form action="{{ route('online-users.kick', $session->radacctid) }}" method="POST">
                                     @csrf
                                     <button type="submit" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-4 py-2 rounded-xl text-xs transition-all" title="Kirim Sinyal Putus (CoA) ke Router">
                                         Disconnect
                                     </button>
                                 </form>
+                                @endunless
 
                                 {{-- Secondary Action: Manual Force Close (Fallback) --}}
+                                @unless(auth()->user()->isCs())
                                 <form action="{{ route('online-users.kick', $session->radacctid) }}" method="POST" onsubmit="return confirm('WARNING: Force Close will stop this session in DB WITHOUT disconnecting the user from the router. This may lead to inconsistency. Continue?')">
                                     @csrf
                                     <input type="hidden" name="force" value="1">
@@ -84,6 +87,7 @@
                                         Tutup Paksa
                                     </button>
                                 </form>
+                                @endunless
                             </td>
                         </tr>
                     @empty

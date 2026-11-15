@@ -40,6 +40,7 @@ class SidebarMenu
         $isKasir = $u->isKasir();
         $isSales = $u->isSales();
         $isMitra = $u->isMitra();
+        $isCs = $u->isCs();
 
         $sections = [];
 
@@ -65,7 +66,7 @@ class SidebarMenu
             $management[] = self::link('Referal Saya', 'sales.customers', 'users');
             $management[] = self::link('Dompet & Mutasi Saya', 'sales.ledger', 'cash');
         }
-        if ($isAdmin || $isSales || $isTeknisi) {
+        if ($isAdmin || $isSales || $isTeknisi || $isCs) {
             $management[] = self::link('Pelanggan', 'customers.index', 'users', [
                 'customers.index', 'customers.create', 'customers.edit', 'customers.show',
                 'customers.import.*', 'customers.activate', 'customers.dismantle',
@@ -80,8 +81,15 @@ class SidebarMenu
             $management[] = self::link('Paket', 'packages.index', 'cube', ['packages.*']);
             $management[] = self::link('Router (NAS)', 'nas.index', 'server', ['nas.*']);
         }
-        if ($isAdmin || $isTeknisi || $isSales) {
+        if ($isAdmin || $isTeknisi || $isSales || $isCs) {
             $management[] = self::link('Tiket', 'tickets.index', 'ticket', ['tickets.index', 'tickets.create', 'tickets.show', 'tickets.edit']);
+        }
+        if ($isAdmin || $isCs) {
+            $pending = \App\Models\PackageChangeRequest::where('status', 'pending')->count();
+            $management[] = self::link('Pengajuan Ganti Paket', 'package-requests.index', 'refresh', ['package-requests.*'], [], $pending ? (string) $pending : null);
+        }
+        if ($isCs) {
+            $management[] = self::link('Peta Pelanggan', 'customers.map', 'map');
         }
         if ($isAdmin) {
             $management[] = self::link('Rekap Tiket', 'tickets.recap', 'chart-bar', ['tickets.recap*']);
@@ -90,14 +98,20 @@ class SidebarMenu
 
         // ---- Billing & Status
         $billing = [];
+        if ($isCs) {
+            $billing[] = self::link('Invoice', 'invoices.index', 'document', ['invoices.*']);
+        }
         if ($isAdmin || $isKasir) {
             $billing[] = self::link('Invoice', 'invoices.index', 'document', ['invoices.*']);
             $billing[] = self::link('Piutang', 'receivables.index', 'receipt', ['receivables.*']);
             $billing[] = self::link('Desain Invoice', 'invoice-templates.index', 'template', ['invoice-templates.*']);
         }
-        if ($isAdmin || $isTeknisi) {
+        if ($isAdmin || $isTeknisi || $isCs) {
             $billing[] = self::link('Pengguna Online', 'online-users.index', 'signal', ['online-users.*']);
             $billing[] = self::link('Log Autentikasi', 'auth-logs.index', 'shield-check', ['auth-logs.*']);
+        }
+        if ($isCs) {
+            $billing[] = self::link('Riwayat Pesan WhatsApp', 'whatsapp-logs.index', 'inbox', ['whatsapp-logs.*']);
         }
         $sections[] = ['label' => 'Tagihan & Status', 'items' => $billing];
 

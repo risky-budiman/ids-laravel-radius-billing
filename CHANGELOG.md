@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.126] - 2026-11-16
+
+### Fitur baru
+- **roles:** Customer Service role with package-change requests that need approval
+
 ## [v1.5.125] - 2026-11-16
 
 ### Perbaikan

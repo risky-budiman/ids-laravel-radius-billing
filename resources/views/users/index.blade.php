@@ -51,10 +51,11 @@
                                                 'teknisi' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
                                                 'kasir' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
                                                 'sales' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                                                'cs' => 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
                                             ];
                                         @endphp
                                         <span class="px-3 py-1 text-xs rounded-full {{ $roleClasses[$user->role] ?? 'bg-gray-100 text-gray-600' }}">
-                                            {{ $user->role }}
+                                            {{ $user->role === 'cs' ? 'CS' : $user->role }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-5 text-center">

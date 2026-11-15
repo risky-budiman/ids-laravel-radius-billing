@@ -24,6 +24,7 @@ class UserController extends Controller
             User::ROLE_TEKNISI => 'Teknisi',
             User::ROLE_KASIR => 'Kasir',
             User::ROLE_SALES => 'Sales',
+            User::ROLE_CS => 'Customer Service (CS)',
             User::ROLE_MITRA => 'Partner / Mitra'
         ];
         return view('users.create', compact('roles'));
@@ -35,7 +36,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_TEKNISI, User::ROLE_KASIR, User::ROLE_SALES, User::ROLE_MITRA])],
+            'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_TEKNISI, User::ROLE_KASIR, User::ROLE_SALES, User::ROLE_MITRA, User::ROLE_CS])],
             'commission_rate' => 'nullable|numeric|min:0',
             'commission_type' => 'nullable|in:percentage,fixed',
             'bank_name' => 'nullable|string',
@@ -69,6 +70,7 @@ class UserController extends Controller
             User::ROLE_TEKNISI => 'Teknisi',
             User::ROLE_KASIR => 'Kasir',
             User::ROLE_SALES => 'Sales',
+            User::ROLE_CS => 'Customer Service (CS)',
             User::ROLE_MITRA => 'Partner / Mitra'
         ];
         return view('users.edit', compact('user', 'roles'));
@@ -80,7 +82,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|string|min:8|confirmed',
-            'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_TEKNISI, User::ROLE_KASIR, User::ROLE_SALES, User::ROLE_MITRA])],
+            'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_TEKNISI, User::ROLE_KASIR, User::ROLE_SALES, User::ROLE_MITRA, User::ROLE_CS])],
             'commission_rate' => 'nullable|numeric|min:0',
             'commission_type' => 'nullable|in:percentage,fixed',
             'bank_name' => 'nullable|string',

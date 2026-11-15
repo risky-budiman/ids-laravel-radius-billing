@@ -1,6 +1,10 @@
 @php
     $u = auth()->user();
     $canTech = $u->isAdmin() || $u->isTeknisi();
+    $isCs = $u->isCs();
+    // CS & admin: ubah kontak + ajukan ganti paket (disetujui admin/administrator)
+    $canRequestPackage = ($u->isAdmin() || $isCs) && ! in_array($customer->status, \App\Models\Customer::TERMINATED_STATUSES, true);
+    $pendingPackageRequest = \App\Models\PackageChangeRequest::with('toPackage:id,name')->where('customer_id', $customer->id)->where('status', 'pending')->first();
     $statusMap = [
         'active' => ['badge-success', 'Aktif'],
         'new' => ['badge-info', 'Baru'],
@@ -41,13 +45,90 @@
                         <a href="{{ route('customers.activate', $customer) }}" class="btn-success">Aktivasi sekarang</a>
                     @endif
                 @endif
-                <a href="{{ route('customers.edit', $customer) }}" class="btn-primary">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                    Edit pelanggan
-                </a>
+                @if($u->isAdmin() || $isCs)
+                    <button type="button" x-data @click="$dispatch('open-modal', 'edit-contact')" class="btn-secondary">Ubah kontak</button>
+                @endif
+                @if($canRequestPackage && ! $pendingPackageRequest)
+                    <button type="button" x-data @click="$dispatch('open-modal', 'request-package')" class="btn-secondary">Ajukan ganti paket</button>
+                @endif
+                @unless($isCs)
+                    <a href="{{ route('customers.edit', $customer) }}" class="btn-primary">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        Edit pelanggan
+                    </a>
+                @endunless
             </div>
         </div>
     </x-slot>
+
+    @foreach(['success' => 'emerald', 'error' => 'rose'] as $flashKey => $tone)
+        @if(session($flashKey))
+            <div class="mb-4 rounded-xl border border-{{ $tone }}-200 bg-{{ $tone }}-50 px-4 py-3 text-sm text-{{ $tone }}-800 dark:border-{{ $tone }}-500/30 dark:bg-{{ $tone }}-500/10 dark:text-{{ $tone }}-300">{{ session($flashKey) }}</div>
+        @endif
+    @endforeach
+    @if($errors->any())
+        <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">{{ $errors->first() }}</div>
+    @endif
+    @if($pendingPackageRequest)
+        <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+            Pengajuan ganti paket ke <strong>{{ $pendingPackageRequest->toPackage?->name }}</strong> menunggu persetujuan admin.
+            <a href="{{ route('package-requests.index') }}" class="font-semibold underline">Lihat pengajuan</a>
+        </div>
+    @endif
+
+    @if($u->isAdmin() || $isCs)
+        <x-modal name="edit-contact" focusable>
+            <form method="POST" action="{{ route('customers.contact.update', $customer) }}" class="p-6 space-y-4">
+                @csrf @method('PATCH')
+                <h2 class="text-lg font-semibold text-surface-900 dark:text-white">Ubah kontak pelanggan</h2>
+                <div>
+                    <label for="c_phone" class="label">Nomor HP / WhatsApp</label>
+                    <input id="c_phone" name="phone" class="input" value="{{ old('phone', $customer->phone) }}" maxlength="20">
+                    <p class="help-text">Dipakai untuk tagihan, pengingat & kode OTP portal.</p>
+                </div>
+                <div>
+                    <label for="c_email" class="label">Email</label>
+                    <input id="c_email" name="email" type="email" class="input" value="{{ old('email', $customer->email) }}">
+                </div>
+                <div>
+                    <label for="c_address" class="label">Alamat</label>
+                    <textarea id="c_address" name="address" rows="3" class="input !h-auto" maxlength="500">{{ old('address', $customer->address) }}</textarea>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" x-on:click="$dispatch('close')" class="btn-ghost">Batal</button>
+                    <button class="btn-primary">Simpan</button>
+                </div>
+            </form>
+        </x-modal>
+    @endif
+
+    @if($canRequestPackage && ! $pendingPackageRequest)
+        <x-modal name="request-package" focusable>
+            <form method="POST" action="{{ route('package-requests.store', $customer) }}" class="p-6 space-y-4">
+                @csrf
+                <h2 class="text-lg font-semibold text-surface-900 dark:text-white">Ajukan ganti paket</h2>
+                <p class="text-sm text-surface-500">Paket saat ini: <strong>{{ $customer->package?->name ?? '—' }}</strong>{{ $customer->package ? ' (Rp ' . number_format((float) $customer->package->price, 0, ',', '.') . ')' : '' }}. Paket berganti setelah disetujui admin.</p>
+                <div>
+                    <label for="to_package_id" class="label">Paket baru</label>
+                    <select id="to_package_id" name="to_package_id" class="input" required>
+                        <option value="">Pilih paket</option>
+                        @foreach(\App\Models\Package::orderBy('price')->get(['id', 'name', 'price']) as $pk)
+                            @continue($pk->id === $customer->package_id)
+                            <option value="{{ $pk->id }}">{{ $pk->name }} — Rp {{ number_format((float) $pk->price, 0, ',', '.') }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="reason" class="label">Alasan / permintaan pelanggan</label>
+                    <textarea id="reason" name="reason" rows="3" class="input !h-auto" maxlength="500" required placeholder="mis. Pelanggan minta naik ke 20 Mbps mulai bulan depan"></textarea>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" x-on:click="$dispatch('close')" class="btn-ghost">Batal</button>
+                    <button class="btn-primary">Kirim pengajuan</button>
+                </div>
+            </form>
+        </x-modal>
+    @endif
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {{-- ================= Kolom kiri ================= --}}

@@ -45,6 +45,8 @@ class User extends Authenticatable
     const ROLE_SALES = 'sales';
     const ROLE_MITRA = 'mitra';
     const ROLE_CUSTOMER = 'customer';
+    /** Customer Service: tiket, data kontak, lihat tagihan & status; ganti paket hanya lewat pengajuan. */
+    const ROLE_CS = 'cs';
 
     /**
      * Check if user has specific role
@@ -75,6 +77,7 @@ class User extends Authenticatable
     public function isSales(): bool { return $this->role === self::ROLE_SALES || $this->is_sales; }
     public function isMitra(): bool { return $this->role === self::ROLE_MITRA; }
     public function isCustomer(): bool { return $this->role === self::ROLE_CUSTOMER; }
+    public function isCs(): bool { return $this->role === self::ROLE_CS; }
 
     /**
      * Relationship to active sessions

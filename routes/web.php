@@ -79,7 +79,7 @@ Route::post('/webhooks/moota', [\App\Http\Controllers\PaymentWebhookController::
 
 
 
-Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknisi,kasir,sales'])->group(function () {
+Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknisi,kasir,sales,cs'])->group(function () {
     Route::get('/', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     // Test Realtime WebSocket & Notification Route
@@ -106,14 +106,17 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
     })->middleware('role:administrator')->name('admin.test-realtime');
 
     // RADIUS Session Management
-    Route::post('radius/disconnect-all', [\App\Http\Controllers\Admin\RadiusController::class, 'disconnectAll'])->name('radius.disconnect-all');
-    Route::post('radius/clear-stale', [\App\Http\Controllers\Admin\RadiusController::class, 'clearStaleSessions'])->name('radius.clear-stale');
+    // Dulu terbuka untuk semua staf (termasuk kasir/sales): memutus sesi SEMUA pelanggan
+    Route::post('radius/disconnect-all', [\App\Http\Controllers\Admin\RadiusController::class, 'disconnectAll'])->middleware('role:administrator,admin')->name('radius.disconnect-all');
+    Route::post('radius/clear-stale', [\App\Http\Controllers\Admin\RadiusController::class, 'clearStaleSessions'])->middleware('role:administrator,admin,teknisi')->name('radius.clear-stale');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::resource('packages', \App\Http\Controllers\PackageController::class);
+    // Paket: lihat semua staf; tambah/ubah harga/hapus hanya admin (dulu semua staf)
+    Route::resource('packages', \App\Http\Controllers\PackageController::class)->except(['index', 'show'])->middleware('role:administrator,admin');
+    Route::resource('packages', \App\Http\Controllers\PackageController::class)->only(['index', 'show']);
 
     // CUSTOMERS: All Operational Roles (View, Create, Edit)
     Route::middleware('role:administrator,admin,teknisi,sales')->group(function () {
@@ -123,16 +126,36 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::get('customers/export', [\App\Http\Controllers\CustomerImportController::class, 'export'])->name('customers.export');
         Route::post('customers/import', [\App\Http\Controllers\CustomerImportController::class, 'store'])->name('customers.import.store');
 
-        Route::get('customers/map', [\App\Http\Controllers\CustomerController::class, 'map'])->name('customers.map');
-        Route::get('customers', [\App\Http\Controllers\CustomerController::class, 'index'])->name('customers.index');
         Route::post('customers/bulk-action', [\App\Http\Controllers\CustomerController::class, 'bulkAction'])->name('customers.bulk-action');
         Route::get('customers/create', [\App\Http\Controllers\CustomerController::class, 'create'])->name('customers.create');
         Route::post('customers', [\App\Http\Controllers\CustomerController::class, 'store'])->name('customers.store');
-        Route::get('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'show'])->name('customers.show');
         Route::get('customers/{customer}/edit', [\App\Http\Controllers\CustomerController::class, 'edit'])->name('customers.edit');
         Route::put('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'update'])->name('customers.update');
         Route::patch('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'update']);
         Route::post('customers/{customer}/reset-fup', [\App\Http\Controllers\CustomerController::class, 'resetFup'])->name('customers.reset-fup');
+    });
+
+    // CUSTOMERS (lihat) + CS: daftar, peta, detail; ubah kontak & pengajuan ganti paket.
+    // Didaftarkan setelah customers/create & customers/import agar tidak tertangkap customers/{customer}.
+    Route::middleware('role:administrator,admin,teknisi,sales,cs')->group(function () {
+        Route::get('customers/map', [\App\Http\Controllers\CustomerController::class, 'map'])->name('customers.map');
+        Route::get('customers', [\App\Http\Controllers\CustomerController::class, 'index'])->name('customers.index');
+        Route::get('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'show'])->name('customers.show');
+    });
+    Route::middleware('role:administrator,admin,cs')->group(function () {
+        Route::patch('customers/{customer}/contact', [\App\Http\Controllers\CustomerContactController::class, 'update'])->name('customers.contact.update');
+        Route::post('customers/{customer}/package-requests', [\App\Http\Controllers\PackageChangeRequestController::class, 'store'])->name('package-requests.store');
+        Route::get('package-requests', [\App\Http\Controllers\PackageChangeRequestController::class, 'index'])->name('package-requests.index');
+    });
+    Route::middleware('role:administrator,admin')->group(function () {
+        Route::post('package-requests/{packageRequest}/approve', [\App\Http\Controllers\PackageChangeRequestController::class, 'approve'])->name('package-requests.approve');
+        Route::post('package-requests/{packageRequest}/reject', [\App\Http\Controllers\PackageChangeRequestController::class, 'reject'])->name('package-requests.reject');
+    });
+
+    // Berita Acara: lihat & kirim ulang tautan (CS ikut); tanda tangan teknisi tetap di grup aktivasi
+    Route::middleware('role:administrator,admin,teknisi,cs')->group(function () {
+        Route::get('installation-reports/{report}', [\App\Http\Controllers\InstallationReportController::class, 'show'])->name('installation-reports.show');
+        Route::post('installation-reports/{report}/send-link', [\App\Http\Controllers\InstallationReportController::class, 'sendLink'])->name('installation-reports.send-link');
     });
 
     // CUSTOMER ACTIVATION: Admin & Teknisi
@@ -146,9 +169,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::post('customers/{customer}/dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'processDismantle'])->name('customers.dismantle.store');
 
         // Berita Acara Instalasi (tanda tangan digital)
-        Route::get('installation-reports/{report}', [\App\Http\Controllers\InstallationReportController::class, 'show'])->name('installation-reports.show');
         Route::post('installation-reports/{report}/sign', [\App\Http\Controllers\InstallationReportController::class, 'sign'])->name('installation-reports.sign');
-        Route::post('installation-reports/{report}/send-link', [\App\Http\Controllers\InstallationReportController::class, 'sendLink'])->name('installation-reports.send-link');
 
         // NOC CENTER (Technician & Administrator Only)
         Route::middleware('role:administrator,teknisi')->group(function () {
@@ -201,8 +222,8 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::get('my-customers', [\App\Http\Controllers\Sales\DashboardController::class, 'customers'])->name('customers');
     });
 
-    // TICKETS: Admin, Teknisi & Sales
-    Route::middleware('role:administrator,admin,teknisi,sales')->group(function () {
+    // TICKETS: Admin, Teknisi, Sales & CS
+    Route::middleware('role:administrator,admin,teknisi,sales,cs')->group(function () {
         // Rekap audit pekerjaan tim (didaftarkan sebelum resource agar tidak tertangkap tickets/{ticket})
         Route::middleware('role:administrator,admin')->group(function () {
             Route::get('tickets/recap', [\App\Http\Controllers\TicketRecapController::class, 'index'])->name('tickets.recap');
@@ -223,7 +244,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
             Route::get('kpi', [\App\Http\Controllers\BusinessKpiController::class, 'index'])->name('kpi.index');
             Route::get('kpi/export', [\App\Http\Controllers\BusinessKpiController::class, 'export'])->name('kpi.export');
         });
-        Route::resource('invoices', \App\Http\Controllers\InvoiceController::class);
+        Route::resource('invoices', \App\Http\Controllers\InvoiceController::class)->except(['index', 'show']);
         // Hapus buku piutang macet (write-off) & pembatalannya
         Route::post('invoices/{invoice}/write-off', [\App\Http\Controllers\InvoiceWriteOffController::class, 'store'])
             ->middleware('role:administrator,admin')->name('invoices.write-off');
@@ -231,7 +252,6 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
             ->middleware('role:administrator,admin')->name('invoices.write-off.destroy');
         Route::post('invoices/generate-automated', [\App\Http\Controllers\InvoiceController::class, 'generateAutomated'])->name('invoices.generate-automated');
         Route::get('invoices/{invoice}/pay', [\App\Http\Controllers\InvoiceController::class, 'pay'])->name('invoices.pay');
-        Route::post('invoices/{invoice}/whatsapp', [\App\Http\Controllers\InvoiceController::class, 'sendWhatsApp'])->name('invoices.whatsapp');
         
         // Bulk Actions
         Route::post('invoices/bulk-delete', [\App\Http\Controllers\InvoiceController::class, 'bulkDelete'])->name('invoices.bulk-delete');
@@ -239,12 +259,27 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::post('invoices/bulk-whatsapp', [\App\Http\Controllers\InvoiceController::class, 'bulkWhatsApp'])->name('invoices.bulk-whatsapp');
     });
 
+    // INVOICE (lihat & kirim ulang tagihan WhatsApp): kasir & CS. Setelah resource agar invoices/create menang.
+    Route::middleware('role:administrator,admin,kasir,cs')->group(function () {
+        Route::get('invoices', [\App\Http\Controllers\InvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('invoices/{invoice}', [\App\Http\Controllers\InvoiceController::class, 'show'])->name('invoices.show');
+        Route::post('invoices/{invoice}/whatsapp', [\App\Http\Controllers\InvoiceController::class, 'sendWhatsApp'])->name('invoices.whatsapp');
+    });
+
+    // Status pelanggan (lihat): pengguna online & log autentikasi — CS ikut
+    Route::middleware('role:administrator,admin,teknisi,cs')->group(function () {
+        Route::get('online-users', [\App\Http\Controllers\OnlineUserController::class, 'index'])->name('online-users.index');
+        Route::get('auth-logs', [\App\Http\Controllers\AuthLogController::class, 'index'])->name('auth-logs.index');
+    });
+
+    Route::middleware('role:administrator,cs')->group(function () {
+        Route::get('whatsapp-logs', [\App\Http\Controllers\WhatsappLogController::class, 'index'])->name('whatsapp-logs.index');
+    });
+
     // TECHNICAL & WAREHOUSE: Admin & Teknisi
     Route::middleware('role:administrator,admin,teknisi')->group(function () {
-        Route::get('online-users', [\App\Http\Controllers\OnlineUserController::class, 'index'])->name('online-users.index');
         Route::post('online-users/{radacctid}/kick', [\App\Http\Controllers\OnlineUserController::class, 'kick'])->name('online-users.kick');
         Route::post('online-users/{radacctid}/force-close', [\App\Http\Controllers\OnlineUserController::class, 'forceClose'])->name('online-users.force-close');
-        Route::get('auth-logs', [\App\Http\Controllers\AuthLogController::class, 'index'])->name('auth-logs.index');
         Route::delete('auth-logs/clear', [\App\Http\Controllers\AuthLogController::class, 'clear'])->name('auth-logs.clear');
         Route::delete('auth-logs/{id}', [\App\Http\Controllers\AuthLogController::class, 'destroy'])->name('auth-logs.destroy');
         
@@ -361,7 +396,6 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::post('whatsapp-broadcast', [\App\Http\Controllers\WhatsappBroadcastController::class, 'send'])->name('whatsapp-broadcast.send');
 
         // WhatsApp Logs
-        Route::get('whatsapp-logs', [\App\Http\Controllers\WhatsappLogController::class, 'index'])->name('whatsapp-logs.index');
         Route::post('whatsapp-logs/{whatsappLog}/resend', [\App\Http\Controllers\WhatsappLogController::class, 'resend'])->name('whatsapp-logs.resend');
         Route::delete('whatsapp-logs/{whatsappLog}', [\App\Http\Controllers\WhatsappLogController::class, 'destroy'])->name('whatsapp-logs.destroy');
         Route::post('whatsapp-logs/bulk-destroy', [\App\Http\Controllers\WhatsappLogController::class, 'bulkDestroy'])->name('whatsapp-logs.bulk-destroy');
