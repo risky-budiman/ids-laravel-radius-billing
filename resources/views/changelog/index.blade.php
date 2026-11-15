@@ -1,205 +1,131 @@
+@php
+    $typeBadge = [
+        'feature' => ['Fitur baru', 'badge-info'],
+        'fix' => ['Perbaikan', 'badge-warning'],
+        'security' => ['Keamanan', 'badge-danger'],
+        'improvement' => ['Peningkatan', 'badge-gray'],
+    ];
+    $sectionTone = [
+        'Fitur baru' => 'text-primary-600 dark:text-primary-400',
+        'Perbaikan' => 'text-amber-700 dark:text-amber-400',
+        'Keamanan' => 'text-rose-700 dark:text-rose-400',
+        'Peningkatan' => 'text-surface-500 dark:text-surface-400',
+    ];
+@endphp
 <x-app-layout>
-    <div class="py-12 bg-gray-50 dark:bg-gray-900 min-h-screen font-sans">
-        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
-            
-            <!-- HEADER (Sesuai Referensi) -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-12 flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-md">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                    </div>
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white tracking-tight">Change Log</h2>
-                </div>
-                
-                @if(auth()->user()->isAdministrator())
-                    <button x-data="" @click="$dispatch('open-modal', 'add-changelog')" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold uppercase tracking-wider rounded-lg transition-colors shadow-sm">
-                        + NEW UPDATE
-                    </button>
-                @endif
+    <x-slot name="header">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2>Riwayat Pembaruan</h2>
+                <p class="page-subtitle">Versi terpasang <span class="font-mono font-semibold">{{ $currentVersion }}</span> · perubahan per versi, terbaru di atas.</p>
             </div>
-
-            <!-- TIMELINE CONTAINER -->
-            <div class="relative">
-                <!-- Central Vertical Line -->
-                <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 h-full w-px bg-gray-300 dark:bg-gray-700"></div>
-
-                <div class="space-y-4">
-                    @forelse($changelogs as $index => $log)
-                        <!-- ROW -->
-                        <div class="md:grid md:grid-cols-9 flex flex-col items-center">
-                            
-                            @if($index % 2 == 0)
-                                <!-- EVEN: Date Left, Icon Center, Card Right -->
-                                <div class="md:col-span-4 flex items-center justify-end w-full px-6 mb-2 md:mb-0">
-                                    <p class="text-sm font-bold text-gray-500 uppercase tracking-wide text-right">
-                                        {{ \Carbon\Carbon::parse($log->release_date)->translatedFormat('d F Y') }}
-                                    </p>
-                                </div>
-
-                                <div class="md:col-span-1 flex justify-center items-center relative py-4">
-                                    <div class="w-10 h-10 rounded-full bg-blue-500 border-4 border-white dark:border-gray-900 shadow-sm flex items-center justify-center text-white z-10">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                        </svg>
-                                    </div>
-                                </div>
-
-                                <div class="md:col-span-4 w-full px-6 py-4">
-                                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-dashed border-blue-400 dark:border-blue-500 p-6 rounded-xl shadow-sm group">
-                                        <div class="flex items-center justify-between mb-4">
-                                            <h3 class="text-xl font-bold text-blue-800 dark:text-blue-300">{{ $log->version }}</h3>
-                                            <span class="text-xs text-blue-600 dark:text-blue-400">Perbarui</span>
-                                        </div>
-
-                                        <div class="space-y-2">
-                                            @if($log->title)
-                                                <h4 class="font-bold text-gray-800 dark:text-gray-200 text-sm mb-2">{{ $log->title }}</h4>
-                                            @endif
-                                            <div class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                                                @php
-                                                    $lines = explode("\n", $log->description);
-                                                @endphp
-                                                @foreach($lines as $line)
-                                                    @if(trim($line))
-                                                        <p class="flex items-start">
-                                                            <span class="text-blue-500 mr-2 font-bold">+</span>
-                                                            {{ ltrim(trim($line), '- +') }}
-                                                        </p>
-                                                    @endif
-                                                @endforeach
-                                            </div>
-                                        </div>
-
-                                        @if(auth()->user()->isAdministrator())
-                                            <div class="mt-4 pt-3 border-t border-blue-200/50 dark:border-blue-800/50 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <form action="{{ route('changelog.destroy', $log) }}" method="POST" onsubmit="return confirm('Erase this history?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="text-gray-400 hover:text-red-500 transition-colors">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                        </svg>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-
-                            @else
-                                <!-- ODD: Card Left, Icon Center, Date Right -->
-                                <div class="md:col-span-4 w-full px-6 py-4 order-2 md:order-1">
-                                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-dashed border-blue-400 dark:border-blue-500 p-6 rounded-xl shadow-sm group">
-                                        <div class="flex items-center justify-between mb-4">
-                                            <h3 class="text-xl font-bold text-blue-800 dark:text-blue-300">{{ $log->version }}</h3>
-                                            <span class="text-xs text-blue-600 dark:text-blue-400">Perbarui</span>
-                                        </div>
-
-                                        <div class="space-y-2">
-                                            @if($log->title)
-                                                <h4 class="font-bold text-gray-800 dark:text-gray-200 text-sm mb-2">{{ $log->title }}</h4>
-                                            @endif
-                                            <div class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                                                @php
-                                                    $lines = explode("\n", $log->description);
-                                                @endphp
-                                                @foreach($lines as $line)
-                                                    @if(trim($line))
-                                                        <p class="flex items-start">
-                                                            <span class="text-blue-500 mr-2 font-bold">+</span>
-                                                            {{ ltrim(trim($line), '- +') }}
-                                                        </p>
-                                                    @endif
-                                                @endforeach
-                                            </div>
-                                        </div>
-
-                                        @if(auth()->user()->isAdministrator())
-                                            <div class="mt-4 pt-3 border-t border-blue-200/50 dark:border-blue-800/50 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <form action="{{ route('changelog.destroy', $log) }}" method="POST" onsubmit="return confirm('Erase this history?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="text-gray-400 hover:text-red-500 transition-colors">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                        </svg>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <div class="md:col-span-1 flex justify-center items-center relative py-4 order-1 md:order-2">
-                                    <div class="w-10 h-10 rounded-full bg-blue-500 border-4 border-white dark:border-gray-900 shadow-sm flex items-center justify-center text-white z-10">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                        </svg>
-                                    </div>
-                                </div>
-
-                                <div class="md:col-span-4 flex items-center justify-start w-full px-6 mb-2 md:mb-0 order-3 md:order-3">
-                                    <p class="text-sm font-bold text-gray-500 uppercase tracking-wide">
-                                        {{ \Carbon\Carbon::parse($log->release_date)->translatedFormat('d F Y') }}
-                                    </p>
-                                </div>
-                            @endif
-
-                        </div>
-                    @empty
-                        <div class="text-center py-20 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                            <p class="text-gray-400 font-medium italic">Belum ada catatan pembaruan.</p>
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-
+            @if(auth()->user()->isAdministrator())
+                <button type="button" x-data @click="$dispatch('open-modal', 'add-changelog')" class="btn-secondary btn-sm">Tambah catatan manual</button>
+            @endif
         </div>
+    </x-slot>
+
+    <div class="max-w-4xl space-y-4">
+        @if(session('success'))
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">{{ session('success') }}</div>
+        @endif
+
+        @forelse($changelogs as $log)
+            @php
+                [$typeLabel, $typeClass] = $typeBadge[$log->type] ?? $typeBadge['improvement'];
+                $isCurrent = ltrim($log->version, 'v') === ltrim($currentVersion, 'v');
+                // Baris "[Bagian] teks" (hasil sinkron) dikelompokkan; baris tanpa label (catatan manual) apa adanya
+                $groups = [];
+                foreach (preg_split('/\R/', (string) $log->description) as $line) {
+                    $line = trim(ltrim(trim($line), '-+•* '));
+                    if ($line === '') continue;
+                    if (preg_match('/^\[([^\]]+)\]\s*(.+)$/', $line, $m)) {
+                        $groups[$m[1]][] = $m[2];
+                    } else {
+                        $groups[''][] = $line;
+                    }
+                }
+            @endphp
+            <article class="card {{ $isCurrent ? 'ring-2 ring-primary-500/40' : '' }}">
+                <div class="card-body">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h3 class="font-mono text-base font-semibold text-surface-900 dark:text-white">{{ $log->version }}</h3>
+                        <span class="{{ $typeClass }}">{{ $typeLabel }}</span>
+                        @if($isCurrent)<span class="badge-success">Versi terpasang</span>@endif
+                        <span class="ml-auto text-xs text-surface-500 dark:text-surface-400">
+                            {{ $log->release_date ? \Carbon\Carbon::parse($log->release_date)->locale('id')->translatedFormat('d F Y') : '' }}
+                        </span>
+                        @if(auth()->user()->isAdministrator())
+                            <form action="{{ route('changelog.destroy', $log) }}" method="POST" onsubmit="return confirm('Hapus catatan versi {{ $log->version }}?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-xs text-surface-400 hover:text-rose-600" title="Hapus catatan">Hapus</button>
+                            </form>
+                        @endif
+                    </div>
+                    {{-- Judul otomatis ("2 fitur baru, 1 perbaikan") sudah tergambar dari badge & daftar --}}
+                    @if($log->title && ! preg_match('/^\d+ /', $log->title) && ! str_starts_with($log->title, 'Release '))
+                        <p class="mt-1 text-sm font-medium text-surface-800 dark:text-surface-200">{{ $log->title }}</p>
+                    @endif
+
+                    <div class="mt-2 space-y-3 text-sm">
+                        @foreach($groups as $section => $items)
+                            <div>
+                                @if($section !== '' && count($groups) > 1)
+                                    <p class="text-xs font-semibold uppercase tracking-wide {{ $sectionTone[$section] ?? 'text-surface-500' }}">{{ $section }}</p>
+                                @endif
+                                <ul class="mt-1 list-disc space-y-0.5 pl-5 text-surface-700 dark:text-surface-300">
+                                    @foreach($items as $item)<li>{{ $item }}</li>@endforeach
+                                </ul>
+                            </div>
+                        @endforeach
+                    </div>
+
+                </div>
+            </article>
+        @empty
+            <div class="card"><div class="card-body text-center text-sm text-surface-500">Belum ada riwayat pembaruan.</div></div>
+        @endforelse
+
+        <div>{{ $changelogs->links() }}</div>
     </div>
 
-    <!-- MODAL -->
     <x-modal name="add-changelog" focusable>
-        <form method="post" action="{{ route('changelog.store') }}" class="p-8">
+        <form method="post" action="{{ route('changelog.store') }}" class="p-6 space-y-4">
             @csrf
-            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Rilis Aplikasi Baru</h2>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-white">Tambah catatan manual</h2>
+            <p class="text-xs text-surface-500">Catatan otomatis disusun dari riwayat commit. Gunakan ini hanya untuk versi di luar riwayat git.</p>
+            <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <x-input-label for="version" value="Versi (mis. v1.0.1)" class="font-bold text-xs uppercase text-gray-500 mb-2" />
-                    <x-text-input id="version" name="version" type="text" class="block w-full border-gray-300 rounded-lg" placeholder="v1.0.1" required />
+                    <label for="version" class="label">Versi</label>
+                    <input id="version" name="version" class="input font-mono" placeholder="v1.0.1" required>
                 </div>
                 <div>
-                    <x-input-label for="release_date" value="Tanggal Rilis" class="font-bold text-xs uppercase text-gray-500 mb-2" />
-                    <x-text-input id="release_date" name="release_date" type="date" class="block w-full border-gray-300 rounded-lg" value="{{ date('Y-m-d') }}" required />
+                    <label for="release_date" class="label">Tanggal rilis</label>
+                    <input id="release_date" name="release_date" type="date" class="input" value="{{ date('Y-m-d') }}" required>
                 </div>
             </div>
-
-            <div class="mb-6">
-                <x-input-label for="title" value="Judul Pembaruan" class="font-bold text-xs uppercase text-gray-500 mb-2" />
-                <x-text-input id="title" name="title" type="text" class="block w-full border-gray-300 rounded-lg" placeholder="Ringkasan rilis ini" required />
+            <div>
+                <label for="title" class="label">Judul</label>
+                <input id="title" name="title" class="input" placeholder="Ringkasan rilis" required>
             </div>
-
-            <div class="mb-6">
-                <x-input-label for="type" value="Kategori" class="font-bold text-xs uppercase text-gray-500 mb-2" />
+            <div>
+                <label for="type" class="label">Kategori</label>
                 <select id="type" name="type" class="input">
-                    <option value="feature">✨ New Feature</option>
-                    <option value="fix">🐛 Bug Fix</option>
-                    <option value="security">🛡️ Security Patch</option>
+                    <option value="feature">Fitur baru</option>
+                    <option value="fix">Perbaikan</option>
+                    <option value="improvement">Peningkatan</option>
+                    <option value="security">Keamanan</option>
                 </select>
             </div>
-
-            <div class="mb-8">
-                <x-input-label for="description" value="Rincian (satu per baris)" class="font-bold text-xs uppercase text-gray-500 mb-2" />
-                <textarea id="description" name="description" rows="5" class="input" placeholder="Tulis daftar perubahan di sini..." required></textarea>
+            <div>
+                <label for="description" class="label">Rincian (satu per baris)</label>
+                <textarea id="description" name="description" rows="5" class="input !h-auto" required></textarea>
             </div>
-
-            <div class="flex justify-end space-x-3">
-                <x-secondary-button x-on:click="$dispatch('close')" class="rounded-lg">{{ __('Cancel') }}</x-secondary-button>
-                <x-primary-button class="bg-indigo-600 rounded-lg">{{ __('Publish Log') }}</x-primary-button>
+            <div class="flex justify-end gap-2">
+                <button type="button" x-on:click="$dispatch('close')" class="btn-ghost">Batal</button>
+                <button class="btn-primary">Simpan</button>
             </div>
         </form>
     </x-modal>
 </x-app-layout>
-

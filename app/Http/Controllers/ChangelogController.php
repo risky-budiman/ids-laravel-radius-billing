@@ -26,8 +26,15 @@ class ChangelogController extends Controller
             } catch (\Throwable $e) {}
         }
 
-        $changelogs = Changelog::latest('id')->get();
-        return view('changelog.index', compact('changelogs'));
+        // Urut versi (bukan id): entri lama & hasil sinkron bisa tersimpan tidak berurutan
+        $all = Changelog::all()->sort(fn ($a, $b) => version_compare(ltrim($b->version, 'v'), ltrim($a->version, 'v'))
+            ?: strcmp((string) $b->release_date, (string) $a->release_date))->values();
+        $changelogs = new \Illuminate\Pagination\LengthAwarePaginator(
+            $all->forPage(request()->integer('page', 1), 15)->values(), $all->count(), 15,
+            request()->integer('page', 1), ['path' => request()->url()]);
+        $currentVersion = $formattedVersion;
+
+        return view('changelog.index', compact('changelogs', 'currentVersion'));
     }
 
     /**
@@ -56,7 +63,7 @@ class ChangelogController extends Controller
             'release_date' => $request->release_date,
         ]);
 
-        return redirect()->back()->with('success', 'Changelog entry added successfully.');
+        return redirect()->back()->with('success', 'Catatan pembaruan ditambahkan.');
     }
 
     /**
@@ -69,6 +76,6 @@ class ChangelogController extends Controller
         }
 
         $changelog->delete();
-        return redirect()->back()->with('success', 'Changelog entry deleted successfully.');
+        return redirect()->back()->with('success', 'Catatan pembaruan dihapus.');
     }
 }

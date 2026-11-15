@@ -57,8 +57,8 @@ class BumpVersionCommand extends Command
         file_put_contents($versionFile, $newVersion);
         $this->info("🚀 Version bumped: v{$currentVersion} -> v{$newVersion}");
 
-        // Automatically update changelog
-        $this->call('app:generate-changelog');
+        // CHANGELOG.md disusun hook post-commit (app:generate-changelog --write), setelah pesan commit
+        // ini tersedia — di pre-commit pesannya belum ada, sehingga versi ini dulu tercatat tanpa isinya.
 
         return 0;
     }
