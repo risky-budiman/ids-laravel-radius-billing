@@ -24,13 +24,23 @@ class WhatsappTemplateController extends Controller
     {
         $request->validate([
             'message' => 'required|string',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            // Hari pengingat tagihan: angka -30..30 dipisah koma (mis. "3,1,0")
+            'reminder_days' => ['nullable', 'string', 'max:50', 'regex:/^\s*-?\d{1,2}(\s*,\s*-?\d{1,2})*\s*$/'],
+        ], [
+            'reminder_days.regex' => 'Isi angka hari dipisah koma, mis. 3,1,0.',
         ]);
 
         $whatsappTemplate->update([
             'message' => $request->message,
             'is_active' => $request->has('is_active')
         ]);
+
+        if ($whatsappTemplate->type === 'invoice_reminder' && $request->filled('reminder_days')) {
+            \App\Models\Setting::updateOrCreate(['key' => 'invoice_reminder_days'],
+                ['value' => implode(',', array_map('intval', array_map('trim', explode(',', $request->reminder_days))))]);
+            \Illuminate\Support\Facades\Cache::forget('app_settings');
+        }
 
         return redirect()->route('whatsapp-templates.index')->with('success', 'Template pesan WhatsApp berhasil diperbarui.');
     }

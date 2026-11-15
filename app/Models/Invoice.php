@@ -60,6 +60,12 @@ class Invoice extends Model
             ->whereDate('due_date', '<', ($today ?? now())->toDateString());
     }
 
+    /** Pengingat WhatsApp yang sudah dikirim untuk invoice ini. */
+    public function reminders()
+    {
+        return $this->hasMany(InvoiceReminder::class);
+    }
+
     public function customer()
     {
         return $this->belongsTo(Customer::class);

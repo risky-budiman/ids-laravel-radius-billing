@@ -56,6 +56,18 @@
                             </label>
                         </div>
 
+                        @if($whatsappTemplate->type === 'invoice_reminder')
+                            <div class="mb-8">
+                                <label for="reminder_days" class="label">Kirim pengingat pada (hari sebelum jatuh tempo)</label>
+                                <input id="reminder_days" name="reminder_days" class="input font-mono sm:max-w-xs"
+                                       value="{{ old('reminder_days', get_setting('invoice_reminder_days', '3,1,0')) }}" placeholder="3,1,0">
+                                <p class="help-text">Dipisah koma. <span class="font-mono">3</span> = H-3, <span class="font-mono">1</span> = H-1, <span class="font-mono">0</span> = hari jatuh tempo, <span class="font-mono">-1</span> = sehari setelahnya. Dikirim otomatis setiap hari pukul 09:00, sekali per tagihan per hari pengingat, hanya untuk pelanggan aktif yang belum membayar.</p>
+                                @error('reminder_days')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @endif
+
                         <div class="flex items-center justify-end border-t border-gray-100 dark:border-gray-700 pt-6">
                             <a href="{{ route('whatsapp-templates.index') }}" class="mr-4 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">Batal</a>
                             <button type="submit" class="inline-flex items-center px-6 py-3 bg-emerald-600 border border-transparent rounded-xl font-semibold text-white uppercase tracking-widest hover:bg-emerald-700 focus:bg-emerald-700 active:bg-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-sm shadow-emerald-500/30">

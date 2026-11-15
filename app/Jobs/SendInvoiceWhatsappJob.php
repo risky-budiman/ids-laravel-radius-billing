@@ -19,15 +19,17 @@ class SendInvoiceWhatsappJob implements ShouldQueue
 
     public $invoiceId;
     public $logId;
+    public string $templateType;
     public $timeout = 60; // 1 minute max per message
 
     /**
      * Create a new job instance.
      */
-    public function __construct(int $invoiceId, ?int $logId = null)
+    public function __construct(int $invoiceId, ?int $logId = null, string $templateType = 'invoice_generated')
     {
         $this->invoiceId = $invoiceId;
         $this->logId = $logId;
+        $this->templateType = $templateType;
     }
 
     /**
@@ -48,6 +50,12 @@ class SendInvoiceWhatsappJob implements ShouldQueue
         }
 
         $customer = $invoice->customer;
+        $isReminder = $this->templateType === 'invoice_reminder';
+
+        // Pengingat dikirim bertahap (jeda anti-ban): jangan kirim bila sudah dibayar sementara antre.
+        if ($isReminder && $invoice->status !== 'unpaid') {
+            return;
+        }
 
         if (empty($customer->phone)) {
             Log::warning("Invoice WA: Customer {$customer->username} has no phone number for INV #{$invoice->invoice_number}.");
@@ -60,7 +68,12 @@ class SendInvoiceWhatsappJob implements ShouldQueue
             return;
         }
 
-        $template = WhatsappTemplate::where('type', 'invoice_generated')->first();
+        $template = WhatsappTemplate::where('type', $this->templateType)->first();
+
+        // Pengingat hanya dikirim bila templatenya aktif (bisa dimatikan di menu Template Pesan)
+        if ($isReminder && (! $template || ! $template->is_active)) {
+            return;
+        }
 
         $customerId = $customer->customer_code ?: ($customer->username ? explode('@', $customer->username)[0] : (string)$customer->id);
         $periode = $invoice->period_start ? ($invoice->period_start->format('d M') . ' - ' . $invoice->period_end->format('d M Y')) : now()->format('F Y');

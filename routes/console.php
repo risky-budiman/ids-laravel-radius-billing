@@ -10,6 +10,8 @@ Artisan::command('inspire', function () {
 use Illuminate\Support\Facades\Schedule;
 Schedule::command('app:process-billing')->dailyAt('00:01');
 // Backup database harian (.sql.gz, rotasi 7 harian + 6 bulanan) — lihat DatabaseDumpService
+// Pengingat tagihan WhatsApp H-3 / H-1 / hari H (template invoice_reminder, setting invoice_reminder_days)
+Schedule::command('app:send-invoice-reminders')->dailyAt('09:00')->withoutOverlapping(60);
 Schedule::command('app:backup-database')->dailyAt('02:30')->withoutOverlapping(120);
 Schedule::command('customer:check-grace-period')->everyMinute();
 
