@@ -33,7 +33,11 @@ class DashboardController extends Controller
         $netTaxLiability = 0;
         $totalTaxPaidToGovt = 0;
 
-        if (class_exists(Invoice::class)) {
+        // Keuangan (pendapatan, laba, saldo kas, PPN, piutang) & log aktivitas hanya dihitung untuk
+        // administrator/admin; role lain melihat dasbor operasional.
+        $canSeeFinance = (bool) auth()->user()?->isAdmin();
+
+        if ($canSeeFinance) {
             $unpaidInvoices = Invoice::where('status', 'unpaid')->count();
 
             $startOfMonth = Carbon::now()->startOfMonth();
@@ -108,10 +112,9 @@ class DashboardController extends Controller
             $cashProfit = $cashRevenue - $expense; // Laba Tunai
         }
 
-        $latestActivities = ActivityLog::with('user')
-            ->latest()
-            ->limit(10)
-            ->get();
+        $latestActivities = $canSeeFinance
+            ? ActivityLog::with('user')->latest()->limit(10)->get()
+            : collect();
 
         // ── Live Traffic Data from RADIUS ──
         $onlineNow = RadAcct::online()->count();

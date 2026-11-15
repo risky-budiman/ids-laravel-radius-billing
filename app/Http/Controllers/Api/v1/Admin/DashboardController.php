@@ -71,6 +71,11 @@ class DashboardController extends Controller
             $recentActivities = [];
         }
 
+        // Mitra/teknisi/sales/CS tidak menerima angka keuangan & log aktivitas (dulu semua staf menerimanya)
+        $user = $request->user();
+        $canSeeBilling = $user->hasRole(['administrator', 'admin', 'kasir']);
+        $canSeeActivity = $user->isAdmin();
+
         return response()->json([
             'customers' => [
                 'total' => (int) $totalCustomers,
@@ -79,22 +84,22 @@ class DashboardController extends Controller
                 'new' => (int) $newCustomers,
                 'waiting_activation' => (int) $waitingActivation,
             ],
-            'invoices' => [
+            'invoices' => $canSeeBilling ? [
                 'total_this_month' => (int) $totalInvoices,
                 'paid' => (int) $paidInvoices,
                 'unpaid' => (int) $unpaidInvoices,
                 'overdue' => (int) $overdueInvoices,
-            ],
-            'revenue' => [
+            ] : null,
+            'revenue' => $canSeeBilling ? [
                 'this_month' => (float) $monthlyRevenue,
-            ],
+            ] : null,
             'tickets' => [
                 'open' => (int) $openTickets,
                 'in_progress' => (int) $inProgressTickets,
                 'closed_this_month' => (int) $closedTicketsThisMonth,
             ],
             'online_users' => (int) $onlineUsers,
-            'recent_activities' => $recentActivities,
+            'recent_activities' => $canSeeActivity ? $recentActivities : [],
         ]);
     }
 }

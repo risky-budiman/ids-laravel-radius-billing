@@ -32,3 +32,9 @@ Menampilkan ringkasan trafik penggunaan bandwidth global (jika terintegrasi deng
 
 ---
 *Tips: Gunakan data di dashboard untuk melakukan follow-up kepada pelanggan yang masuk dalam status 'Isolated' agar mereka segera melakukan pembayaran.*
+
+## Tampilan per Role
+
+- **Administrator & Admin**: seluruh dasbor, termasuk pendapatan, laba, saldo kas, piutang, PPN dan *Aktivitas Terbaru*.
+- **Role lain** (teknisi, kasir, sales, CS): dasbor operasional (pelanggan, sesi online, autentikasi, trafik, PSB). Angka keuangan dan log aktivitas tidak dihitung maupun ditampilkan.
+- **API aplikasi** (`/api/v1/admin/dashboard`): `invoices` & `revenue` hanya untuk administrator, admin dan kasir (role lain menerima `null`); `recent_activities` hanya untuk administrator & admin.

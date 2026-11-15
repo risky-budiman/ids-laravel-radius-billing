@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.129] - 2026-11-16
+
+### Perbaikan
+- **dashboard:** Finance figures and activity log only for the roles allowed to see them
+
 ## [v1.5.128] - 2026-11-16
 
 ### Perbaikan

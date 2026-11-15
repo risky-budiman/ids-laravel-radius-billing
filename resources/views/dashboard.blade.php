@@ -347,7 +347,8 @@
                 @endif
             </div>
 
-            {{-- Aktivitas terbaru --}}
+            {{-- Aktivitas terbaru (admin): log memuat perubahan keuangan & pengaturan --}}
+            @if($isAdmin)
             <div class="card">
                 <div class="card-header">
                     <div>
@@ -382,6 +383,7 @@
                     @endforelse
                 </ul>
             </div>
+            @endif
         </section>
     </div>
 
