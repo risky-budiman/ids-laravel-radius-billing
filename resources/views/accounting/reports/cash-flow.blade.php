@@ -70,5 +70,31 @@
                 </tfoot>
             </table>
         </div>
+
+        @if(auth()->user()->hasRole(['administrator', 'admin']))
+            @php $cfCodes = app(\App\Services\Reports\CashFlowService::class)->codes(); @endphp
+            <details class="card mt-6 no-print" @if(session('success') || $errors->any()) open @endif>
+                <summary class="card-header cursor-pointer select-none">
+                    <span class="card-title">Pengaturan klasifikasi akun</span>
+                    <span class="block text-xs font-normal text-surface-500 dark:text-surface-400">Kode akun lawan yang masuk tiap aktivitas. Akun lain mengikuti tipenya: pendapatan → operasional masuk, beban → operasional keluar, ekuitas/kewajiban → pendanaan.</span>
+                </summary>
+                <form method="POST" action="{{ route('accounting.reports.cash-flow.settings') }}" class="card-body space-y-4">
+                    @csrf
+                    @if(session('success'))<p class="text-sm text-emerald-700 dark:text-emerald-400">{{ session('success') }}</p>@endif
+                    @foreach(\App\Services\Reports\CashFlowService::LABELS as $key => $label)
+                        <div>
+                            <label for="{{ $key }}" class="label">{{ $label }}</label>
+                            <input id="{{ $key }}" name="{{ $key }}" class="input font-mono" value="{{ old($key, implode(', ', $cfCodes[$key])) }}" placeholder="mis. 1104, 2102">
+                            @error($key)<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                            <p class="help-text">Bawaan: <span class="font-mono">{{ \App\Services\Reports\CashFlowService::DEFAULTS[$key] }}</span></p>
+                        </div>
+                    @endforeach
+                    <div class="flex justify-end gap-2">
+                        <button name="reset" value="1" class="btn-ghost" onclick="return confirm('Kembalikan ke kode bawaan?')">Kembalikan bawaan</button>
+                        <button class="btn-primary">Simpan</button>
+                    </div>
+                </form>
+            </details>
+        @endif
     </div>
 </x-app-layout>

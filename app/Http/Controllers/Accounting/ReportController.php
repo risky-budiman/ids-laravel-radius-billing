@@ -233,92 +233,24 @@ class ReportController extends Controller
         return view('accounting.reports.cash-flow', $this->computeCashFlow($startDate, $endDate) + compact('startDate', 'endDate'));
     }
 
-    /**
-     * Arus kas metode langsung dari jurnal akun Kas & Bank (1001 dan turunannya).
-     *
-     * Setiap baris kas diklasifikasikan per AKUN LAWAN dengan nominal akun lawan itu sendiri
-     * (sebelumnya nominal kas penuh dijumlahkan untuk setiap akun lawan, sehingga jurnal yang
-     * dipecah — mis. pendapatan + PPN — terhitung ganda). Arus yang tidak masuk kategori mana pun
-     * ditampilkan sebagai "lainnya" agar saldo awal + arus = saldo akhir sebenarnya.
-     */
+    /** Arus kas (lihat App\Services\Reports\CashFlowService). */
     private function computeCashFlow(string $startDate, string $endDate): array
     {
-        $cashAccounts = ChartOfAccount::where('code', '1001')
-            ->orWhere('parent_id', function ($query) {
-                $query->select('id')->from('chart_of_accounts')->where('code', '1001');
-            })
-            ->pluck('id');
+        return app(\App\Services\Reports\CashFlowService::class)->compute($startDate, $endDate);
+    }
 
-        $journals = \App\Models\Journal::whereBetween('date', [$startDate, $endDate])
-            ->whereHas('items', fn ($q) => $q->whereIn('account_id', $cashAccounts))
-            ->with('items.account')
-            ->get();
-
-        $operatingIn = $operatingOut = $investingOut = $financingIn = $otherIn = $otherOut = 0.0;
-
-        foreach ($journals as $journal) {
-            $cashItems = $journal->items->whereIn('account_id', $cashAccounts);
-            $offsets = $journal->items->whereNotIn('account_id', $cashAccounts);
-            $netCash = (float) $cashItems->sum('debit') - (float) $cashItems->sum('credit');
-            if (abs($netCash) < 0.005 || $offsets->isEmpty()) {
-                continue;   // transfer antar kas/bank: tidak mengubah total kas
-            }
-
-            $classified = 0.0;
-            foreach ($offsets as $offset) {
-                $type = $offset->account?->type;
-                $code = $offset->account?->code;
-                if ($netCash > 0) {   // kas masuk: sisi kredit akun lawan
-                    $amount = (float) $offset->credit - (float) $offset->debit;
-                    if ($type === 'income' || $code === '1103') {
-                        $operatingIn += $amount;
-                    } elseif ($type === 'equity' || $type === 'liability') {
-                        $financingIn += $amount;
-                    } else {
-                        continue;
-                    }
-                } else {              // kas keluar: sisi debit akun lawan
-                    $amount = (float) $offset->debit - (float) $offset->credit;
-                    if ($type === 'expense' || in_array($code, ['2101', '2103'], true)) {
-                        $operatingOut += $amount;
-                    } elseif (in_array($code, ['1104', '1201', '1202'], true)) {
-                        $investingOut += $amount;
-                    } else {
-                        continue;
-                    }
-                }
-                $classified += $amount;
-            }
-
-            // Sisa yang tidak terklasifikasi
-            $rest = abs($netCash) - $classified;
-            if (abs($rest) >= 0.005) {
-                if ($netCash > 0) {
-                    $otherIn += $rest;
-                } else {
-                    $otherOut += $rest;
-                }
-            }
+    /** Kode akun per aktivitas arus kas (administrator, admin). */
+    public function updateCashFlowSettings(Request $request)
+    {
+        abort_unless($request->user()->hasRole(['administrator', 'admin']), 403);
+        $keys = array_keys(\App\Services\Reports\CashFlowService::DEFAULTS);
+        $data = $request->validate(array_fill_keys($keys, ['nullable', 'string', 'max:500', 'regex:/^[0-9A-Za-z.,;\s-]*$/']));
+        if ($request->boolean('reset')) {
+            $data = \App\Services\Reports\CashFlowService::DEFAULTS;
         }
+        app(\App\Services\Reports\CashFlowService::class)->saveCodes($data);
 
-        $netOperating = $operatingIn - $operatingOut;
-        $netInvesting = -$investingOut;
-        $netFinancing = $financingIn;
-        $netOther = $otherIn - $otherOut;
-        $netIncrease = $netOperating + $netInvesting + $netFinancing + $netOther;
-
-        $cashBalance = fn (string $op, string $date) => (float) JournalItem::whereIn('account_id', $cashAccounts)
-            ->whereHas('journal', fn ($q) => $q->where('date', $op, $date))
-            ->selectRaw('COALESCE(SUM(debit), 0) - COALESCE(SUM(credit), 0) AS bal')->value('bal');
-
-        $openingCash = $cashBalance('<', $startDate);
-        $closingCash = $cashBalance('<=', $endDate);
-
-        return compact(
-            'operatingIn', 'operatingOut', 'investingOut', 'financingIn', 'otherIn', 'otherOut',
-            'netOperating', 'netInvesting', 'netFinancing', 'netOther', 'netIncrease',
-            'openingCash', 'closingCash'
-        );
+        return back()->with('success', 'Klasifikasi akun arus kas disimpan.');
     }
 
     public function exportLedger(Request $request)

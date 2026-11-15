@@ -456,6 +456,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::get('reports/ledger/export', [\App\Http\Controllers\Accounting\ReportController::class, 'exportLedger'])->name('reports.ledger.export');
         Route::get('reports/cash-flow', [\App\Http\Controllers\Accounting\ReportController::class, 'cashFlow'])->name('reports.cash-flow');
         Route::get('reports/cash-flow/export', [\App\Http\Controllers\Accounting\ReportController::class, 'exportCashFlow'])->name('reports.cash-flow.export');
+        Route::post('reports/cash-flow/settings', [\App\Http\Controllers\Accounting\ReportController::class, 'updateCashFlowSettings'])->name('reports.cash-flow.settings');
 
         Route::get('closing', [\App\Http\Controllers\Accounting\ClosingController::class, 'index'])->name('closing.index');
         Route::post('closing', [\App\Http\Controllers\Accounting\ClosingController::class, 'process'])->name('closing.process');

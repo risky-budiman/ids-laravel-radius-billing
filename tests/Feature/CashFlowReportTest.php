@@ -37,7 +37,7 @@ class CashFlowReportTest extends TestCase
         $income = $this->account('4101', 'Pendapatan Langganan', 'income');
         $vat = $this->account('2103', 'Hutang PPN', 'liability');
         $expense = $this->account('5101', 'Beban Operasional', 'expense');
-        $prepaid = $this->account('1105', 'Uang Muka', 'asset');
+        $prepaid = $this->account('1190', 'Uang Muka Lain', 'asset');   // akun di luar daftar klasifikasi
 
         $this->journal('2026-02-28', [[$kas, 500000, 0], [$income, 0, 500000]]);              // saldo awal
         // Pembayaran 111.000 = pendapatan 100.000 + PPN 11.000 (satu jurnal, dua akun lawan)
@@ -68,5 +68,43 @@ class CashFlowReportTest extends TestCase
         @unlink($path);
         $this->assertContains(100000.0, $values);
         $this->assertContains(546000.0, $values);
+    }
+
+    public function test_invoice_collections_are_operating_and_codes_are_configurable(): void
+    {
+        $cash = $this->account('1001', 'Kas & Bank', 'asset');
+        $bank = $this->account('1102', 'Bank', 'asset', $cash->id);
+        $receivable = $this->account('1104', 'Piutang Pelanggan', 'asset');
+        $stock = $this->account('1105', 'Persediaan Barang', 'asset');
+        $equipment = $this->account('1202', 'Peralatan Jaringan', 'asset');
+
+        // Pembayaran invoice: Dr Bank / Cr Piutang (dulu masuk "lainnya", bukan operasional)
+        $this->journal('2026-04-03', [[$bank, 150000, 0], [$receivable, 0, 150000]]);
+        $this->journal('2026-04-04', [[$stock, 60000, 0], [$bank, 0, 60000]]);         // beli stok tunai
+        $this->journal('2026-04-05', [[$equipment, 90000, 0], [$bank, 0, 90000]]);     // beli OLT
+
+        $admin = User::factory()->create(['role' => 'administrator', 'is_active' => true]);
+        $range = ['start_date' => '2026-04-01', 'end_date' => '2026-04-30'];
+        $res = $this->actingAs($admin)->get(route('accounting.reports.cash-flow', $range))->assertOk()->assertSee('Pengaturan klasifikasi akun');
+        $this->assertEquals(150000, $res->viewData('operatingIn'));
+        $this->assertEquals(60000, $res->viewData('operatingOut'));
+        $this->assertEquals(90000, $res->viewData('investingOut'));
+        $this->assertEquals(0, $res->viewData('netOther'));
+
+        // API memakai perhitungan yang sama
+        \Laravel\Sanctum\Sanctum::actingAs($admin);
+        $this->getJson('/api/v1/admin/accounting/cash-flow?' . http_build_query($range))->assertOk()
+            ->assertJsonPath('operating_in', 150000)->assertJsonPath('investing_out', 90000);
+
+        // Ubah klasifikasi: persediaan dianggap investasi
+        $this->post(route('accounting.reports.cash-flow.settings'), [
+            'cashflow_operating_in_codes' => '1104', 'cashflow_operating_out_codes' => '2101', 'cashflow_investing_codes' => '1105, 1202',
+        ])->assertSessionHas('success');
+        $res = $this->get(route('accounting.reports.cash-flow', $range));
+        $this->assertEquals(150000, $res->viewData('investingOut'));
+        $this->assertEquals(0, $res->viewData('operatingOut'));
+
+        $this->actingAs(User::factory()->create(['role' => 'kasir', 'is_active' => true]))
+            ->post(route('accounting.reports.cash-flow.settings'), ['cashflow_investing_codes' => ''])->assertForbidden();
     }
 }

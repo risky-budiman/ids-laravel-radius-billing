@@ -276,78 +276,25 @@ class AccountingController extends Controller
         $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
 
-        // Get all journal items related to Cash/Bank accounts (Code 1001 and its children like 1101, 1102)
-        $cashAccounts = ChartOfAccount::where('code', '1001')
-            ->orWhere('parent_id', function($query) {
-                $query->select('id')->from('chart_of_accounts')->where('code', '1001');
-            })
-            ->pluck('id');
-
-        $cashJournals = JournalItem::whereIn('account_id', $cashAccounts)
-            ->whereHas('journal', function($q) use ($startDate, $endDate) {
-                $q->whereBetween('date', [$startDate, $endDate]);
-            })
-            ->with(['journal.items.account'])
-            ->get();
-
-        $operatingIn = 0;
-        $operatingOut = 0;
-        $investingOut = 0;
-        $financingIn = 0;
-
-        foreach ($cashJournals as $cashItem) {
-            $isDebit = $cashItem->debit > 0;
-            $amount = $isDebit ? $cashItem->debit : $cashItem->credit;
-
-            $offsetItems = $cashItem->journal->items->where('account_id', '!=', $cashItem->account_id);
-
-            foreach ($offsetItems as $offset) {
-                if (!$offset->account) continue;
-                $type = $offset->account->type;
-                $code = $offset->account->code;
-
-                if ($isDebit) {
-                    if (in_array($type, ['income', 'revenue']) || $code === '1103') {
-                        $operatingIn += $amount;
-                    } elseif ($type === 'equity' || $type === 'liability') {
-                        $financingIn += $amount;
-                    }
-                } else {
-                    if (in_array($type, ['expense', 'cost_of_sales']) || in_array($code, ['2101', '2103'])) {
-                        $operatingOut += $amount;
-                    } elseif (in_array($code, ['1104', '1105', '1201', '1202'])) {
-                        $investingOut += $amount;
-                    }
-                }
-            }
-        }
-
-        $netOperating = (float) ($operatingIn - $operatingOut);
-        $netInvesting = (float) (-$investingOut);
-        $netFinancing = (float) ($financingIn);
-        $netCashFlow = (float) ($netOperating + $netInvesting + $netFinancing);
-
-        // Opening Cash Balance
-        $prevCashItems = JournalItem::whereIn('account_id', $cashAccounts)
-            ->whereHas('journal', function($q) use ($startDate) {
-                $q->where('date', '<', $startDate);
-            })->get();
-        $openingCash = (float) ($prevCashItems->sum('debit') - $prevCashItems->sum('credit'));
-        $closingCash = (float) ($openingCash + $netCashFlow);
+        // Perhitungan sama dengan laporan web (dulu versi API menjumlahkan kas penuh per akun lawan -> ganda)
+        $d = app(\App\Services\Reports\CashFlowService::class)->compute($startDate, $endDate);
 
         return response()->json([
-            'operating_in' => (float) $operatingIn,
-            'operating_out' => (float) $operatingOut,
-            'net_operating' => $netOperating,
+            'operating_in' => (float) $d['operatingIn'],
+            'operating_out' => (float) $d['operatingOut'],
+            'net_operating' => (float) $d['netOperating'],
             'investing_in' => 0.0,
-            'investing_out' => (float) $investingOut,
-            'net_investing' => $netInvesting,
-            'financing_in' => (float) $financingIn,
+            'investing_out' => (float) $d['investingOut'],
+            'net_investing' => (float) $d['netInvesting'],
+            'financing_in' => (float) $d['financingIn'],
             'financing_out' => 0.0,
-            'net_financing' => $netFinancing,
-            'net_cash_flow' => $netCashFlow,
-            'opening_cash' => $openingCash,
-            'closing_cash' => $closingCash,
+            'net_financing' => (float) $d['netFinancing'],
+            'other_in' => (float) $d['otherIn'],
+            'other_out' => (float) $d['otherOut'],
+            'net_other' => (float) $d['netOther'],
+            'net_cash_flow' => (float) $d['netIncrease'],
+            'opening_cash' => (float) $d['openingCash'],
+            'closing_cash' => (float) $d['closingCash'],
             'start_date' => $startDate,
             'end_date' => $endDate,
         ]);
