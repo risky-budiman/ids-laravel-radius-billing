@@ -73,8 +73,13 @@ class TicketService
             && in_array($customer->status, [Customer::STATUS_NEW, Customer::STATUS_WAITING_ACTIVATION], true)) {
             $customer->update(['status' => Customer::STATUS_CANCELED]);
         } elseif ($ticket->type === 'dismantle' && $customer->status === Customer::STATUS_WAITING_DISMANTLE) {
-            // Dismantle batal: kembali ke status sebelum pengajuan (is_active tidak diubah saat pengajuan).
-            $customer->update(['status' => $customer->is_active ? Customer::STATUS_ACTIVE : Customer::STATUS_SUSPENDED]);
+            // Dismantle batal: kembali berlangganan. Pelanggan yang diajukan karena menunggak dan kini
+            // tidak punya tunggakan lewat jatuh tempo (sudah melunasi) langsung aktif lagi; bila masih
+            // menunggak, kembali terisolir (pembayaran nanti membukanya seperti biasa).
+            $stillOverdue = $customer->invoices()->overdueRecurring()->exists();
+            $customer->update($customer->is_active || ! $stillOverdue
+                ? ['status' => Customer::STATUS_ACTIVE, 'is_active' => true]
+                : ['status' => Customer::STATUS_SUSPENDED]);
         }
     }
 }

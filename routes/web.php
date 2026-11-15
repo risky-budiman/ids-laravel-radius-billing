@@ -380,6 +380,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::post('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'update'])->name('settings.company.update');
         Route::get('settings/isolation', [\App\Http\Controllers\IsolationSettingsController::class, 'index'])->name('settings.isolation');
         Route::post('settings/isolation', [\App\Http\Controllers\IsolationSettingsController::class, 'update'])->name('settings.isolation.update');
+        Route::post('settings/isolation/dismantle', [\App\Http\Controllers\IsolationSettingsController::class, 'updateDismantle'])->name('settings.isolation.dismantle');
         Route::get('settings/isolation/mikrotik.rsc', [\App\Http\Controllers\IsolationSettingsController::class, 'script'])->name('settings.isolation.script');
 
         // Invoice Template Builder

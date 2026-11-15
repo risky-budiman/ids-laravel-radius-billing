@@ -152,6 +152,68 @@
             </div>
         </form>
 
+        {{-- Pengajuan dismantle otomatis --}}
+        @php
+            $adEnabled = old('auto_dismantle_enabled', $autoDismantle->enabled() ? '1' : '0') == '1';
+            $adDays = old('auto_dismantle_days', $autoDismantle->days());
+            $adCandidates = $autoDismantle->candidates();
+        @endphp
+        <form method="POST" action="{{ route('settings.isolation.dismantle') }}" class="card">
+            @csrf
+            <div class="card-header flex items-center justify-between gap-4">
+                <div>
+                    <h3 class="card-title">Pengajuan dismantle otomatis</h3>
+                    <p class="text-xs text-surface-500 dark:text-surface-400">Pelanggan yang terisolir <strong>karena menunggak</strong> lebih lama dari batas di bawah otomatis diubah menjadi <strong>Menunggu dismantle</strong>: tiket penarikan perangkat dibuat, tagihan bulanan berhenti, dan isolir tetap berlaku sampai perangkat ditarik. Dijalankan setiap hari pukul 01:30.</p>
+                </div>
+                <label class="inline-flex items-center gap-2 cursor-pointer shrink-0">
+                    <input type="hidden" name="auto_dismantle_enabled" value="0">
+                    <input type="checkbox" name="auto_dismantle_enabled" value="1" @checked($adEnabled) class="rounded border-surface-300 text-primary-600 focus:ring-primary-500">
+                    <span class="text-sm font-medium">Aktifkan</span>
+                </label>
+            </div>
+            <div class="card-body space-y-4">
+                <div class="flex flex-wrap items-end gap-3">
+                    <div>
+                        <label for="auto_dismantle_days" class="label">Ajukan setelah terisolir</label>
+                        <div class="flex items-center gap-2">
+                            <input id="auto_dismantle_days" name="auto_dismantle_days" type="number" min="{{ \App\Services\AutoDismantleService::MIN_DAYS }}" max="{{ \App\Services\AutoDismantleService::MAX_DAYS }}"
+                                   value="{{ $adDays }}" class="input !w-28 text-right tabular-nums" required>
+                            <span class="text-sm text-surface-600 dark:text-surface-300">hari</span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">Simpan</button>
+                </div>
+
+                <div>
+                    <p class="text-sm font-medium text-surface-900 dark:text-white">
+                        Akan diajukan pada run berikutnya: {{ $adCandidates->count() }} pelanggan
+                        @unless($autoDismantle->enabled())<span class="badge-gray ml-1">nonaktif — belum ada yang diajukan</span>@endunless
+                    </p>
+                    @if($adCandidates->isNotEmpty())
+                        <div class="mt-2 overflow-x-auto rounded-lg border border-surface-200 dark:border-surface-700">
+                            <table class="table">
+                                <thead><tr><th>Pelanggan</th><th>Terisolir sejak</th><th class="text-right">Lama</th><th class="text-right">Tunggakan</th></tr></thead>
+                                <tbody>
+                                    @foreach($adCandidates as $c)
+                                        <tr>
+                                            <td>
+                                                <a href="{{ route('customers.show', $c) }}" class="font-medium text-primary-600 hover:underline dark:text-primary-400">{{ $c->name }}</a>
+                                                <span class="block text-xs text-surface-500">{{ $c->customer_code }}</span>
+                                            </td>
+                                            <td class="text-xs whitespace-nowrap">{{ $c->suspended_at->locale('id')->translatedFormat('d F Y') }}</td>
+                                            <td class="amount">{{ (int) $c->suspended_at->diffInDays(now()) }} hari</td>
+                                            <td class="amount">{{ rupiah($c->unpaid_total ?? 0, 0) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                    <p class="help-text">Bila pelanggan melunasi sebelum perangkat ditarik, batalkan tiket dismantle-nya: tanpa tunggakan tersisa, layanannya langsung aktif kembali.</p>
+                </div>
+            </div>
+        </form>
+
         {{-- Contoh konfigurasi router: diisi otomatis dari data sistem --}}
         <section class="card" x-data="{ copied: false }">
             <div class="card-header flex flex-wrap items-center justify-between gap-3">

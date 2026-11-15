@@ -10,6 +10,8 @@ Artisan::command('inspire', function () {
 use Illuminate\Support\Facades\Schedule;
 Schedule::command('app:process-billing')->dailyAt('00:01');
 // Backup database harian (.sql.gz, rotasi 7 harian + 6 bulanan) — lihat DatabaseDumpService
+// Pengajuan dismantle otomatis bagi pelanggan terisolir > N hari (nonaktif default; Pengaturan Isolir)
+Schedule::command('app:auto-dismantle')->dailyAt('01:30')->withoutOverlapping(30);
 // Peringatan tiket belum diambil (>2 jam) / lewat SLA (24 jam atau jadwal) ke grup WhatsApp teknisi
 Schedule::command('app:ticket-sla-alerts')->everyFifteenMinutes()->withoutOverlapping(10);
 // Pengingat tagihan WhatsApp H-3 / H-1 / hari H (template invoice_reminder, setting invoice_reminder_days)

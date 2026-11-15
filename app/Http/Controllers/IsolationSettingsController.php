@@ -36,7 +36,24 @@ class IsolationSettingsController extends Controller
             'pagePort' => $this->isolation->pagePort(),
             'script' => $this->isolation->mikrotikScript($nas),
             'nginx' => $this->isolation->nginxSnippet(),
+            'autoDismantle' => app(\App\Services\AutoDismantleService::class),
         ]);
+    }
+
+    /** Simpan pengaturan pengajuan dismantle otomatis. */
+    public function updateDismantle(Request $request, \App\Services\AutoDismantleService $auto)
+    {
+        $data = $request->validate([
+            'auto_dismantle_enabled' => 'nullable|boolean',
+            'auto_dismantle_days' => 'required|integer|min:' . \App\Services\AutoDismantleService::MIN_DAYS . '|max:' . \App\Services\AutoDismantleService::MAX_DAYS,
+        ], [], ['auto_dismantle_days' => 'batas hari']);
+
+        $auto->saveSettings($request->boolean('auto_dismantle_enabled'), (int) $data['auto_dismantle_days']);
+        $count = $auto->candidates()->count();
+
+        return redirect()->route('settings.isolation')->with('success', $auto->enabled()
+            ? "Dismantle otomatis aktif: pelanggan terisolir lebih dari {$auto->days()} hari diajukan setiap hari pukul 01:30 ({$count} pelanggan pada run berikutnya)."
+            : 'Dismantle otomatis dinonaktifkan.');
     }
 
     /** Unduh skrip RouterOS (.rsc) untuk NAS terpilih, siap di-import: /import isolir.rsc */

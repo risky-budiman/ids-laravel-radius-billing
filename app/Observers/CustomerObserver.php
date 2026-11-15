@@ -45,6 +45,13 @@ class CustomerObserver
         } elseif (in_array($customer->status, [Customer::STATUS_ACTIVE, Customer::STATUS_SUSPENDED], true)) {
             $customer->terminated_at = null;
         }
+
+        // Sejak kapan terisolir (dasar pengajuan dismantle otomatis)
+        if ($customer->status === Customer::STATUS_SUSPENDED) {
+            $customer->suspended_at ??= now();
+        } else {
+            $customer->suspended_at = null;
+        }
     }
 
     public function updated(Customer $customer): void
