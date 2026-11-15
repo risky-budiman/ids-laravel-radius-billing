@@ -112,6 +112,7 @@
                         <option value="">Semua status</option>
                         <option value="paid" @selected(request('status') == 'paid')>Lunas</option>
                         <option value="unpaid" @selected(request('status') == 'unpaid')>Belum bayar</option>
+                        <option value="written_off" @selected(request('status') == 'written_off')>Dihapus buku</option>
                     </select>
                 </div>
                 <div class="md:col-span-2 flex gap-2">
@@ -173,6 +174,8 @@
                                 <td>
                                     @if($invoice->status == 'paid')
                                         <span class="badge-success">Lunas</span>
+                                    @elseif($invoice->status == 'written_off')
+                                        <span class="badge-gray" title="{{ $invoice->write_off_reason }}">Dihapus buku</span>
                                     @elseif($isOverdue)
                                         <span class="badge-danger">Terlambat</span>
                                     @else
@@ -198,6 +201,26 @@
                                             <button type="button" @click="openPaymentModal({{ $invoice->id }}, '{{ $invoice->invoice_number }}', '{{ number_format($invoice->amount, 0, ',', '.') }}')" class="btn-secondary btn-sm !h-8 ml-1">
                                                 Tandai lunas
                                             </button>
+                                            @if(auth()->user()->hasRole(['administrator', 'admin']))
+                                                <form action="{{ route('invoices.write-off', $invoice) }}" method="POST" class="inline"
+                                                      onsubmit="const r = prompt('Hapus buku piutang {{ $invoice->invoice_number }} (Rp {{ number_format($invoice->amount, 0, ',', '.') }}).
+Tagihan keluar dari daftar piutang; bila pelanggan membayar nanti, otomatis dipulihkan.
+
+Alasan:'); if (!r) return false; this.reason.value = r;">
+                                                    @csrf
+                                                    <input type="hidden" name="reason">
+                                                    <button type="submit" class="btn-ghost btn-icon !h-8 !w-8 hover:!text-surface-700" title="Hapus buku (piutang macet)" aria-label="Hapus buku">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        @elseif($invoice->status == 'written_off')
+                                            @if(auth()->user()->hasRole(['administrator', 'admin']))
+                                                <form action="{{ route('invoices.write-off.destroy', $invoice) }}" method="POST" class="inline">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit" onclick="return confirm('Batalkan penghapusan? Invoice kembali menjadi piutang belum dibayar.');" class="btn-ghost btn-sm !h-8" title="Pulihkan piutang">Pulihkan</button>
+                                                </form>
+                                            @endif
                                         @else
                                             <form action="{{ route('invoices.update', $invoice) }}" method="POST" class="inline">
                                                 @csrf @method('PUT')

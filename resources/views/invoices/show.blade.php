@@ -222,7 +222,9 @@
                     <div class="inv-heading">
                         <h1>Invoice</h1>
                         <div class="no">{{ $invoice->invoice_number }}</div>
-                        @if($isPaid)
+                        @if($invoice->status === 'written_off')
+                            <span class="badge badge-unpaid">Dihapus buku</span>
+                        @elseif($isPaid)
                             <span class="badge badge-paid">Lunas</span>
                         @elseif($isOverdue)
                             <span class="badge badge-overdue">Lewat jatuh tempo</span>

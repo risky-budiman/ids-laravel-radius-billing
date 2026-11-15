@@ -28,11 +28,15 @@ class Invoice extends Model
         'due_date',
         'notes',
         'paid_at',
+        'written_off_at',
+        'written_off_by',
+        'write_off_reason',
     ];
 
     protected $casts = [
         'due_date' => 'date',
         'paid_at' => 'datetime',
+        'written_off_at' => 'datetime',
         'period_start' => 'date',
         'period_end' => 'date',
         'amount' => 'decimal:2',

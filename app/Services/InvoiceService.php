@@ -37,6 +37,13 @@ class InvoiceService
             }
             $invoice = $locked;
 
+            // Piutang yang sudah dihapus buku ternyata dibayar: batalkan write-off (jurnal dibalik) lalu catat pembayaran
+            if ($invoice->status === 'written_off') {
+                app(InvoiceWriteOffService::class)->restore($invoice, auth()->user());
+                $invoice = $invoice->fresh();
+                Log::info("Invoice {$invoice->invoice_number} yang dihapus buku dibayar; write-off dibatalkan otomatis.");
+            }
+
             $invoice->update([
                 'status' => 'paid',
                 'paid_at' => now(),

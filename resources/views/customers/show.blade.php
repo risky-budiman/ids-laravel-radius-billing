@@ -188,7 +188,7 @@
                             </thead>
                             <tbody>
                                 @forelse($invoices as $inv)
-                                    @php $overdue = $inv->status !== 'paid' && $inv->due_date && $inv->due_date->isPast(); @endphp
+                                    @php $overdue = $inv->status === 'unpaid' && $inv->due_date && $inv->due_date->isPast(); @endphp
                                     <tr>
                                         <td><a href="{{ route('invoices.show', $inv) }}" class="font-medium text-surface-900 dark:text-white hover:text-primary-600 font-mono text-[13px]">{{ $inv->invoice_number }}</a></td>
                                         <td class="text-surface-500">{{ $inv->period_start ? $d($inv->period_start, 'M Y') : ($inv->billing_period ?: '—') }}</td>
@@ -196,6 +196,7 @@
                                         <td class="text-right tabular-nums font-medium text-surface-900 dark:text-white">{{ rupiah($inv->amount) }}</td>
                                         <td>
                                             @if($inv->status === 'paid')<span class="badge-success">Lunas</span>
+                                            @elseif($inv->status === 'written_off')<span class="badge-gray">Dihapus buku</span>
                                             @elseif($overdue)<span class="badge-danger">Terlambat</span>
                                             @else<span class="badge-warning">Belum bayar</span>@endif
                                         </td>

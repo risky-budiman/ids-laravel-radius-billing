@@ -224,6 +224,11 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
             Route::get('kpi/export', [\App\Http\Controllers\BusinessKpiController::class, 'export'])->name('kpi.export');
         });
         Route::resource('invoices', \App\Http\Controllers\InvoiceController::class);
+        // Hapus buku piutang macet (write-off) & pembatalannya
+        Route::post('invoices/{invoice}/write-off', [\App\Http\Controllers\InvoiceWriteOffController::class, 'store'])
+            ->middleware('role:administrator,admin')->name('invoices.write-off');
+        Route::delete('invoices/{invoice}/write-off', [\App\Http\Controllers\InvoiceWriteOffController::class, 'destroy'])
+            ->middleware('role:administrator,admin')->name('invoices.write-off.destroy');
         Route::post('invoices/generate-automated', [\App\Http\Controllers\InvoiceController::class, 'generateAutomated'])->name('invoices.generate-automated');
         Route::get('invoices/{invoice}/pay', [\App\Http\Controllers\InvoiceController::class, 'pay'])->name('invoices.pay');
         Route::post('invoices/{invoice}/whatsapp', [\App\Http\Controllers\InvoiceController::class, 'sendWhatsApp'])->name('invoices.whatsapp');
