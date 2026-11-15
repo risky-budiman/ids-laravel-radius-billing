@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.120] - 2026-11-15
+
+### Fitur baru
+- **billing:** Configurable grace days before suspension
+
 ## [v1.5.119] - 2026-11-15
 
 ### Perbaikan

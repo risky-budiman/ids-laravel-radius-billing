@@ -81,7 +81,7 @@ class ProcessAutomatedBilling extends Command
         $overdue = Customer::where('is_active', true)
             ->where('status', Customer::STATUS_ACTIVE)
             ->where(function ($q) use ($today) {
-                $q->whereHas('invoices', fn ($i) => $i->overdueRecurring())
+                $q->whereHas('invoices', fn ($i) => $i->suspendableRecurring())   // lewat jatuh tempo + masa tenggang
                   // Renewal: masa aktif habis walau invoice belum/tidak terbit.
                   ->orWhere(fn ($r) => $r->where('billing_type', 'prepaid')
                       ->where('billing_method', 'renewal')

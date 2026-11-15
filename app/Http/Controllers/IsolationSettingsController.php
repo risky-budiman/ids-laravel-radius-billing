@@ -56,6 +56,19 @@ class IsolationSettingsController extends Controller
             : 'Dismantle otomatis dinonaktifkan.');
     }
 
+    /** Masa tenggang: jumlah hari setelah jatuh tempo sebelum pelanggan diisolir. */
+    public function updateGrace(Request $request)
+    {
+        $data = $request->validate(['isolir_grace_days' => 'required|integer|min:0|max:' . \App\Models\Invoice::MAX_GRACE_DAYS], [], ['isolir_grace_days' => 'masa tenggang']);
+        \App\Models\Setting::updateOrCreate(['key' => 'isolir_grace_days'], ['value' => (string) $data['isolir_grace_days']]);
+        \Illuminate\Support\Facades\Cache::forget('app_settings');
+        $days = (int) $data['isolir_grace_days'];
+
+        return redirect()->route('settings.isolation')->with('success', $days
+            ? "Masa tenggang {$days} hari: pelanggan diisolir bila tagihan belum lunas {$days} hari setelah jatuh tempo."
+            : 'Tanpa masa tenggang: pelanggan diisolir sehari setelah jatuh tempo.');
+    }
+
     /** Unduh skrip RouterOS (.rsc) untuk NAS terpilih, siap di-import: /import isolir.rsc */
     public function script(Request $request)
     {

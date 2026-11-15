@@ -76,7 +76,7 @@ class TicketService
             // Dismantle batal: kembali berlangganan. Pelanggan yang diajukan karena menunggak dan kini
             // tidak punya tunggakan lewat jatuh tempo (sudah melunasi) langsung aktif lagi; bila masih
             // menunggak, kembali terisolir (pembayaran nanti membukanya seperti biasa).
-            $stillOverdue = $customer->invoices()->overdueRecurring()->exists();
+            $stillOverdue = $customer->invoices()->suspendableRecurring()->exists();
             $customer->update($customer->is_active || ! $stillOverdue
                 ? ['status' => Customer::STATUS_ACTIVE, 'is_active' => true]
                 : ['status' => Customer::STATUS_SUSPENDED]);

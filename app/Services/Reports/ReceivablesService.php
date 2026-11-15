@@ -91,11 +91,11 @@ class ReceivablesService
         return Customer::where('is_active', true)
             ->where('status', Customer::STATUS_ACTIVE)
             ->where(function ($q) use ($nextRun) {
-                $q->whereHas('invoices', fn ($i) => $i->overdueRecurring($nextRun))
+                $q->whereHas('invoices', fn ($i) => $i->suspendableRecurring($nextRun))
                   ->orWhere(fn ($r) => $r->where('billing_type', 'prepaid')->where('billing_method', 'renewal')
                       ->whereNotNull('expired_at')->whereDate('expired_at', '<', $nextRun->toDateString()));
             })
-            ->with(['invoices' => fn ($i) => $i->overdueRecurring($nextRun)->orderBy('due_date')])
+            ->with(['invoices' => fn ($i) => $i->suspendableRecurring($nextRun)->orderBy('due_date')])
             ->orderBy('name')
             ->get()
             ->map(fn (Customer $c) => [

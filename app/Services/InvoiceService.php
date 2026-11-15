@@ -98,7 +98,7 @@ class InvoiceService
             // Masih ada tunggakan langganan lain yang lewat jatuh tempo: tetap terisolir
             // (kalau dibuka, billing harian akan langsung mengisolir lagi).
             $stillOverdue = $customer && ! $customer->is_active
-                && $customer->invoices()->overdueRecurring()->whereKeyNot($invoice->id)->exists();
+                && $customer->invoices()->suspendableRecurring()->whereKeyNot($invoice->id)->exists();
             if ($stillOverdue) {
                 Log::info("Invoice {$invoice->invoice_number} lunas, tetapi {$customer->username} masih punya tunggakan lewat jatuh tempo; tetap terisolir.");
             }

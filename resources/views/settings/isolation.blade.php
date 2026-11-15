@@ -152,6 +152,27 @@
             </div>
         </form>
 
+        {{-- Masa tenggang sebelum isolir --}}
+        <form method="POST" action="{{ route('settings.isolation.grace') }}" class="card">
+            @csrf
+            <div class="card-header">
+                <h3 class="card-title">Masa tenggang sebelum isolir</h3>
+                <p class="text-xs text-surface-500 dark:text-surface-400">Berapa hari setelah tanggal jatuh tempo invoice pelanggan yang belum membayar diisolir (billing harian). Berlaku juga untuk daftar "akan diisolir" di laporan Piutang. Masa aktif prabayar (renewal) tidak terpengaruh.</p>
+            </div>
+            <div class="card-body flex flex-wrap items-end gap-3">
+                <div>
+                    <label for="isolir_grace_days" class="label">Isolir setelah jatuh tempo +</label>
+                    <div class="flex items-center gap-2">
+                        <input id="isolir_grace_days" name="isolir_grace_days" type="number" min="0" max="{{ \App\Models\Invoice::MAX_GRACE_DAYS }}"
+                               value="{{ old('isolir_grace_days', \App\Models\Invoice::graceDays()) }}" class="input !w-28 text-right tabular-nums" required>
+                        <span class="text-sm text-surface-600 dark:text-surface-300">hari</span>
+                    </div>
+                    <p class="help-text">0 = diisolir sehari setelah jatuh tempo (bawaan).</p>
+                </div>
+                <button type="submit" class="btn-primary">Simpan</button>
+            </div>
+        </form>
+
         {{-- Pengajuan dismantle otomatis --}}
         @php
             $adEnabled = old('auto_dismantle_enabled', $autoDismantle->enabled() ? '1' : '0') == '1';

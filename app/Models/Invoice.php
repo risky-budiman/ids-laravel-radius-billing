@@ -60,6 +60,27 @@ class Invoice extends Model
             ->whereDate('due_date', '<', ($today ?? now())->toDateString());
     }
 
+    /** Masa tenggang isolir: berapa hari setelah jatuh tempo pelanggan baru diisolir (Pengaturan Isolir). */
+    public const MAX_GRACE_DAYS = 60;
+
+    public static function graceDays(): int
+    {
+        return max(0, min(self::MAX_GRACE_DAYS, (int) get_setting('isolir_grace_days', 0)));
+    }
+
+    /**
+     * Tagihan langganan yang sudah lewat jatuh tempo DAN masa tenggang -> dasar isolir.
+     * Masa tenggang 0: diisolir sehari setelah jatuh tempo (perilaku sebelumnya).
+     */
+    public function scopeSuspendableRecurring($query, $today = null)
+    {
+        $cutoff = \Carbon\Carbon::parse($today ?? now())->subDays(self::graceDays());
+
+        return $query->recurringBill()
+            ->where('status', 'unpaid')
+            ->whereDate('due_date', '<', $cutoff->toDateString());
+    }
+
     /** Pengingat WhatsApp yang sudah dikirim untuk invoice ini. */
     public function reminders()
     {
