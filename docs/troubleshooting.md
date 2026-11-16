@@ -19,5 +19,19 @@ Berikut adalah daftar masalah yang sering ditemui dan langkah-langkah cepat untu
 - **Cek Log Aplikasi**: Lihat di menu **System Logs** atau cek file `storage/logs/system.log`.
 - **Clear Cache**: Terkadang cache browser atau server perlu dibersihkan. Hubungi Admin IT untuk menjalankan `php artisan optimize:clear`.
 
+## 5. Pelanggan Terdampak Bug Form Edit (sebelum v1.5.117)
+
+Sebelum v1.5.117, setiap simpan di form edit pelanggan:
+- memaksa status menjadi aktif/terisolir, sehingga pelanggan **menunggu aktivasi** menjadi terisolir (tidak bisa diaktifkan lewat wizard) dan pelanggan **dicabut/batal** kembali tertagih, bahkan login RADIUS-nya dibuat ulang;
+- menghapus **koordinat** pelanggan.
+
+Pemulihan dari Log Aktivitas (dijalankan Admin IT di server):
+1. `php artisan customers:recover-edit-bug` — **hanya laporan**: daftar pelanggan yang akan dipulihkan, yang dilewati beserta alasannya, dan invoice belum lunas yang perlu diperiksa.
+2. Periksa daftarnya, lalu `php artisan customers:recover-edit-bug --apply`.
+
+Opsi: `--customer=<kode>` (satu pelanggan), `--before="2026-11-15 14:40"` (hanya kejadian sebelum waktu deploy perbaikan), `--skip-status`, `--skip-coordinates`.
+
+Yang dipulihkan: status, aktif/tidak, tanggal isolir & tanggal berhenti asli, dan koordinat. Pelanggan yang kembali **menunggu aktivasi** dilepas dari isolir (aktivasi tetap lewat wizard). Pelanggan **dicabut/batal** dihapus lagi login RADIUS-nya dan sesinya diputus. Pelanggan yang setelah kejadian sudah diubah lagi (misalnya sudah diaktifkan resmi atau koordinat diisi ulang) **dilewati**. Invoice belum lunas yang terbit selama status salah hanya dilaporkan; batalkan atau sesuaikan secara manual. Setiap pemulihan tercatat di Log Aktivitas (`customer_recovered`).
+
 ---
 *Dukungan Lanjutan: Jika masalah belum teratasi, silakan buat tiket dukungan kepada tim pengembang sistem.*

@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.156] - 2026-11-16
+
+### Fitur baru
+- **customers:** Customers:recover-edit-bug restores data damaged by the pre-v1.5.117 edit form
+
 ## [v1.5.155] - 2026-11-16
 
 ### Fitur baru
