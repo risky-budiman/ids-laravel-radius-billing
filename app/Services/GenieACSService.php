@@ -163,6 +163,29 @@ class GenieACSService
     }
 
     /**
+     * Hapus perintah refreshObject rusak dari versi lama aplikasi (nama objek berakhiran titik → fault
+     * "Invalid parameter path" yang tertahan di antrean modem). Hanya perintah sinkron buatan aplikasi yang
+     * cocok persis yang dihapus; perintah lain tidak disentuh. @return int jumlah yang dihapus
+     */
+    public function deleteBrokenRefreshTasks(string $deviceId): int
+    {
+        $deleted = 0;
+        try {
+            foreach ((array) ($this->getTasks($deviceId)['data'] ?? []) as $task) {
+                $name = (string) ($task['objectName'] ?? '');
+                if (($task['name'] ?? '') === 'refreshObject' && in_array($name, ['InternetGatewayDevice.', 'Device.'], true) && ! empty($task['_id'])) {
+                    $this->request('DELETE', 'tasks/' . rawurlencode((string) $task['_id']));
+                    $deleted++;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning("Bersihkan perintah sinkron lama {$deviceId} gagal: " . $e->getMessage());
+        }
+
+        return $deleted;
+    }
+
+    /**
      * Set TR-069 parameters on a device.
      */
     public function setParameters(string $deviceId, array $parameters)

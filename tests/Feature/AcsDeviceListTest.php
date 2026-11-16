@@ -43,6 +43,52 @@ class AcsDeviceListTest extends TestCase
         $this->assertSame('warn', AcsDevice::signalLevel(-25.0));
     }
 
+    public function test_sync_uses_path_without_trailing_dot_and_cleans_broken_tasks(): void
+    {
+        $server = AcsServer::create(['name' => 'Pusat', 'url' => 'http://acs.test', 'is_active' => true]);
+        $id = '00259E-HG8546M-HWTC1';
+        Http::fake(function (HttpRequest $r) use ($id) {
+            if ($r->method() === 'GET' && str_contains($r->url(), '/tasks')) {
+                return Http::response([
+                    ['_id' => 'task_rusak', 'name' => 'refreshObject', 'objectName' => 'InternetGatewayDevice.', 'device' => $id],
+                    ['_id' => 'task_lain', 'name' => 'setParameterValues', 'device' => $id],
+                ]);
+            }
+            if ($r->method() === 'GET') {
+                return Http::response([$this->device('HWTC1', 'x', 1)]);
+            }
+
+            return Http::response([], 200);
+        });
+        $this->actingAs(User::factory()->create(['role' => 'teknisi', 'is_active' => true]));
+
+        $this->postJson(route('acs-servers.refresh-device', ['deviceId' => $id]), ['server_id' => $server->id])
+            ->assertOk()->assertJson(['success' => true])->assertJsonFragment(['message' => 'Perintah sinkron terkirim. Data modem diperbarui dalam beberapa detik — muat ulang halaman. (1 perintah sinkron lama yang gagal dibersihkan.)']);
+
+        Http::assertSent(fn (HttpRequest $r) => $r->method() === 'DELETE' && str_ends_with($r->url(), '/tasks/task_rusak'));
+        Http::assertNotSent(fn (HttpRequest $r) => $r->method() === 'DELETE' && str_contains($r->url(), 'task_lain'));
+        Http::assertSent(fn (HttpRequest $r) => $r->method() === 'POST' && ($r->data()['name'] ?? null) === 'refreshObject'
+            && $r->data()['objectName'] === 'InternetGatewayDevice');
+    }
+
+    public function test_detail_page_renders_all_tabs(): void
+    {
+        $server = AcsServer::create(['name' => 'Pusat', 'url' => 'http://acs.test', 'is_active' => true]);
+        $dev = $this->device('HWTC1', 'budi@net', 1);
+        $dev['InternetGatewayDevice']['LANDevice'][1] = [
+            'Hosts' => ['Host' => [1 => ['HostName' => ['_value' => 'realme-C33'], 'IPAddress' => ['_value' => '192.168.100.32'], 'MACAddress' => ['_value' => '5a:f1:96:a5:bd:d5'], 'InterfaceType' => ['_value' => '802.11']]]],
+            'WLANConfiguration' => [1 => ['SSID' => ['_value' => 'RumahBudi'], 'Enable' => ['_value' => true], 'Channel' => ['_value' => 6]]],
+        ];
+        Http::fake(['acs.test/devices*' => Http::response([$dev]), 'acs.test/tasks*' => Http::response([])]);
+        $this->actingAs(User::factory()->create(['role' => 'administrator', 'is_active' => true]));
+
+        $this->get(route('acs-servers.device-details', ['deviceId' => '00259E-HG8546M-HWTC1', 'server_id' => $server->id]))->assertOk()
+            ->assertSee('HG8546M')->assertSee('Online')->assertSee('Sinkron data')
+            ->assertSee('Perangkat terhubung')->assertSee('realme-C33')->assertSee('Wi-Fi')
+            ->assertSee('Ubah PPPoE & VLAN', false)->assertSee('RumahBudi')->assertSee('Simpan Wi-Fi 1')
+            ->assertDontSee('Pure Native')->assertDontSee('Transceiver Temperature');
+    }
+
     public function test_list_links_customers_shows_status_and_filters_offline(): void
     {
         AcsServer::create(['name' => 'Pusat', 'url' => 'http://acs.test', 'is_active' => true]);

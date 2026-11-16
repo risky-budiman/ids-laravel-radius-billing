@@ -306,14 +306,16 @@ class GenieAcsController extends Controller
         }
 
         try {
-            $rootObject = 'InternetGatewayDevice.';
+            // Tanpa titik di akhir (GenieACS 1.2: "InternetGatewayDevice." = Invalid parameter path)
+            $rootObject = 'InternetGatewayDevice';
             try {
                 $devRes = $service->getDevice($deviceId);
                 if (isset($devRes['data']['Device']) && !isset($devRes['data']['InternetGatewayDevice'])) {
-                    $rootObject = 'Device.';
+                    $rootObject = 'Device';
                 }
             } catch (\Throwable $e) {}
 
+            $service->deleteBrokenRefreshTasks($deviceId);
             $service->pushTask($deviceId, ['name' => 'refreshObject', 'objectName' => $rootObject]);
 
             return response()->json([

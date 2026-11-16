@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.162] - 2026-11-16
+
+### Perbaikan
+- **genieacs:** 'Sinkron data' failed with 'Invalid parameter path'; detail tabs redesigned
+
 ## [v1.5.160] - 2026-11-16
 
 ### Fitur baru

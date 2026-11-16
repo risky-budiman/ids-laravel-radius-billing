@@ -260,536 +260,355 @@
                 </section>
             </div>
 
-            <!-- Tab 2: Diagnostics & Clients -->
+            {{-- Tab 2: Optik & perangkat terhubung --}}
+            @php
+                $lbl = 'block text-sm font-medium text-surface-700 dark:text-surface-300';
+                $hint = 'mt-1 text-xs text-surface-500 dark:text-surface-400';
+                $hostsRaw = $device['InternetGatewayDevice']['LANDevice'][1]['Hosts']['Host'] ?? $device['Device']['Hosts']['Host'] ?? [];
+                $hosts = collect(is_array($hostsRaw) ? $hostsRaw : [])
+                    ->filter(fn ($h, $k) => is_numeric($k) && is_array($h) && (isset($h['IPAddress']['_value']) || isset($h['MACAddress']['_value'])))
+                    ->map(function ($h) {
+                        $iface = strtolower((string) ($h['InterfaceType']['_value'] ?? $h['Layer2Interface']['_value'] ?? ''));
+                        $active = $h['Active']['_value'] ?? true;
+
+                        return [
+                            'name' => trim((string) ($h['HostName']['_value'] ?? '')) ?: null,
+                            'ip' => $h['IPAddress']['_value'] ?? null,
+                            'mac' => $h['MACAddress']['_value'] ?? null,
+                            'via' => str_contains($iface, '802.11') || str_contains($iface, 'wlan') || str_contains($iface, 'wifi') ? 'Wi-Fi'
+                                : (str_contains($iface, 'ethernet') || str_contains($iface, 'lan') ? 'LAN' : null),
+                            'active' => in_array($active, [true, 1, '1', 'true'], true),
+                        ];
+                    })->values();
+                $hostsVia = $hosts->contains(fn ($h) => $h['via'] !== null);   // kolom "Lewat" hanya bila modem melaporkannya
+                $optic = [
+                    ['Daya Rx', $rxPower !== null ? number_format($rxPower, 2) . ' dBm' : null, $rxPower === null ? '' : ($rxPower < -27 ? 'text-rose-600' : ($rxPower < -24 ? 'text-amber-600' : 'text-emerald-600 dark:text-emerald-400'))],
+                    ['Daya Tx', $txPower !== null ? number_format($txPower, 2) . ' dBm' : null, ''],
+                    ['Suhu transceiver', $temperature !== null ? number_format($temperature, 1) . ' °C' : null, $temperature !== null && $temperature >= 70 ? 'text-rose-600' : ''],
+                    ['Arus bias laser', $bias !== null ? number_format($bias, 2) . ' mA' : null, ''],
+                ];
+            @endphp
             <div id="tab-diagnostics" class="tab-content space-y-6 hidden">
-                <!-- Optical Transceiver Diagnostics Card -->
-                <div class="card p-6">
-                    <h3 class="text-base font-semibold text-surface-900 dark:text-white mb-5 flex items-center gap-2">
-                        Optik (GPON/EPON)
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Daya Optik Rx</p>
-                            @if($rxPower !== null)
-                                @php
-                                    $colorClass = 'text-green-600 dark:text-green-400';
-                                    if ($rxPower < -27) {
-                                        $colorClass = 'text-rose-600 dark:text-rose-400 font-semibold animate-pulse';
-                                    } elseif ($rxPower < -24) {
-                                        $colorClass = 'text-amber-500 dark:text-amber-400';
-                                    }
-                                @endphp
-                                <p class="text-base font-mono font-extrabold {{ $colorClass }}">
-                                    {{ number_format($rxPower, 2) }} dBm
-                                </p>
-                            @else
-                                <p class="text-sm font-semibold text-gray-400">N/A</p>
-                            @endif
-                        </div>
-                        <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Daya Optik Tx</p>
-                            @if($txPower !== null)
-                                <p class="text-base font-mono font-extrabold text-indigo-600 dark:text-indigo-400">
-                                    {{ number_format($txPower, 2) }} dBm
-                                </p>
-                            @else
-                                <p class="text-sm font-semibold text-gray-400">N/A</p>
-                            @endif
-                        </div>
-                        <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Suhu transceiver</p>
-                            @if($temperature !== null)
-                                <p class="text-base font-mono font-extrabold text-gray-750 dark:text-gray-300">
-                                    {{ number_format($temperature, 1) }} °C
-                                </p>
-                            @else
-                                <p class="text-sm font-semibold text-gray-400">N/A</p>
-                            @endif
-                        </div>
-                        <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Arus Bias Laser</p>
-                            @if($bias !== null)
-                                <p class="text-base font-mono font-extrabold text-gray-750 dark:text-gray-300">
-                                    {{ number_format($bias, 2) }} mA
-                                </p>
-                            @else
-                                <p class="text-sm font-semibold text-gray-400">N/A</p>
-                            @endif
-                        </div>
+                <section class="card">
+                    <div class="card-header flex items-center justify-between">
+                        <h3 class="card-title">Optik (GPON/EPON)</h3>
+                        <span class="text-xs text-surface-500">Rx: hijau ≥ -24 · kuning -24 s/d -27 · merah &lt; -27 dBm</span>
                     </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Active WLAN Hosts Card -->
-                    <div class="card p-6">
-                        @php
-                            $hostCount = $device['InternetGatewayDevice']['LANDevice'][1]['Hosts']['HostNumberOfEntries']['_value']
-                                ?? $device['Device']['Hosts']['HostNumberOfEntries']['_value']
-                                ?? 0;
-                        @endphp
-                        <div class="flex justify-between items-center mb-5">
-                            <h3 class="text-base font-semibold text-surface-900 dark:text-white flex items-center gap-2">
-                                Perangkat WLAN Aktif
-                            </h3>
-                            <span class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 rounded-lg text-xs font-extrabold">
-                                {{ $hostCount }} terhubung
-                            </span>
-                        </div>
-
-                        <div class="space-y-3 max-h-[300px] overflow-y-auto pr-1.5 custom-scrollbar">
-                            @php $foundHosts = false; @endphp
-                            @for($h = 1; $h <= 10; $h++)
-                                @php
-                                    $host = $device['InternetGatewayDevice']['LANDevice'][1]['Hosts']['Host'][$h] 
-                                        ?? $device['Device']['Hosts']['Host'][$h] 
-                                        ?? null;
-                                @endphp
-                                @if($host && (isset($host['IPAddress']['_value']) || isset($host['MACAddress']['_value'])))
-                                    @php $foundHosts = true; @endphp
-                                    <div class="p-3 bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-gray-100/50 dark:border-gray-800 flex justify-between items-center">
-                                        <div class="min-w-0 flex-1">
-                                            <p class="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">
-                                                {{ $host['HostName']['_value'] ?? 'Unnamed Client' }}
-                                            </p>
-                                            <p class="text-xs font-mono text-gray-400 mt-0.5">{{ $host['IPAddress']['_value'] ?? 'No IP' }} • {{ $host['MACAddress']['_value'] ?? 'No MAC' }}</p>
-                                        </div>
-                                        <span class="text-xs px-2 py-0.5 bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 rounded-md border border-green-100/30">Aktif</span>
-                                    </div>
-                                @endif
-                            @endfor
-
-                            @if(!$foundHosts)
-                                <div class="text-center py-8">
-                                    <svg class="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                    <p class="text-xs text-gray-400 italic">Tidak ada perangkat terhubung.</p>
-                                </div>
-                            @endif
-                        </div>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-surface-100 dark:divide-surface-800">
+                        @foreach($optic as [$label, $value, $cls])
+                            <div class="p-5">
+                                <p class="text-xs font-medium text-surface-500">{{ $label }}</p>
+                                <p class="mt-1 text-xl font-semibold tabular-nums {{ $value === null ? 'text-surface-300 dark:text-surface-600' : ($cls ?: 'text-surface-900 dark:text-white') }}">{{ $value ?? '—' }}</p>
+                            </div>
+                        @endforeach
                     </div>
+                </section>
 
-                    <!-- ACS Task Queue -->
-                    <div class="card p-6">
-                        <h3 class="text-base font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2">
-                            Antrean Tugas
-                        </h3>
-                        <div class="space-y-3">
+                <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
+                    <section class="card xl:col-span-2 overflow-hidden">
+                        <div class="card-header flex items-center justify-between">
+                            <h3 class="card-title">Perangkat terhubung</h3>
+                            <span class="badge-primary">{{ $hosts->count() }} perangkat</span>
+                        </div>
+                        @if($hosts->isNotEmpty())
+                            <div class="max-h-[26rem] overflow-auto">
+                                <table class="w-full text-sm">
+                                    <thead class="sticky top-0 bg-surface-50 dark:bg-surface-900 text-left text-xs font-medium uppercase tracking-wide text-surface-500">
+                                        <tr><th class="px-5 py-2.5">Nama</th><th class="px-5 py-2.5">IP</th><th class="px-5 py-2.5">MAC</th>@if($hostsVia)<th class="px-5 py-2.5">Lewat</th>@endif</tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-surface-100 dark:divide-surface-800">
+                                        @foreach($hosts as $h)
+                                            <tr class="{{ $h['active'] ? '' : 'opacity-50' }}">
+                                                <td class="px-5 py-2.5">
+                                                    <span class="inline-flex items-center gap-2">
+                                                        <span class="w-1.5 h-1.5 rounded-full {{ $h['active'] ? 'bg-emerald-500' : 'bg-surface-300' }}"></span>
+                                                        <span class="{{ $h['name'] ? 'font-medium text-surface-900 dark:text-white' : 'italic text-surface-400' }}">{{ $h['name'] ?? 'Tanpa nama' }}</span>
+                                                    </span>
+                                                </td>
+                                                <td class="px-5 py-2.5 font-mono text-xs text-surface-700 dark:text-surface-300">{{ $h['ip'] ?? '—' }}</td>
+                                                <td class="px-5 py-2.5 font-mono text-xs text-surface-500">{{ $h['mac'] ?? '—' }}</td>
+                                                @if($hostsVia)<td class="px-5 py-2.5">@if($h['via'])<span class="badge-gray">{{ $h['via'] }}</span>@else<span class="text-surface-400">—</span>@endif</td>@endif
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <p class="card-body text-sm text-surface-500">Modem belum melaporkan perangkat yang terhubung. Klik <strong>Sinkron data</strong> untuk membaca ulang.</p>
+                        @endif
+                    </section>
+
+                    <section class="card">
+                        <div class="card-header"><h3 class="card-title">Antrean perintah</h3></div>
+                        <div class="card-body space-y-2">
                             @forelse($tasks ?? [] as $task)
-                                <div class="p-3.5 bg-amber-50/50 dark:bg-amber-950/10 border border-amber-100/30 dark:border-amber-900/30 rounded-xl flex justify-between items-center">
-                                    <div class="min-w-0 flex-1">
-                                        <p class="text-xs font-extrabold text-amber-800 dark:text-amber-400 uppercase tracking-wide">{{ $task['name'] }}</p>
-                                        <p class="text-xs text-amber-600/80 dark:text-amber-500/80 mt-0.5">Queued {{ \Carbon\Carbon::parse($task['timestamp'])->diffForHumans() }}</p>
+                                <div class="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-500/20 dark:bg-amber-500/10">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-medium text-amber-900 dark:text-amber-200">{{ ['setParameterValues' => 'Ubah parameter', 'reboot' => 'Reboot', 'refreshObject' => 'Sinkron data', 'factoryReset' => 'Factory reset', 'getParameterValues' => 'Baca parameter', 'addObject' => 'Tambah objek', 'deleteObject' => 'Hapus objek', 'download' => 'Unduh firmware'][$task['name']] ?? $task['name'] }}</p>
+                                        <p class="text-xs text-amber-700/80 dark:text-amber-300/70">dikirim {{ \Carbon\Carbon::parse($task['timestamp'])->locale('id')->diffForHumans() }}</p>
                                     </div>
-                                    <span class="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 rounded text-xs font-extrabold border border-amber-200/20">Menunggu</span>
+                                    <span class="badge-warning">Menunggu</span>
                                 </div>
                             @empty
-                                <div class="text-center py-6">
-                                    <svg class="w-8 h-8 text-green-400/80 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <p class="text-xs text-gray-400 dark:text-gray-500 italic">Tidak ada antrean. Perangkat sudah sinkron.</p>
+                                <div class="py-6 text-center">
+                                    <x-icon name="check-circle" class="mx-auto mb-2 w-8 h-8 text-emerald-500" />
+                                    <p class="text-sm text-surface-500">Tidak ada antrean — modem sudah sinkron.</p>
                                 </div>
                             @endforelse
+                            <p class="pt-1 text-xs text-surface-400">Perintah menunggu bila modem belum menghubungi GenieACS; dijalankan saat inform berikutnya.</p>
                         </div>
-                    </div>
+                    </section>
                 </div>
             </div>
 
-            <!-- Tab 3: WAN Settings -->
+            {{-- Tab 3: WAN / PPPoE --}}
             <div id="tab-wan" class="tab-content space-y-6 hidden">
                 @php
                     $wanList = $wanConnections ?? [];
-                    // Find active PPPoE connection
-                    $activePppConn = null;
-                    foreach ($wanList as $c) {
-                        if ($c['is_active_ppp']) {
-                            $activePppConn = $c;
-                            break;
-                        }
-                    }
-                    if (!$activePppConn && !empty($wanList)) {
-                        $activePppConn = $wanList[0];
-                    }
+                    $activePppConn = collect($wanList)->firstWhere('is_active_ppp', true) ?? ($wanList[0] ?? null);
+                    $detectedServices = collect($wanList)->pluck('service_list')->filter()->values()->all();
+                    $commonServices = array_unique(array_merge($detectedServices, ['INTERNET', 'TR069,INTERNET', 'TR069', 'VOIP', 'IPTV', 'OTHER', 'VOIP,INTERNET', 'IPTV,INTERNET']));
                 @endphp
 
-                <!-- WAN Interfaces Overview -->
-                <div class="card p-6">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-5">
-                        <h3 class="text-base font-semibold text-surface-900 dark:text-white flex items-center gap-2">
-                            Interface WAN terdeteksi ({{ count($wanList) }})
-                        </h3>
-                        <span class="text-xs text-gray-400 font-medium">Interface aktif ditandai</span>
+                <section class="card overflow-hidden">
+                    <div class="card-header flex items-center justify-between">
+                        <h3 class="card-title">Koneksi WAN di modem</h3>
+                        <span class="text-xs text-surface-500">{{ count($wanList) }} koneksi</span>
                     </div>
-
-                    @if(!empty($wanList))
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            @foreach($wanList as $c)
-                                <div class="p-4 rounded-xl border transition-all {{ $c['is_active_ppp'] ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-800/60 ring-1 ring-indigo-500/20' : 'bg-gray-50 dark:bg-gray-900 border-gray-100/60 dark:border-gray-800' }}">
-                                    <div class="flex justify-between items-start mb-2.5">
-                                        <div>
-                                            <span class="text-xs text-gray-400 dark:text-gray-500">{{ $c['protocol'] }} Connection</span>
-                                            <h4 class="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[180px]" title="{{ $c['name'] }}">{{ $c['name'] }}</h4>
-                                        </div>
-                                        @if($c['status'] === 'Connected')
-                                            <span class="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-lg flex items-center gap-1 border border-emerald-200/40">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                                Up
-                                            </span>
-                                        @else
-                                            <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 text-xs font-bold rounded-lg">
-                                                {{ $c['status'] ?? 'Idle' }}
-                                            </span>
-                                        @endif
-                                    </div>
-                                    <div class="space-y-1 text-xs">
-                                        <div class="flex justify-between py-1 border-b border-gray-200/40 dark:border-gray-800/40">
-                                            <span class="text-gray-400 text-[11px]">PPPoE User:</span>
-                                            <span class="font-mono font-bold text-gray-800 dark:text-gray-200 truncate max-w-[160px]" title="{{ $c['username'] }}">{{ $c['username'] ?: '—' }}</span>
-                                        </div>
-                                        <div class="flex justify-between py-1 border-b border-gray-200/40 dark:border-gray-800/40">
-                                            <span class="text-gray-400 text-[11px]">VLAN ID:</span>
-                                            <span class="font-mono font-extrabold text-indigo-600 dark:text-indigo-400">{{ $c['vlan_id'] ?? 'Untagged' }}</span>
-                                        </div>
-                                        <div class="flex justify-between py-1 border-b border-gray-200/40 dark:border-gray-800/40">
-                                            <span class="text-gray-400 text-[11px]">Alamat IP:</span>
-                                            <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ $c['ip'] ?: 'No IP' }}</span>
-                                        </div>
-                                        <div class="flex justify-between py-1">
-                                            <span class="text-gray-400 text-[11px]">Tipe Layanan:</span>
-                                            <span class="font-semibold text-gray-600 dark:text-gray-300">{{ $c['service_list'] }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="mt-2.5 pt-2 border-t border-gray-200/30 dark:border-gray-800/30 text-xs text-gray-400 font-mono truncate" title="{{ $c['path'] }}">
-                                        {{ $c['path'] }}
-                                    </div>
-                                </div>
-                            @endforeach
+                    @if(! empty($wanList))
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-surface-50 dark:bg-surface-900/60 text-left text-xs font-medium uppercase tracking-wide text-surface-500">
+                                    <tr><th class="px-5 py-2.5">Koneksi</th><th class="px-5 py-2.5">Username</th><th class="px-5 py-2.5">VLAN</th><th class="px-5 py-2.5">IP</th><th class="px-5 py-2.5">Layanan</th><th class="px-5 py-2.5">Status</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-surface-100 dark:divide-surface-800">
+                                    @foreach($wanList as $c)
+                                        <tr class="{{ $c['is_active_ppp'] ? 'bg-primary-50/50 dark:bg-primary-500/5' : '' }}">
+                                            <td class="px-5 py-2.5">
+                                                <p class="font-medium text-surface-900 dark:text-white">{{ $c['name'] }}</p>
+                                                <p class="text-xs text-surface-500">{{ $c['protocol'] }}@if($c['is_active_ppp']) · <span class="text-primary-700 dark:text-primary-300">PPPoE utama</span>@endif</p>
+                                            </td>
+                                            <td class="px-5 py-2.5 font-mono text-xs">{{ $c['username'] ?: '—' }}</td>
+                                            <td class="px-5 py-2.5 font-mono text-xs">{{ $c['vlan_id'] ?? 'tanpa tag' }}</td>
+                                            <td class="px-5 py-2.5 font-mono text-xs">{{ $c['ip'] ?: '—' }}</td>
+                                            <td class="px-5 py-2.5 text-xs">{{ $c['service_list'] ?: '—' }}</td>
+                                            <td class="px-5 py-2.5">
+                                                @if($c['status'] === 'Connected')
+                                                    <span class="badge-success"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Terhubung</span>
+                                                @else
+                                                    <span class="badge-gray">{{ $c['status'] ?: 'Tidak aktif' }}</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     @else
-                        <div class="p-6 text-center bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-800">
-                            <p class="text-xs text-gray-500">Belum ada interface WAN terdeteksi dari inform terakhir. Anda tetap dapat memasukkan konfigurasi baru di bawah.</p>
-                        </div>
+                        <p class="card-body text-sm text-surface-500">Belum ada koneksi WAN dari laporan terakhir modem. Konfigurasi baru tetap bisa dikirim di bawah.</p>
                     @endif
-                </div>
+                </section>
 
-                @php
-                    $detectedServices = [];
-                    foreach ($wanList as $c) {
-                        if (!empty($c['service_list'])) {
-                            $detectedServices[] = $c['service_list'];
-                        }
-                    }
-                    $commonServices = array_unique(array_merge($detectedServices, [
-                        'INTERNET',
-                        'TR069,INTERNET',
-                        'TR069',
-                        'VOIP',
-                        'IPTV',
-                        'OTHER',
-                        'VOIP,INTERNET',
-                        'IPTV,INTERNET',
-                    ]));
-                @endphp
-
-                <!-- WAN PPPoE & Network Configuration Form with Alpine.js Reactivity -->
-                <div class="card p-6"
-                     x-data="wanConfigForm(@js($wanList), '{{ $activePppConn['path'] ?? '' }}')">
-                    
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6">
-                        <div>
-                            <h3 class="text-base font-semibold text-surface-900 dark:text-white flex items-center gap-2">
-                                Konfigurasi PPPoE, VLAN & Binding Port
-                            </h3>
-                            <p class="text-xs text-gray-400 mt-0.5">Perubahan dikirim langsung ke modem lewat TR-069 dan tercatat di Log Aktivitas.</p>
-                        </div>
+                <section class="card" x-data="wanConfigForm(@js($wanList), @js($activePppConn['path'] ?? ''))">
+                    <div class="card-header">
+                        <h3 class="card-title">Ubah PPPoE & VLAN</h3>
+                        <p class="text-xs text-surface-500">Dikirim langsung ke modem lewat TR-069 dan tercatat di Log Aktivitas. Internet pelanggan bisa terputus sesaat.</p>
                     </div>
 
-                    <!-- Notification alerts inside form -->
-                    <div x-show="submitSuccess" x-cloak class="p-4 mb-5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 rounded-xl text-xs flex items-center gap-3">
-                        <svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        <span x-text="submitMessage"></span>
-                    </div>
-                    <div x-show="submitError" x-cloak class="p-4 mb-5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 rounded-xl text-xs flex items-center gap-3">
-                        <svg class="w-5 h-5 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span x-text="submitError"></span>
-                    </div>
-
-                    <form action="{{ route('acs-servers.update-config', ['deviceId' => $deviceId]) }}" method="POST" @submit="submitForm($event)" class="space-y-6">
+                    <form action="{{ route('acs-servers.update-config', ['deviceId' => $deviceId]) }}" method="POST" @submit="submitForm($event)" class="card-body space-y-6">
                         @csrf
                         <input type="hidden" name="server_id" value="{{ $server->id }}">
 
-                        <!-- Row 1: Target WAN Interface Selector & Status Aktif/Tidak Aktif -->
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 bg-gray-50/70 dark:bg-gray-900/70 rounded-xl border border-gray-100 dark:border-gray-800">
-                            <!-- Target WAN Interface Selector -->
+                        <div x-show="submitSuccess" x-cloak class="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+                            <x-icon name="check-circle" class="w-5 h-5 shrink-0" /> <span x-text="submitMessage"></span>
+                        </div>
+                        <div x-show="submitError" x-cloak class="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
+                            <x-icon name="exclamation" class="w-5 h-5 shrink-0" /> <span x-text="submitError"></span>
+                        </div>
+
+                        {{-- Koneksi tujuan --}}
+                        <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
                             <div class="lg:col-span-2">
-                                <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-                                    Interface WAN Tujuan
-                                </label>
-                                <select name="wan_path" x-model="selectedPath" @change="onWanChange()" class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm font-semibold outline-none transition-all dark:text-gray-200">
+                                <label class="{{ $lbl }}" for="wan_path">Koneksi WAN yang diubah</label>
+                                <select id="wan_path" name="wan_path" x-model="selectedPath" @change="onWanChange()" class="input mt-1">
                                     @foreach($wanList as $c)
-                                        <option value="{{ $c['path'] }}">
-                                            {{ $c['name'] }} — [{{ $c['protocol'] }}] {{ $c['username'] ? 'User: ' . $c['username'] : ($c['service_list'] ?? 'WAN') }} (VLAN: {{ $c['vlan_id'] ?? 'Untagged' }})
-                                        </option>
+                                        <option value="{{ $c['path'] }}">{{ $c['name'] }} — {{ $c['protocol'] }}{{ $c['username'] ? ' · ' . $c['username'] : '' }} (VLAN {{ $c['vlan_id'] ?? '-' }})</option>
                                     @endforeach
                                     @if(empty($wanList))
-                                        <option value="">(Koneksi WAN Default)</option>
+                                        <option value="">Koneksi WAN bawaan</option>
                                     @endif
                                 </select>
-                                <p class="text-[11px] text-gray-400 mt-1">Saat memilih interface, semua isian formulir di bawah otomatis menyesuaikan dengan data interface tersebut.</p>
-                            </div>
-
-                            <!-- 1. Status Aktif / Tidak Aktif (Enable Parameter) -->
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-                                    Status Interface WAN
-                                </label>
-                                <div class="relative">
-                                    <select name="is_enabled" x-model="isEnabled" class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm font-extrabold outline-none transition-all dark:text-gray-200"
-                                            :class="isEnabled == '1' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
-                                        <option value="1">🟢 Aktif (Enabled)</option>
-                                        <option value="0">🔴 Tidak Aktif (Disabled)</option>
-                                    </select>
-                                </div>
-                                <p class="text-[11px] text-gray-400 mt-1">Mengontrol parameter <code class="font-mono text-xs text-indigo-500">Aktifkan</code> koneksi WAN.</p>
-                            </div>
-                        </div>
-
-                        <!-- Current Selected WAN Telemetry Snippet -->
-                        <div x-show="currentConn" class="p-3.5 bg-indigo-50/30 dark:bg-indigo-950/20 border border-indigo-100/50 dark:border-indigo-900/40 rounded-xl text-xs flex flex-wrap items-center justify-between gap-2">
-                            <div class="flex items-center gap-3">
-                                <span class="px-2 py-0.5 rounded text-xs font-mono"
-                                      :class="currentConn && currentConn.status === 'Connected' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'"
-                                      x-text="(currentConn ? currentConn.status : 'Unknown')">
-                                </span>
-                                <span class="text-gray-500 font-mono text-[11px]">IP: <b class="text-gray-800 dark:text-gray-200" x-text="currentConn && currentConn.ip ? currentConn.ip : 'Belum Ada IP'"></b></span>
-                            </div>
-                            <div class="text-xs font-mono text-gray-400 truncate max-w-full" x-text="selectedPath"></div>
-                        </div>
-                        
-                        <!-- Row 2: PPPoE Username & Password -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">PPPoE Username</label>
-                                <input type="text" name="ppp_username" x-model="pppUsername" placeholder="misal: pelanggan@nextlink" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm font-mono outline-none transition-all dark:text-gray-200">
+                                <p class="{{ $hint }}">Isian di bawah otomatis mengikuti koneksi yang dipilih.
+                                    <span x-show="currentConn" x-cloak>Sekarang: <span class="font-mono" x-text="currentConn && currentConn.ip ? currentConn.ip : 'belum ada IP'"></span> (<span x-text="currentConn && currentConn.status === 'Connected' ? 'terhubung' : (currentConn ? currentConn.status : '')"></span>)</span>
+                                </p>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">PPPoE Password</label>
-                                <div class="relative" x-data="{ show: false }">
-                                    <input :type="show ? 'text' : 'password'" name="ppp_password" x-model="pppPassword" placeholder="Ketik untuk mengubah password..." class="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm font-mono outline-none transition-all dark:text-gray-200">
-                                    <button type="button" @click="show = !show" class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                                        <svg x-show="!show" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                        <svg x-show="show" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/></svg>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Row 3: VLAN ID, Connection Trigger, Max MTU/MRU -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">VLAN ID</label>
-                                <input type="number" name="vlan_id" x-model="vlanId" placeholder="misal: 101" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm font-mono font-bold outline-none transition-all dark:text-gray-200">
-                                <p class="text-xs text-gray-400 mt-1">Otomatis dipetakan ke X_HW_VLAN / X_ZTE-COM_VLANID / VLANIDMark</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Connection Trigger</label>
-                                <select name="connection_trigger" x-model="connectionTrigger" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm font-semibold outline-none transition-all dark:text-gray-200">
-                                    <option value="AlwaysOn">AlwaysOn (Default)</option>
-                                    <option value="OnDemand">OnDemand</option>
-                                    <option value="Manual">Manual</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Max MRU / MTU</label>
-                                <input type="number" name="mru" x-model="mru" placeholder="1492" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm font-mono outline-none transition-all dark:text-gray-200">
-                            </div>
-                        </div>
-
-                        <!-- Row 4: Service Type & Status NAT -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- 4. Service Type Optional & Detected from Modem -->
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-                                    Service Type (Tipe Layanan)
-                                </label>
-                                <div class="space-y-2">
-                                    <select x-model="serviceType" @change="onServiceSelect($event.target.value)" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm font-semibold outline-none transition-all dark:text-gray-200">
-                                        @foreach($commonServices as $svc)
-                                            <option value="{{ $svc }}">{{ $svc }} {{ in_array($svc, $detectedServices) ? '⭐ (Ada di modem)' : '' }}</option>
-                                        @endforeach
-                                        <option value="__CUSTOM__">✏️ Tulis Tipe Sendiri (Kustom)...</option>
-                                    </select>
-                                    
-                                    <!-- Custom Service Text Input (if custom selected) -->
-                                    <div x-show="isCustomService" x-cloak>
-                                        <input type="text" name="service_list_custom" x-model="customServiceType" placeholder="Ketik service type (misal: OTHER_VOIP)..." class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs font-mono outline-none transition-all dark:text-gray-200">
-                                    </div>
-                                    <input type="hidden" name="service_list" :value="isCustomService ? customServiceType : serviceType">
-                                </div>
-                                <p class="text-[11px] text-gray-400 mt-1">Membaca opsi umum modem serta service yang terdeteksi pada ONT saat ini.</p>
-                            </div>
-
-                            <!-- Status NAT -->
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Status NAT</label>
-                                <select name="nat_enabled" x-model="natEnabled" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm font-semibold outline-none transition-all dark:text-gray-200">
-                                    <option value="1">Enabled (Disarankan)</option>
+                                <label class="{{ $lbl }}" for="is_enabled">Status koneksi</label>
+                                <select id="is_enabled" name="is_enabled" x-model="isEnabled" class="input mt-1" :class="isEnabled == '1' ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'">
+                                    <option value="1">Aktif</option>
                                     <option value="0">Nonaktif</option>
                                 </select>
-                                <p class="text-[11px] text-gray-400 mt-1">Network Address Translation untuk koneksi WAN Internet.</p>
                             </div>
                         </div>
 
-                        <!-- 3. Local Interface Binding (LAN & Wi-Fi SSIDs) -->
-                        <div class="p-5 bg-gray-50/60 dark:bg-gray-900/60 rounded-xl border border-gray-100 dark:border-gray-800 space-y-4">
-                            <div>
-                                <h4 class="text-xs font-extrabold text-gray-700 dark:text-gray-200 uppercase tracking-wider flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-                                    Binding Interface Lokal (Port)
-                                </h4>
-                                <p class="text-[11px] text-gray-400 mt-0.5">Pilih port LAN fisik dan Wireless SSID mana saja yang dibinding langsung ke interface WAN ini.</p>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <!-- LAN Ports Binding -->
-                                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700/80">
-                                    <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                                        <span>🔌</span> Port LAN Ethernet
-                                    </p>
-                                    <div class="grid grid-cols-2 gap-2.5">
-                                        <template x-for="port in [1, 2, 3, 4]" :key="'lan' + port">
-                                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl border cursor-pointer transition-all text-xs font-bold"
-                                                   :class="lanBind['lan' + port] ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300' : 'bg-gray-50/50 dark:bg-gray-900/50 border-gray-200/60 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100/50'">
-                                                <input type="checkbox" :name="'lan_bind[lan' + port + ']'" value="1"
-                                                       x-model="lanBind['lan' + port]"
-                                                       class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300">
-                                                <span x-text="'LAN ' + port"></span>
-                                            </label>
-                                        </template>
-                                    </div>
+                        {{-- Login PPPoE --}}
+                        <fieldset class="space-y-3">
+                            <legend class="text-xs font-semibold uppercase tracking-wide text-surface-500">Login PPPoE</legend>
+                            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                                <div>
+                                    <label class="{{ $lbl }}" for="ppp_username">Username</label>
+                                    <input id="ppp_username" type="text" name="ppp_username" x-model="pppUsername" class="input mt-1 font-mono" placeholder="mis. 20391582226@nextlink" autocomplete="off">
                                 </div>
-
-                                <!-- Wi-Fi SSIDs Binding -->
-                                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700/80">
-                                    <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                                        <span>📡</span> Wireless SSIDs
-                                    </p>
-                                    <div class="grid grid-cols-2 gap-2.5">
-                                        <template x-for="ssid in [1, 2, 3, 4]" :key="'ssid' + ssid">
-                                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl border cursor-pointer transition-all text-xs font-bold"
-                                                   :class="ssidBind['ssid' + ssid] ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300' : 'bg-gray-50/50 dark:bg-gray-900/50 border-gray-200/60 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100/50'">
-                                                <input type="checkbox" :name="'ssid_bind[ssid' + ssid + ']'" value="1"
-                                                       x-model="ssidBind['ssid' + ssid]"
-                                                       class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300">
-                                                <span x-text="'SSID ' + ssid"></span>
-                                            </label>
-                                        </template>
+                                <div>
+                                    <label class="{{ $lbl }}" for="ppp_password">Password</label>
+                                    <div class="relative mt-1" x-data="{ show: false }">
+                                        <input id="ppp_password" :type="show ? 'text' : 'password'" name="ppp_password" x-model="pppPassword" class="input pr-10 font-mono" placeholder="Kosongkan bila tidak diubah" autocomplete="new-password">
+                                        <button type="button" @click="show = !show" class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-surface-400 hover:text-surface-700" :aria-label="show ? 'Sembunyikan' : 'Tampilkan'">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </fieldset>
 
-                        <!-- 5. Enhanced Push Button with Spinner & Disabled State -->
-                        <div class="pt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                            <button type="submit"
-                                    :disabled="submitting"
-                                    class="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-xl font-bold text-xs transition-all shadow-sm flex items-center justify-center gap-2.5  cursor-pointer disabled:cursor-not-allowed">
-                                <!-- Loading Spinner -->
-                                <svg x-show="submitting" x-cloak class="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <!-- Send Icon -->
-                                <svg x-show="!submitting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
-                                </svg>
-                                <span x-text="submitting ? 'Mengirim ke ONT (GenieACS)...' : 'Push Konfigurasi PPPoE ke ONT'"></span>
+                        {{-- Jaringan --}}
+                        <fieldset class="space-y-3">
+                            <legend class="text-xs font-semibold uppercase tracking-wide text-surface-500">Jaringan</legend>
+                            <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+                                <div>
+                                    <label class="{{ $lbl }}" for="vlan_id">VLAN ID</label>
+                                    <input id="vlan_id" type="number" name="vlan_id" x-model="vlanId" class="input mt-1 font-mono" placeholder="mis. 101">
+                                    <p class="{{ $hint }}">Dipetakan otomatis sesuai merek (Huawei/ZTE/TR-181).</p>
+                                </div>
+                                <div>
+                                    <label class="{{ $lbl }}" for="connection_trigger">Mode sambung</label>
+                                    <select id="connection_trigger" name="connection_trigger" x-model="connectionTrigger" class="input mt-1">
+                                        <option value="AlwaysOn">Selalu tersambung (disarankan)</option>
+                                        <option value="OnDemand">Saat ada trafik</option>
+                                        <option value="Manual">Manual</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="{{ $lbl }}" for="mru">MRU / MTU</label>
+                                    <input id="mru" type="number" name="mru" x-model="mru" class="input mt-1 font-mono" placeholder="1492">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="{{ $lbl }}" for="service_type">Jenis layanan</label>
+                                    <select id="service_type" x-model="serviceType" @change="onServiceSelect($event.target.value)" class="input mt-1">
+                                        @foreach($commonServices as $svc)
+                                            <option value="{{ $svc }}">{{ $svc }}{{ in_array($svc, $detectedServices) ? ' — ada di modem' : '' }}</option>
+                                        @endforeach
+                                        <option value="__CUSTOM__">Lainnya (ketik sendiri)…</option>
+                                    </select>
+                                    <input x-show="isCustomService" x-cloak type="text" name="service_list_custom" x-model="customServiceType" class="input mt-2 font-mono" placeholder="mis. OTHER_VOIP">
+                                    <input type="hidden" name="service_list" :value="isCustomService ? customServiceType : serviceType">
+                                </div>
+                                <div>
+                                    <label class="{{ $lbl }}" for="nat_enabled">NAT</label>
+                                    <select id="nat_enabled" name="nat_enabled" x-model="natEnabled" class="input mt-1">
+                                        <option value="1">Aktif (disarankan)</option>
+                                        <option value="0">Nonaktif</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        {{-- Binding port --}}
+                        <fieldset class="space-y-3">
+                            <legend class="text-xs font-semibold uppercase tracking-wide text-surface-500">Port yang memakai koneksi ini</legend>
+                            <div class="flex flex-wrap gap-2">
+                                <template x-for="port in [1, 2, 3, 4]" :key="'lan' + port">
+                                    <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors"
+                                           :class="lanBind['lan' + port] ? 'border-primary-400 bg-primary-50 text-primary-800 dark:bg-primary-500/10 dark:text-primary-200' : 'border-surface-200 text-surface-600 hover:bg-surface-50 dark:border-surface-700 dark:text-surface-300 dark:hover:bg-surface-800'">
+                                        <input type="checkbox" :name="'lan_bind[lan' + port + ']'" value="1" x-model="lanBind['lan' + port]" class="rounded border-surface-300 text-primary-600">
+                                        <span x-text="'LAN ' + port"></span>
+                                    </label>
+                                </template>
+                                <span class="mx-1 self-center text-surface-300">|</span>
+                                <template x-for="ssid in [1, 2, 3, 4]" :key="'ssid' + ssid">
+                                    <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors"
+                                           :class="ssidBind['ssid' + ssid] ? 'border-primary-400 bg-primary-50 text-primary-800 dark:bg-primary-500/10 dark:text-primary-200' : 'border-surface-200 text-surface-600 hover:bg-surface-50 dark:border-surface-700 dark:text-surface-300 dark:hover:bg-surface-800'">
+                                        <input type="checkbox" :name="'ssid_bind[ssid' + ssid + ']'" value="1" x-model="ssidBind['ssid' + ssid]" class="rounded border-surface-300 text-primary-600">
+                                        <span x-text="'Wi-Fi ' + ssid"></span>
+                                    </label>
+                                </template>
+                            </div>
+                        </fieldset>
+
+                        <div class="flex flex-col-reverse gap-3 border-t border-surface-200 pt-5 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800">
+                            <p class="text-xs text-surface-500">Modem menyimpan perubahan lalu dihubungi ulang (connection request).</p>
+                            <button type="submit" :disabled="submitting" class="btn-primary">
+                                <svg x-show="submitting" x-cloak class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                <span x-text="submitting ? 'Mengirim ke modem…' : 'Kirim ke modem'"></span>
                             </button>
-                            <span class="text-[11px] text-gray-400 text-center sm:text-right">
-                                RPC Langsung: Simpan ke ONT + Connection Request
-                            </span>
                         </div>
                     </form>
-                </div>
+                </section>
             </div>
 
-            <!-- Tab 4: Wi-Fi Configuration -->
-            <div id="tab-wireless" class="tab-content space-y-6 hidden">
-                <!-- Wireless Management Panels (WLAN Configuration) -->
-                @for($i = 1; $i <= 4; $i++)
-                    @php
-                        $igdWlan = $device['InternetGatewayDevice']['LANDevice'][1]['WLANConfiguration'][$i] ?? null;
-                        $devWlanSsid = $device['Device']['WiFi']['SSID'][$i] ?? null;
-                        $devWlanRadio = $device['Device']['WiFi']['Radio'][$i] ?? null;
-                        $devWlanAp = $device['Device']['WiFi']['AccessPoint'][$i] ?? null;
-
-                        if (!$igdWlan && !$devWlanSsid) continue;
-
-                        $ssid = $igdWlan['SSID']['_value'] ?? $devWlanSsid['SSID']['_value'] ?? 'Unknown';
-                        $band = $devWlanRadio['OperatingFrequencyBand']['_value'] ?? ($i == 2 ? '5 GHz' : '2.4 GHz');
-                        $wlanEnabled = $igdWlan['Enable']['_value'] ?? $devWlanRadio['Enable']['_value'] ?? null;
-                    @endphp
-
-                    <div class="card p-6">
-                        <div class="flex justify-between items-center mb-5">
-                            <h3 class="text-base font-semibold text-surface-900 dark:text-white flex items-center gap-2">
-                                Profil Wi-Fi #{{ $i }} ({{ $band }})
-                            </h3>
-                            @if($wlanEnabled === '1' || $wlanEnabled === true || $wlanEnabled === 'true')
-                                <span class="px-2.5 py-1 bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 rounded-lg text-xs font-extrabold border border-green-100/20 flex items-center gap-1.5">
-                                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                                    SSID Aktif
-                                </span>
-                            @else
-                                <span class="px-2.5 py-1 bg-gray-50 dark:bg-gray-900 text-gray-400 rounded-lg text-xs font-extrabold border border-gray-100/30">
-                                    SSID Off
-                                </span>
-                            @endif
-                        </div>
-
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                            <div class="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                                <p class="text-xs text-gray-400 dark:text-gray-500 font-bold mb-0.5">Nama SSID Aktif</p>
-                                <p class="text-xs font-extrabold text-indigo-600 dark:text-indigo-400">{{ $ssid }}</p>
-                            </div>
-                            <div class="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                                <p class="text-xs text-gray-400 dark:text-gray-500 font-bold mb-0.5">RF Channel</p>
-                                <p class="text-xs font-bold text-gray-700 dark:text-gray-300">
-                                    {{ $igdWlan['Channel']['_value'] ?? $devWlanRadio['Channel']['_value'] ?? 'Auto' }}
-                                </p>
-                            </div>
-                            <div class="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                                <p class="text-xs text-gray-400 dark:text-gray-500 font-bold mb-0.5">Authentication Mode</p>
-                                <p class="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">
-                                    {{ $igdWlan['BeaconType']['_value'] ?? $devWlanAp['Security']['ModeEnabled']['_value'] ?? 'WPA2-PSK' }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <form action="{{ route('acs-servers.update-config', ['deviceId' => $deviceId]) }}" method="POST" class="space-y-4">
-                            @csrf
-                            <input type="hidden" name="server_id" value="{{ $server->id }}">
-                            <input type="hidden" name="instance" value="{{ $i }}">
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Ubah Nama SSID</label>
-                                    <input type="text" name="wifi_ssid" value="{{ $ssid }}" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm outline-none transition-all dark:text-gray-200">
+            {{-- Tab 4: Wi-Fi --}}
+            <div id="tab-wireless" class="tab-content hidden">
+                @php $wifiCards = 0; @endphp
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    @for($i = 1; $i <= 4; $i++)
+                        @php
+                            $igdWlan = $device['InternetGatewayDevice']['LANDevice'][1]['WLANConfiguration'][$i] ?? null;
+                            $devWlanSsid = $device['Device']['WiFi']['SSID'][$i] ?? null;
+                            $devWlanRadio = $device['Device']['WiFi']['Radio'][$i] ?? null;
+                            $devWlanAp = $device['Device']['WiFi']['AccessPoint'][$i] ?? null;
+                            if (! $igdWlan && ! $devWlanSsid) {
+                                continue;
+                            }
+                            $wifiCards++;
+                            $ssid = $igdWlan['SSID']['_value'] ?? $devWlanSsid['SSID']['_value'] ?? '';
+                            $band = $devWlanRadio['OperatingFrequencyBand']['_value'] ?? ($igdWlan['OperatingFrequencyBand']['_value'] ?? ($i == 2 || $i == 6 ? '5 GHz' : '2.4 GHz'));
+                            $wlanEnabled = in_array($igdWlan['Enable']['_value'] ?? $devWlanRadio['Enable']['_value'] ?? null, ['1', 1, true, 'true'], true);
+                            $channel = $igdWlan['Channel']['_value'] ?? $devWlanRadio['Channel']['_value'] ?? null;
+                            $security = $igdWlan['BeaconType']['_value'] ?? $devWlanAp['Security']['ModeEnabled']['_value'] ?? null;
+                            $clients = $igdWlan['TotalAssociations']['_value'] ?? null;
+                        @endphp
+                        <section class="card">
+                            <div class="card-header flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="text-xs text-surface-500">Wi-Fi {{ $i }} · {{ str_replace('GHz', ' GHz', str_replace(' ', '', $band)) }}</p>
+                                    <h3 class="card-title truncate">{{ $ssid ?: 'Tanpa nama' }}</h3>
                                 </div>
+                                <span class="{{ $wlanEnabled ? 'badge-success' : 'badge-gray' }}">{{ $wlanEnabled ? 'Aktif' : 'Mati' }}</span>
+                            </div>
+                            <dl class="grid grid-cols-3 divide-x divide-surface-100 border-b border-surface-100 text-center dark:divide-surface-800 dark:border-surface-800">
+                                <div class="p-3"><dt class="text-xs text-surface-500">Channel</dt><dd class="text-sm font-medium text-surface-900 dark:text-white">{{ $channel ?: 'Otomatis' }}</dd></div>
+                                <div class="p-3"><dt class="text-xs text-surface-500">Keamanan</dt><dd class="truncate text-sm font-medium text-surface-900 dark:text-white" title="{{ $security }}">{{ $security ?: '—' }}</dd></div>
+                                <div class="p-3"><dt class="text-xs text-surface-500">Klien</dt><dd class="text-sm font-medium text-surface-900 dark:text-white">{{ $clients ?? '—' }}</dd></div>
+                            </dl>
+                            <form action="{{ route('acs-servers.update-config', ['deviceId' => $deviceId]) }}" method="POST" class="card-body space-y-4"
+                                  onsubmit="return confirm('Kirim perubahan Wi-Fi {{ $i }} ke modem? Perangkat yang tersambung akan terputus dan perlu sambung ulang.')">
+                                @csrf
+                                <input type="hidden" name="server_id" value="{{ $server->id }}">
+                                <input type="hidden" name="instance" value="{{ $i }}">
                                 <div>
-                                    <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Change Wi-Fi Password</label>
-                                    <input type="password" name="wifi_password" placeholder="Leave blank to keep unchanged" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm outline-none transition-all dark:text-gray-200">
+                                    <label class="{{ $lbl }}" for="wifi_ssid_{{ $i }}">Nama Wi-Fi (SSID)</label>
+                                    <input id="wifi_ssid_{{ $i }}" type="text" name="wifi_ssid" value="{{ $ssid }}" maxlength="32" class="input mt-1">
                                 </div>
-                            </div>
-
-                            <div class="pt-2">
-                                <button type="submit" class="w-full md:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition-all shadow-md shadow-indigo-500/10 flex items-center justify-center gap-2 ">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                                    Simpan
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                @endfor
+                                <div x-data="{ show: false }">
+                                    <label class="{{ $lbl }}" for="wifi_password_{{ $i }}">Password Wi-Fi baru</label>
+                                    <div class="relative mt-1">
+                                        <input id="wifi_password_{{ $i }}" :type="show ? 'text' : 'password'" name="wifi_password" minlength="8" maxlength="63" class="input pr-10" placeholder="Kosongkan bila tidak diubah" autocomplete="new-password">
+                                        <button type="button" @click="show = !show" class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-surface-400 hover:text-surface-700" :aria-label="show ? 'Sembunyikan' : 'Tampilkan'">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        </button>
+                                    </div>
+                                    <p class="{{ $hint }}">Minimal 8 karakter.</p>
+                                </div>
+                                <div class="flex justify-end">
+                                    <button type="submit" class="btn-primary"><x-icon name="check" class="w-4 h-4" /> Simpan Wi-Fi {{ $i }}</button>
+                                </div>
+                            </form>
+                        </section>
+                    @endfor
+                </div>
+                @if($wifiCards === 0)
+                    <div class="card card-body text-center text-sm text-surface-500">Modem belum melaporkan pengaturan Wi-Fi. Klik <strong>Sinkron data</strong> untuk membaca ulang.</div>
+                @endif
             </div>
         </div>
 

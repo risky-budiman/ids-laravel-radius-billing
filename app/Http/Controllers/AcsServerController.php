@@ -398,33 +398,36 @@ class AcsServerController extends Controller
         $service = \App\Services\GenieACSService::forServer($server);
 
         try {
-            // Determine valid root object path (TR-069 object paths must end with a dot)
-            $rootObject = 'InternetGatewayDevice.';
+            // Nama objek TANPA titik di akhir: GenieACS 1.2 menolak "InternetGatewayDevice." dengan fault
+            // "Invalid parameter path" (dulu setiap Sinkron data gagal dan perintahnya tertahan di antrean modem).
+            $rootObject = 'InternetGatewayDevice';
             try {
                 $devRes = $service->getDevice($deviceId);
                 if (isset($devRes['data']['Device']) && !isset($devRes['data']['InternetGatewayDevice'])) {
-                    $rootObject = 'Device.';
+                    $rootObject = 'Device';
                 }
             } catch (\Throwable $e) {}
 
+            // Bersihkan perintah sinkron rusak dari versi lama yang masih tertahan untuk modem ini
+            $cleaned = $service->deleteBrokenRefreshTasks($deviceId);
+
             $service->pushTask($deviceId, ['name' => 'refreshObject', 'objectName' => $rootObject]);
-            
+            $msg = 'Perintah sinkron terkirim. Data modem diperbarui dalam beberapa detik — muat ulang halaman.'
+                . ($cleaned ? " ({$cleaned} perintah sinkron lama yang gagal dibersihkan.)" : '');
+
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Sync task pushed in background. Device is refreshing.'
-                ]);
+                return response()->json(['success' => true, 'message' => $msg]);
             }
-            
-            return back()->with('success', "Sync task pushed. Please wait a few seconds and refresh the page.");
+
+            return back()->with('success', $msg);
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Failed to sync: " . $e->getMessage()
+                    'message' => 'Gagal sinkron: ' . $e->getMessage()
                 ], 500);
             }
-            return back()->with('error', "Failed to sync: " . $e->getMessage());
+            return back()->with('error', 'Gagal sinkron: ' . $e->getMessage());
         }
     }
 
