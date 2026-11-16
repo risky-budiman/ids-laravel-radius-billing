@@ -139,20 +139,21 @@ class WifiController extends Controller
         $params = $service->buildWifiParameters($device, $request->only(['wifi_ssid', 'wifi_password']), (int) $instance);
 
         try {
-            // Push set parameters task (includes ?timeout=5000&connection_request automatically)
-            try {
-                $service->setParameters($deviceId, $params);
-            } catch (\Exception $e) {
-                // Task may still be queued in GenieACS even if we get a timeout/empty reply
-                Log::warning("setParameters response issue (task likely queued): " . $e->getMessage());
+            // Hanya parameter yang ada di modem; hasil sebenarnya dilaporkan (dulu selalu "berhasil")
+            $result = $service->applyParameters($deviceId, $device, $params);
+            if ($result['state'] === 'failed') {
+                return response()->json(['success' => false, 'message' => 'Modem belum bisa mengubah Wi-Fi saat ini. Coba lagi nanti atau hubungi kami.'], 422);
             }
             $customer = $request->user();
-            GenieACSService::audit('acs_config_updated', $deviceId, $params,
-                ['by_customer' => $customer->customer_code ?? $customer->id, 'via' => 'aplikasi pelanggan']);
+            GenieACSService::audit('acs_config_updated', $deviceId, array_intersect_key($params, array_flip($result['sent'])),
+                ['by_customer' => $customer->customer_code ?? $customer->id, 'via' => 'aplikasi pelanggan', 'result' => $result['state']]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Perubahan Wi-Fi berhasil dikirim ke antrean. Modem akan menerapkan perubahan dalam beberapa detik.'
+                'state' => $result['state'],
+                'message' => $result['state'] === 'done'
+                    ? 'Wi-Fi sudah diubah. Sambungkan ulang perangkat Anda dengan nama/password baru.'
+                    : 'Perubahan Wi-Fi terkirim ke modem dan akan diterapkan dalam beberapa saat.',
             ]);
         } catch (\Exception $e) {
             Log::error("API Wifi Update Error for {$deviceId}: " . $e->getMessage());

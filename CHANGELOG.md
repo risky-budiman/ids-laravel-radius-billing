@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.164] - 2026-11-16
+
+### Perbaikan
+- **genieacs:** Wi-Fi and WAN changes rejected by Huawei modems; honest results; failed tasks visible
+
 ## [v1.5.163] - 2026-11-16
 
 ### Perbaikan

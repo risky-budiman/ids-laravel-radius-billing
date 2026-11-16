@@ -28,7 +28,13 @@ class GenieAcsTest extends TestCase
     {
         parent::setUp();
         $this->server = AcsServer::create(['name' => 'ACS', 'url' => 'http://acs.test:7557', 'is_active' => true]);
-        Http::fake(['acs.test:7557/*' => Http::response([['_id' => self::DEVICE_ID]], 200, ['total' => '1'])]);
+        $w = fn ($v, $t = 'xsd:string') => ['_value' => $v, '_writable' => true, '_type' => $t];
+        Http::fake(['acs.test:7557/*' => Http::response([[
+            '_id' => self::DEVICE_ID, '_deviceId' => ['_Manufacturer' => 'ZTE'],
+            'InternetGatewayDevice' => ['LANDevice' => [1 => ['WLANConfiguration' => [1 => [
+                'SSID' => $w('Lama'), 'Enable' => $w(true, 'xsd:boolean'), 'KeyPassphrase' => $w(''), 'X_ZTE-COM_KeyPassphrase' => $w(''),
+            ]]]]],
+        ]], 200, ['total' => '1'])]);
     }
 
     public function test_search_query_uses_escaped_regex(): void

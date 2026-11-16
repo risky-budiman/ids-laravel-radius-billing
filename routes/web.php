@@ -384,6 +384,8 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::post('acs-devices/{deviceId}/reboot', [\App\Http\Controllers\AcsServerController::class, 'reboot'])->name('acs-servers.reboot')->where('deviceId', '[^/]+');
         Route::post('acs-devices/{deviceId}/refresh', [\App\Http\Controllers\AcsServerController::class, 'refreshDevice'])->name('acs-servers.refresh-device')->where('deviceId', '[^/]+');
         Route::post('acs-devices/{deviceId}/update-tags', [\App\Http\Controllers\AcsServerController::class, 'updateDeviceTags'])->name('acs-servers.update-tags')->where('deviceId', '[^/]+');
+        Route::get('acs-devices/{deviceId}/queue', [\App\Http\Controllers\AcsServerController::class, 'deviceQueue'])->name('acs-servers.queue')->where('deviceId', '[^/]+');
+        Route::post('acs-devices/{deviceId}/tasks/{taskId}/delete', [\App\Http\Controllers\AcsServerController::class, 'deleteTask'])->name('acs-servers.delete-task')->where('deviceId', '[^/]+');
         Route::get('acs-devices', [\App\Http\Controllers\AcsServerController::class, 'devices'])->name('acs-servers.devices');
     });
 

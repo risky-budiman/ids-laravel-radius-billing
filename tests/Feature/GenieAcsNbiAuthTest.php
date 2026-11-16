@@ -25,7 +25,19 @@ class GenieAcsNbiAuthTest extends TestCase
     private const HUAWEI = [
         '_id' => '00E0FC-HG8245H-HWTC0001',
         '_deviceId' => ['_Manufacturer' => 'Huawei Technologies Co., Ltd'],
-        'InternetGatewayDevice' => ['LANDevice' => [1 => ['WLANConfiguration' => [1 => ['SSID' => ['_value' => 'Lama']]]]]],
+        // Bentuk seperti HG8546M asli: KeyPassphrase & PreSharedKey.1.KeyPassphrase ada, SaveConfig ada
+        'InternetGatewayDevice' => [
+            'LANDevice' => [1 => ['WLANConfiguration' => [1 => [
+                'SSID' => ['_value' => 'Lama', '_writable' => true, '_type' => 'xsd:string'],
+                'Enable' => ['_value' => true, '_writable' => true, '_type' => 'xsd:boolean'],
+                'KeyPassphrase' => ['_value' => '', '_writable' => true, '_type' => 'xsd:string'],
+                'PreSharedKey' => [1 => [
+                    'KeyPassphrase' => ['_value' => '', '_writable' => true, '_type' => 'xsd:string'],
+                    'PreSharedKey' => ['_value' => '', '_writable' => true, '_type' => 'xsd:string'],
+                ]],
+            ]]]],
+            'Services' => ['X_Huawei_SelfDefined' => ['SaveConfig' => ['_value' => false, '_writable' => true, '_type' => 'xsd:boolean']]],
+        ],
     ];
 
     public function test_basic_auth_is_sent_only_when_configured_and_401_is_explained(): void
@@ -107,6 +119,9 @@ class GenieAcsNbiAuthTest extends TestCase
 
             return in_array('InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.SSID', $names, true)
                 && in_array('InternetGatewayDevice.Services.X_Huawei_SelfDefined.SaveConfig', $names, true)
+                && in_array('InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.PreSharedKey.1.KeyPassphrase', $names, true)
+                // PreSharedKey.1.PreSharedKey hanya untuk kunci heksa 64 karakter (dulu membuat Huawei menolak, 9002)
+                && ! in_array('InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.PreSharedKey.1.PreSharedKey', $names, true)
                 && ! collect($names)->contains(fn ($n) => str_contains($n, 'X_ZTE-COM'));   // dulu dikirim ke semua merek
         });
         Http::assertNotSent(fn (HttpRequest $r) => str_contains($r->url(), 'nonaktif.test'));
@@ -114,6 +129,6 @@ class GenieAcsNbiAuthTest extends TestCase
         $log = ActivityLog::where('action', 'acs_config_updated')->sole();
         $this->assertNull($log->user_id, 'pelanggan bukan pengguna staf');
         $this->assertSame('001001000999', $log->properties['by_customer']);
-        $this->assertSame('••••', $log->properties['parameters']['InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.KeyPassphrase']);
+        $this->assertSame('••••', $log->properties['parameters']['InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.PreSharedKey.1.KeyPassphrase']);
     }
 }

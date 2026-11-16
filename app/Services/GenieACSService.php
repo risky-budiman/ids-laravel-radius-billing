@@ -162,6 +162,159 @@ class GenieACSService
         return $this->request('GET', "tasks?{$queryString}");
     }
 
+    /** Kode fault CWMP yang umum, untuk pesan ke pengguna. */
+    private const CWMP_FAULTS = [
+        '9001' => 'permintaan ditolak modem', '9002' => 'kesalahan internal modem (biasanya ada parameter/nilai yang tidak diterima)',
+        '9003' => 'argumen tidak valid', '9005' => 'nama parameter tidak dikenal modem', '9006' => 'tipe nilai salah',
+        '9007' => 'nilai parameter tidak valid', '9008' => 'parameter tidak bisa diubah',
+    ];
+
+    /** Node parameter di data perangkat (null bila tidak ada). */
+    public static function node(array $dev, string $path): ?array
+    {
+        $node = $dev;
+        foreach (explode('.', $path) as $key) {
+            if (! is_array($node) || ! array_key_exists($key, $node)) {
+                return null;
+            }
+            $node = $node[$key];
+        }
+
+        return is_array($node) ? $node : null;
+    }
+
+    /**
+     * Saring parameter terhadap data modem: hanya yang ADA dan BISA DITULIS yang dikirim, dengan tipe dari data
+     * modem (xsd:boolean → true/false, angka → int). Dulu parameter vendor yang tidak ada di modem (mis.
+     * X_Huawei_SelfDefined.SaveConfig) ikut terkirim sehingga modem menolak seluruh perintah.
+     *
+     * @param  array<string, mixed>  $params
+     * @return array{values: list<array>, skipped: list<string>}
+     */
+    public function prepareParameterValues(array $dev, array $params): array
+    {
+        $values = [];
+        $skipped = [];
+        foreach ($params as $name => $value) {
+            if (! $dev) {   // data modem tidak terbaca: kirim apa adanya
+                $values[] = [$name, $value];
+
+                continue;
+            }
+            $node = self::node($dev, $name);
+            if ($node === null || ($node['_writable'] ?? true) === false) {
+                $skipped[] = $name;
+
+                continue;
+            }
+            $type = $node['_type'] ?? null;
+            if ($type === 'xsd:boolean') {
+                $value = in_array($value, [true, 1, '1', 'true'], true);
+            } elseif (in_array($type, ['xsd:unsignedInt', 'xsd:int', 'xsd:long', 'xsd:unsignedLong'], true) && is_numeric($value)) {
+                $value = (int) $value;
+            } else {
+                $value = (string) $value;
+            }
+            $values[] = $type ? [$name, $value, $type] : [$name, $value];
+        }
+
+        return ['values' => $values, 'skipped' => $skipped];
+    }
+
+    /**
+     * Kirim perubahan parameter dan laporkan hasil yang sebenarnya. Perintah yang ditolak modem dihapus dari
+     * antrean (dulu tertahan & diulang terus, menghambat perintah lain untuk modem itu).
+     *
+     * @return array{state: string, message: string, skipped: list<string>, sent: list<string>}  state: done | queued | failed
+     */
+    public function applyParameters(string $deviceId, array $dev, array $params): array
+    {
+        $prep = $this->prepareParameterValues($dev, $params);
+        $sent = array_map(fn ($v) => $v[0], $prep['values']);
+        if (! $prep['values']) {
+            return ['state' => 'failed', 'message' => 'Tidak ada parameter yang dikenali modem ini untuk diubah. Klik Sinkron data lalu coba lagi.',
+                'skipped' => $prep['skipped'], 'sent' => []];
+        }
+
+        $task = ['name' => 'setParameterValues', 'parameterValues' => $prep['values']];
+        try {
+            $res = $this->pushTask($deviceId, $task, 15, true, 8000);
+        } catch (Exception $e) {
+            if (str_contains($e->getMessage(), 'cURL error 28') || stripos($e->getMessage(), 'timed out') !== false) {
+                return ['state' => 'queued', 'message' => 'Perintah terkirim; modem sedang memprosesnya.', 'skipped' => $prep['skipped'], 'sent' => $sent];
+            }
+            throw $e;
+        }
+
+        if (($res['status'] ?? 200) === 200) {
+            return ['state' => 'done', 'message' => 'Perubahan sudah diterapkan di modem.', 'skipped' => $prep['skipped'], 'sent' => $sent];
+        }
+
+        // 202: belum selesai — cek apakah modem menolak
+        $taskId = $res['data']['_id'] ?? null;
+        $fault = $taskId ? $this->taskFault($deviceId, (string) $taskId) : null;
+        if ($fault) {
+            try {
+                $this->request('DELETE', 'tasks/' . rawurlencode((string) $taskId));
+            } catch (Exception) {
+            }
+
+            return ['state' => 'failed', 'message' => 'Modem menolak perubahan: ' . $fault, 'skipped' => $prep['skipped'], 'sent' => $sent];
+        }
+
+        return ['state' => 'queued', 'message' => 'Perintah terkirim; modem belum terhubung ke GenieACS dan akan menerapkannya saat terhubung.',
+            'skipped' => $prep['skipped'], 'sent' => $sent];
+    }
+
+    /** Pesan fault (bahasa Indonesia) untuk satu tugas, atau null. */
+    public function taskFault(string $deviceId, string $taskId): ?string
+    {
+        try {
+            $faults = $this->request('GET', 'faults/?' . http_build_query(['query' => json_encode(['_id' => "{$deviceId}:task_{$taskId}"])]))['data'] ?? [];
+        } catch (Exception) {
+            return null;
+        }
+        $f = $faults[0] ?? null;
+
+        return $f ? self::describeFault($f) : null;
+    }
+
+    /** Fault per tugas untuk satu perangkat: [task_id => pesan]. */
+    public function deviceFaults(string $deviceId): array
+    {
+        $out = [];
+        try {
+            foreach ((array) ($this->request('GET', 'faults/?' . http_build_query(['query' => json_encode(['device' => $deviceId])]))['data'] ?? []) as $f) {
+                if (preg_match('/:task_(.+)$/', (string) ($f['_id'] ?? ''), $m)) {
+                    $out[$m[1]] = self::describeFault($f) . ' · dicoba ' . (int) ($f['retries'] ?? 0) . 'x';
+                }
+            }
+        } catch (Exception) {
+        }
+
+        return $out;
+    }
+
+    public static function describeFault(array $f): string
+    {
+        $code = (string) ($f['code'] ?? '');
+        $num = preg_replace('/\D/', '', $code);
+        $text = self::CWMP_FAULTS[$num] ?? (string) ($f['message'] ?? $code);
+
+        return trim($text . ($code ? " ({$code})" : ''));
+    }
+
+    /** Hapus satu tugas (beserta faultnya) dari antrean modem. */
+    public function deleteTask(string $deviceId, string $taskId): void
+    {
+        $this->request('DELETE', 'tasks/' . rawurlencode($taskId));
+        try {
+            $this->request('DELETE', 'faults/' . rawurlencode("{$deviceId}:task_{$taskId}"));
+        } catch (Exception) {
+            // fault ikut hilang bersama tugas di sebagian versi GenieACS
+        }
+    }
+
     /**
      * Minta modem membaca ulang seluruh parameternya. Membaca semua parameter bisa lebih dari 30 detik dan
      * NBI menahan balasan selama itu (dulu tampil "Gagal menghubungi server GenieACS"); perintah sudah tercatat
@@ -556,7 +709,7 @@ class GenieACSService
             }
         }
 
-        // 10. Huawei Flash Save
+        // 10. Huawei Flash Save (dikirim hanya bila parameternya ada di modem — lihat prepareParameterValues)
         if ($isHuawei) {
             $params["InternetGatewayDevice.Services.X_Huawei_SelfDefined.SaveConfig"] = "1";
         }
@@ -596,10 +749,19 @@ class GenieACSService
             }
             if (!empty($input['wifi_password'])) {
                 $pass = (string) $input['wifi_password'];
-                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.KeyPassphrase"] = $pass;
-                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.PreSharedKey.1.PreSharedKey"] = $pass;
-                if ($isZte) {
-                    $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.X_ZTE-COM_KeyPassphrase"] = $pass;
+                $base = "InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}";
+                // Password Wi-Fi (passphrase 8–63 karakter). PreSharedKey.1.PreSharedKey khusus kunci heksa 64
+                // karakter: dulu password biasa ikut dikirim ke sana sehingga Huawei menolak seluruh perintah (9002).
+                $has = fn ($p) => $dev && self::node($dev, $p) !== null;
+                if (preg_match('/^[0-9a-fA-F]{64}$/', $pass)) {
+                    $params["{$base}.PreSharedKey.1.PreSharedKey"] = $pass;
+                } else {
+                    // Satu parameter passphrase standar saja (yang ada di modem)
+                    $std = $has("{$base}.PreSharedKey.1.KeyPassphrase") ? "{$base}.PreSharedKey.1.KeyPassphrase" : "{$base}.KeyPassphrase";
+                    $params[$std] = $pass;
+                    if ($isZte && $has("{$base}.X_ZTE-COM_KeyPassphrase")) {
+                        $params["{$base}.X_ZTE-COM_KeyPassphrase"] = $pass;
+                    }
                 }
             }
             if ($isHuawei) {

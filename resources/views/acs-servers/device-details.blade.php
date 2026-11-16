@@ -342,12 +342,27 @@
                         <div class="card-header"><h3 class="card-title">Antrean perintah</h3></div>
                         <div class="card-body space-y-2">
                             @forelse($tasks ?? [] as $task)
-                                <div class="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-500/20 dark:bg-amber-500/10">
-                                    <div class="min-w-0">
-                                        <p class="text-sm font-medium text-amber-900 dark:text-amber-200">{{ ['setParameterValues' => 'Ubah parameter', 'reboot' => 'Reboot', 'refreshObject' => 'Sinkron data', 'factoryReset' => 'Factory reset', 'getParameterValues' => 'Baca parameter', 'addObject' => 'Tambah objek', 'deleteObject' => 'Hapus objek', 'download' => 'Unduh firmware'][$task['name']] ?? $task['name'] }}</p>
-                                        <p class="text-xs text-amber-700/80 dark:text-amber-300/70">dikirim {{ \Carbon\Carbon::parse($task['timestamp'])->locale('id')->diffForHumans() }}</p>
+                                @php
+                                    $taskFault = ($faults ?? [])[(string) ($task['_id'] ?? '')] ?? null;
+                                    $taskLabel = ['setParameterValues' => 'Ubah pengaturan', 'reboot' => 'Reboot', 'refreshObject' => 'Sinkron data', 'factoryReset' => 'Factory reset', 'getParameterValues' => 'Baca parameter', 'addObject' => 'Tambah objek', 'deleteObject' => 'Hapus objek', 'download' => 'Unduh firmware'][$task['name']] ?? $task['name'];
+                                @endphp
+                                <div class="rounded-lg border px-3 py-2 {{ $taskFault ? 'border-rose-200 bg-rose-50 dark:border-rose-500/20 dark:bg-rose-500/10' : 'border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10' }}">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-medium {{ $taskFault ? 'text-rose-900 dark:text-rose-200' : 'text-amber-900 dark:text-amber-200' }}">{{ $taskLabel }}</p>
+                                            <p class="text-xs {{ $taskFault ? 'text-rose-700/80 dark:text-rose-300/80' : 'text-amber-700/80 dark:text-amber-300/70' }}">dikirim {{ \Carbon\Carbon::parse($task['timestamp'])->locale('id')->diffForHumans() }}</p>
+                                        </div>
+                                        <span class="{{ $taskFault ? 'badge-danger' : 'badge-warning' }}">{{ $taskFault ? 'Gagal' : 'Menunggu' }}</span>
                                     </div>
-                                    <span class="badge-warning">Menunggu</span>
+                                    @if($taskFault)
+                                        <p class="mt-1 text-xs text-rose-700 dark:text-rose-300">{{ $taskFault }}</p>
+                                        <form method="POST" action="{{ route('acs-servers.delete-task', ['deviceId' => $deviceId, 'taskId' => $task['_id']]) }}" class="mt-2"
+                                              onsubmit="return confirm('Hapus perintah yang gagal ini dari antrean modem?')">
+                                            @csrf
+                                            <input type="hidden" name="server_id" value="{{ $server->id }}">
+                                            <button class="text-xs font-medium text-rose-700 underline-offset-2 hover:underline dark:text-rose-300">Hapus perintah</button>
+                                        </form>
+                                    @endif
                                 </div>
                             @empty
                                 <div class="py-6 text-center">
@@ -355,7 +370,7 @@
                                     <p class="text-sm text-surface-500">Tidak ada antrean — modem sudah sinkron.</p>
                                 </div>
                             @endforelse
-                            <p class="pt-1 text-xs text-surface-400">Perintah menunggu bila modem belum menghubungi GenieACS; dijalankan saat inform berikutnya.</p>
+                            <p class="pt-1 text-xs text-surface-400">"Menunggu" = modem belum menjalankannya (akan dijalankan saat modem menghubungi GenieACS). "Gagal" = modem menolak; perintah gagal menahan perintah lain untuk modem ini, jadi hapus lalu kirim ulang.</p>
                         </div>
                     </section>
                 </div>
@@ -678,12 +693,46 @@
                 })
                 .then(function(data) {
                     showToast(data.message || (data.success ? 'Perintah sinkron terkirim.' : 'Sinkron gagal.'), data.success ? 'success' : 'error');
+                    if (data.success) watchSync(serverId);
                 })
                 .catch(function(error) {
                     console.error(error);
                     showToast('Tidak bisa menghubungi server aplikasi. Periksa koneksi lalu coba lagi.', 'error');
                 });
             }
+
+            // Pantau antrean setiap 5 detik (maks. 2 menit): muat ulang saat sinkron selesai, beri tahu bila gagal
+            function watchSync(serverId) {
+                var url = @js(route('acs-servers.queue', ['deviceId' => $deviceId], false)) + '?server_id=' + encodeURIComponent(serverId);
+                var tries = 0;
+                var timer = setInterval(function () {
+                    tries++;
+                    fetch(url, { headers: { 'Accept': 'application/json' } })
+                        .then(function (r) { return r.json(); })
+                        .then(function (d) {
+                            if (!d.success) return;
+                            var refresh = (d.tasks || []).filter(function (t) { return t.name === 'refreshObject'; });
+                            var failed = refresh.filter(function (t) { return t.fault; });
+                            if (failed.length) {
+                                clearInterval(timer);
+                                showToast('Sinkron gagal: ' + failed[0].fault, 'error');
+                            } else if (!refresh.length) {
+                                clearInterval(timer);
+                                showToast('Sinkron selesai — memuat data terbaru…', 'success');
+                                setTimeout(function () { window.location.reload(); }, 800);
+                            }
+                        })
+                        .catch(function () {});
+                    if (tries >= 24) {
+                        clearInterval(timer);
+                        showToast('Modem belum selesai membaca data. Muat ulang halaman beberapa saat lagi.', 'info');
+                    }
+                }, 5000);
+            }
+
+            @if(session('acs_tab'))
+                document.addEventListener('DOMContentLoaded', function () { switchTab(@js(session('acs_tab'))); });
+            @endif
 
             function switchTab(tabId) {
                 // Hide all tab contents

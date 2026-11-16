@@ -256,9 +256,10 @@ class AcsServerController extends Controller
             }
             
             $wanConnections = $service->extractWanConnections($device ?? []);
+            $faults = $service->deviceFaults($deviceId);   // [task_id => alasan gagal]
             $summary = $device ? \App\Support\AcsDevice::attachCustomers(collect([\App\Support\AcsDevice::summarize((array) $device)]))->first() : null;
 
-            return view('acs-servers.device-details', compact('device', 'server', 'deviceId', 'service', 'tasks', 'wanConnections', 'summary'));
+            return view('acs-servers.device-details', compact('device', 'server', 'deviceId', 'service', 'tasks', 'wanConnections', 'summary', 'faults'));
         } catch (\Exception $e) {
             return view('acs-servers.device-details', [
                 'device' => null,
@@ -342,31 +343,64 @@ class AcsServerController extends Controller
         }
 
         try {
-            // Push set parameters task (includes ?timeout=5000&connection_request automatically)
-            // GenieACS will apply the parameters on the ONT and persist them in MongoDB upon completion
-            try {
-                $service->setParameters($deviceId, $params);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning("setParameters response issue (task likely queued): " . $e->getMessage());
+            // Hanya parameter yang ada di modem yang dikirim; hasil sebenarnya (diterapkan / antre / ditolak)
+            // dilaporkan. Dulu selalu "berhasil" walau modem menolak dan perintahnya tertahan di antrean.
+            $result = $service->applyParameters($deviceId, $deviceData, $params);
+            $ok = $result['state'] !== 'failed';
+            $label = $request->filled('wifi_ssid') || $request->filled('wifi_password') ? "Wi-Fi {$instance}" : 'WAN/PPPoE';
+            $msg = "{$label}: {$result['message']}";
+            if ($ok && $result['skipped']) {
+                $msg .= ' (' . count($result['skipped']) . ' pengaturan dilewati karena tidak ada di modem ini.)';
+            }
+            if ($ok) {
+                \App\Services\GenieACSService::audit('acs_config_updated', $deviceId, array_intersect_key($params, array_flip($result['sent'])),
+                    ['server_id' => $server->id, 'via' => 'web', 'result' => $result['state']]);
             }
 
-            \App\Services\GenieACSService::audit('acs_config_updated', $deviceId, $params, ['server_id' => $server->id, 'via' => 'web']);
-
-            $successMsg = "Konfigurasi PPPoE/Jaringan berhasil dikirim ke perangkat. Task telah masuk antrean GenieACS dan Connection Request telah dikirim.";
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => $successMsg
-                ]);
+                return response()->json(['success' => $ok, 'state' => $result['state'], 'message' => $msg, 'skipped' => $result['skipped']], $ok ? 200 : 422);
             }
 
-            return back()->with('success', $successMsg);
+            return back()->with($ok ? 'success' : 'error', $msg)
+                ->with('acs_tab', $request->filled('wifi_ssid') || $request->filled('wifi_password') ? 'tab-wireless' : 'tab-wan');
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("SSID/Config Update Error for {$deviceId}: " . $e->getMessage());
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => "Gagal mengirim konfigurasi: " . $e->getMessage()], 500);
             }
             return back()->with('error', "Gagal mengirim konfigurasi: " . $e->getMessage());
+        }
+    }
+
+    /** Antrean perintah modem (dipantau halaman detail setelah Sinkron data). */
+    public function deviceQueue(Request $request, string $deviceId)
+    {
+        $server = \App\Models\AcsServer::findOrFail($request->get('server_id'));
+        $service = \App\Services\GenieACSService::forServer($server);
+        try {
+            $faults = $service->deviceFaults($deviceId);
+            $tasks = collect($service->getTasks($deviceId)['data'] ?? [])->map(fn ($t) => [
+                'id' => (string) ($t['_id'] ?? ''), 'name' => (string) ($t['name'] ?? ''),
+                'fault' => $faults[(string) ($t['_id'] ?? '')] ?? null,
+            ])->values();
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 502);
+        }
+
+        return response()->json(['success' => true, 'tasks' => $tasks]);
+    }
+
+    /** Hapus satu perintah yang tertahan/gagal dari antrean modem. */
+    public function deleteTask(Request $request, string $deviceId, string $taskId)
+    {
+        $server = \App\Models\AcsServer::findOrFail($request->get('server_id'));
+        try {
+            \App\Services\GenieACSService::forServer($server)->deleteTask($deviceId, $taskId);
+            \App\Services\GenieACSService::audit('acs_task_deleted', $deviceId, [], ['server_id' => $server->id, 'task_id' => $taskId]);
+
+            return back()->with('success', 'Perintah dihapus dari antrean modem.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal menghapus perintah: ' . $e->getMessage());
         }
     }
 
