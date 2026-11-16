@@ -84,6 +84,16 @@ Daftar ONU per port PON HSGQ (MAC, nama, Rx power, jarak) dibaca lewat **SNMP**.
 - **OLT yang masih dipakai pelanggan tidak bisa dihapus.** Pindahkan pelanggan ke OLT lain terlebih dahulu.
 - Tambah, ubah dan hapus OLT tercatat di **Log Aktivitas** (`olt_created`, `olt_updated`, `olt_deleted`).
 
+### Memilih ONU dari OLT saat aktivasi
+
+Di **wizard aktivasi** (bagian OLT), setelah memilih *Source OLT* klik **Pilih dari OLT**:
+- daftar semua ONU di OLT tersebut dibaca lewat SNMP (posisi, MAC/SN, nama ONU, sinyal) dan bisa dicari;
+- klik satu ONU untuk mengisi **SN/MAC** dan **posisi** otomatis (format `1/1/2:5`);
+- ONU yang sudah dipakai pelanggan lain ditandai dan tidak bisa dipilih; ONU milik pelanggan yang sedang diaktifkan ditandai *Pelanggan ini*;
+- hasil baca disimpan 10 menit (sama dengan halaman port); **Baca ulang** membaca langsung dari OLT.
+
+Dipakai bila ONU sudah di-*allow* di OLT. Registrasi/allow ONU baru langsung dari aplikasi sedang disiapkan lewat API web OLT.
+
 ### Data registrasi ONU (untuk dikerjakan di OLT)
 
 - **VLAN** diambil dari isian *VLAN* pada wizard aktivasi (bawaan 100 bila kosong).

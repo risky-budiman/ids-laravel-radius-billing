@@ -361,6 +361,52 @@ class OltController extends Controller
         return response()->json(['onus' => $onus, 'status' => 'ready']);
     }
 
+    /**
+     * Daftar ONU di semua port OLT (dibaca lewat SNMP) untuk dipilih di wizard aktivasi: teknisi menautkan ONU
+     * yang sudah terdaftar/di-allow di OLT ke pelanggan tanpa mengetik SN & posisi. ONU yang sudah dipakai
+     * pelanggan lain ditandai.
+     */
+    public function onuPicker(Request $request, Olt $olt)
+    {
+        $norm = fn (?string $sn) => strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $sn));
+        $linked = \App\Models\Customer::where('olt_id', $olt->id)->whereNotNull('onu_sn')
+            ->get(['id', 'customer_code', 'name', 'onu_sn'])->keyBy(fn ($c) => $norm($c->onu_sn));
+        $forCustomer = (int) $request->query('customer_id');
+
+        $gateway = new OltGateway($olt);
+        $onus = [];
+        $failedPorts = [];
+        foreach ($olt->ponPorts()->orderBy('slot')->orderBy('pon_port')->get() as $port) {
+            $key = "olt_port_data_{$port->id}";
+            $rows = \Illuminate\Support\Facades\Cache::get($key);
+            if ($rows === null || $request->boolean('fresh')) {
+                try {
+                    $rows = $gateway->getOnusOnPort($port->shelf ?: 1, $port->slot, $port->pon_port);
+                    \Illuminate\Support\Facades\Cache::put($key, $rows, now()->addMinutes(10));
+                } catch (\Throwable $e) {
+                    $failedPorts[] = "{$port->slot}/{$port->pon_port}";
+                    continue;
+                }
+            }
+            foreach ($rows as $row) {
+                $pos = \App\Services\Network\ZteOids::parseOnuPosition((string) ($row['index'] ?? ''));
+                $owner = $linked[$norm($row['sn'] ?? '')] ?? null;
+                $onus[] = [
+                    'port' => "{$port->slot}/{$port->pon_port}",
+                    'index' => $pos ? "{$pos['shelf']}/{$pos['slot']}/{$pos['port']}:{$pos['onu_id']}" : (string) ($row['index'] ?? ''),
+                    'sn' => strtoupper((string) ($row['sn'] ?? '')),
+                    'name' => (string) ($row['name'] ?? ''),
+                    'status' => (string) ($row['status'] ?? ''),
+                    'signal' => is_numeric($row['signal'] ?? null) ? (float) $row['signal'] : null,
+                    'distance' => $row['distance'] ?? null,
+                    'customer' => $owner ? ['code' => $owner->customer_code, 'name' => $owner->name, 'self' => $owner->id === $forCustomer] : null,
+                ];
+            }
+        }
+
+        return response()->json(['onus' => $onus, 'failed_ports' => $failedPorts, 'olt' => $olt->name]);
+    }
+
     /** Perbarui cache sinyal NOC & indeks ONU pelanggan dari hasil scan port. */
     private function syncSignalCache(Olt $olt, array $onus): void
     {

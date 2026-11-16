@@ -82,6 +82,63 @@
                             <p class="text-xs text-gray-400 mt-1 italic">Example: .1.1.1.1</p>
                         </div>
 
+                        {{-- Pilih ONU langsung dari OLT (dibaca lewat SNMP): mengisi SN/MAC & posisi otomatis --}}
+                        <div class="md:col-span-2" x-data="onuPicker(@js(route('olts.onu-picker', ['olt' => '__OLT__'], false)), {{ $customer->id }})">
+                            <div class="flex flex-wrap items-center gap-3 rounded-lg border border-dashed border-primary-300 dark:border-primary-500/40 bg-primary-50/50 dark:bg-primary-500/5 px-4 py-3">
+                                <x-icon name="server" class="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                                <p class="flex-1 text-sm text-surface-700 dark:text-surface-300">
+                                    ONU sudah di-allow di OLT? Pilih dari daftar OLT — SN/MAC & posisi terisi otomatis.
+                                </p>
+                                <button type="button" class="btn-primary btn-sm" @click="open()">
+                                    <x-icon name="search" class="w-3.5 h-3.5" /> Pilih dari OLT
+                                </button>
+                            </div>
+
+                            <template x-teleport="body">
+                            <div x-show="show" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-surface-900/50 p-4" @keydown.escape.window="show = false">
+                                <div class="card w-full max-w-3xl max-h-[85vh] flex flex-col" @click.outside="show = false">
+                                    <div class="flex items-center justify-between gap-3 border-b border-surface-200 dark:border-surface-800 px-5 py-4">
+                                        <div>
+                                            <h3 class="font-semibold text-surface-900 dark:text-white">Pilih ONU dari <span x-text="oltName || 'OLT'"></span></h3>
+                                            <p class="text-xs text-surface-500">Dibaca langsung dari OLT lewat SNMP. ONU yang sudah dipakai pelanggan lain tidak bisa dipilih.</p>
+                                        </div>
+                                        <button type="button" class="btn-ghost btn-icon" @click="show = false" aria-label="Tutup"><x-icon name="x" class="w-4 h-4" /></button>
+                                    </div>
+                                    <div class="flex items-center gap-2 px-5 py-3 border-b border-surface-200 dark:border-surface-800">
+                                        <input type="search" x-model="q" class="input" placeholder="Cari MAC/SN, nama ONU atau port…">
+                                        <button type="button" class="btn-secondary btn-sm shrink-0" @click="load(true)" :disabled="loading"><x-icon name="refresh" class="w-3.5 h-3.5" /> Baca ulang</button>
+                                    </div>
+                                    <div class="flex-1 overflow-y-auto">
+                                        <p x-show="loading" class="p-6 text-center text-sm text-surface-500">Membaca ONU dari OLT…</p>
+                                        <p x-show="error" x-text="error" class="p-6 text-center text-sm text-rose-600"></p>
+                                        <p x-show="!loading && failed.length" class="px-5 pt-3 text-xs text-amber-700 dark:text-amber-400" x-text="'Port tidak terbaca: ' + failed.join(', ')"></p>
+                                        <table x-show="!loading && !error" class="w-full text-sm">
+                                            <thead class="sticky top-0 bg-surface-50 dark:bg-surface-900 text-left text-xs text-surface-500">
+                                                <tr><th class="px-5 py-2">Posisi</th><th class="py-2">MAC / SN</th><th class="py-2">Nama ONU</th><th class="py-2">Sinyal</th><th class="py-2 pr-5">Pelanggan</th></tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-surface-100 dark:divide-surface-800">
+                                                <template x-for="o in filtered()" :key="o.index + o.sn">
+                                                    <tr :class="o.customer && !o.customer.self ? 'opacity-50' : 'cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-500/10'" @click="pick(o)">
+                                                        <td class="px-5 py-2 font-mono text-xs" x-text="o.index"></td>
+                                                        <td class="py-2 font-mono text-xs" x-text="o.sn"></td>
+                                                        <td class="py-2 text-xs" x-text="o.name || '—'"></td>
+                                                        <td class="py-2 text-xs font-medium tabular-nums" :class="o.signal === null ? 'text-surface-400' : (o.signal < -27 ? 'text-rose-600' : (o.signal < -24 ? 'text-amber-600' : 'text-emerald-600'))" x-text="o.signal === null ? o.status : o.signal.toFixed(2) + ' dBm'"></td>
+                                                        <td class="py-2 pr-5 text-xs">
+                                                            <span x-show="!o.customer" class="badge-success">Belum dipakai</span>
+                                                            <span x-show="o.customer && o.customer.self" class="badge-primary">Pelanggan ini</span>
+                                                            <span x-show="o.customer && !o.customer.self" class="badge-gray" x-text="o.customer ? o.customer.code + ' · ' + o.customer.name : ''"></span>
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                        <p x-show="!loading && !error && filtered().length === 0" class="p-6 text-center text-sm text-surface-500">Tidak ada ONU yang cocok.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            </template>
+                        </div>
+
                         <div>
                             <x-input-label for="onu_type" :value="__('ONU Type/Model')" />
                             <select id="onu_type" name="onu_type" class="mt-1 input">
@@ -374,6 +431,40 @@
     @endpush
 
     @push('scripts')
+    <script>
+        // Pemilih ONU dari OLT (wizard aktivasi)
+        function onuPicker(urlTemplate, customerId) {
+            return {
+                show: false, loading: false, error: '', q: '', onus: [], failed: [], oltName: '', loadedFor: null,
+                oltId() { return document.getElementById('olt_id')?.value || ''; },
+                open() {
+                    if (!this.oltId()) { alert('Pilih Source OLT terlebih dahulu.'); return; }
+                    this.show = true;
+                    if (this.loadedFor !== this.oltId()) this.load(false);
+                },
+                load(fresh) {
+                    this.loading = true; this.error = '';
+                    const url = urlTemplate.replace('__OLT__', this.oltId()) + '?customer_id=' + customerId + (fresh ? '&fresh=1' : '');
+                    fetch(url, { headers: { 'Accept': 'application/json' } })
+                        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                        .then(d => { this.onus = d.onus || []; this.failed = d.failed_ports || []; this.oltName = d.olt; this.loadedFor = this.oltId(); })
+                        .catch(e => { this.error = 'Gagal membaca OLT: ' + e.message; })
+                        .finally(() => this.loading = false);
+                },
+                filtered() {
+                    const q = this.q.toLowerCase().replace(/[^a-z0-9/:. ]/g, '');
+                    if (!q) return this.onus;
+                    return this.onus.filter(o => (o.sn + ' ' + o.sn.replace(/[^A-Z0-9]/g, '') + ' ' + o.name + ' ' + o.index + ' ' + o.port).toLowerCase().includes(q));
+                },
+                pick(o) {
+                    if (o.customer && !o.customer.self) return;
+                    document.getElementById('onu_sn').value = o.sn;
+                    document.getElementById('onu_index').value = o.index;
+                    this.show = false;
+                },
+            };
+        }
+    </script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
     <script>

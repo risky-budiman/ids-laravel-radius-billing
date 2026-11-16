@@ -163,6 +163,8 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
     Route::middleware('role:administrator,admin,teknisi')->group(function () {
         Route::get('customers/{customer}/activate', [\App\Http\Controllers\CustomerActivationController::class, 'index'])->name('customers.activate');
         Route::post('customers/{customer}/activate', [\App\Http\Controllers\CustomerActivationController::class, 'store'])->name('customers.activate.store');
+        // Pilih ONU langsung dari daftar OLT (SNMP) di wizard aktivasi
+        Route::get('olts/{olt}/onu-picker', [\App\Http\Controllers\OltController::class, 'onuPicker'])->name('olts.onu-picker');
         
         // Dismantle logic
         Route::post('customers/{customer}/request-dismantle', [\App\Http\Controllers\CustomerActivationController::class, 'requestDismantle'])->name('customers.request-dismantle');

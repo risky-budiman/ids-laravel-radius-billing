@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.148] - 2026-11-16
+
+### Fitur baru
+- **activation:** Pick the ONU straight from the OLT in the activation wizard
+
 ## [v1.5.147] - 2026-11-16
 
 ### Perbaikan
