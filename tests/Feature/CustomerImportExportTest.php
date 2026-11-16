@@ -84,6 +84,22 @@ class CustomerImportExportTest extends TestCase
         }
     }
 
+    public function test_index_buttons_follow_role_and_render_no_raw_directives(): void
+    {
+        $this->actingAs($this->admin)->get(route('customers.index'))->assertOk()
+            ->assertSee(route('customers.import.index'))->assertSee('with_passwords=1', false)
+            ->assertDontSee('\if(', false)->assertDontSee('\endif', false)->assertDontSee('\unless', false);
+
+        $teknisi = User::factory()->create(['role' => 'teknisi', 'is_active' => true]);
+        $this->actingAs($teknisi)->get(route('customers.index'))->assertOk()
+            ->assertDontSee(route('customers.import.index'))->assertDontSee(route('customers.export'))
+            ->assertSee(route('customers.create'));
+
+        $cs = User::factory()->create(['role' => 'cs', 'is_active' => true]);
+        $this->actingAs($cs)->get(route('customers.index'))->assertOk()
+            ->assertDontSee(route('customers.create'))->assertDontSee(route('customers.export'));
+    }
+
     public function test_update_mode_keeps_blank_columns_and_password_and_ignores_status(): void
     {
         $c = $this->existing();

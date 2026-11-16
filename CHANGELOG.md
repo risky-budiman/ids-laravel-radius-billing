@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.133] - 2026-11-16
+
+### Perbaikan
+- **customers:** List header showed raw Blade directives; import/export and add buttons follow role again
+
 ## [v1.5.132] - 2026-11-16
 
 ### Perbaikan
