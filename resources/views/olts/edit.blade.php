@@ -93,6 +93,16 @@
                         @error('snmp_write_community') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
+                    <!-- Metode akses -->
+                    <div class="md:col-span-2 space-y-2">
+                        <label for="access_method" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Metode Akses</label>
+                        <select name="access_method" id="access_method" class="w-full md:w-1/2 rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
+                            <option value="snmp_telnet" @selected(old('access_method', $olt->access_method ?: 'snmp_telnet') === 'snmp_telnet')>SNMP + Telnet (pemantauan + registrasi/hapus/isolir ONU otomatis)</option>
+                            <option value="snmp" @selected(old('access_method', $olt->access_method ?: 'snmp_telnet') === 'snmp')>SNMP saja (tanpa telnet)</option>
+                        </select>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">SNMP saja: pemantauan, sinyal & daftar ONU (ZTE) tetap jalan; registrasi, hapus & ganti profil ONU <strong>tidak dijalankan otomatis</strong> (dicatat di Log Aktivitas untuk dikerjakan manual di OLT), isolir cukup lewat RADIUS. Daftar ONU OLT HSGQ masih membutuhkan telnet. Kolom telnet di bawah boleh dikosongkan.</p>
+                    </div>
+
                     <!-- CLI / Telnet Section (Optional) -->
                     <div class="md:col-span-2 mt-4">
                         <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">Konfigurasi CLI / Telnet (Opsional, hanya untuk provisioning)</h3>

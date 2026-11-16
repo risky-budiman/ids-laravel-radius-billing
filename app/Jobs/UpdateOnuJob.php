@@ -41,6 +41,14 @@ class UpdateOnuJob implements ShouldQueue
         if ($this->action === 'update_speed' && ! $this->profile) {
             return;   // paket tanpa profil T-CONT: kecepatan cukup diatur RADIUS
         }
+        // OLT mode SNMP saja: isolir/buka cukup lewat RADIUS; ganti profil T-CONT dicatat agar dikerjakan manual
+        if (! $olt->usesTelnet()) {
+            if ($this->action === 'update_speed') {
+                $this->audit('onu_action_skipped', "Ganti profil ONU {$this->onuIndex} ke {$this->profile} dilewati: {$olt->name} memakai mode SNMP saja. Ubah manual di OLT bila perlu.", $olt);
+            }
+
+            return;
+        }
 
         $gateway = $this->gateway($olt);
         if ($this->sn) {

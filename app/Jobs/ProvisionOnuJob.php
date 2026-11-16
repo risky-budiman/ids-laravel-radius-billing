@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Services\Network\OltGateway;
 use Illuminate\Bus\Queueable;
@@ -27,6 +28,14 @@ class ProvisionOnuJob implements ShouldQueue
         $customer = Customer::with('olt', 'package')->find($this->customerId);
         if (!$customer || !$customer->olt || !$customer->onu_sn) {
             Log::warning("Provisioning Job: Missing data for customer ID {$this->customerId}");
+            return;
+        }
+
+        // OLT mode SNMP saja: tidak ada telnet — staf mendaftarkan ONU manual di OLT
+        if (! $customer->olt->usesTelnet()) {
+            ActivityLog::create(['action' => 'onu_provision_skipped', 'subject_type' => Customer::class, 'subject_id' => $customer->id,
+                'description' => "Registrasi otomatis ONU {$customer->onu_sn} ({$customer->name}) dilewati: {$customer->olt->name} memakai mode SNMP saja. Daftarkan ONU manual di OLT."]);
+
             return;
         }
 

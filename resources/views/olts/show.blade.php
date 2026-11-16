@@ -138,10 +138,17 @@
                             <span class="text-xs text-gray-500">Perbarui metrik port fisik di latar belakang</span>
                         </button>
                     </form>
+                    @if($olt->usesTelnet())
                     <button onclick="document.getElementById('manual-delete-modal').classList.remove('hidden')" class="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-xl text-left hover:bg-rose-100 transition-all group md:col-span-2">
                         <span class="block font-bold text-rose-700 dark:text-rose-400 group-hover:text-rose-800">Hapus ONU Manual</span>
                         <span class="text-xs text-rose-500">Hapus paksa konfigurasi ONU langsung dari OLT</span>
                     </button>
+                    @else
+                    <div class="p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl md:col-span-2">
+                        <span class="block font-bold text-gray-600 dark:text-gray-300">Mode SNMP saja</span>
+                        <span class="text-xs text-gray-500">Registrasi, hapus & ganti profil ONU butuh telnet sehingga tidak dijalankan dari sini — kerjakan manual di OLT. Ubah metode akses di <em>Ubah OLT</em> bila ingin otomatis.</span>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>

@@ -22,6 +22,7 @@ class Olt extends Model
         'password',
         'enable_password',
         'olt_type',
+        'access_method',
         'is_active',
         'description',
         'latitude',
@@ -48,6 +49,15 @@ class Olt extends Model
     public function ponPorts(): HasMany
     {
         return $this->hasMany(OltPonPort::class);
+    }
+
+    public const ACCESS_SNMP_TELNET = 'snmp_telnet';
+    public const ACCESS_SNMP = 'snmp';
+
+    /** Mode "SNMP saja": tidak ada perintah telnet ke OLT ini. */
+    public function usesTelnet(): bool
+    {
+        return ($this->access_method ?: self::ACCESS_SNMP_TELNET) !== self::ACCESS_SNMP;
     }
 
     public function customers(): HasMany

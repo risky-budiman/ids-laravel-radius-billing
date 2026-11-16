@@ -36,6 +36,11 @@ class DeprovisionOnuJob implements ShouldQueue
 
             return;
         }
+        if (! $olt->usesTelnet()) {
+            $this->audit('onu_delete_skipped', "Hapus otomatis ONU {$this->sn} ({$this->onuIndex}) dilewati: {$olt->name} memakai mode SNMP saja. Hapus manual di OLT.");
+
+            return;
+        }
         if (str_contains(strtoupper((string) $olt->olt_type), 'HSGQ')) {
             $this->audit('onu_delete_failed', "Hapus ONU {$this->sn} di {$olt->name}: OLT HSGQ belum didukung — hapus manual di OLT.");
 

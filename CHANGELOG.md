@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.141] - 2026-11-16
+
+### Fitur baru
+- **olt:** Per-OLT access method "SNMP + Telnet" / "SNMP only"
+
 ## [v1.5.140] - 2026-11-16
 
 ### Fitur baru

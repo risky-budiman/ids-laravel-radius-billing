@@ -284,6 +284,10 @@ class OltGateway
     {
         // ── 1. Khusus Tipe OLT HSGQ (EPON / GPON) ──
         if (str_contains(strtoupper($this->olt->olt_type ?? ''), 'HSGQ')) {
+            // Daftar ONU HSGQ masih lewat telnet: OID tabel ONU HSGQ belum tersedia (butuh MIB vendor)
+            if (! $this->olt->usesTelnet()) {
+                throw new \RuntimeException('Daftar ONU OLT HSGQ masih membutuhkan telnet (OID ONU HSGQ belum tersedia). Ubah metode akses ke SNMP + Telnet.');
+            }
             Log::info("HSGQ: Fetching ONUs on PON port {$port} for OLT: {$this->olt->name}");
             $cliService = new HsgqCliService($this->olt);
             return $cliService->getOnusOnPort($port);
@@ -688,6 +692,11 @@ class OltGateway
     /** Jalankan operasi tulis lewat service telnet & simpan alasan gagalnya. */
     protected function telnetWrite(callable $op): mixed
     {
+        if (! $this->olt->usesTelnet()) {
+            $this->lastWriteError = 'OLT memakai mode SNMP saja; perintah telnet tidak dijalankan.';
+
+            return false;
+        }
         $service = $this->provisioningService();
         $result = $op($service);
         $this->lastWriteError = $result === false ? ($service->lastError() ?? 'Operasi telnet gagal.') : null;

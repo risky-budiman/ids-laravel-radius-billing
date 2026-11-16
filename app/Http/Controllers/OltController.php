@@ -44,6 +44,7 @@ class OltController extends Controller
             'password' => 'nullable|string',
             'enable_password' => 'nullable|string',
             'olt_type' => 'required|string',
+            'access_method' => 'nullable|in:snmp_telnet,snmp',
             'is_active' => 'nullable',
             'description' => 'nullable|string',
             'latitude' => 'nullable|string',
@@ -53,6 +54,7 @@ class OltController extends Controller
         $validated['snmp_write_community'] = $validated['snmp_write_community'] ?? 'private';
         $validated['telnet_port'] = $validated['telnet_port'] ?? 23;
         $validated['is_active'] = $request->has('is_active');
+        $validated['access_method'] = $validated['access_method'] ?? Olt::ACCESS_SNMP_TELNET;
         $olt = Olt::create($validated);
 
         \App\Models\ActivityLog::log('olt_created', "OLT '{$olt->name}' ({$olt->ip_address}) ditambahkan.", $olt);
@@ -117,6 +119,7 @@ class OltController extends Controller
             'password' => 'nullable|string',
             'enable_password' => 'nullable|string',
             'olt_type' => 'required|string',
+            'access_method' => 'nullable|in:snmp_telnet,snmp',
             'is_active' => 'nullable',
             'description' => 'nullable|string',
             'latitude' => 'nullable|string',
@@ -125,6 +128,10 @@ class OltController extends Controller
 
         $validated['telnet_port'] = $validated['telnet_port'] ?? 23;
         $validated['is_active'] = $request->has('is_active');
+
+        if (blank($validated['access_method'] ?? null)) {
+            unset($validated['access_method']);
+        }
 
         // Kredensial & community tidak ditampilkan di form: kosong = tetap memakai yang lama
         foreach (['password', 'enable_password', 'snmp_read_community', 'snmp_write_community'] as $secret) {
@@ -253,6 +260,9 @@ class OltController extends Controller
      */
     public function manualDeleteOnu(Request $request, Olt $olt)
     {
+        if (! $olt->usesTelnet()) {
+            return back()->with('error', 'OLT ini memakai mode SNMP saja; hapus ONU harus dilakukan langsung di OLT.');
+        }
         $data = $request->validate([
             'onu_index' => 'required|string|max:40',
             'onu_sn' => 'required|string|max:32|regex:/^[A-Za-z0-9]+$/',

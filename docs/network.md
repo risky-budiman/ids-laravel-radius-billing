@@ -48,6 +48,16 @@ Sistem mendukung integrasi ke OLT ZTE (C300, C320, C600) dan HSGQ. Pemantauan me
 - Bila OLT tidak merespons SNMP, halaman menampilkan pesan gagal dan **daftar terakhir tetap ditampilkan** — port tidak lagi dianggap kosong dan statusnya tidak diubah.
 - Deteksi ulang port PON berjalan dalam satu transaksi: bila gagal di tengah, status port tidak berubah.
 
+### Metode akses OLT: SNMP + Telnet / SNMP saja
+
+Di **Ubah OLT → Metode Akses**:
+- **SNMP + Telnet** (bawaan): pemantauan lewat SNMP; registrasi, hapus, isolir dan ganti profil ONU otomatis lewat telnet.
+- **SNMP saja**: tidak ada perintah telnet ke OLT. Pemantauan, sinyal dan daftar ONU (ZTE) tetap berjalan, sedangkan:
+  - **registrasi, hapus dan ganti profil ONU tidak dijalankan otomatis**. Setiap kejadian dicatat di Log Aktivitas (`onu_provision_skipped`, `onu_delete_skipped`, `onu_action_skipped`) agar dikerjakan manual di OLT;
+  - isolir/buka cukup lewat RADIUS (ONU tidak di-*shutdown*);
+  - tombol *Hapus ONU Manual* diganti keterangan;
+  - **daftar ONU OLT HSGQ masih membutuhkan telnet**, karena OID tabel ONU HSGQ belum tersedia (butuh MIB vendor).
+
 ### Hak akses & kredensial OLT
 
 - **Tambah, ubah dan hapus OLT hanya administrator.** Teknisi tetap bisa melihat OLT, tes koneksi, sinkron port dan melihat ONU.
