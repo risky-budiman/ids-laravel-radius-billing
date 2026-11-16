@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.147] - 2026-11-16
+
+### Perbaikan
+- **olt:** OLT list returned 500 on servers using the database cache
+
 ## [v1.5.146] - 2026-11-16
 
 ### Fitur baru

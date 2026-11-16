@@ -49,7 +49,7 @@ class NocOltPortTest extends TestCase
             $up->id => ['status' => 'online', 'cpu' => 91, 'temp' => 40, 'uptime' => '3d 4h'],
             $down->id => ['status' => 'offline', 'cpu' => 0, 'temp' => 0, 'uptime' => 'N/A'],
         ], 300);
-        Cache::put('noc_olt_stats_at', now()->subMinutes(2), 300);
+        Cache::put('noc_olt_stats_at', now()->subMinutes(2)->getTimestamp(), 300);
         $teknisi = User::factory()->create(['role' => 'teknisi', 'is_active' => true]);
 
         $t = microtime(true);
@@ -61,6 +61,23 @@ class NocOltPortTest extends TestCase
             ->assertSee('Dicek 2 menit yang lalu')
             ->assertDontSee(route('olts.edit', $up));   // teknisi tidak bisa mengubah
         $this->assertLessThan(3, microtime(true) - $t, 'halaman daftar tidak boleh memindai SNMP');
+    }
+
+    public function test_olt_list_works_with_the_database_cache_store(): void
+    {
+        // Server memakai CACHE_STORE=database + serializable_classes=false: objek (Carbon) di cache rusak saat
+        // dibaca kembali. Dulu waktu pengecekan disimpan sebagai Carbon -> halaman Data OLT error 500.
+        config(['cache.default' => 'database']);
+        $olt = $this->olt('OLT DB');
+        Cache::put('noc_olt_stats', [$olt->id => ['status' => 'online', 'cpu' => 5, 'temp' => 30, 'uptime' => '1d']], 300);
+        Cache::put('noc_olt_stats_at', now()->getTimestamp(), 300);
+        $teknisi = User::factory()->create(['role' => 'teknisi', 'is_active' => true]);
+
+        $this->actingAs($teknisi)->get(route('olts.index'))->assertOk()->assertSee('Dicek');
+
+        // Nilai lama yang rusak (objek) dibaca sebagai "belum dicek", bukan error
+        Cache::put('noc_olt_stats_at', now(), 300);
+        $this->actingAs($teknisi)->get(route('olts.index'))->assertOk();
     }
 
     public function test_port_page_uses_cache_and_rejects_ports_of_other_olts(): void

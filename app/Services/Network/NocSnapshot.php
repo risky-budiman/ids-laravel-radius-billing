@@ -24,7 +24,8 @@ class NocSnapshot
         }
 
         return Cache::remember('noc_olt_stats', self::TTL, function () use ($olts) {
-            Cache::put('noc_olt_stats_at', now(), self::TTL);
+            // Timestamp angka (bukan objek Carbon): cache server menolak unserialize objek
+            Cache::put('noc_olt_stats_at', now()->getTimestamp(), self::TTL);
             $data = [];
             foreach ($olts as $olt) {
                 try {
@@ -46,7 +47,9 @@ class NocSnapshot
 
     public static function cachedAt(): ?\Illuminate\Support\Carbon
     {
-        return Cache::get('noc_olt_stats_at');
+        $at = Cache::get('noc_olt_stats_at');
+
+        return is_int($at) ? \Illuminate\Support\Carbon::createFromTimestamp($at, config('app.timezone')) : null;
     }
 
     /**
