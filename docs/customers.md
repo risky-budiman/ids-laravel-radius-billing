@@ -72,6 +72,7 @@ Hanya **admin & administrator** (menu Pelanggan → *Impor Data* / *Ekspor Data*
 ### Impor
 1. Unduh **template**, isi sheet *Format Import* (lihat sheet *Contoh & Panduan*). Kolom username, password, No. HP, ID pelanggan, NIK dan SN ONU sudah berformat **teks** — jangan diubah ke angka, karena Excel menghapus angka 0 di depan dan membulatkan NIK 16 digit.
 2. Pilih file lalu klik **Cek dulu (pratinjau)**. Belum ada data yang disimpan; sistem menampilkan rencana per baris (*dibuat* / *diperbarui*), baris yang akan dilewati beserta alasannya, dan catatan. Bila sudah sesuai klik **Impor sekarang** (file tidak perlu diunggah ulang). Tombol **Langsung impor** melewati pratinjau.
+   - **File besar (lebih dari 300 baris)** diproses di **latar belakang**: halaman menampilkan bilah kemajuan ("Baris 125 dari 2.000") dan hasilnya muncul sendiri saat selesai. Halaman boleh ditutup; buka lagi lewat tautan yang sama. Proses dimulai paling lambat ±1 menit oleh jadwal server (butuh cron `schedule:run`). Bila impor gagal di tengah jalan, baris yang sudah masuk tetap tersimpan; unggah ulang dengan mode *Lewati* untuk melanjutkan sisanya.
 3. Pilih cara menangani username yang sudah ada:
    - **Lewati** — baris dengan username yang sudah ada tidak diproses.
    - **Perbarui** — hanya kolom yang **diisi** di file yang diubah. Kolom kosong — termasuk password — **tidak** menghapus data lama, jadi file hasil ekspor tanpa password aman diimpor ulang.

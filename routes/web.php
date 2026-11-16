@@ -123,6 +123,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
             Route::get('customers/import/template', [\App\Http\Controllers\CustomerImportController::class, 'downloadTemplate'])->name('customers.import.template');
             Route::get('customers/export', [\App\Http\Controllers\CustomerImportController::class, 'export'])->name('customers.export');
             Route::post('customers/import', [\App\Http\Controllers\CustomerImportController::class, 'store'])->name('customers.import.store');
+            Route::get('customers/import/runs/{run}', [\App\Http\Controllers\CustomerImportController::class, 'status'])->name('customers.import.status');
         });
 
         Route::post('customers/bulk-action', [\App\Http\Controllers\CustomerController::class, 'bulkAction'])->name('customers.bulk-action');

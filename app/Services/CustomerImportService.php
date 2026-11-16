@@ -408,6 +408,21 @@ class CustomerImportService
      * (dulu nilai yang tidak dikenal diam-diam diganti nilai bawaan). Dengan opsi `dry_run` tidak ada yang
      * disimpan: hasilnya pratinjau aksi per baris (dibuat / diperbarui / dilewati).
      */
+    /** Jumlah baris data (tanpa judul) untuk memutuskan impor langsung atau di latar belakang. */
+    public function countDataRows(string $filePath): int
+    {
+        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($filePath);
+        $reader->setReadDataOnly(true);
+        $info = method_exists($reader, 'listWorksheetInfo') ? $reader->listWorksheetInfo($filePath) : [];
+        if ($info) {
+            $sheet = collect($info)->firstWhere('worksheetName', 'Format Import') ?? $info[0];
+
+            return max(0, (int) ($sheet['totalRows'] ?? 0) - 1);
+        }
+
+        return max(0, $reader->load($filePath)->getActiveSheet()->getHighestDataRow() - 1);
+    }
+
     public function importFile(string $filePath, array $options = []): array
     {
         $duplicateAction = $options['duplicate_action'] ?? 'skip'; // 'skip' or 'update'
@@ -468,9 +483,18 @@ class CustomerImportService
         $seenUsernames = [];
         $seenKtp = [];
 
+        // Impor latar belakang: laporkan kemajuan (baris ke-n dari total baris data) tiap 25 baris
+        $progress = $options['progress'] ?? null;
+        $dataRows = max(0, count($rows) - $startIndex);
+        $seen = 0;
+
         foreach ($rows as $rowIndex => $row) {
             if ($rowIndex <= $startIndex) {
                 continue;
+            }
+            $seen++;
+            if ($progress && ($seen % 25 === 0 || $seen === $dataRows)) {
+                $progress($seen, $dataRows);
             }
 
             $rawCell = fn (string $key) => isset($colMap[$key]) ? ($row[$colMap[$key]] ?? null) : null;

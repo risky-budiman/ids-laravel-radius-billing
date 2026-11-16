@@ -29,6 +29,11 @@ Schedule::command('noc:monitor')->everyFiveMinutes()->withoutOverlapping(30)->wh
 Schedule::command('noc:prune 30')->dailyAt('03:20')->when(fn () => (int) get_setting('noc_monitor_interval', 0) > 0);
 
 // FUP & Quota Management
+// Impor pelanggan file besar: HANYA antrean "imports" (antrean lain tidak disentuh agar pesan WhatsApp lama
+// yang mungkin menumpuk tidak ikut terkirim). Berhenti sendiri bila antrean kosong.
+Schedule::command('queue:work --queue=imports --stop-when-empty --tries=1 --timeout=3300 --max-time=3300')
+    ->everyMinute()->withoutOverlapping(60)->runInBackground();
+
 Schedule::command('app:sync-usage')->everyFiveMinutes();
 Schedule::command('app:reset-usage')->monthlyOn(1, '00:00');
 

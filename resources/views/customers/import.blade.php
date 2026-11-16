@@ -48,9 +48,44 @@
             </div>
         @endif
 
+        {{-- Proses latar belakang (file besar) --}}
+        @php
+            $importResult = session('import_result');
+            if (! $importResult && isset($run) && $run && $run->status === 'done' && is_array($run->result)) {
+                $pendingImport = session('import_pending');
+                $importResult = $run->result + ['file_name' => $run->file_name, 'duplicate_action' => $run->duplicate_action,
+                    // "Impor sekarang" hanya bila file pratinjau ini masih yang tertunda di sesi ini
+                    'token' => $run->mode === 'preview' && ($pendingImport['token'] ?? null) === $run->id ? $run->id : null];
+            }
+        @endphp
+        @if(isset($run) && $run && ! $run->isFinished())
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-indigo-200 dark:border-indigo-800 p-6 shadow-sm"
+                 x-data="{ s: @js(['status' => $run->status, 'percent' => $run->percent(), 'processed' => $run->processed_rows, 'total' => $run->total_rows, 'started' => (bool) $run->started_at]) }"
+                 x-init="const t = setInterval(() => fetch(@js(route('customers.import.status', $run, false)), { headers: { Accept: 'application/json' } })
+                     .then(r => r.json()).then(d => { s = d; if (d.status === 'done' || d.status === 'failed') { clearInterval(t); location.reload(); } }).catch(() => {}), 3000)">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <h4 class="font-bold text-base text-gray-900 dark:text-white">{{ $run->mode === 'preview' ? 'Pratinjau' : 'Impor' }} berjalan di latar belakang</h4>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">File <span class="font-mono">{{ $run->file_name }}</span> · halaman boleh ditutup, hasil tetap tersimpan.</p>
+                    </div>
+                    <span class="text-2xl font-semibold tabular-nums text-indigo-600 dark:text-indigo-400" x-text="s.percent + '%'"></span>
+                </div>
+                <div class="mt-4 h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                    <div class="h-full rounded-full bg-indigo-600 transition-all" :style="'width:' + Math.max(2, s.percent) + '%'"></div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400"
+                   x-text="!s.started ? 'Menunggu giliran… (dimulai paling lambat ±1 menit oleh jadwal server)' : ('Baris ' + s.processed + ' dari ' + s.total)"></p>
+            </div>
+        @elseif(isset($run) && $run && $run->status === 'failed')
+            <div class="rounded-xl border border-rose-200 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300">
+                <strong>{{ $run->mode === 'preview' ? 'Pratinjau' : 'Impor' }} file {{ $run->file_name }} gagal:</strong> {{ $run->error }}
+                @if($run->mode === 'import') Baris yang sudah masuk tetap tersimpan; unggah ulang dengan mode <em>Lewati</em> untuk melanjutkan sisanya. @endif
+            </div>
+        @endif
+
         <!-- Import Results Detail (If any) -->
-        @if(session('import_result'))
-            @php $res = session('import_result'); $isPreview = ! empty($res['dry_run']); @endphp
+        @if($importResult)
+            @php $res = $importResult; $isPreview = ! empty($res['dry_run']); @endphp
             <div class="bg-white dark:bg-gray-800 rounded-xl border {{ $isPreview ? 'border-indigo-200 dark:border-indigo-800' : 'border-gray-100 dark:border-gray-700' }} p-6 shadow-sm space-y-4">
                 @if($isPreview)
                     <div class="flex flex-wrap items-start justify-between gap-3">

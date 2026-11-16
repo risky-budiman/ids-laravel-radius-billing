@@ -20,9 +20,44 @@ class CustomerImportController extends Controller
     /**
      * Show import form & guidelines
      */
-    public function index()
+    /** File dengan baris data lebih dari ini diproses di latar belakang (halaman tidak menunggu). */
+    public static int $backgroundRows = 300;
+
+    public function index(Request $request)
     {
-        return view('customers.import');
+        $run = null;
+        if ($id = $request->query('run')) {
+            $run = \App\Models\ImportRun::find($id);
+            abort_unless($run && ($run->user_id === auth()->id() || auth()->user()->isAdministrator()), 404);
+        }
+
+        return view('customers.import', ['run' => $run]);
+    }
+
+    /** Status proses latar belakang (dipantau halaman impor). */
+    public function status(\App\Models\ImportRun $run)
+    {
+        abort_unless($run->user_id === auth()->id() || auth()->user()->isAdministrator(), 404);
+
+        return response()->json(['status' => $run->status, 'percent' => $run->percent(), 'processed' => $run->processed_rows,
+            'total' => $run->total_rows, 'error' => $run->error, 'started' => (bool) $run->started_at]);
+    }
+
+    /** Antrekan pratinjau/impor file besar; halaman impor memantau kemajuannya. */
+    private function queueRun(string $mode, string $path, string $name, string $duplicateAction, int $rows, ?string $id = null)
+    {
+        $run = new \App\Models\ImportRun([
+            'user_id' => auth()->id(), 'mode' => $mode, 'file_name' => $name, 'path' => $path,
+            'duplicate_action' => $duplicateAction, 'total_rows' => $rows,
+        ]);
+        if ($id) {
+            $run->id = $id;   // pratinjau: id = token sesi, agar "Impor sekarang" melanjutkan file yang sama
+        }
+        $run->save();
+        \App\Jobs\RunCustomerImport::dispatch($run->id);
+
+        return redirect()->route('customers.import.index', ['run' => $run->id])
+            ->with('success', ($mode === 'preview' ? 'Pratinjau' : 'Impor') . " {$rows} baris berjalan di latar belakang. Halaman ini boleh ditutup; hasilnya tetap tersimpan.");
     }
 
     /**
@@ -69,9 +104,13 @@ class CustomerImportController extends Controller
                 if (! $pending || $pending['token'] !== $request->input('token') || ! $disk->exists($pending['path'])) {
                     return redirect()->route('customers.import.index')->with('error', 'Pratinjau sudah kedaluwarsa. Unggah file lagi.');
                 }
+                session()->forget('import_pending');
+                $rows = $this->importService->countDataRows($disk->path($pending['path']));
+                if ($rows > self::$backgroundRows) {
+                    return $this->queueRun('import', $pending['path'], $pending['name'], $options['duplicate_action'], $rows);
+                }
                 $result = $this->importService->importFile($disk->path($pending['path']), $options);
                 $disk->delete($pending['path']);
-                session()->forget('import_pending');
 
                 return $this->finishImport($result, $pending['name']);
             }
@@ -80,7 +119,6 @@ class CustomerImportController extends Controller
 
             // 2) Pratinjau (dry-run): tidak ada yang disimpan; file disimpan sementara untuk dilanjutkan
             if ($request->input('mode') === 'preview') {
-                $result = $this->importService->importFile($file->getRealPath(), $options + ['dry_run' => true]);
                 $old = session('import_pending');
                 if ($old) {
                     $disk->delete($old['path']);
@@ -90,11 +128,25 @@ class CustomerImportController extends Controller
                 session(['import_pending' => ['token' => $token, 'path' => $path, 'name' => $file->getClientOriginalName(),
                     'duplicate_action' => $options['duplicate_action']]]);
 
+                $rows = $this->importService->countDataRows($disk->path($path));
+                if ($rows > self::$backgroundRows) {
+                    // id proses = token, sehingga "Impor sekarang" dari hasil pratinjau memakai file yang sama
+                    return $this->queueRun('preview', $path, $file->getClientOriginalName(), $options['duplicate_action'], $rows, $token);
+                }
+                $result = $this->importService->importFile($disk->path($path), $options + ['dry_run' => true]);
+
                 return redirect()->route('customers.import.index')
                     ->with('import_result', $result + ['token' => $token, 'file_name' => $file->getClientOriginalName(), 'duplicate_action' => $options['duplicate_action']]);
             }
 
             // 3) Impor langsung
+            $rows = $this->importService->countDataRows($file->getRealPath());
+            if ($rows > self::$backgroundRows) {
+                $path = $file->storeAs('imports', \Illuminate\Support\Str::uuid() . '.' . ($file->getClientOriginalExtension() ?: 'xlsx'), 'local');
+
+                return $this->queueRun('import', $path, $file->getClientOriginalName(), $options['duplicate_action'], $rows);
+            }
+
             return $this->finishImport($this->importService->importFile($file->getRealPath(), $options), $file->getClientOriginalName());
         } catch (Exception $e) {
             return redirect()->route('customers.import.index')

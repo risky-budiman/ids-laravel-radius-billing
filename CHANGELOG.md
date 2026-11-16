@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.158] - 2026-11-16
+
+### Fitur baru
+- **import:** Large customer imports run in the background with progress
+
 ## [v1.5.157] - 2026-11-16
 
 ### Fitur baru
