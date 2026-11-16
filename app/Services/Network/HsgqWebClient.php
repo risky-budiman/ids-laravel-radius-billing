@@ -116,4 +116,49 @@ class HsgqWebClient
     {
         return $this->get('onu_allow_list', ['port_id' => $port]);
     }
+
+    /**
+     * Nama & deskripsi ONU per port dari web OLT (SNMP HSGQ tidak memuat deskripsi), dikunci MAC tanpa pemisah
+     * huruf besar. Endpoint dicoba berurutan karena tiap firmware HSGQ berbeda; endpoint yang 404 dilewati.
+     *
+     * @return array<string, array{name: string, description: string}>
+     */
+    public function onuDescriptions(int $port): array
+    {
+        $out = [];
+        $lastError = null;
+        foreach (['onu_info', 'onu_list', 'onu_allow_list'] as $endpoint) {
+            try {
+                $rows = $this->get($endpoint, ['port_id' => $port]);
+            } catch (RuntimeException $e) {
+                if (str_contains($e->getMessage(), 'Login') || str_contains($e->getMessage(), 'belum diisi') || str_contains($e->getMessage(), 'dihubungi')) {
+                    throw $e;
+                }
+                $lastError = $e;
+                continue;
+            }
+            foreach ($rows as $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+                $mac = strtoupper(preg_replace('/[^A-Fa-f0-9]/', '', (string) ($row['macaddr'] ?? $row['mac'] ?? $row['onu_sn'] ?? $row['sn'] ?? '')));
+                $desc = trim((string) ($row['onu_desc'] ?? $row['desc'] ?? $row['description'] ?? ''));
+                if ($mac === '' || ($desc === '' && isset($out[$mac]))) {
+                    continue;
+                }
+                $out[$mac] = [
+                    'name' => trim((string) ($row['onu_name'] ?? $row['name'] ?? '')),
+                    'description' => $desc,
+                ];
+            }
+            if ($out && collect($out)->contains(fn ($o) => $o['description'] !== '')) {
+                break;
+            }
+        }
+        if (! $out && $lastError) {
+            throw $lastError;
+        }
+
+        return $out;
+    }
 }

@@ -93,13 +93,71 @@ class NocOltPortTest extends TestCase
         $this->get(route('olts.show-port', [$a, $portB]))->assertNotFound();
         $this->getJson(route('olts.get-port-data', [$a, $portB]))->assertNotFound();
 
-        // Tanpa cache: halaman langsung tampil dalam mode memuat (tidak menunggu scan SNMP)
-        $this->get(route('olts.show-port', [$a, $portA]))->assertOk()->assertSee('if (true)', false);
+        // Halaman langsung tampil; daftar ONU dimuat di latar lewat endpoint data (tidak menunggu scan SNMP)
+        $this->get(route('olts.show-port', [$a, $portA]))->assertOk()->assertSee('PON 1/1')->assertSee('onuPortManager()', false);
 
-        // Dengan cache: data tampil dan endpoint data tidak memindai ulang
-        $onus = [['index' => '1/1/1:1', 'sn' => 'ZTEGC0000001', 'name' => 'Pelanggan', 'status' => 'online', 'signal' => -20.5]];
-        Cache::put("olt_port_data_{$portA->id}", $onus, 600);
-        $this->get(route('olts.show-port', [$a, $portA]))->assertOk()->assertSee('ZTEGC0000001')->assertSee('if (false)', false);
-        $this->getJson(route('olts.get-port-data', [$a, $portA]))->assertOk()->assertJson(['status' => 'ready', 'onus' => $onus]);
+        // Dengan cache: endpoint data tidak memindai ulang; ONU ditautkan ke pelanggan (SN tanpa pemisah pun cocok)
+        $pkg = \App\Models\Package::create(['name' => 'P10', 'type' => 'pppoe', 'price' => 100000, 'upload_speed' => '10M', 'download_speed' => '10M', 'is_active' => true]);
+        $c = \App\Models\Customer::create(['customer_code' => '001001009801', 'username' => 'port@net', 'name' => 'Pelanggan Port',
+            'package_id' => $pkg->id, 'phone' => '0811', 'onu_sn' => 'ztegc0000001']);
+        $c->update(['olt_id' => $a->id]);
+        Cache::put("olt_port_data_{$portA->id}", [
+            ['index' => '1/1/1:1', 'sn' => 'ZTEGC0000001', 'name' => 'Pelanggan', 'status' => 'online', 'signal' => -20.5, 'description' => '-'],
+            ['index' => '1/1/1:2', 'sn' => 'ZTEGC0000002', 'name' => 'Lain', 'status' => 'offline', 'signal' => 'N/A'],
+        ], 600);
+        $res = $this->getJson(route('olts.get-port-data', [$a, $portA]))->assertOk()->assertJson(['status' => 'ready']);
+        $this->assertSame('001001009801', $res->json('onus.0.customer.code'));
+        $this->assertNull($res->json('onus.1.customer'));
+        $this->assertSame('', $res->json('onus.0.description'), 'tanda "-" tidak ditampilkan sebagai deskripsi');
+        $this->assertTrue($res->json('capabilities.reboot'), 'ZTE: reboot lewat SNMP');
+    }
+
+    public function test_hsgq_descriptions_from_web_api_and_reboot_not_offered(): void
+    {
+        $olt = Olt::create(['name' => 'HSGQ', 'ip_address' => '10.0.0.50', 'snmp_port' => 161, 'snmp_version' => 2,
+            'snmp_read_community' => 'public', 'olt_type' => 'HSGQ_EPON', 'is_active' => true,
+            'web_username' => 'admin', 'web_password' => 'rahasia-web']);
+        $port = OltPonPort::create(['olt_id' => $olt->id, 'slot' => 1, 'pon_port' => 1, 'status' => 'active']);
+        Cache::put("olt_port_data_{$port->id}", [
+            ['index' => '1.1.1.1', 'onu_id' => 1, 'sn' => '00:1a:69:43:12:29', 'name' => '20391582228', 'status' => 'online', 'signal' => -15.6, 'description' => '-'],
+        ], 600);
+        \Illuminate\Support\Facades\Http::fake([
+            '10.0.0.50/userlogin*' => \Illuminate\Support\Facades\Http::response(['code' => 1], 200, ['X-Token' => 't']),
+            '10.0.0.50/onu_info*' => \Illuminate\Support\Facades\Http::response('', 404),
+            '10.0.0.50/onu_list*' => \Illuminate\Support\Facades\Http::response(['code' => 1, 'data' => [
+                ['onu_id' => 1, 'macaddr' => '00:1a:69:43:12:29', 'onu_name' => '20391582228', 'onu_desc' => 'Ilhamsyah Pu'],
+            ]]),
+        ]);
+        $teknisi = User::factory()->create(['role' => 'teknisi', 'is_active' => true]);
+        $this->actingAs($teknisi);
+
+        $res = $this->getJson(route('olts.get-port-data', [$olt, $port]))->assertOk();
+        $this->assertSame('Ilhamsyah Pu', $res->json('onus.0.description'));
+        $this->assertFalse($res->json('capabilities.reboot'));
+
+        // Reboot HSGQ ditolak dengan alasan jelas (SNMP HSGQ tidak mendukung)
+        $this->postJson(route('olts.onus.reboot', [$olt, $port]), ['index' => '1/1/1:1', 'sn' => '00:1A:69:43:12:29'])
+            ->assertStatus(422)->assertJsonFragment(['success' => false]);
+    }
+
+    public function test_zte_reboot_checks_serial_first_and_is_logged(): void
+    {
+        $olt = $this->olt('OLT ZTE');
+        $port = OltPonPort::create(['olt_id' => $olt->id, 'slot' => 1, 'pon_port' => 7, 'status' => 'active']);
+        $gw = new class($olt) extends \App\Services\Network\OltGateway {
+            public array $rebooted = [];
+            public function serialAt(int $shelf, int $slot, int $port, int $onuId): ?string { return $onuId === 5 ? 'ZTEGC0000001' : 'ZTEGC0000999'; }
+            public function rebootOnu(string $index): bool { $this->rebooted[] = $index; return true; }
+        };
+        $this->app->bind(\App\Services\Network\OltGateway::class, fn () => $gw);
+        $teknisi = User::factory()->create(['role' => 'teknisi', 'is_active' => true]);
+        $this->actingAs($teknisi);
+
+        $this->postJson(route('olts.onus.reboot', [$olt, $port]), ['index' => '1/1/7:6', 'sn' => 'ZTEGC0000001'])->assertStatus(422);
+        $this->assertSame([], $gw->rebooted, 'SN beda: ONU pelanggan lain tidak di-reboot');
+
+        $this->postJson(route('olts.onus.reboot', [$olt, $port]), ['index' => '1/1/7:5', 'sn' => 'ZTEGC0000001'])->assertOk();
+        $this->assertSame(['1.1.7.5'], $gw->rebooted);
+        $this->assertTrue(\App\Models\ActivityLog::where('action', 'onu_rebooted')->exists());
     }
 }

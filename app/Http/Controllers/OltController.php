@@ -335,16 +335,12 @@ class OltController extends Controller
     {
         abort_unless((int) $port->olt_id === (int) $olt->id, 404);   // dulu port OLT lain bisa dibuka lewat URL
 
-        // Tampilkan dari cache bila ada; bila belum, halaman memuat data di latar lewat getPortData
-        // (dulu scan SNMP berjalan sebelum halaman tampil — lambat/timeout)
-        $cached = \Illuminate\Support\Facades\Cache::get("olt_port_data_{$port->id}");
+        // Halaman tampil langsung; daftar ONU (+ pelanggan & deskripsi) dimuat di latar lewat getPortData,
+        // yang memakai cache 10 menit bila ada (dulu scan SNMP berjalan sebelum halaman tampil)
+        $olt->loadCount('ponPorts');
+        $siblings = $olt->ponPorts()->orderBy('slot')->orderBy('pon_port')->get(['id', 'slot', 'pon_port', 'status']);
 
-        return view('olts.show_port', [
-            'olt' => $olt,
-            'port' => $port,
-            'onus' => $cached ?? [],
-            'isLoading' => $cached === null,
-        ]);
+        return view('olts.show_port', ['olt' => $olt, 'port' => $port, 'siblings' => $siblings]);
     }
 
     /**
@@ -368,24 +364,122 @@ class OltController extends Controller
         abort_unless((int) $port->olt_id === (int) $olt->id, 404);
 
         $key = "olt_port_data_{$port->id}";
-        if (! $request->has('fresh') && ($cached = \Illuminate\Support\Facades\Cache::get($key)) !== null) {
-            return response()->json(['onus' => $cached, 'status' => 'ready']);
+        $onus = $request->has('fresh') ? null : \Illuminate\Support\Facades\Cache::get($key);
+        if ($onus === null) {
+            try {
+                $onus = (new OltGateway($olt))->getOnusOnPort($port->shelf ?: 1, $port->slot, $port->pon_port);
+            } catch (\Throwable $e) {
+                // Gagal scan TIDAK disimpan sebagai port kosong & status port tidak diubah (dulu di-cache 5 menit)
+                \Illuminate\Support\Facades\Log::warning("Scan port OLT {$olt->id} {$port->slot}/{$port->pon_port} gagal: " . $e->getMessage());
+
+                return response()->json(['onus' => [], 'status' => 'error', 'message' => 'OLT tidak merespons SNMP. Coba lagi.']);
+            }
+            \Illuminate\Support\Facades\Cache::put($key, $onus, now()->addMinutes(10));
+            $port->update(['status' => count($onus) > 0 ? 'active' : 'inactive']);
+            $this->syncSignalCache($olt, $onus);
         }
 
-        try {
-            $onus = (new OltGateway($olt))->getOnusOnPort($port->shelf ?: 1, $port->slot, $port->pon_port);
-        } catch (\Throwable $e) {
-            // Gagal scan TIDAK disimpan sebagai port kosong & status port tidak diubah (dulu di-cache 5 menit)
-            \Illuminate\Support\Facades\Log::warning("Scan port OLT {$olt->id} {$port->slot}/{$port->pon_port} gagal: " . $e->getMessage());
+        [$onus, $descError] = $this->enrichOnus($olt, $port, $onus, $request->has('fresh'));
 
-            return response()->json(['onus' => [], 'status' => 'error', 'message' => 'OLT tidak merespons SNMP. Coba lagi.']);
+        return response()->json([
+            'onus' => $onus,
+            'status' => 'ready',
+            'description_error' => $descError,
+            'capabilities' => $this->onuCapabilities($olt),
+        ]);
+    }
+
+    /** Aksi ONU yang tersedia untuk OLT ini (SNMP saja; HSGQ menunggu API web teruji). */
+    private function onuCapabilities(Olt $olt): array
+    {
+        $isHsgq = str_contains(strtoupper((string) $olt->olt_type), 'HSGQ');
+
+        return [
+            'reboot' => ! $isHsgq,
+            'reboot_hint' => $isHsgq ? 'Reboot ONU HSGQ belum tersedia: SNMP HSGQ tidak mendukungnya; menunggu API web OLT diuji.' : null,
+            'edit' => false,
+            'edit_hint' => $isHsgq
+                ? 'Ubah nama/deskripsi ONU HSGQ menunggu API web OLT diuji (isi login web di Ubah OLT).'
+                : 'Ubah nama/deskripsi ONU ZTE belum didukung lewat SNMP.',
+            'web_configured' => $isHsgq && filled($olt->web_username) && filled($olt->web_password),
+        ];
+    }
+
+    /**
+     * Tambahkan pelanggan yang tertaut (cocok SN/MAC) dan — untuk HSGQ dengan login web — deskripsi ONU dari
+     * API web OLT (SNMP HSGQ tidak memuat deskripsi). Deskripsi bersifat tambahan: gagal dibaca tidak
+     * menggagalkan daftar ONU.
+     */
+    private function enrichOnus(Olt $olt, \App\Models\OltPonPort $port, array $onus, bool $fresh): array
+    {
+        $norm = fn ($sn) => strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $sn));
+        $customers = \App\Models\Customer::where('olt_id', $olt->id)->whereNotNull('onu_sn')
+            ->get(['id', 'customer_code', 'name', 'onu_sn', 'status'])->keyBy(fn ($c) => $norm($c->onu_sn));
+
+        $descriptions = [];
+        $descError = null;
+        if (str_contains(strtoupper((string) $olt->olt_type), 'HSGQ') && filled($olt->web_username) && filled($olt->web_password)) {
+            $dKey = "olt_port_desc_{$port->id}";
+            if ($fresh) {
+                \Illuminate\Support\Facades\Cache::forget($dKey);
+            }
+            $descriptions = \Illuminate\Support\Facades\Cache::get($dKey);
+            if ($descriptions === null) {
+                try {
+                    $descriptions = (new \App\Services\Network\HsgqWebClient($olt))->onuDescriptions((int) $port->pon_port);
+                    \Illuminate\Support\Facades\Cache::put($dKey, $descriptions, now()->addMinutes(10));
+                } catch (\Throwable $e) {
+                    $descriptions = [];
+                    $descError = 'Deskripsi tidak terbaca dari web OLT: ' . $e->getMessage();
+                }
+            }
         }
 
-        \Illuminate\Support\Facades\Cache::put($key, $onus, now()->addMinutes(10));
-        $port->update(['status' => count($onus) > 0 ? 'active' : 'inactive']);
-        $this->syncSignalCache($olt, $onus);
+        foreach ($onus as &$onu) {
+            $key = $norm($onu['sn'] ?? '');
+            $c = $customers[$key] ?? null;
+            $onu['customer'] = $c ? ['id' => $c->id, 'code' => $c->customer_code, 'name' => $c->name, 'status' => $c->status,
+                'url' => route('customers.show', $c->id)] : null;
+            $web = $descriptions[$key] ?? null;
+            if ($web && $web['description'] !== '') {
+                $onu['description'] = $web['description'];
+            }
+            if (($onu['description'] ?? '-') === '-') {
+                $onu['description'] = '';
+            }
+        }
+        unset($onu);
 
-        return response()->json(['onus' => $onus, 'status' => 'ready']);
+        return [$onus, $descError];
+    }
+
+    /**
+     * Reboot satu ONU. ZTE: SNMP SET setelah SN di posisi itu dicocokkan (tidak me-reboot ONU pelanggan lain).
+     * HSGQ: belum didukung (SNMP HSGQ tidak menyediakan reboot; menunggu API web OLT diuji).
+     */
+    public function rebootOnu(Request $request, Olt $olt, \App\Models\OltPonPort $port)
+    {
+        abort_unless((int) $port->olt_id === (int) $olt->id, 404);
+        $data = $request->validate(['index' => 'required|string|max:40', 'sn' => 'required|string|max:40']);
+        $caps = $this->onuCapabilities($olt);
+        if (! $caps['reboot']) {
+            return response()->json(['success' => false, 'message' => $caps['reboot_hint']], 422);
+        }
+        $pos = \App\Services\Network\ZteOids::parseOnuPosition($data['index']);
+        if (! $pos) {
+            return response()->json(['success' => false, 'message' => 'Format posisi ONU tidak dikenali.'], 422);
+        }
+
+        $gateway = app()->makeWith(OltGateway::class, ['olt' => $olt]);
+        $check = $gateway->verifyOnuSerial($pos['shelf'], $pos['slot'], $pos['port'], $pos['onu_id'], strtoupper($data['sn']));
+        if (! $check['ok']) {
+            return response()->json(['success' => false, 'message' => 'Reboot dibatalkan: ' . $check['reason']], 422);
+        }
+        $ok = $gateway->rebootOnu("{$pos['shelf']}.{$pos['slot']}.{$pos['port']}.{$pos['onu_id']}");
+        \App\Models\ActivityLog::log($ok ? 'onu_rebooted' : 'onu_reboot_failed',
+            ($ok ? 'ONU di-reboot' : 'Reboot ONU GAGAL') . " di {$olt->name}: posisi {$data['index']}, SN {$data['sn']}.", $olt);
+
+        return response()->json(['success' => $ok, 'message' => $ok ? 'Perintah reboot terkirim ke ONU.' : 'OLT menolak perintah reboot (periksa write community/SNMPv3).'], $ok ? 200 : 502);
     }
 
     /**

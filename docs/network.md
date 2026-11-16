@@ -54,7 +54,12 @@ Sistem mendukung integrasi ke OLT ZTE (C300, C320, C600) dan HSGQ. Akses ke OLT 
 
 - Status OLT dan jumlah **ONU belum terdaftar** di dasbor NOC (web & aplikasi) disimpan **5 menit**. Klik **Refresh** untuk memindai ulang.
 - OLT yang **offline tidak dipindai** (dasbor tidak menunggu timeout). OLT yang offline atau gagal dipindai ditampilkan sebagai *"Tidak terpindai: …"*, sehingga angka 0 tidak disalahartikan.
-- **Halaman port** langsung tampil; daftar ONU diambil di latar. Hasil scan disimpan 10 menit; tombol sinkron memindai ulang.
+- **Halaman port** langsung tampil; daftar ONU diambil di latar. Hasil scan disimpan 10 menit; **Sinkron langsung** memindai ulang. Isinya:
+  - ringkasan port: total ONU, online, offline, sinyal kritis, rata-rata Rx;
+  - tabel ONU: posisi, nama & MAC/SN, **deskripsi**, **pelanggan yang tertaut** (klik untuk membuka data pelanggan), sinyal Rx berwarna (≥ -24 baik, -24 s/d -27 waspada, < -27 dBm kritis), jarak, status;
+  - cari (MAC/SN, nama, deskripsi, pelanggan), filter (Online, Offline, Kritis, Tanpa pelanggan), urutkan menurut posisi/sinyal/jarak, pindah port;
+  - panel **Detail** per ONU: salin MAC/SN, buka pelanggan, **Reboot ONU**, ubah nama/deskripsi.
+- **Ketersediaan aksi ONU:** OLT **ZTE** — reboot lewat SNMP (SN di posisi itu dicocokkan dulu; tercatat `onu_rebooted`). OLT **HSGQ** — SNMP-nya tidak menyediakan reboot, ubah nama/deskripsi maupun deskripsi ONU; deskripsi dibaca lewat **API web OLT** bila login web diisi, sedangkan reboot & ubah ONU HSGQ menyusul setelah API web OLT diuji.
 - Bila OLT tidak merespons SNMP, halaman menampilkan pesan gagal dan **daftar terakhir tetap ditampilkan** — port tidak lagi dianggap kosong dan statusnya tidak diubah.
 - Deteksi ulang port PON berjalan dalam satu transaksi: bila gagal di tengah, status port tidak berubah.
 

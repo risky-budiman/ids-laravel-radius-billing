@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.150] - 2026-11-16
+
+### Fitur baru
+- **olt:** Redesigned PON port page — ONU table with customer link, description, filters and actions
+
 ## [v1.5.149] - 2026-11-16
 
 ### Fitur baru

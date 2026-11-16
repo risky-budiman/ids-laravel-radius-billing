@@ -1,246 +1,274 @@
+@php
+    $isAdministrator = auth()->user()->isAdministrator();
+    $portLabel = "PON {$port->slot}/{$port->pon_port}";
+@endphp
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <div class="flex items-center">
-                <a href="{{ route('olts.show', $olt->id) }}" class="mr-4 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <a href="{{ route('olts.show', $olt) }}" class="btn-ghost btn-icon" aria-label="Kembali ke OLT">
+                    <x-icon name="chevron-right" class="w-5 h-5 rotate-180" />
                 </a>
                 <div>
-                    <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
-                        Port {{ $port->shelf }}/{{ $port->slot }}/{{ $port->pon_port }}
-                    </h2>
-                    <p class="text-xs text-gray-500 uppercase font-bold tracking-widest">{{ $olt->name }}</p>
+                    <h2 class="font-bold text-2xl text-surface-900 dark:text-white leading-tight">{{ $portLabel }}</h2>
+                    <p class="text-sm text-surface-500 dark:text-surface-400">{{ $olt->name }} · {{ $olt->typeLabel() }} · {{ $olt->ponTechnology() }}</p>
                 </div>
             </div>
-            <div class="flex space-x-2">
-                <button @click="window.dispatchEvent(new CustomEvent('sync-onu-live'))" class="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    <span>Sinkron Data Langsung</span>
+            <div class="flex items-center gap-2">
+                @if($siblings->count() > 1)
+                    <select class="input h-9 py-0 text-sm w-auto" onchange="if (this.value) window.location = this.value" aria-label="Pindah port">
+                        @foreach($siblings as $sp)
+                            <option value="{{ route('olts.show-port', [$olt, $sp]) }}" @selected($sp->id === $port->id)>PON {{ $sp->slot }}/{{ $sp->pon_port }}</option>
+                        @endforeach
+                    </select>
+                @endif
+                <button type="button" class="btn-primary" onclick="window.dispatchEvent(new CustomEvent('sync-onu-live'))">
+                    <x-icon name="refresh" class="w-4 h-4" /> Sinkron langsung
                 </button>
             </div>
         </div>
     </x-slot>
 
     <div class="space-y-6" x-data="onuPortManager()">
-        <!-- Port Summary Card -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                <span class="block text-xs text-gray-400 uppercase font-bold mb-1">Status</span>
-                <div class="flex items-center">
-                    <div class="w-3 h-3 rounded-full {{ $port->status == 'active' ? 'bg-green-500' : 'bg-gray-300' }} mr-2"></div>
-                    <span class="font-bold text-gray-900 dark:text-white">{{ strtoupper($port->status) }}</span>
-                </div>
+        {{-- Ringkasan port --}}
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="card p-4">
+                <p class="text-xs font-medium text-surface-500">Total ONU</p>
+                <p class="mt-1 text-2xl font-semibold tabular-nums text-surface-900 dark:text-white" x-text="loading && !onus.length ? '…' : onus.length"></p>
             </div>
-            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                <span class="block text-xs text-gray-400 uppercase font-bold mb-1">Registered ONUs</span>
-                <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400" x-text="onus.length"></span>
+            <div class="card p-4">
+                <p class="text-xs font-medium text-surface-500">Online</p>
+                <p class="mt-1 text-2xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400" x-text="count('online')"></p>
             </div>
-            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                <span class="block text-xs text-gray-400 uppercase font-bold mb-1">Tipe Board</span>
-                <span class="font-bold text-gray-800 dark:text-gray-200">{{ $olt->olt_type }}</span>
+            <div class="card p-4">
+                <p class="text-xs font-medium text-surface-500">Offline</p>
+                <p class="mt-1 text-2xl font-semibold tabular-nums" :class="count('offline') ? 'text-amber-600 dark:text-amber-400' : 'text-surface-900 dark:text-white'" x-text="count('offline')"></p>
             </div>
-            <div class="glass bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                <span class="block text-xs text-gray-400 uppercase font-bold mb-1">VLAN Tag</span>
-                <span class="font-bold text-gray-800 dark:text-gray-200">100 (Default)</span>
+            <div class="card p-4">
+                <p class="text-xs font-medium text-surface-500">Sinyal kritis</p>
+                <p class="mt-1 text-2xl font-semibold tabular-nums" :class="count('critical') ? 'text-rose-600 dark:text-rose-400' : 'text-surface-900 dark:text-white'" x-text="count('critical')"></p>
+            </div>
+            <div class="card p-4 col-span-2 lg:col-span-1">
+                <p class="text-xs font-medium text-surface-500">Rata-rata Rx</p>
+                <p class="mt-1 text-2xl font-semibold tabular-nums" :class="signalClass(avgSignal())" x-text="avgSignal() === null ? '—' : avgSignal().toFixed(2) + ' dBm'"></p>
             </div>
         </div>
 
-        <!-- ONU List Table -->
-        <div class="glass bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-            <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                <h3 class="font-bold text-gray-900 dark:text-white">ONU Terdaftar di Port Ini</h3>
-                
-                <!-- Loading Indicator -->
-                <div class="flex items-center space-x-4">
-                    <div x-show="loading" class="flex items-center text-indigo-600 font-bold text-sm animate-pulse">
-                        <svg class="animate-spin h-5 w-5 mr-3 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span>Mengambil data ONU langsung...</span>
-                    </div>
+        {{-- Info kemampuan & error --}}
+        <template x-if="caps && !caps.reboot && !caps.web_configured">
+            <div class="flex items-start gap-2.5 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 dark:border-sky-500/20 dark:bg-sky-500/10 dark:text-sky-300">
+                <x-icon name="exclamation" class="w-5 h-5 shrink-0" />
+                <p>Deskripsi, reboot & ubah ONU di OLT HSGQ tidak tersedia lewat SNMP — butuh <strong>akses web OLT</strong>.
+                    @if($isAdministrator)<a href="{{ route('olts.edit', $olt) }}" class="font-semibold underline">Isi login web OLT</a>.@else Minta administrator mengisi login web OLT.@endif</p>
+            </div>
+        </template>
+        <p x-show="descError" x-cloak x-text="descError" class="rounded-lg bg-amber-50 dark:bg-amber-500/10 px-4 py-2 text-xs text-amber-800 dark:text-amber-300"></p>
+        <p x-show="error" x-cloak x-text="error" class="rounded-lg bg-rose-50 dark:bg-rose-500/10 px-4 py-2 text-sm text-rose-700 dark:text-rose-300"></p>
+
+        {{-- Daftar ONU --}}
+        <div class="card overflow-hidden">
+            <div class="flex flex-col lg:flex-row lg:items-center gap-3 border-b border-surface-200 dark:border-surface-800 p-4">
+                <div class="relative w-full lg:max-w-xs">
+                    <x-icon name="search" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
+                    <input type="search" x-model.debounce.150ms="q" class="input pl-9" placeholder="Cari MAC/SN, nama, deskripsi, pelanggan…" aria-label="Cari ONU">
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                    <template x-for="f in filters" :key="f.key">
+                        <button type="button" class="btn-sm rounded-full px-3 border text-xs font-medium transition-colors"
+                                :class="filter === f.key ? 'bg-primary-600 border-primary-600 text-white' : 'border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-800'"
+                                @click="filter = f.key" x-text="f.label + ' (' + count(f.key) + ')'"></button>
+                    </template>
+                </div>
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 lg:ml-auto text-xs text-surface-500 whitespace-nowrap">
+                    <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>≥ -24</span>
+                    <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span>-24 s/d -27</span>
+                    <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span>&lt; -27 dBm</span>
                 </div>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-gray-50 dark:bg-gray-900/50">
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Index</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Serial / MAC</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Nama ONU</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Deskripsi</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Tipe</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Sinyal</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Alasan Terakhir</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Status</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase">Aksi</th>
+                <table class="w-full text-sm">
+                    <thead class="bg-surface-50 dark:bg-surface-900/60 text-left text-xs font-medium uppercase tracking-wide text-surface-500">
+                        <tr>
+                            <th class="px-4 py-3 cursor-pointer select-none" @click="sortBy('onu_id')">Posisi <span x-text="sortMark('onu_id')"></span></th>
+                            <th class="px-4 py-3">ONU</th>
+                            <th class="px-4 py-3">Deskripsi</th>
+                            <th class="px-4 py-3">Pelanggan</th>
+                            <th class="px-4 py-3 cursor-pointer select-none" @click="sortBy('signal')">Sinyal Rx <span x-text="sortMark('signal')"></span></th>
+                            <th class="px-4 py-3 cursor-pointer select-none" @click="sortBy('distance')">Jarak <span x-text="sortMark('distance')"></span></th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3 text-right">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                        <!-- Table Data (Dynamic via Alpine) -->
-                        <template x-for="onu in onus" :key="onu.index">
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors">
-                                <td class="p-4 font-mono text-sm text-gray-600 dark:text-gray-400" x-text="onu.index"></td>
-                                <td class="p-4 font-mono text-sm">
-                                    <span class="font-bold text-gray-900 dark:text-white" x-text="onu.sn"></span>
+                    <tbody class="divide-y divide-surface-100 dark:divide-surface-800">
+                        <template x-for="onu in visible()" :key="onu.index + onu.sn">
+                            <tr class="hover:bg-surface-50 dark:hover:bg-surface-800/40 cursor-pointer" @click="openDetail(onu)">
+                                <td class="px-4 py-3 font-mono text-xs text-surface-600 dark:text-surface-300" x-text="position(onu)"></td>
+                                <td class="px-4 py-3">
+                                    <p class="font-medium text-surface-900 dark:text-white" x-text="onu.name || '—'"></p>
+                                    <p class="font-mono text-[11px] text-surface-500" x-text="(onu.sn || '').toUpperCase()"></p>
                                 </td>
-                                <td class="p-4 text-sm font-semibold text-indigo-600 dark:text-indigo-400" x-text="onu.name || '-'"></td>
-                                <td class="p-4 text-sm text-gray-600 dark:text-gray-400" x-text="onu.description || '-'"></td>
-                                <td class="p-4 text-sm font-mono text-gray-600 dark:text-gray-400" x-text="onu.type"></td>
-                                <td class="p-4">
-                                    <span class="font-bold" 
-                                          :class="onu.signal === 'LOST' || onu.signal === 'N/A' ? 'text-gray-400 italic' : (parseFloat(onu.signal) < -27 ? 'text-red-500' : 'text-green-500')"
-                                          x-text="onu.signal === 'LOST' || onu.signal === 'N/A' ? 'No Signal' : onu.signal + ' dBm'">
-                                    </span>
-                                </td>
-                                <td class="p-4 text-xs font-semibold" 
-                                    :class="['working', 'ready', 'online'].includes((onu.status || '').toLowerCase()) ? 'text-gray-500 dark:text-gray-400' : 'text-amber-500 dark:text-amber-400'"
-                                    x-text="onu.reason || '-'">
-                                </td>
-                                <td class="p-4">
-                                    <span class="px-3 py-1 text-xs font-bold rounded-full"
-                                          :class="['working', 'ready', 'online'].includes((onu.status || '').toLowerCase()) 
-                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'"
-                                          x-text="onu.status">
-                                    </span>
-                                </td>
-                                <td class="p-4">
-                                    <button @click="openDetail(onu)" class="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 rounded-lg transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                    </button>
-                                </td>
-                            </tr>
-                        </template>
-
-                        <!-- Empty/Loading State -->
-                        <template x-if="onus.length === 0">
-                            <tr>
-                                <td colspan="9" class="p-12 text-center text-gray-500 dark:text-gray-400 italic">
-                                    <template x-if="loading">
-                                        <div class="flex flex-col items-center">
-                                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2"></div>
-                                            Memindai daftar ONU di latar belakang... Mohon tunggu.
-                                        </div>
+                                <td class="px-4 py-3 text-surface-600 dark:text-surface-300 max-w-[14rem] truncate" x-text="onu.description || '—'" :title="onu.description"></td>
+                                <td class="px-4 py-3" @click.stop>
+                                    <template x-if="onu.customer">
+                                        <a :href="onu.customer.url" class="block hover:underline">
+                                            <span class="font-medium text-primary-700 dark:text-primary-300" x-text="onu.customer.name"></span>
+                                            <span class="block font-mono text-[11px] text-surface-500" x-text="onu.customer.code"></span>
+                                        </a>
                                     </template>
-                                    <template x-if="!loading">
-                                        Belum ada ONU terdaftar di port ini.
-                                    </template>
+                                    <span x-show="!onu.customer" class="badge-gray">Belum ditautkan</span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-semibold tabular-nums" :class="signalClass(num(onu.signal))" x-text="num(onu.signal) === null ? '—' : num(onu.signal).toFixed(2) + ' dBm'"></span>
+                                    </div>
+                                    <div class="mt-1 h-1 w-20 rounded-full bg-surface-200 dark:bg-surface-700 overflow-hidden" x-show="num(onu.signal) !== null">
+                                        <div class="h-full rounded-full" :class="signalBar(num(onu.signal))" :style="'width:' + signalPct(num(onu.signal)) + '%'"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 tabular-nums text-surface-600 dark:text-surface-300" x-text="onu.distance ? (onu.distance >= 1000 ? (onu.distance / 1000).toFixed(2) + ' km' : onu.distance + ' m') : '—'"></td>
+                                <td class="px-4 py-3">
+                                    <span :class="isOnline(onu) ? 'badge-success' : 'badge-danger'" x-text="isOnline(onu) ? 'Online' : 'Offline'"></span>
+                                </td>
+                                <td class="px-4 py-3 text-right" @click.stop>
+                                    <div class="inline-flex items-center gap-1">
+                                        <button type="button" class="btn-ghost btn-sm" @click="openDetail(onu)">Detail</button>
+                                        <button type="button" class="btn-ghost btn-icon h-8 w-8" :disabled="!caps?.reboot || busy" :title="caps?.reboot ? 'Reboot ONU' : caps?.reboot_hint" @click="reboot(onu)">
+                                            <x-icon name="refresh" class="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </template>
                     </tbody>
                 </table>
+                <div x-show="loading && !onus.length" class="p-10 text-center text-sm text-surface-500">
+                    <div class="mx-auto mb-2 h-6 w-6 animate-spin rounded-full border-2 border-primary-600 border-t-transparent"></div>
+                    Membaca daftar ONU dari OLT…
+                </div>
+                <p x-show="!loading && !visible().length" x-cloak class="p-10 text-center text-sm text-surface-500"
+                   x-text="onus.length ? 'Tidak ada ONU yang cocok dengan filter.' : 'Belum ada ONU terdaftar di port ini.'"></p>
             </div>
         </div>
 
-        <!-- ONU Detail Modal -->
-        <div x-show="showDetail" 
-             class="fixed inset-0 z-50 overflow-y-auto" 
-             style="display: none;">
-            <div class="flex items-center justify-center min-h-screen px-4">
-                <div class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75" @click="showDetail = false"></div>
-                <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-sm max-w-lg w-full overflow-hidden border border-gray-100 dark:border-gray-700">
-                    <div class="px-6 py-4 bg-indigo-600 flex justify-between items-center text-white">
-                        <h3 class="font-bold">ONU Detailed Diagnostics</h3>
-                        <button @click="showDetail = false" class="text-white hover:text-gray-200 text-lg font-bold">&times;</button>
-                    </div>
-                    <div class="p-6">
-                        <template x-if="selectedOnu">
-                            <div class="space-y-4">
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
-                                        <span class="text-xs font-bold text-gray-400 block mb-1">Nama ONU</span>
-                                        <span class="text-base font-bold text-indigo-600 dark:text-indigo-400" x-text="selectedOnu.name"></span>
-                                    </div>
-                                    <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
-                                        <span class="text-xs font-bold text-gray-400 block mb-1">Deskripsi</span>
-                                        <span class="text-base font-bold text-gray-900 dark:text-white" x-text="selectedOnu.description || '-'"></span>
-                                    </div>
+        {{-- Panel detail ONU --}}
+        <template x-teleport="body">
+            <div x-show="selected" x-cloak class="fixed inset-0 z-50 flex justify-end bg-surface-900/40" @keydown.escape.window="selected = null" @click.self="selected = null">
+                <aside class="h-full w-full max-w-md overflow-y-auto bg-white dark:bg-surface-900 shadow-xl" x-show="selected"
+                       x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0">
+                    <template x-if="selected">
+                        <div>
+                            <div class="flex items-start justify-between gap-3 border-b border-surface-200 dark:border-surface-800 p-5">
+                                <div>
+                                    <p class="text-xs text-surface-500" x-text="'{{ $olt->name }} · ' + position(selected)"></p>
+                                    <h3 class="text-lg font-semibold text-surface-900 dark:text-white" x-text="selected.name || 'ONU'"></h3>
+                                    <span class="mt-1" :class="isOnline(selected) ? 'badge-success' : 'badge-danger'" x-text="isOnline(selected) ? 'Online' : 'Offline'"></span>
                                 </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <span class="text-xs font-bold text-gray-400 block">Serial / MAC</span>
-                                        <span class="font-bold text-gray-900 dark:text-white font-mono text-sm" x-text="selectedOnu.sn"></span>
-                                    </div>
-                                    <div>
-                                        <span class="text-xs font-bold text-gray-400 block">Status</span>
-                                        <span class="font-bold uppercase text-xs" :class="['working', 'ready', 'online'].includes((selectedOnu.status || '').toLowerCase()) ? 'text-green-500' : 'text-red-500'" x-text="selectedOnu.status"></span>
-                                    </div>
-                                    <div>
-                                        <span class="text-xs font-bold text-gray-400 block">Sinyal</span>
-                                        <span class="font-bold text-gray-900 dark:text-white" x-text="selectedOnu.signal === 'LOST' || selectedOnu.signal === 'N/A' ? 'No Signal' : selectedOnu.signal + ' dBm'"></span>
-                                    </div>
-                                    <div>
-                                        <span class="text-xs font-bold text-gray-400 block">Alasan Terakhir</span>
-                                        <span class="font-bold text-gray-900 dark:text-white text-xs" x-text="selectedOnu.reason || '-'"></span>
-                                    </div>
-                                    <div>
-                                        <span class="text-xs font-bold text-gray-400 block">Waktu Daftar</span>
-                                        <span class="font-bold text-gray-900 dark:text-white text-xs font-mono" x-text="selectedOnu.reg_time || '-'"></span>
-                                    </div>
-                                    <div>
-                                        <span class="text-xs font-bold text-gray-400 block">Tipe</span>
-                                        <span class="font-bold text-gray-900 dark:text-white text-xs" x-text="selectedOnu.type"></span>
-                                    </div>
-                                </div>
+                                <button type="button" class="btn-ghost btn-icon" @click="selected = null" aria-label="Tutup"><x-icon name="x" class="w-4 h-4" /></button>
                             </div>
-                        </template>
-                    </div>
-                </div>
+                            <dl class="divide-y divide-surface-100 dark:divide-surface-800 text-sm">
+                                <div class="flex justify-between gap-4 px-5 py-3"><dt class="text-surface-500">MAC / SN</dt><dd class="font-mono" x-text="(selected.sn || '').toUpperCase()"></dd></div>
+                                <div class="flex justify-between gap-4 px-5 py-3"><dt class="text-surface-500">Deskripsi</dt><dd class="text-right" x-text="selected.description || '—'"></dd></div>
+                                <div class="flex justify-between gap-4 px-5 py-3"><dt class="text-surface-500">Sinyal Rx</dt><dd class="font-semibold" :class="signalClass(num(selected.signal))" x-text="num(selected.signal) === null ? '—' : num(selected.signal).toFixed(2) + ' dBm'"></dd></div>
+                                <div class="flex justify-between gap-4 px-5 py-3"><dt class="text-surface-500">Jarak</dt><dd x-text="selected.distance ? selected.distance + ' m' : '—'"></dd></div>
+                                <div class="flex justify-between gap-4 px-5 py-3"><dt class="text-surface-500">Tipe</dt><dd x-text="selected.type || '—'"></dd></div>
+                                <div class="flex justify-between gap-4 px-5 py-3" x-show="selected.reg_time"><dt class="text-surface-500">Terdaftar</dt><dd x-text="selected.reg_time"></dd></div>
+                                <div class="flex justify-between gap-4 px-5 py-3"><dt class="text-surface-500">Pelanggan</dt>
+                                    <dd class="text-right">
+                                        <template x-if="selected.customer"><a :href="selected.customer.url" class="font-medium text-primary-700 dark:text-primary-300 hover:underline" x-text="selected.customer.code + ' · ' + selected.customer.name"></a></template>
+                                        <span x-show="!selected.customer" class="text-surface-500">Belum ditautkan</span>
+                                    </dd>
+                                </div>
+                            </dl>
+                            <div class="space-y-2 p-5">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-surface-500">Aksi</p>
+                                <button type="button" class="btn-secondary w-full justify-start" @click="copy(selected.sn)"><x-icon name="document" class="w-4 h-4" /> Salin MAC/SN</button>
+                                <template x-if="selected.customer">
+                                    <a :href="selected.customer.url" class="btn-secondary w-full justify-start"><x-icon name="user" class="w-4 h-4" /> Buka data pelanggan</a>
+                                </template>
+                                <button type="button" class="btn-secondary w-full justify-start" :disabled="!caps?.reboot || busy" @click="reboot(selected)">
+                                    <x-icon name="refresh" class="w-4 h-4" /> <span x-text="busy ? 'Mengirim…' : 'Reboot ONU'"></span>
+                                </button>
+                                <p x-show="caps && !caps.reboot" class="text-xs text-surface-500" x-text="caps?.reboot_hint"></p>
+                                <button type="button" class="btn-secondary w-full justify-start" disabled><x-icon name="settings" class="w-4 h-4" /> Ubah nama / deskripsi</button>
+                                <p class="text-xs text-surface-500" x-text="caps?.edit_hint"></p>
+                            </div>
+                        </div>
+                    </template>
+                </aside>
             </div>
-        </div>
+        </template>
     </div>
 
     @push('scripts')
     <script>
         function onuPortManager() {
             return {
-                showDetail: false,
-                selectedOnu: null,
-                onus: {!! json_encode($onus ?? []) !!},
-                loading: false,
+                onus: [], caps: null, loading: false, busy: false, error: '', descError: '', selected: null,
+                q: '', filter: 'all', sort: 'onu_id', dir: 1,
+                filters: [
+                    { key: 'all', label: 'Semua' }, { key: 'online', label: 'Online' }, { key: 'offline', label: 'Offline' },
+                    { key: 'critical', label: 'Kritis' }, { key: 'unlinked', label: 'Tanpa pelanggan' },
+                ],
                 init() {
-                    window.addEventListener('sync-onu-live', () => {
-                        this.syncLiveData();
-                    });
-                    // Halaman tampil dulu, data ONU diambil di latar (dulu halaman menunggu scan SNMP selesai)
-                    if (@json($isLoading ?? false)) {
-                        this.syncLiveData();
-                    }
+                    window.addEventListener('sync-onu-live', () => this.load(true));
+                    this.load(false);
                 },
-                syncLiveData() {
-                    this.loading = true;
-                    fetch('{{ route('olts.get-port-data', [$olt->id, $port->id], false) }}?fresh=1', {
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(res => {
-                        if (!res.ok) throw new Error('HTTP status ' + res.status);
-                        return res.json();
-                    })
-                    .then(data => {
-                        if (data.status === 'error') {
-                            // Gagal scan: daftar lama tetap ditampilkan (dulu dianggap port kosong)
-                            throw new Error(data.message || 'OLT tidak merespons');
-                        }
-                        this.onus = data.onus || [];
-                    })
-                    .catch(err => {
-                        console.error('Fetch error:', err);
-                        alert('Gagal mengambil data ONU: ' + err.message);
-                    })
-                    .finally(() => {
-                        this.loading = false;
-                    });
+                load(fresh) {
+                    this.loading = true; this.error = '';
+                    fetch(@js(route('olts.get-port-data', [$olt, $port], false)) + (fresh ? '?fresh=1' : ''), { headers: { 'Accept': 'application/json' } })
+                        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                        .then(d => {
+                            if (d.status === 'error') throw new Error(d.message || 'OLT tidak merespons');
+                            this.onus = d.onus || []; this.caps = d.capabilities || null; this.descError = d.description_error || '';
+                        })
+                        .catch(e => { this.error = 'Gagal membaca ONU: ' + e.message + (this.onus.length ? ' — menampilkan data terakhir.' : ''); })
+                        .finally(() => this.loading = false);
                 },
-                openDetail(onu) {
-                    this.selectedOnu = onu;
-                    this.showDetail = true;
-                }
+                num(v) { const n = parseFloat(v); return isNaN(n) ? null : n; },
+                isOnline(o) { return ['online', 'working', 'ready'].includes(String(o.status || '').toLowerCase()); },
+                matches(o, key) {
+                    const s = this.num(o.signal);
+                    return key === 'all' || (key === 'online' && this.isOnline(o)) || (key === 'offline' && !this.isOnline(o))
+                        || (key === 'critical' && s !== null && s < -27) || (key === 'unlinked' && !o.customer);
+                },
+                count(key) { return this.onus.filter(o => this.matches(o, key)).length; },
+                avgSignal() {
+                    const v = this.onus.map(o => this.num(o.signal)).filter(n => n !== null);
+                    return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+                },
+                visible() {
+                    const q = this.q.toLowerCase().trim(), qn = q.replace(/[^a-z0-9]/g, '');
+                    let rows = this.onus.filter(o => this.matches(o, this.filter));
+                    if (q) rows = rows.filter(o => [o.sn, o.name, o.description, o.customer?.name, o.customer?.code, this.position(o)]
+                        .some(v => String(v || '').toLowerCase().includes(q)) || (qn && String(o.sn || '').toLowerCase().replace(/[^a-z0-9]/g, '').includes(qn)));
+                    const val = o => this.sort === 'signal' ? (this.num(o.signal) ?? -999) : (this.sort === 'distance' ? (o.distance || 0) : (o.onu_id || 0));
+                    return rows.sort((a, b) => (val(a) - val(b)) * this.dir);
+                },
+                sortBy(key) { this.dir = this.sort === key ? -this.dir : 1; this.sort = key; },
+                sortMark(key) { return this.sort === key ? (this.dir > 0 ? '▲' : '▼') : ''; },
+                position(o) { const p = String(o.index || '').split(/[.\/:]/).filter(Boolean); return p.length >= 4 ? p[0] + '/' + p[1] + '/' + p[2] + ':' + p[3] : (o.index || ''); },
+                signalClass(s) { return s === null ? 'text-surface-400' : (s < -27 ? 'text-rose-600 dark:text-rose-400' : (s < -24 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')); },
+                signalBar(s) { return s < -27 ? 'bg-rose-500' : (s < -24 ? 'bg-amber-500' : 'bg-emerald-500'); },
+                signalPct(s) { return Math.max(5, Math.min(100, ((s + 35) / 27) * 100)); },
+                openDetail(o) { this.selected = o; },
+                copy(text) {
+                    navigator.clipboard?.writeText(String(text || '').toUpperCase());
+                    if (window.showGlobalToast) window.showGlobalToast('MAC/SN disalin');
+                },
+                reboot(o) {
+                    if (!this.caps?.reboot || !confirm('Reboot ONU ' + (o.name || o.sn) + '? Internet pelanggan terputus ±1–2 menit.')) return;
+                    this.busy = true;
+                    fetch(@js(route('olts.onus.reboot', [$olt, $port], false)), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                        body: JSON.stringify({ index: this.position(o), sn: o.sn }),
+                    })
+                        .then(r => r.json())
+                        .then(d => (window.showGlobalToast ? window.showGlobalToast(d.message) : alert(d.message)))
+                        .catch(() => alert('Gagal menghubungi server'))
+                        .finally(() => this.busy = false);
+                },
             };
         }
     </script>
