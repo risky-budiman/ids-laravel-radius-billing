@@ -287,16 +287,33 @@ class SnmpService
 
         // ── METHOD 3: FreeDSx Pure PHP Library ──
         try {
-            // SnmpWalk diiterasi dengan hasOids()/next() — dulu di-foreach langsung sehingga selalu kosong
-            $walk = $this->getFreeDsxClient()->walk($cleanOid);
-            while ($walk->hasOids()) {
-                $item = $walk->next();
-                $oidStr = '.' . ltrim((string) $item->getOid(), '.');
-                if (! str_starts_with($oidStr, '.' . $cleanOid . '.')) {
-                    break;   // keluar dari subtree
+            // SnmpWalk diiterasi dengan hasOids()/next() — dulu di-foreach langsung sehingga selalu kosong.
+            // GETBULK 30 baris per permintaan (100 bawaan FreeDSx membuat OLT HSGQ sering timeout); bila timeout
+            // di tengah, walk dilanjutkan dari OID terakhir (maks. 3x) — tidak mengulang dari awal.
+            $client = $this->getFreeDsxClient();
+            $startAt = $cleanOid;
+            $resumes = 0;
+            while (true) {
+                try {
+                    $walk = new \FreeDSx\Snmp\SnmpWalk($client, $startAt, null, false);
+                    $walk->maxRepetitions(30);
+                    while ($walk->hasOids()) {
+                        $item = $walk->next();
+                        $oidStr = '.' . ltrim((string) $item->getOid(), '.');
+                        if (! str_starts_with($oidStr, '.' . $cleanOid . '.')) {
+                            break 2;   // keluar dari subtree
+                        }
+                        $val = $item->getValue();
+                        $results[$oidStr] = is_object($val) && method_exists($val, 'getValue') ? $val->getValue() : $val;
+                        $startAt = ltrim($oidStr, '.');
+                    }
+                    break;
+                } catch (Exception $e) {
+                    if (++$resumes > 3) {
+                        throw $e;
+                    }
+                    usleep(300000);
                 }
-                $val = $item->getValue();
-                $results[$oidStr] = is_object($val) && method_exists($val, 'getValue') ? $val->getValue() : $val;
             }
             return $results;
         } catch (Exception $e) {

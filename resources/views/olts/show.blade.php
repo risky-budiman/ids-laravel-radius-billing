@@ -138,55 +138,13 @@
                             <span class="text-xs text-gray-500">Perbarui metrik port fisik di latar belakang</span>
                         </button>
                     </form>
-                    @if($olt->usesTelnet())
-                    <button onclick="document.getElementById('manual-delete-modal').classList.remove('hidden')" class="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-xl text-left hover:bg-rose-100 transition-all group md:col-span-2">
-                        <span class="block font-bold text-rose-700 dark:text-rose-400 group-hover:text-rose-800">Hapus ONU Manual</span>
-                        <span class="text-xs text-rose-500">Hapus paksa konfigurasi ONU langsung dari OLT</span>
-                    </button>
-                    @else
                     <div class="p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl md:col-span-2">
-                        <span class="block font-bold text-gray-600 dark:text-gray-300">Mode SNMP saja</span>
-                        <span class="text-xs text-gray-500">Registrasi, hapus & ganti profil ONU butuh telnet sehingga tidak dijalankan dari sini — kerjakan manual di OLT. Ubah metode akses di <em>Ubah OLT</em> bila ingin otomatis.</span>
+                        <span class="block font-bold text-gray-600 dark:text-gray-300">Akses OLT: SNMP saja</span>
+                        <span class="text-xs text-gray-500">Registrasi, hapus &amp; ganti profil ONU dikerjakan langsung di OLT. Sistem mencatat pekerjaan yang perlu dilakukan di Log Aktivitas.</span>
                     </div>
-                    @endif
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Manual Delete Modal -->
-    <div id="manual-delete-modal" class="fixed inset-0 z-50 hidden bg-gray-900/50 backdrop-blur-sm flex items-center justify-center">
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-8 max-w-md w-full mx-4 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div class="flex justify-between items-start mb-6">
-                <div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Hapus Paksa ONU</h3>
-                    <p class="text-sm text-gray-500 mt-1">PERINGATAN: Tindakan ini melewati data billing dan menghapus ONU langsung dari OLT.</p>
-                </div>
-                <button onclick="document.getElementById('manual-delete-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            
-            <form action="{{ route('olts.manual-delete-onu', $olt->id) }}" method="POST">
-                @csrf
-                <div class="space-y-4 mb-8">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">ONU Index (Position)</label>
-                        <input type="text" name="onu_index" placeholder="mis. 1/1/7:5" required class="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-rose-500 focus:border-rose-500 font-mono">
-                        <p class="text-xs text-gray-500 mt-1">Format: shelf/slot/port:onu (1/1/7:5) atau .1.1.7.5</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">SN ONU</label>
-                        <input type="text" name="onu_sn" placeholder="mis. ZTEGC1234567" required pattern="[A-Za-z0-9]+" class="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-rose-500 focus:border-rose-500 font-mono uppercase">
-                        <p class="text-xs text-gray-500 mt-1">ONU hanya dihapus bila SN di posisi tersebut sama. Hasilnya (berhasil / dibatalkan) tercatat di Log Aktivitas.</p>
-                    </div>
-                </div>
-                
-                <div class="flex space-x-3">
-                    <button type="button" onclick="document.getElementById('manual-delete-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 transition-colors">Batal</button>
-                    <button type="submit" onclick="return confirm('Hapus ONU ini dari OLT? Layanan internet pada ONU tersebut akan terputus.');" class="flex-1 py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-colors shadow-sm">Hapus ONU</button>
-                </div>
-            </form>
-        </div>
-    </div>
 </x-app-layout>

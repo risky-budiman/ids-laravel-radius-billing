@@ -277,20 +277,54 @@ class OltGateway
     // ═════════════════════════════════════════════════════
 
     /**
-     * Daftar ONU HSGQ (EPON) di satu port PON lewat SNMP. null = tabel ONU tidak terbaca (pakai cadangan telnet).
+     * Daftar ONU HSGQ (EPON) di satu port PON lewat SNMP. null = tabel ONU tidak terbaca.
      *
      * Status: ONU yang punya nilai Rx valid = online. Saat pemetaan dibuat semua 238 ONU sedang online, sehingga
      * bentuk data ONU offline di SNMP (baris hilang atau Rx kosong) belum teramati — keduanya dianggap offline.
      */
-    protected function hsgqOnusViaSnmp(int $port): ?array
+    /** Tabel ONU HSGQ yang sudah dibaca dalam instance ini (dipakai bersama oleh semua port). */
+    protected ?array $hsgqTables = null;
+
+    /**
+     * Baca keempat tabel ONU HSGQ sekali. Walk yang kosong dicoba ulang sekali: OLT HSGQ sesekali timeout saat
+     * sibuk, dan tanpa cadangan telnet satu timeout tidak boleh membuat daftar ONU hilang.
+     */
+    protected function hsgqTables(): ?array
     {
-        $names = $this->snmp()->walkSafe(HsgqOids::ONU_NAME_TABLE);
+        if ($this->hsgqTables !== null) {
+            return $this->hsgqTables;
+        }
+        $walk = function (string $oid, bool $hex = false): array {
+            for ($try = 0; $try < 2; $try++) {
+                $rows = $hex ? $this->snmp()->walkHexSafe($oid) : $this->snmp()->walkSafe($oid);
+                if ($rows) {
+                    return $rows;
+                }
+                usleep(500000);
+            }
+
+            return [];
+        };
+        $names = $walk(HsgqOids::ONU_NAME_TABLE);
         if (empty($names)) {
             return null;
         }
-        $macs = $this->snmp()->walkHexSafe(HsgqOids::ONU_MAC_TABLE);
-        $rx = $this->snmp()->walkSafe(HsgqOids::ONU_RX_POWER_TABLE);
-        $dist = $this->snmp()->walkSafe(HsgqOids::ONU_DISTANCE_TABLE);
+
+        return $this->hsgqTables = [
+            'names' => $names,
+            'macs' => $walk(HsgqOids::ONU_MAC_TABLE, true),
+            'rx' => $walk(HsgqOids::ONU_RX_POWER_TABLE),
+            'dist' => $walk(HsgqOids::ONU_DISTANCE_TABLE),
+        ];
+    }
+
+    protected function hsgqOnusViaSnmp(int $port): ?array
+    {
+        $tables = $this->hsgqTables();
+        if ($tables === null) {
+            return null;
+        }
+        ['names' => $names, 'macs' => $macs, 'rx' => $rx, 'dist' => $dist] = $tables;
 
         $base = HsgqOids::PON_INDEX_BASE + 256 * ($port - 1);
         $onus = [];
@@ -327,24 +361,20 @@ class OltGateway
     }
 
     /**
-     * Get all registered ONUs on a specific PON port via SNMP (or HSGQ CLI fallback).
+     * Get all registered ONUs on a specific PON port via SNMP.
      * Returns: index, onu_id, sn, name, type, status, signal
      */
     public function getOnusOnPort(int $shelf, int $slot, int $port): array
     {
         // ── 1. Khusus Tipe OLT HSGQ (EPON / GPON) ──
         if (str_contains(strtoupper($this->olt->olt_type ?? ''), 'HSGQ')) {
-            // SNMP dulu (OID dipetakan dari OLT HSGQ asli); telnet hanya cadangan bila tabel SNMP tidak terbaca
+            // Hanya SNMP (OID dipetakan dari OLT HSGQ asli; telnet sudah dihapus)
             $snmpOnus = $this->hsgqOnusViaSnmp($port);
-            if ($snmpOnus !== null) {
-                return $snmpOnus;
+            if ($snmpOnus === null) {
+                throw new \RuntimeException("Tabel ONU SNMP OLT HSGQ {$this->olt->name} tidak terbaca.");
             }
-            if (! $this->olt->usesTelnet()) {
-                throw new \RuntimeException("Tabel ONU SNMP OLT HSGQ {$this->olt->name} tidak terbaca dan metode akses SNMP saja (tanpa telnet).");
-            }
-            Log::info("HSGQ: Fetching ONUs on PON port {$port} for OLT: {$this->olt->name}");
-            $cliService = new HsgqCliService($this->olt);
-            return $cliService->getOnusOnPort($port);
+
+            return $snmpOnus;
         }
 
         $shelf = $shelf ?: 1;
@@ -724,63 +754,5 @@ class OltGateway
             Log::error("Failed to reboot ONU via SNMP: " . $e->getMessage());
             return false;
         }
-    }
-
-    // ═════════════════════════════════════════════════════
-    // PROVISIONING WRITE OPERATIONS (Telnet CLI)
-    // ═════════════════════════════════════════════════════
-
-    /** Alasan gagal operasi tulis (telnet) terakhir, untuk ditampilkan/dicatat. */
-    protected ?string $lastWriteError = null;
-
-    public function lastWriteError(): ?string
-    {
-        return $this->lastWriteError;
-    }
-
-    /** Jalankan operasi tulis lewat service telnet & simpan alasan gagalnya. */
-    protected function telnetWrite(callable $op): mixed
-    {
-        if (! $this->olt->usesTelnet()) {
-            $this->lastWriteError = 'OLT memakai mode SNMP saja; perintah telnet tidak dijalankan.';
-
-            return false;
-        }
-        $service = $this->provisioningService();
-        $result = $op($service);
-        $this->lastWriteError = $result === false ? ($service->lastError() ?? 'Operasi telnet gagal.') : null;
-
-        return $result;
-    }
-
-    /** Dipisah agar bisa diganti di tes. */
-    protected function provisioningService(): ZteOltProvisioningService
-    {
-        return new ZteOltProvisioningService($this->olt);
-    }
-
-    public function provisionOnu(int $shelf, int $slot, int $port, string $sn, string $onuType, int $vlan = 100, string $description = 'NextLink-Customer', ?string $tcontProfile = null): string|false
-    {
-        return $this->telnetWrite(fn ($s) => $s->provisionOnu($shelf, $slot, $port, $sn, $onuType, $vlan, $description, $tcontProfile));
-    }
-
-    public function deprovisionOnu(int $shelf, int $slot, int $port, int $onuId): bool
-    {
-        return $this->telnetWrite(fn ($s) => $s->deleteOnu($shelf, $slot, $port, $onuId));
-    }
-
-    public function suspendOnu(int $shelf, int $slot, int $port, int $onuId): bool
-    {
-        return $this->telnetWrite(fn ($s) => $s->suspendOnu($shelf, $slot, $port, $onuId));
-    }
-
-    public function resumeOnu(int $shelf, int $slot, int $port, int $onuId): bool
-    {
-        return $this->telnetWrite(fn ($s) => $s->resumeOnu($shelf, $slot, $port, $onuId));
-    }
-
-    public function updateOnuProfile(int $shelf, int $slot, int $port, int $onuId, $package): bool
-    {
-        return $this->telnetWrite(fn ($s) => $s->updateOnuProfile($shelf, $slot, $port, $onuId, $package));
     }
 }

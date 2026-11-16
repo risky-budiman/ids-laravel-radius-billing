@@ -57,7 +57,7 @@ Tombol **Ubah kontak** di halaman pelanggan (admin & CS) hanya mengubah **No. HP
 1. Di halaman pelanggan klik **Ajukan ganti paket**, pilih paket baru dan tulis alasannya (admin, CS, teknisi & sales).
 2. Pengajuan muncul di **Manajemen > Pengajuan Ganti Paket** dengan selisih harga per bulan.
 3. Admin/administrator **Setujui** atau **Tolak** (alasan wajib).
-4. Saat disetujui paket langsung berganti: grup RADIUS paket baru (tetap terisolir bila sedang diisolir), sesi diputus agar kecepatan baru berlaku, profil T-CONT ONU diganti bila paket punya *Profil T-CONT OLT*. Tagihan berikutnya memakai harga baru.
+4. Saat disetujui paket langsung berganti: grup RADIUS paket baru (tetap terisolir bila sedang diisolir), sesi diputus agar kecepatan baru berlaku, bila paket punya *Profil T-CONT OLT*, Log Aktivitas mencatat agar profil ONU diganti manual di OLT. Tagihan berikutnya memakai harga baru.
 
 Aturan: satu pengajuan menunggu per pelanggan; admin tidak bisa menyetujui pengajuannya sendiri (administrator bisa); pengajuan ditolak bila paket pelanggan sudah berubah sejak diajukan.
 

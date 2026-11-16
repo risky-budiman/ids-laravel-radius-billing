@@ -45,12 +45,7 @@ class OltController extends Controller
             'snmp_v3_auth_password' => 'nullable|string|min:8|max:128',
             'snmp_v3_priv_protocol' => 'nullable|in:DES,AES',
             'snmp_v3_priv_password' => 'nullable|string|min:8|max:128',
-            'telnet_port' => 'nullable|integer',
-            'username' => 'nullable|string',
-            'password' => 'nullable|string',
-            'enable_password' => 'nullable|string',
             'olt_type' => 'required|string',
-            'access_method' => 'nullable|in:snmp_telnet,snmp',
             'is_active' => 'nullable',
             'description' => 'nullable|string',
             'latitude' => 'nullable|string',
@@ -58,9 +53,7 @@ class OltController extends Controller
         ]);
 
         $validated['snmp_write_community'] = $validated['snmp_write_community'] ?? 'private';
-        $validated['telnet_port'] = $validated['telnet_port'] ?? 23;
         $validated['is_active'] = $request->has('is_active');
-        $validated['access_method'] = $validated['access_method'] ?? Olt::ACCESS_SNMP_TELNET;
         $this->ensureV3Credentials($validated);
         $olt = Olt::create($validated);
 
@@ -127,27 +120,17 @@ class OltController extends Controller
             'snmp_v3_auth_password' => 'nullable|string|min:8|max:128',
             'snmp_v3_priv_protocol' => 'nullable|in:DES,AES',
             'snmp_v3_priv_password' => 'nullable|string|min:8|max:128',
-            'telnet_port' => 'nullable|integer',
-            'username' => 'nullable|string',
-            'password' => 'nullable|string',
-            'enable_password' => 'nullable|string',
             'olt_type' => 'required|string',
-            'access_method' => 'nullable|in:snmp_telnet,snmp',
             'is_active' => 'nullable',
             'description' => 'nullable|string',
             'latitude' => 'nullable|string',
             'longitude' => 'nullable|string',
         ]);
 
-        $validated['telnet_port'] = $validated['telnet_port'] ?? 23;
         $validated['is_active'] = $request->has('is_active');
 
-        if (blank($validated['access_method'] ?? null)) {
-            unset($validated['access_method']);
-        }
-
         // Kredensial & community tidak ditampilkan di form: kosong = tetap memakai yang lama
-        foreach (['password', 'enable_password', 'snmp_read_community', 'snmp_write_community', 'snmp_v3_auth_password', 'snmp_v3_priv_password'] as $secret) {
+        foreach (['snmp_read_community', 'snmp_write_community', 'snmp_v3_auth_password', 'snmp_v3_priv_password'] as $secret) {
             if (blank($validated[$secret] ?? null)) {
                 unset($validated[$secret]);
             }
@@ -291,28 +274,6 @@ class OltController extends Controller
         }
     }
 
-    /**
-     * Manual Delete ONU from OLT
-     */
-    public function manualDeleteOnu(Request $request, Olt $olt)
-    {
-        if (! $olt->usesTelnet()) {
-            return back()->with('error', 'OLT ini memakai mode SNMP saja; hapus ONU harus dilakukan langsung di OLT.');
-        }
-        $data = $request->validate([
-            'onu_index' => 'required|string|max:40',
-            'onu_sn' => 'required|string|max:32|regex:/^[A-Za-z0-9]+$/',
-        ], [], ['onu_index' => 'indeks ONU', 'onu_sn' => 'SN ONU']);
-
-        if (! \App\Services\Network\ZteOids::parseOnuPosition($data['onu_index'])) {
-            return back()->with('error', 'Format indeks ONU tidak dikenali. Contoh: 1/1/7:5 atau .1.1.7.5');
-        }
-
-        // ONU hanya dihapus bila SN di posisi itu sama dengan SN yang diisi (hasilnya tercatat di Log Aktivitas)
-        \App\Jobs\DeprovisionOnuJob::dispatch($olt->id, $data['onu_index'], strtoupper($data['onu_sn']), $request->user()?->id);
-
-        return back()->with('success', "Penghapusan ONU {$data['onu_sn']} di posisi {$data['onu_index']} diantrekan. Hasilnya tercatat di Log Aktivitas.");
-    }
     /**
      * Show details for a specific PON port (Scan ONUs via SNMP immediately)
      */

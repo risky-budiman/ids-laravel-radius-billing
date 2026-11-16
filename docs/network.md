@@ -20,7 +20,7 @@ Anda dapat menambahkan router di menu **Network > NAS**.
 
 ## Integrasi OLT (Optical Line Terminal)
 
-Sistem mendukung integrasi ke OLT ZTE (C300, C320, C600) dan HSGQ. Pemantauan memakai **SNMP**; registrasi, hapus, isolir dan ganti profil ONU di OLT ZTE memakai **telnet** (isi Username, Password & Enable Password OLT):
+Sistem mendukung integrasi ke OLT ZTE (C300, C320, C600) dan HSGQ. Akses ke OLT **hanya lewat SNMP** (telnet tidak dipakai sama sekali):
 
 - **Monitoring Real-Time**: Status perangkat (Uptime, CPU, Temperatur).
 - **Auto-Discovery Port PON**: Deteksi otomatis seluruh port PON dan status aktif/kosong tanpa input manual.
@@ -48,19 +48,19 @@ Sistem mendukung integrasi ke OLT ZTE (C300, C320, C600) dan HSGQ. Pemantauan me
 - Bila OLT tidak merespons SNMP, halaman menampilkan pesan gagal dan **daftar terakhir tetap ditampilkan** — port tidak lagi dianggap kosong dan statusnya tidak diubah.
 - Deteksi ulang port PON berjalan dalam satu transaksi: bila gagal di tengah, status port tidak berubah.
 
-### Metode akses OLT: SNMP + Telnet / SNMP saja
+### Pekerjaan ONU dikerjakan di OLT (sistem hanya SNMP)
 
-Di **Ubah OLT → Metode Akses**:
-- **SNMP + Telnet** (bawaan): pemantauan lewat SNMP; registrasi, hapus, isolir dan ganti profil ONU otomatis lewat telnet.
-- **SNMP saja**: tidak ada perintah telnet ke OLT. Pemantauan, sinyal dan daftar ONU (ZTE) tetap berjalan, sedangkan:
-  - **registrasi, hapus dan ganti profil ONU tidak dijalankan otomatis**. Setiap kejadian dicatat di Log Aktivitas (`onu_provision_skipped`, `onu_delete_skipped`, `onu_action_skipped`) agar dikerjakan manual di OLT;
-  - isolir/buka cukup lewat RADIUS (ONU tidak di-*shutdown*);
-  - tombol *Hapus ONU Manual* diganti keterangan;
-  - daftar ONU OLT HSGQ juga dibaca lewat SNMP (lihat di bawah).
+Sistem tidak lagi mengirim perintah telnet ke OLT; form OLT juga tidak punya isian telnet (username/password/enable). Akibatnya:
+- **Registrasi ONU** (pelanggan baru), **hapus ONU** (dismantle/hapus pelanggan) dan **ganti profil T-CONT** (ganti paket yang punya profil) **dikerjakan teknisi langsung di OLT**. Sistem mencatat pekerjaannya di **Log Aktivitas** lengkap dengan OLT, posisi/port, SN, VLAN dan profil:
+  - `onu_provision_manual` — daftarkan ONU;
+  - `onu_delete_manual` — hapus ONU;
+  - `onu_profile_manual` — ganti profil T-CONT.
+- **Isolir & buka isolir** cukup lewat RADIUS (pelanggan diarahkan ke halaman isolir); ONU tidak perlu di-*shutdown*.
+- Kecepatan internet tetap diatur RADIUS/MikroTik; profil T-CONT di OLT hanya batas fisik ONU.
 
 ### Daftar ONU OLT HSGQ (EPON) lewat SNMP
 
-Daftar ONU per port PON HSGQ (MAC, nama, Rx power, jarak) dibaca lewat **SNMP**, sehingga tidak lagi butuh telnet. Telnet hanya dipakai sebagai cadangan bila tabel SNMP tidak terbaca dan metode aksesnya *SNMP + Telnet*.
+Daftar ONU per port PON HSGQ (MAC, nama, Rx power, jarak) dibaca lewat **SNMP**.
 - OID dipetakan langsung dari OLT **HSGQ-E04ID** (firmware IR_V3.3.3ID_Rel) dan dicocokkan dengan CLI pada 238 ONU: MAC, nama dan posisi 100% sama, selisih Rx ≤ 0,01 dBm.
 - **Status:** ONU dengan nilai optik dianggap *online*, tanpa nilai optik dianggap *offline*. Saat pemetaan dibuat semua ONU sedang online, jadi tampilan ONU yang benar-benar offline perlu dicek sekali (cabut satu ONU uji lalu buka halaman port).
 - Deskripsi ONU (mis. nama pelanggan) tidak tersedia di SNMP HSGQ; yang tampil adalah *nama* ONU.
@@ -69,39 +69,16 @@ Daftar ONU per port PON HSGQ (MAC, nama, Rx power, jarak) dibaca lewat **SNMP**,
 ### Hak akses & kredensial OLT
 
 - **Tambah, ubah dan hapus OLT hanya administrator.** Teknisi tetap bisa melihat OLT, tes koneksi, sinkron port dan melihat ONU.
-- **Password, enable password, read community dan write community disimpan terenkripsi** memakai `APP_KEY`. Jangan mengganti `APP_KEY` di server produksi: kredensial OLT tidak bisa dibaca lagi dan harus diisi ulang.
-- Form **Ubah OLT** tidak menampilkan community maupun password. Kosongkan kolomnya untuk tetap memakai nilai lama; isi hanya bila ingin menggantinya.
+- **Read/write community dan password SNMPv3 disimpan terenkripsi** memakai `APP_KEY`. Jangan mengganti `APP_KEY` di server produksi: kredensial OLT tidak bisa dibaca lagi dan harus diisi ulang.
+- Form **Ubah OLT** tidak menampilkan community maupun password SNMPv3. Kosongkan kolomnya untuk tetap memakai nilai lama; isi hanya bila ingin menggantinya.
 - **OLT yang masih dipakai pelanggan tidak bisa dihapus.** Pindahkan pelanggan ke OLT lain terlebih dahulu.
 - Tambah, ubah dan hapus OLT tercatat di **Log Aktivitas** (`olt_created`, `olt_updated`, `olt_deleted`).
 
-### Keamanan aksi tulis ke ONU
-
-Hapus ONU (dismantle, hapus pelanggan, hapus manual), isolir/buka ONU dan ganti profil kecepatan **hanya dijalankan bila SN di posisi ONU tersebut sama dengan SN pelanggan**. Sistem membaca SN di posisi itu lewat SNMP terlebih dahulu:
-
-- SN cocok → perintah dijalankan.
-- SN berbeda (posisi sudah dipakai ONU pelanggan lain), posisi kosong, atau SNMP tidak bisa dibaca → **dibatalkan**, tidak ada yang dihapus.
-
-Hasil setiap aksi (berhasil, dibatalkan beserta alasannya, atau gagal) tercatat di **Log Aktivitas** dengan aksi `onu_deleted`, `onu_delete_aborted`, `onu_delete_failed`, `onu_action_aborted`, `onu_action_failed`.
-
-**Hapus ONU manual** (halaman OLT → Hapus ONU): isi **indeks** dan **SN ONU**. Format indeks yang diterima: `1/1/7:5`, `gpon-onu_1/1/7:5`, `1.1.7.5` atau `.1.1.7.5`.
-
-**Balasan OLT diperiksa.** Untuk registrasi, hapus, isolir/buka dan ganti profil ONU lewat telnet, sistem memastikan login sampai prompt `ZXAN#`. Setiap perintah juga harus dibalas prompt dan tidak berisi pesan error ZTE (`%Error …`, `%Code …`, `Invalid input …`). Bila ada yang gagal, perintah berikutnya tidak dijalankan. Alasannya tercatat di **Log Aktivitas**:
-- *login telnet ditolak* — periksa username/password OLT;
-- *mode enable ditolak* — periksa Enable Password;
-- *perintah '…' ditolak OLT: %Error …*;
-- *OLT tidak membalas perintah '…' (timeout)*.
-
-Registrasi ONU yang berhasil maupun gagal tercatat (`onu_provisioned` / `onu_provision_failed`).
-
-Hapus ONU otomatis belum didukung untuk OLT HSGQ — sistem mencatatnya di Log Aktivitas agar dihapus manual di OLT.
-
-### Registrasi ONU & profil kecepatan
+### Data registrasi ONU (untuk dikerjakan di OLT)
 
 - **VLAN** diambil dari isian *VLAN* pada wizard aktivasi (bawaan 100 bila kosong).
-- **Profil T-CONT** diambil dari paket pelanggan (*Paket → Profil T-CONT OLT*); bawaan `UP-100M` bila kosong.
-- Nama ONU di OLT memakai ID pelanggan (tanpa spasi), agar perintah ZTE tidak gagal.
-- SN harus 8–16 huruf/angka; selain itu registrasi ditolak.
-- Saat paket pelanggan diganti, profil T-CONT ONU ikut diganti **bila** paket baru punya Profil T-CONT. Bila kosong, langkah ini dilewati — kecepatan internet tetap diatur RADIUS/MikroTik.
+- **Profil T-CONT** diambil dari paket pelanggan (*Paket → Profil T-CONT OLT*).
+- Nama ONU di OLT sebaiknya memakai ID pelanggan agar mudah dicocokkan.
 
 ## Manajemen Modem Pelanggan (GenieACS / TR-069)
 

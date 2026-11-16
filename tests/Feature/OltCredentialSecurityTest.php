@@ -23,8 +23,7 @@ class OltCredentialSecurityTest extends TestCase
     {
         return Olt::create([
             'name' => 'OLT Uji', 'ip_address' => '10.0.0.2', 'snmp_port' => 161, 'snmp_version' => 2,
-            'snmp_read_community' => 'baca-rahasia', 'snmp_write_community' => 'tulis-rahasia', 'telnet_port' => 23,
-            'username' => 'zte', 'password' => 'pass-olt', 'enable_password' => 'enable-olt', 'olt_type' => 'ZTE_C320', 'is_active' => true,
+            'snmp_read_community' => 'baca-rahasia', 'snmp_write_community' => 'tulis-rahasia', 'olt_type' => 'ZTE_C320', 'is_active' => true,
         ]);
     }
 
@@ -33,14 +32,13 @@ class OltCredentialSecurityTest extends TestCase
         $olt = $this->olt();
         $raw = DB::table('olts')->where('id', $olt->id)->first();
 
-        foreach (['password' => 'pass-olt', 'enable_password' => 'enable-olt', 'snmp_read_community' => 'baca-rahasia', 'snmp_write_community' => 'tulis-rahasia'] as $col => $plain) {
+        foreach (['snmp_read_community' => 'baca-rahasia', 'snmp_write_community' => 'tulis-rahasia'] as $col => $plain) {
             $this->assertNotSame($plain, $raw->{$col}, "$col tersimpan teks biasa");
             $this->assertSame($plain, Crypt::decryptString($raw->{$col}));
             $this->assertSame($plain, $olt->fresh()->{$col});
         }
         $json = $olt->fresh()->toJson();
         $this->assertStringNotContainsString('rahasia', $json);
-        $this->assertStringNotContainsString('pass-olt', $json);
     }
 
     public function test_edit_form_does_not_reveal_communities_and_blank_keeps_them(): void
@@ -53,15 +51,29 @@ class OltCredentialSecurityTest extends TestCase
 
         $this->actingAs($admin)->put(route('olts.update', $olt), [
             'name' => 'OLT Uji 2', 'ip_address' => '10.0.0.2', 'snmp_port' => 161, 'snmp_version' => 2,
-            'snmp_read_community' => '', 'snmp_write_community' => '', 'password' => '', 'enable_password' => '', 'olt_type' => 'ZTE_C320',
+            'snmp_read_community' => '', 'snmp_write_community' => '', 'olt_type' => 'ZTE_C320',
         ])->assertRedirect(route('olts.index'));
 
         $olt->refresh();
         $this->assertSame('OLT Uji 2', $olt->name);
         $this->assertSame('baca-rahasia', $olt->snmp_read_community);
         $this->assertSame('tulis-rahasia', $olt->snmp_write_community);
-        $this->assertSame('pass-olt', $olt->password);
         $this->assertTrue(ActivityLog::where('action', 'olt_updated')->exists());
+    }
+
+    public function test_olts_are_snmp_only_without_telnet_fields(): void
+    {
+        $olt = $this->olt();
+        $admin = User::factory()->create(['role' => 'administrator', 'is_active' => true]);
+        \App\Models\OltPonPort::create(['olt_id' => $olt->id, 'slot' => 1, 'pon_port' => 1, 'status' => 'active']);   // tanpa deteksi port SNMP
+        foreach (['access_method', 'telnet_port', 'username', 'password', 'enable_password'] as $col) {
+            $this->assertFalse(\Illuminate\Support\Facades\Schema::hasColumn('olts', $col), "kolom {$col} masih ada");
+        }
+        foreach ([route('olts.create'), route('olts.edit', $olt), route('olts.show', $olt), route('olts.index')] as $url) {
+            $html = strtolower($this->actingAs($admin)->get($url)->assertOk()->getContent());
+            $this->assertStringNotContainsString('telnet', $html, $url);
+            $this->assertStringNotContainsString('enable_password', $html, $url);
+        }
     }
 
     public function test_teknisi_can_view_but_not_change_olts(): void

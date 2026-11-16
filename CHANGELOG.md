@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.144] - 2026-11-16
+
+### Peningkatan
+- **olt:** SNMP only — telnet removed entirely
+
 ## [v1.5.143] - 2026-11-16
 
 ### Fitur baru

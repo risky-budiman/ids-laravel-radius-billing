@@ -23,8 +23,8 @@ Akses menu **Broadband > Packages > Add New**.
 
 ### 4. Profil T-CONT OLT (opsional)
 Nama profil T-CONT di OLT ZTE untuk paket ini (lihat di OLT dengan `show gpon profile tcont`), satu kata, mis. `UP-20M`.
-- Dipakai saat ONU pelanggan didaftarkan ke OLT.
-- Saat paket pelanggan diganti, ONU otomatis dipindah ke profil paket baru.
+- Ditampilkan di catatan *Daftarkan ONU MANUAL* (Log Aktivitas) saat pelanggan baru diaktifkan.
+- Saat paket pelanggan diganti, sistem mencatat *Ganti profil T-CONT ONU MANUAL* agar profil ONU diganti di OLT (sistem hanya SNMP).
 - Kosongkan bila kecepatan cukup diatur lewat RADIUS/MikroTik.
 
 ## Manajemen Paket

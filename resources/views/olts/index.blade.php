@@ -59,13 +59,9 @@
                             <span>SNMP Port</span>
                             <span class="font-mono">{{ $olt->snmp_port }}</span>
                         </div>
-                        <div class="flex justify-between py-1 border-b border-gray-100 dark:border-gray-700">
-                            <span>Read Community</span>
-                            <span class="font-mono text-xs">{{ Str::mask($olt->snmp_read_community, '*', 2, -2) }}</span>
-                        </div>
                         <div class="flex justify-between py-1">
-                            <span>Port Telnet</span>
-                            <span class="font-mono">{{ $olt->telnet_port }}</span>
+                            <span>Versi SNMP</span>
+                            <span class="font-mono">{{ (int) $olt->snmp_version === 3 ? 'v3' : ((int) $olt->snmp_version === 1 ? 'v1' : 'v2c') }}</span>
                         </div>
                     </div>
                 </div>

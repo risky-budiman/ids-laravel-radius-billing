@@ -133,7 +133,7 @@ class NocController extends Controller
     }
 
     /**
-     * Test connection to OLT via SNMP / Telnet.
+     * Test connection to OLT via SNMP.
      */
     public function testConnection($id)
     {

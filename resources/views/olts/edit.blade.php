@@ -138,42 +138,6 @@
                         @error('snmp_write_community') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
-                    <!-- Metode akses -->
-                    <div class="md:col-span-2 space-y-2">
-                        <label for="access_method" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Metode Akses</label>
-                        <select name="access_method" id="access_method" class="w-full md:w-1/2 rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
-                            <option value="snmp_telnet" @selected(old('access_method', $olt->access_method ?: 'snmp_telnet') === 'snmp_telnet')>SNMP + Telnet (pemantauan + registrasi/hapus/isolir ONU otomatis)</option>
-                            <option value="snmp" @selected(old('access_method', $olt->access_method ?: 'snmp_telnet') === 'snmp')>SNMP saja (tanpa telnet)</option>
-                        </select>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">SNMP saja: pemantauan, sinyal & daftar ONU (ZTE) tetap jalan; registrasi, hapus & ganti profil ONU <strong>tidak dijalankan otomatis</strong> (dicatat di Log Aktivitas untuk dikerjakan manual di OLT), isolir cukup lewat RADIUS. Daftar ONU OLT HSGQ masih membutuhkan telnet. Kolom telnet di bawah boleh dikosongkan.</p>
-                    </div>
-
-                    <!-- CLI / Telnet Section (Optional) -->
-                    <div class="md:col-span-2 mt-4">
-                        <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">Konfigurasi CLI / Telnet (Opsional, hanya untuk provisioning)</h3>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="telnet_port" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Port Telnet (Opsional)</label>
-                        <input type="number" name="telnet_port" id="telnet_port" value="{{ old('telnet_port', $olt->telnet_port) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
-                        @error('telnet_port') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="username" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Username</label>
-                        <input type="text" name="username" id="username" value="{{ old('username', $olt->username) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="password" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Login Password</label>
-                        <input type="password" name="password" id="password" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="Kosongkan untuk tetap memakai yang lama">
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="enable_password" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Enable Password</label>
-                        <input type="password" name="enable_password" id="enable_password" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="Kosongkan untuk tetap memakai yang lama">
-                    </div>
-
                     <div class="flex items-center space-x-3 mt-4">
                         <input type="checkbox" name="is_active" id="is_active" value="1" {{ old('is_active', $olt->is_active) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                         <label for="is_active" class="text-sm font-semibold text-gray-700 dark:text-gray-300">Aktifkan Perangkat</label>

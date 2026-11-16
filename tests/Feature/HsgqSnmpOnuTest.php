@@ -16,10 +16,10 @@ class HsgqSnmpOnuTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function olt(string $access = Olt::ACCESS_SNMP): Olt
+    private function olt(): Olt
     {
         return Olt::create(['name' => 'HSGQ', 'ip_address' => '10.0.0.10', 'snmp_port' => 161, 'snmp_version' => 2,
-            'snmp_read_community' => 'public', 'telnet_port' => 23, 'olt_type' => 'HSGQ_EPON', 'access_method' => $access, 'is_active' => true]);
+            'snmp_read_community' => 'public', 'olt_type' => 'HSGQ_EPON', 'is_active' => true]);
     }
 
     /** SNMP palsu berisi baris dari walk asli (PON1 ONU 1–2, PON2 ONU 1; ONU 3 PON1 tanpa data optik). */
@@ -75,11 +75,11 @@ class HsgqSnmpOnuTest extends TestCase
         $this->assertSame('cc:bc:e3:b9:75:46', $pon2[0]['sn']);   // MAC ini tampil sebagai STRING acak di snmpwalk biasa
     }
 
-    public function test_unreadable_table_needs_telnet_or_fails_clearly(): void
+    public function test_unreadable_table_fails_clearly(): void
     {
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('tidak terbaca');
-        $this->gateway($this->olt(Olt::ACCESS_SNMP), [])->getOnusOnPort(1, 1, 1);
+        $this->gateway($this->olt(), [])->getOnusOnPort(1, 1, 1);
     }
 
     public function test_hex_walk_normalises_raw_bytes_and_hex_text(): void
