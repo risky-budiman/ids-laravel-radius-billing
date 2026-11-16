@@ -79,7 +79,17 @@ Satu form untuk tambah & ubah: Identitas (nama, tipe, IP, lokasi, koordinat + Li
   - tabel ONU: posisi, nama & MAC/SN, **deskripsi**, **pelanggan yang tertaut** (klik untuk membuka data pelanggan), sinyal Rx berwarna (≥ -24 baik, -24 s/d -27 waspada, < -27 dBm kritis), jarak, status;
   - cari (MAC/SN, nama, deskripsi, pelanggan), filter (Online, Offline, Kritis, Tanpa pelanggan), urutkan menurut posisi/sinyal/jarak, pindah port;
   - panel **Detail** per ONU: salin MAC/SN, buka pelanggan, **Reboot ONU**, ubah nama/deskripsi.
-- **Ketersediaan aksi ONU:** OLT **ZTE** — reboot lewat SNMP (SN di posisi itu dicocokkan dulu; tercatat `onu_rebooted`). OLT **HSGQ** — SNMP-nya tidak menyediakan reboot, ubah nama/deskripsi maupun deskripsi ONU. Bila login web diisi, halaman port membaca dari **API web OLT**: deskripsi, status Online/Offline yang pasti, alasan & waktu putus terakhir, vendor/tipe, waktu terdaftar, serta Tx, suhu, tegangan & bias ONU (disimpan 10 menit). Reboot & ubah ONU HSGQ menyusul setelah perintah tulis API web OLT diuji dengan ONU cadangan.
+- **Ketersediaan aksi ONU:** OLT **ZTE** — reboot lewat SNMP (SN di posisi itu dicocokkan dulu; tercatat `onu_rebooted`). OLT **HSGQ** — SNMP-nya tidak menyediakan reboot, ubah nama/deskripsi maupun deskripsi ONU. Bila login web diisi, halaman port membaca dari **API web OLT**: deskripsi, status Online/Offline yang pasti, alasan & waktu putus terakhir, vendor/tipe, waktu terdaftar, serta Tx, suhu, tegangan & bias ONU (disimpan 10 menit). Dengan login web, aksi ONU HSGQ juga tersedia (lihat *Allow & aksi ONU HSGQ*).
+
+### Allow & aksi ONU HSGQ (API web OLT)
+
+Butuh **Akses web OLT** terisi (Ubah OLT). Format perintah mengikuti aplikasi web OLT HSGQ itu sendiri (firmware IR_V3.3.3ID).
+- **Allow ONU** (halaman port → tombol *Allow ONU*): menampilkan ONU yang **menunggu izin** di port itu (tercatat tapi belum diizinkan, atau ada di daftar tolak) — klik *Pilih* — atau ketik MAC dari label ONU. Bila MAC milik pelanggan, nama ONU = kode pelanggan dan deskripsi = nama pelanggan (bisa diganti). ONU yang sudah diizinkan tidak dikirim ulang. ONU biasanya online ±1 menit kemudian.
+- **Reboot**, **ubah nama/deskripsi** (nama maks 16 tanpa spasi, deskripsi maks 64) dan **hapus ONU dari OLT** (ketik HAPUS untuk konfirmasi) dari panel detail ONU.
+- Sebelum reboot/ubah/hapus, MAC di posisi itu **dicocokkan dulu** di OLT; bila ONU sudah pindah posisi (layar basi) perintah dibatalkan agar tidak mengenai ONU pelanggan lain.
+- Di panel **Pekerjaan di OLT**: *Allow sekarang* (pilih port; default dari posisi ONU pelanggan) dan *Hapus dari OLT* (MAC dicari di semua port). Pekerjaan langsung ditutup atas nama pengguna.
+- Semua aksi tercatat di Log Aktivitas (`onu_allowed`, `onu_reboot`, `onu_rename`, `onu_delete`, dan `*_failed`).
+- Ganti profil T-CONT / bandwidth HSGQ belum otomatis.
 - Bila OLT tidak merespons SNMP, halaman menampilkan pesan gagal dan **daftar terakhir tetap ditampilkan** — port tidak lagi dianggap kosong dan statusnya tidak diubah.
 - Deteksi ulang port PON berjalan dalam satu transaksi: bila gagal di tengah, status port tidak berubah.
 

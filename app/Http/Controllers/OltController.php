@@ -454,20 +454,62 @@ class OltController extends Controller
         ]);
     }
 
-    /** Aksi ONU yang tersedia untuk OLT ini (SNMP saja; HSGQ menunggu API web teruji). */
+    /** Aksi ONU yang tersedia untuk OLT ini. ZTE: reboot lewat SNMP. HSGQ: semua aksi lewat API web OLT. */
     private function onuCapabilities(Olt $olt): array
     {
-        $isHsgq = str_contains(strtoupper((string) $olt->olt_type), 'HSGQ');
+        $isHsgq = $this->isHsgq($olt);
+        $web = $isHsgq && filled($olt->web_username) && filled($olt->web_password);
+        $needWeb = 'Butuh akses web OLT (Ubah OLT → Akses web OLT).';
 
         return [
-            'reboot' => ! $isHsgq,
-            'reboot_hint' => $isHsgq ? 'Reboot ONU HSGQ belum tersedia: SNMP HSGQ tidak mendukungnya; menunggu API web OLT diuji.' : null,
-            'edit' => false,
-            'edit_hint' => $isHsgq
-                ? 'Ubah nama/deskripsi ONU HSGQ menunggu API web OLT diuji (isi login web di Ubah OLT).'
-                : 'Ubah nama/deskripsi ONU ZTE belum didukung lewat SNMP.',
-            'web_configured' => $isHsgq && filled($olt->web_username) && filled($olt->web_password),
+            'reboot' => ! $isHsgq || $web,
+            'reboot_hint' => $isHsgq && ! $web ? 'Reboot ONU HSGQ: ' . $needWeb : null,
+            'edit' => $web,
+            'edit_hint' => $web ? null : ($isHsgq ? 'Ubah nama/deskripsi ONU HSGQ: ' . $needWeb : 'Ubah nama/deskripsi ONU ZTE belum didukung lewat SNMP.'),
+            'allow' => $web,
+            'delete' => $web,
+            'web_configured' => $web,
         ];
+    }
+
+    private function isHsgq(Olt $olt): bool
+    {
+        return str_contains(strtoupper((string) $olt->olt_type), 'HSGQ');
+    }
+
+    /** Klien web HSGQ untuk aksi tulis, atau respons 422 bila OLT ini tidak mendukungnya. */
+    private function hsgqWebOr422(Olt $olt): \App\Services\Network\HsgqWebClient|\Illuminate\Http\JsonResponse
+    {
+        if (! $this->isHsgq($olt) || ! filled($olt->web_username) || ! filled($olt->web_password)) {
+            return response()->json(['success' => false, 'message' => 'Aksi ini butuh OLT HSGQ dengan akses web OLT terisi.'], 422);
+        }
+
+        return new \App\Services\Network\HsgqWebClient($olt, 15);
+    }
+
+    /** Nomor ONU (onu_id) dari posisi "1/1/2:5" atau "1.1.2.5". */
+    private function onuIdFromIndex(string $index): ?int
+    {
+        $parts = array_values(array_filter(preg_split('/[.\/:]/', $index), 'strlen'));
+
+        return count($parts) >= 4 && ctype_digit($parts[3]) ? (int) $parts[3] : null;
+    }
+
+    /** Hapus cache daftar & deskripsi ONU port agar layar menampilkan hasil perintah. */
+    private function forgetPortCache(\App\Models\OltPonPort $port): void
+    {
+        \Illuminate\Support\Facades\Cache::forget("olt_port_data_{$port->id}");
+        \Illuminate\Support\Facades\Cache::forget("olt_port_desc_{$port->id}");
+    }
+
+    /** Tutup pekerjaan OLT yang menunggu untuk SN ini (setelah dikerjakan dari aplikasi). */
+    private function closeWorkFor(Olt $olt, string $type, string $sn, string $note): void
+    {
+        $want = \App\Models\OltWorkItem::normalizeSn($sn);
+        \App\Models\OltWorkItem::pending()->where('olt_id', $olt->id)->where('type', $type)->get()
+            ->filter(fn ($w) => \App\Models\OltWorkItem::normalizeSn($w->onu_sn) === $want)
+            ->each(fn ($w) => $w->update(['status' => 'done', 'resolution' => 'manual', 'resolved_by' => auth()->id(),
+                'resolved_at' => now(), 'note' => $note]));
     }
 
     /**
@@ -547,6 +589,13 @@ class OltController extends Controller
         if (! $caps['reboot']) {
             return response()->json(['success' => false, 'message' => $caps['reboot_hint']], 422);
         }
+        if ($this->isHsgq($olt)) {
+            return $this->hsgqOnuAction($olt, $port, $data['index'], $data['sn'], 'reboot', function ($web, $onuId) use ($port) {
+                $web->rebootOnu((int) $port->pon_port, $onuId);
+
+                return 'Perintah reboot terkirim ke ONU.';
+            });
+        }
         $pos = \App\Services\Network\ZteOids::parseOnuPosition($data['index']);
         if (! $pos) {
             return response()->json(['success' => false, 'message' => 'Format posisi ONU tidak dikenali.'], 422);
@@ -562,6 +611,185 @@ class OltController extends Controller
             ($ok ? 'ONU di-reboot' : 'Reboot ONU GAGAL') . " di {$olt->name}: posisi {$data['index']}, SN {$data['sn']}.", $olt);
 
         return response()->json(['success' => $ok, 'message' => $ok ? 'Perintah reboot terkirim ke ONU.' : 'OLT menolak perintah reboot (periksa write community/SNMPv3).'], $ok ? 200 : 502);
+    }
+
+    /**
+     * Jalankan perintah HSGQ ke ONU yang sudah ada: posisi & MAC dicocokkan dulu di OLT, hasil dicatat di log.
+     */
+    private function hsgqOnuAction(Olt $olt, \App\Models\OltPonPort $port, string $index, string $sn, string $action, \Closure $run)
+    {
+        $web = $this->hsgqWebOr422($olt);
+        if ($web instanceof \Illuminate\Http\JsonResponse) {
+            return $web;
+        }
+        $onuId = $this->onuIdFromIndex($index);
+        if (! $onuId) {
+            return response()->json(['success' => false, 'message' => 'Format posisi ONU tidak dikenali.'], 422);
+        }
+        $labels = ['reboot' => 'Reboot ONU', 'rename' => 'Ubah nama/deskripsi ONU', 'delete' => 'Hapus ONU'];
+        try {
+            $web->verifyOnu((int) $port->pon_port, $onuId, $sn);
+            $message = $run($web, $onuId);
+        } catch (\RuntimeException $e) {
+            \App\Models\ActivityLog::log("onu_{$action}_failed", "{$labels[$action]} GAGAL di {$olt->name}: posisi {$index}, MAC {$sn}. {$e->getMessage()}", $olt);
+
+            return response()->json(['success' => false, 'message' => $labels[$action] . ' dibatalkan: ' . $e->getMessage()], 422);
+        }
+        $this->forgetPortCache($port);
+        \App\Models\ActivityLog::log("onu_{$action}", "{$labels[$action]} di {$olt->name}: posisi {$index}, MAC " . strtoupper($sn) . '.', $olt);
+
+        return response()->json(['success' => true, 'message' => $message]);
+    }
+
+    /** Ubah nama & deskripsi ONU (HSGQ, API web OLT). */
+    public function updateOnuInfo(Request $request, Olt $olt, \App\Models\OltPonPort $port)
+    {
+        abort_unless((int) $port->olt_id === (int) $olt->id, 404);
+        $data = $request->validate([
+            'index' => 'required|string|max:40', 'sn' => 'required|string|max:40',
+            'name' => ['nullable', 'string', 'max:16', 'regex:/^\S*$/'], 'description' => 'nullable|string|max:64',
+        ], ['name.regex' => 'Nama ONU tidak boleh berisi spasi.']);
+
+        return $this->hsgqOnuAction($olt, $port, $data['index'], $data['sn'], 'rename', function ($web, $onuId) use ($port, $data) {
+            $web->setOnuInfo((int) $port->pon_port, $onuId, (string) ($data['name'] ?? ''), (string) ($data['description'] ?? ''));
+
+            return 'Nama & deskripsi ONU tersimpan di OLT.';
+        });
+    }
+
+    /** Hapus ONU dari daftar izin OLT (HSGQ). ONU langsung terputus. */
+    public function deleteOnu(Request $request, Olt $olt, \App\Models\OltPonPort $port)
+    {
+        abort_unless((int) $port->olt_id === (int) $olt->id, 404);
+        $data = $request->validate(['index' => 'required|string|max:40', 'sn' => 'required|string|max:40']);
+
+        $res = $this->hsgqOnuAction($olt, $port, $data['index'], $data['sn'], 'delete', function ($web, $onuId) use ($port, $data) {
+            $web->deleteOnu((int) $port->pon_port, $onuId, $data['sn']);
+
+            return 'ONU dihapus dari OLT.';
+        });
+        if ($res->getData(true)['success'] ?? false) {
+            $this->closeWorkFor($olt, 'delete', $data['sn'], 'Dihapus dari aplikasi (API web OLT).');
+        }
+
+        return $res;
+    }
+
+    /** ONU di port yang menunggu izin (belum diizinkan / ada di daftar tolak) — HSGQ. */
+    public function pendingOnus(Olt $olt, \App\Models\OltPonPort $port)
+    {
+        abort_unless((int) $port->olt_id === (int) $olt->id, 404);
+        $web = $this->hsgqWebOr422($olt);
+        if ($web instanceof \Illuminate\Http\JsonResponse) {
+            return $web;
+        }
+        try {
+            return response()->json(['success' => true, 'onus' => $web->pendingOnus((int) $port->pon_port)]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 502);
+        }
+    }
+
+    /**
+     * Allow (izinkan) ONU di port lewat API web OLT HSGQ. Pekerjaan "daftarkan ONU" untuk MAC ini ikut ditutup;
+     * bila MAC milik pelanggan, nama & deskripsi default = kode & nama pelanggan.
+     */
+    public function allowOnu(Request $request, Olt $olt, \App\Models\OltPonPort $port)
+    {
+        abort_unless((int) $port->olt_id === (int) $olt->id, 404);
+        $data = $request->validate([
+            'mac' => 'required|string|max:40', 'name' => ['nullable', 'string', 'max:16', 'regex:/^\S*$/'],
+            'description' => 'nullable|string|max:64',
+        ], ['name.regex' => 'Nama ONU tidak boleh berisi spasi.']);
+        $result = $this->doAllow($olt, $port, $data['mac'], $data['name'] ?? null, $data['description'] ?? null);
+
+        return response()->json(['success' => $result['ok'], 'message' => $result['message']], $result['ok'] ? 200 : 422);
+    }
+
+    /** @return array{ok: bool, message: string} */
+    private function doAllow(Olt $olt, \App\Models\OltPonPort $port, string $mac, ?string $name, ?string $description): array
+    {
+        $web = $this->hsgqWebOr422($olt);
+        if ($web instanceof \Illuminate\Http\JsonResponse) {
+            return ['ok' => false, 'message' => $web->getData(true)['message']];
+        }
+        $macaddr = \App\Services\Network\HsgqWebClient::formatMac($mac);
+        if (! $macaddr) {
+            return ['ok' => false, 'message' => 'MAC ONU tidak valid (contoh: E8:68:19:02:FF:70).'];
+        }
+        $norm = \App\Models\OltWorkItem::normalizeSn($macaddr);
+        $customer = \App\Models\Customer::whereNotNull('onu_sn')->get(['id', 'customer_code', 'name', 'onu_sn'])
+            ->first(fn ($c) => \App\Models\OltWorkItem::normalizeSn($c->onu_sn) === $norm);
+        $name = filled($name) ? $name : ($customer ? substr((string) $customer->customer_code, 0, 16) : '');
+        $description = filled($description) ? $description : ($customer ? mb_substr($customer->name, 0, 64) : '');
+        $pon = "PON {$port->slot}/{$port->pon_port}";
+
+        try {
+            $state = $web->allowOnu((int) $port->pon_port, $macaddr, $name, $description);
+        } catch (\RuntimeException $e) {
+            \App\Models\ActivityLog::log('onu_allow_failed', "Allow ONU GAGAL di {$olt->name} {$pon}: MAC " . strtoupper($macaddr) . ". {$e->getMessage()}", $olt);
+
+            return ['ok' => false, 'message' => 'Allow ONU gagal: ' . $e->getMessage()];
+        }
+        $this->forgetPortCache($port);
+        $message = ['added' => "ONU ditambahkan & diizinkan di {$pon}.", 'authorized' => "ONU diizinkan di {$pon}.",
+            'already' => "ONU sudah diizinkan di {$pon}."][$state];
+        \App\Models\ActivityLog::log('onu_allowed', "Allow ONU di {$olt->name} {$pon}: MAC " . strtoupper($macaddr)
+            . ($customer ? " (pelanggan {$customer->customer_code} {$customer->name})" : '') . " — {$state}.", $olt);
+        $this->closeWorkFor($olt, 'provision', $macaddr, "Di-allow dari aplikasi di {$pon}.");
+
+        return ['ok' => true, 'message' => $message . ' ONU biasanya online ±1 menit kemudian.'];
+    }
+
+    /**
+     * Kerjakan pekerjaan OLT langsung dari panel (HSGQ + akses web): "daftarkan" → allow di port yang dipilih;
+     * "hapus" → cari MAC di semua port lalu hapus dari daftar izin.
+     */
+    public function runWork(Request $request, Olt $olt, \App\Models\OltWorkItem $item)
+    {
+        abort_unless((int) $item->olt_id === (int) $olt->id, 404);
+        if ($item->status !== 'pending' || ! in_array($item->type, ['provision', 'delete'], true) || ! $item->onu_sn) {
+            return back()->with('error', 'Pekerjaan ini tidak bisa dikerjakan dari aplikasi.');
+        }
+
+        if ($item->type === 'provision') {
+            $data = $request->validate(['port_id' => 'required|integer']);
+            $port = $olt->ponPorts()->whereKey($data['port_id'])->firstOrFail();
+            $customer = $item->customer;
+            $r = $this->doAllow($olt, $port, $item->onu_sn, $customer ? substr((string) $customer->customer_code, 0, 16) : null,
+                $customer ? mb_substr($customer->name, 0, 64) : null);
+            $item->refresh();
+            if ($r['ok'] && $item->status === 'pending') {   // MAC beda format dari pekerjaan: tutup tetap
+                $item->update(['status' => 'done', 'resolution' => 'manual', 'resolved_by' => auth()->id(), 'resolved_at' => now(),
+                    'note' => "Di-allow dari aplikasi di PON {$port->slot}/{$port->pon_port}."]);
+            }
+
+            return back()->with($r['ok'] ? 'success' : 'error', $r['message']);
+        }
+
+        $web = $this->hsgqWebOr422($olt);
+        if ($web instanceof \Illuminate\Http\JsonResponse) {
+            return back()->with('error', $web->getData(true)['message']);
+        }
+        try {
+            foreach ($olt->ponPorts()->orderBy('pon_port')->get() as $port) {
+                $row = $web->findOnu((int) $port->pon_port, $item->onu_sn);
+                if ($row) {
+                    $web->deleteOnu((int) $port->pon_port, (int) $row['onu_id'], $item->onu_sn);
+                    $this->forgetPortCache($port);
+                    $item->update(['status' => 'done', 'resolution' => 'manual', 'resolved_by' => auth()->id(), 'resolved_at' => now(),
+                        'note' => "Dihapus dari aplikasi (PON {$port->slot}/{$port->pon_port}:{$row['onu_id']})."]);
+                    \App\Models\ActivityLog::log('onu_delete', "Hapus ONU di {$olt->name} PON {$port->slot}/{$port->pon_port}:{$row['onu_id']}, MAC {$item->onu_sn} (pekerjaan OLT).", $olt);
+
+                    return back()->with('success', "ONU {$item->onu_sn} dihapus dari PON {$port->slot}/{$port->pon_port}.");
+                }
+            }
+        } catch (\RuntimeException $e) {
+            return back()->with('error', 'Hapus ONU gagal: ' . $e->getMessage());
+        }
+        $item->update(['status' => 'done', 'resolution' => 'auto', 'resolved_at' => now(), 'note' => 'Sudah tidak ada di daftar izin OLT.']);
+
+        return back()->with('success', "ONU {$item->onu_sn} sudah tidak ada di OLT; pekerjaan ditutup.");
     }
 
     /**

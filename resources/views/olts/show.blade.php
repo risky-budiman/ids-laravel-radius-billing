@@ -1,5 +1,6 @@
 @php
     $isAdministrator = auth()->user()->isAdministrator();
+    $canWebWrite = str_contains(strtoupper((string) $olt->olt_type), 'HSGQ') && filled($olt->web_username) && filled($olt->web_password);
     $online = ($status['status'] ?? null) === 'online';
     $state = ! $olt->is_active ? 'inactive' : ($status === null ? 'unknown' : ($online ? 'online' : 'offline'));
     $badge = ['online' => ['badge-success', 'Online'], 'offline' => ['badge-danger', 'Tidak merespons'],
@@ -102,7 +103,13 @@
                             Pekerjaan di OLT
                             @if($pendingWork->isNotEmpty())<span class="badge-warning">{{ $pendingWork->count() }} menunggu</span>@endif
                         </h3>
-                        <p class="text-xs text-surface-500">Kerjakan langsung di OLT. Daftarkan & hapus ONU ditutup otomatis setelah terlihat di OLT; ganti profil ditandai manual.</p>
+                        <p class="text-xs text-surface-500">
+                            @if($canWebWrite)
+                                Allow & hapus ONU bisa langsung dari sini (API web OLT). Ganti profil dikerjakan di OLT lalu ditandai manual.
+                            @else
+                                Kerjakan langsung di OLT. Daftarkan & hapus ONU ditutup otomatis setelah terlihat di OLT; ganti profil ditandai manual.
+                            @endif
+                        </p>
                     </div>
                     @if($pendingWork->isNotEmpty())
                         <form method="POST" action="{{ route('olts.work.verify', $olt) }}">@csrf
@@ -132,7 +139,27 @@
                                 </p>
                             </div>
                             @if($w->status === 'pending')
-                                <div class="flex gap-2 shrink-0">
+                                <div class="flex flex-wrap gap-2 shrink-0">
+                                    @if($canWebWrite && $w->type === 'provision' && $olt->ponPorts->isNotEmpty())
+                                        @php
+                                            $parts = array_values(array_filter(preg_split('/[.\/:]/', (string) $w->onu_index), 'strlen'));
+                                            $guessPon = isset($parts[2]) ? (int) $parts[2] : null;
+                                        @endphp
+                                        <form method="POST" action="{{ route('olts.work.run', [$olt, $w]) }}" class="flex gap-1"
+                                              onsubmit="return confirm('Allow ONU {{ $w->onu_sn }} di port yang dipilih?')">@csrf
+                                            <select name="port_id" class="input py-1 text-xs w-auto" aria-label="Port PON">
+                                                @foreach($olt->ponPorts as $pp)
+                                                    <option value="{{ $pp->id }}" @selected($guessPon === (int) $pp->pon_port)>PON {{ $pp->slot }}/{{ $pp->pon_port }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button class="btn-primary btn-sm">Allow sekarang</button>
+                                        </form>
+                                    @elseif($canWebWrite && $w->type === 'delete')
+                                        <form method="POST" action="{{ route('olts.work.run', [$olt, $w]) }}"
+                                              onsubmit="return confirm('Hapus ONU {{ $w->onu_sn }} dari OLT? ONU langsung terputus.')">@csrf
+                                            <button class="btn-danger btn-sm">Hapus dari OLT</button>
+                                        </form>
+                                    @endif
                                     <form method="POST" action="{{ route('olts.work.resolve', [$olt, $w]) }}">@csrf
                                         <input type="hidden" name="action" value="done">
                                         <button class="btn-primary btn-sm"><x-icon name="check" class="w-3.5 h-3.5" /> Sudah dikerjakan</button>

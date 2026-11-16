@@ -196,6 +196,11 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
             Route::post('olts/{olt}/sync-all-ports', [\App\Http\Controllers\OltController::class, 'syncAllPorts'])->name('olts.sync-all-ports');
             Route::get('olts/{olt}/ports/{port}/data', [\App\Http\Controllers\OltController::class, 'getPortData'])->name('olts.get-port-data');
             Route::post('olts/{olt}/ports/{port}/onus/reboot', [\App\Http\Controllers\OltController::class, 'rebootOnu'])->name('olts.onus.reboot');
+            Route::post('olts/{olt}/ports/{port}/onus/info', [\App\Http\Controllers\OltController::class, 'updateOnuInfo'])->name('olts.onus.info');
+            Route::post('olts/{olt}/ports/{port}/onus/delete', [\App\Http\Controllers\OltController::class, 'deleteOnu'])->name('olts.onus.delete');
+            Route::post('olts/{olt}/ports/{port}/onus/allow', [\App\Http\Controllers\OltController::class, 'allowOnu'])->name('olts.onus.allow');
+            Route::get('olts/{olt}/ports/{port}/onus/pending', [\App\Http\Controllers\OltController::class, 'pendingOnus'])->name('olts.onus.pending');
+            Route::post('olts/{olt}/work/{item}/run', [\App\Http\Controllers\OltController::class, 'runWork'])->name('olts.work.run');
             Route::post('olts/{olt}/work/verify', [\App\Http\Controllers\OltController::class, 'verifyWork'])->name('olts.work.verify');
             Route::post('olts/{olt}/work/{item}', [\App\Http\Controllers\OltController::class, 'resolveWork'])->name('olts.work.resolve');
         });

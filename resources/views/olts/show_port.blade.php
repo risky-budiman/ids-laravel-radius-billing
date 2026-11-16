@@ -58,7 +58,7 @@
         <template x-if="caps && !caps.reboot && !caps.web_configured">
             <div class="flex items-start gap-2.5 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 dark:border-sky-500/20 dark:bg-sky-500/10 dark:text-sky-300">
                 <x-icon name="exclamation" class="w-5 h-5 shrink-0" />
-                <p>Deskripsi, reboot & ubah ONU di OLT HSGQ tidak tersedia lewat SNMP — butuh <strong>akses web OLT</strong>.
+                <p>Allow, reboot, ubah & hapus ONU serta deskripsi di OLT HSGQ tidak tersedia lewat SNMP — butuh <strong>akses web OLT</strong>.
                     @if($isAdministrator)<a href="{{ route('olts.edit', $olt) }}" class="font-semibold underline">Isi login web OLT</a>.@else Minta administrator mengisi login web OLT.@endif</p>
             </div>
         </template>
@@ -84,6 +84,9 @@
                     <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span>-24 s/d -27</span>
                     <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span>&lt; -27 dBm</span>
                 </div>
+                <button type="button" class="btn-primary btn-sm whitespace-nowrap" x-show="caps?.allow" x-cloak @click="openAllow()">
+                    <x-icon name="plus" class="w-4 h-4" /> Allow ONU
+                </button>
             </div>
 
             <div class="overflow-x-auto">
@@ -200,12 +203,86 @@
                                     <x-icon name="refresh" class="w-4 h-4" /> <span x-text="busy ? 'Mengirim…' : 'Reboot ONU'"></span>
                                 </button>
                                 <p x-show="caps && !caps.reboot" class="text-xs text-surface-500" x-text="caps?.reboot_hint"></p>
-                                <button type="button" class="btn-secondary w-full justify-start" disabled><x-icon name="settings" class="w-4 h-4" /> Ubah nama / deskripsi</button>
-                                <p class="text-xs text-surface-500" x-text="caps?.edit_hint"></p>
+                                <template x-if="caps?.edit">
+                                    <form class="space-y-2 rounded-lg border border-surface-200 dark:border-surface-700 p-3" @submit.prevent="saveInfo()">
+                                        <p class="text-xs font-medium text-surface-600 dark:text-surface-300">Nama & deskripsi di OLT</p>
+                                        <input type="text" x-model="infoForm.name" maxlength="16" class="input" placeholder="Nama (maks 16, tanpa spasi)" aria-label="Nama ONU">
+                                        <input type="text" x-model="infoForm.description" maxlength="64" class="input" placeholder="Deskripsi (maks 64)" aria-label="Deskripsi ONU">
+                                        <button class="btn-secondary w-full" :disabled="busy"><x-icon name="check" class="w-4 h-4" /> <span x-text="busy ? 'Menyimpan…' : 'Simpan ke OLT'"></span></button>
+                                    </form>
+                                </template>
+                                <template x-if="!caps?.edit">
+                                    <div>
+                                        <button type="button" class="btn-secondary w-full justify-start" disabled><x-icon name="settings" class="w-4 h-4" /> Ubah nama / deskripsi</button>
+                                        <p class="mt-1 text-xs text-surface-500" x-text="caps?.edit_hint"></p>
+                                    </div>
+                                </template>
+                                <button type="button" x-show="caps?.delete" class="btn-ghost w-full justify-start text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10" :disabled="busy" @click="removeOnu(selected)">
+                                    <x-icon name="x" class="w-4 h-4" /> Hapus ONU dari OLT
+                                </button>
                             </div>
                         </div>
                     </template>
                 </aside>
+            </div>
+        </template>
+
+        {{-- Allow ONU (HSGQ) --}}
+        <template x-teleport="body">
+            <div x-show="allowOpen" x-cloak class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-surface-900/40 p-4 sm:p-10" @keydown.escape.window="allowOpen = false" @click.self="allowOpen = false">
+                <div class="w-full max-w-xl rounded-xl bg-white dark:bg-surface-900 shadow-xl">
+                    <div class="flex items-start justify-between gap-3 border-b border-surface-200 dark:border-surface-800 p-5">
+                        <div>
+                            <h3 class="text-lg font-semibold text-surface-900 dark:text-white">Allow ONU · PON {{ $port->slot }}/{{ $port->pon_port }}</h3>
+                            <p class="text-xs text-surface-500">ONU baru harus diizinkan dulu di OLT sebelum bisa online.</p>
+                        </div>
+                        <button type="button" class="btn-ghost btn-icon" @click="allowOpen = false" aria-label="Tutup"><x-icon name="x" class="w-4 h-4" /></button>
+                    </div>
+                    <div class="space-y-5 p-5">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-medium text-surface-700 dark:text-surface-300">Menunggu izin di port ini</p>
+                                <button type="button" class="text-xs text-primary-600 hover:underline" @click="loadPending()" :disabled="pendingLoading">Muat ulang</button>
+                            </div>
+                            <p x-show="pendingLoading" class="mt-2 text-sm text-surface-500">Membaca dari OLT…</p>
+                            <p x-show="pendingError" x-text="pendingError" class="mt-2 text-sm text-rose-600"></p>
+                            <p x-show="!pendingLoading && !pendingError && !pending.length" class="mt-2 text-sm text-surface-500">Tidak ada ONU yang menunggu. Masukkan MAC ONU di bawah.</p>
+                            <ul class="mt-2 divide-y divide-surface-100 dark:divide-surface-800 rounded-lg border border-surface-200 dark:border-surface-700" x-show="pending.length">
+                                <template x-for="p in pending" :key="p.mac">
+                                    <li class="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                                        <div>
+                                            <p class="font-mono" x-text="p.mac"></p>
+                                            <p class="text-xs text-surface-500" x-text="(p.source === 'denied' ? 'Di daftar tolak' : 'Belum diizinkan') + (p.description ? ' · ' + p.description : '')"></p>
+                                        </div>
+                                        <button type="button" class="btn-secondary btn-sm" @click="allowForm.mac = p.mac">Pilih</button>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                        <form class="space-y-3" @submit.prevent="submitAllow()">
+                            <div>
+                                <label class="block text-sm font-medium text-surface-700 dark:text-surface-300" for="allow-mac">MAC ONU</label>
+                                <input id="allow-mac" type="text" x-model="allowForm.mac" class="input mt-1 font-mono" placeholder="E8:68:19:02:FF:70" required>
+                                <p class="mt-1 text-xs text-surface-500">Tertera di label ONU. Bila MAC milik pelanggan, nama & deskripsi otomatis diisi kode & nama pelanggan.</p>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-surface-700 dark:text-surface-300" for="allow-name">Nama <span class="text-xs font-normal text-surface-500">(opsional)</span></label>
+                                    <input id="allow-name" type="text" x-model="allowForm.name" maxlength="16" class="input mt-1" placeholder="Maks 16, tanpa spasi">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-surface-700 dark:text-surface-300" for="allow-desc">Deskripsi <span class="text-xs font-normal text-surface-500">(opsional)</span></label>
+                                    <input id="allow-desc" type="text" x-model="allowForm.description" maxlength="64" class="input mt-1">
+                                </div>
+                            </div>
+                            <p x-show="allowMsg" x-text="allowMsg" class="text-sm" :class="allowOk ? 'text-emerald-600' : 'text-rose-600'"></p>
+                            <div class="flex justify-end gap-2">
+                                <button type="button" class="btn-secondary" @click="allowOpen = false">Tutup</button>
+                                <button class="btn-primary" :disabled="busy"><x-icon name="check" class="w-4 h-4" /> <span x-text="busy ? 'Mengirim…' : 'Allow ONU'"></span></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </template>
     </div>
@@ -215,6 +292,8 @@
         function onuPortManager() {
             return {
                 onus: [], caps: null, loading: false, busy: false, error: '', descError: '', selected: null,
+                infoForm: { name: '', description: '' },
+                allowOpen: false, pending: [], pendingLoading: false, pendingError: '', allowForm: { mac: '', name: '', description: '' }, allowMsg: '', allowOk: false,
                 q: '', filter: 'all', sort: 'onu_id', dir: 1,
                 filters: [
                     { key: 'all', label: 'Semua' }, { key: 'online', label: 'Online' }, { key: 'offline', label: 'Offline' },
@@ -261,7 +340,56 @@
                 signalClass(s) { return s === null ? 'text-surface-400' : (s < -27 ? 'text-rose-600 dark:text-rose-400' : (s < -24 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')); },
                 signalBar(s) { return s < -27 ? 'bg-rose-500' : (s < -24 ? 'bg-amber-500' : 'bg-emerald-500'); },
                 signalPct(s) { return Math.max(5, Math.min(100, ((s + 35) / 27) * 100)); },
-                openDetail(o) { this.selected = o; },
+                openDetail(o) { this.selected = o; this.infoForm = { name: o.name || '', description: o.description || '' }; },
+                post(url, body) {
+                    return fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                        body: JSON.stringify(body),
+                    }).then(async r => {
+                        const d = await r.json().catch(() => ({}));
+                        const errors = d.errors ? Object.values(d.errors).flat().join(' ') : '';
+                        return { ok: r.ok && d.success !== false, message: errors || d.message || ('HTTP ' + r.status) };
+                    });
+                },
+                toast(m) { window.showGlobalToast ? window.showGlobalToast(m) : alert(m); },
+                saveInfo() {
+                    const o = this.selected;
+                    if (/\s/.test(this.infoForm.name)) { this.toast('Nama ONU tidak boleh berisi spasi.'); return; }
+                    this.busy = true;
+                    this.post(@js(route('olts.onus.info', [$olt, $port], false)), { index: this.position(o), sn: o.sn, ...this.infoForm })
+                        .then(r => { this.toast(r.message); if (r.ok) { o.name = this.infoForm.name; o.description = this.infoForm.description; } })
+                        .catch(() => this.toast('Gagal menghubungi server'))
+                        .finally(() => this.busy = false);
+                },
+                removeOnu(o) {
+                    const mac = String(o.sn || '').toUpperCase();
+                    const typed = prompt('Hapus ONU ' + mac + (o.customer ? ' (pelanggan ' + o.customer.name + ')' : '') + ' dari OLT?\nONU langsung terputus dan harus di-allow ulang.\n\nKetik HAPUS untuk melanjutkan:');
+                    if (typed === null) return;
+                    if (typed.trim().toUpperCase() !== 'HAPUS') { this.toast('Dibatalkan: ketik HAPUS untuk menghapus.'); return; }
+                    this.busy = true;
+                    this.post(@js(route('olts.onus.delete', [$olt, $port], false)), { index: this.position(o), sn: o.sn })
+                        .then(r => { this.toast(r.message); if (r.ok) { this.selected = null; this.load(true); } })
+                        .catch(() => this.toast('Gagal menghubungi server'))
+                        .finally(() => this.busy = false);
+                },
+                openAllow() { this.allowOpen = true; this.allowMsg = ''; this.allowForm = { mac: '', name: '', description: '' }; this.loadPending(); },
+                loadPending() {
+                    this.pendingLoading = true; this.pendingError = ''; this.pending = [];
+                    fetch(@js(route('olts.onus.pending', [$olt, $port], false)), { headers: { 'Accept': 'application/json' } })
+                        .then(r => r.json())
+                        .then(d => { if (d.success) this.pending = d.onus || []; else this.pendingError = d.message || 'Gagal membaca dari OLT'; })
+                        .catch(() => this.pendingError = 'Gagal menghubungi server')
+                        .finally(() => this.pendingLoading = false);
+                },
+                submitAllow() {
+                    if (!confirm('Allow ONU ' + this.allowForm.mac.toUpperCase() + ' di PON {{ $port->slot }}/{{ $port->pon_port }}?')) return;
+                    this.busy = true; this.allowMsg = '';
+                    this.post(@js(route('olts.onus.allow', [$olt, $port], false)), this.allowForm)
+                        .then(r => { this.allowOk = r.ok; this.allowMsg = r.message; if (r.ok) { this.loadPending(); setTimeout(() => this.load(true), 60000); } })
+                        .catch(() => { this.allowOk = false; this.allowMsg = 'Gagal menghubungi server'; })
+                        .finally(() => this.busy = false);
+                },
                 copy(text) {
                     navigator.clipboard?.writeText(String(text || '').toUpperCase());
                     if (window.showGlobalToast) window.showGlobalToast('MAC/SN disalin');
@@ -269,14 +397,9 @@
                 reboot(o) {
                     if (!this.caps?.reboot || !confirm('Reboot ONU ' + (o.name || o.sn) + '? Internet pelanggan terputus ±1–2 menit.')) return;
                     this.busy = true;
-                    fetch(@js(route('olts.onus.reboot', [$olt, $port], false)), {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-                        body: JSON.stringify({ index: this.position(o), sn: o.sn }),
-                    })
-                        .then(r => r.json())
-                        .then(d => (window.showGlobalToast ? window.showGlobalToast(d.message) : alert(d.message)))
-                        .catch(() => alert('Gagal menghubungi server'))
+                    this.post(@js(route('olts.onus.reboot', [$olt, $port], false)), { index: this.position(o), sn: o.sn })
+                        .then(r => this.toast(r.message))
+                        .catch(() => this.toast('Gagal menghubungi server'))
                         .finally(() => this.busy = false);
                 },
             };

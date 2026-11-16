@@ -166,11 +166,10 @@ class NocOltPortTest extends TestCase
         $this->assertSame('YOTU 4fe', $res->json('onus.0.type'));
         $this->assertEquals(1.7629, $res->json('onus.0.tx_power'));
         $this->assertEquals(44, $res->json('onus.0.temperature'));
-        $this->assertFalse($res->json('capabilities.reboot'));
-
-        // Reboot HSGQ ditolak dengan alasan jelas (SNMP HSGQ tidak mendukung)
-        $this->postJson(route('olts.onus.reboot', [$olt, $port]), ['index' => '1/1/1:1', 'sn' => '00:1A:69:43:12:29'])
-            ->assertStatus(422)->assertJsonFragment(['success' => false]);
+        // Dengan akses web, aksi ONU HSGQ tersedia lewat API web OLT (lihat HsgqOnuWriteTest)
+        $this->assertTrue($res->json('capabilities.reboot'));
+        $this->assertTrue($res->json('capabilities.allow'));
+        $this->assertTrue($res->json('capabilities.edit'));
     }
 
     public function test_zte_reboot_checks_serial_first_and_is_logged(): void
