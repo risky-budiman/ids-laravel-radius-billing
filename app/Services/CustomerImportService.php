@@ -214,6 +214,13 @@ class CustomerImportService
             $valDate->setPrompt('Pilih tanggal dari kalender atau ketik YYYY-MM-DD');
         }
 
+        // Kolom berformat TEKS: dulu angka 0 di depan No. HP / ID pelanggan hilang dan NIK 16 digit
+        // dibulatkan Excel (presisi angka Excel hanya 15 digit).
+        foreach (['B', 'C', 'E', 'N', 'P', 'R'] as $textCol) {
+            $sheet->getStyle("{$textCol}3:{$textCol}1000")->getNumberFormat()
+                ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
+        }
+
         // Define generous column widths tailored to header titles and typical data
         $columnWidths = [
             'A' => 26, // nama_pelanggan
@@ -341,22 +348,22 @@ class CustomerImportService
             ['username', 'OPSIONAL', 'Username PPPoE/Hotspot. Jika dikosongkan, dibuat otomatis sesuai ID Pelanggan + domain (cth: 001001001101@nextlink).'],
             ['password', 'OPSIONAL', 'Password akun. Jika dikosongkan, dibuatkan password acak 8 karakter yang aman.'],
             ['nama_paket', 'WAJIB', 'Pilih dari dropdown paket aktif yang sesuai di sistem.'],
-            ['no_telepon', 'WAJIB', 'Nomor WhatsApp / HP pelanggan.'],
-            ['tipe_tagihan', 'OPSIONAL', 'Pilih: prepaid (prabayar) atau postpaid (pascabayar). Default: prepaid.'],
-            ['metode_tagihan', 'OPSIONAL', 'Pilih: cycle (invoice tgl 1, jatuh tempo tgl 20), fixed (anniversary), renewal. Default: fixed.'],
-            ['tgl_jatuh_tempo', 'OPSIONAL', 'Tanggal jatuh tempo tagihan per bulan (angka 1 s/d 28). Default: 20.'],
-            ['kenakan_ppn', 'OPSIONAL', 'Pilih YA jika tagihan dikenakan PPN, atau TIDAK jika bebas PPN.'],
+            ['no_telepon', 'WAJIB', 'Nomor WhatsApp / HP pelanggan (wajib untuk pelanggan baru). Kolom berformat teks agar angka 0 di depan tidak hilang.'],
+            ['tipe_tagihan', 'OPSIONAL', 'Pilih: prepaid (prabayar) atau postpaid (pascabayar). Kosong = prepaid. Nilai lain ditolak.'],
+            ['metode_tagihan', 'OPSIONAL', 'Pilih: cycle (invoice tgl 1, jatuh tempo tgl 20), fixed (anniversary), renewal. Kosong = cycle (postpaid) / fixed (prepaid). Nilai lain ditolak.'],
+            ['tgl_jatuh_tempo', 'OPSIONAL', 'Tanggal jatuh tempo tagihan per bulan (angka 1 s/d 28). Kosong = 20. Di luar 1-28 ditolak.'],
+            ['kenakan_ppn', 'OPSIONAL', 'Pilih YA jika tagihan dikenakan PPN, atau TIDAK jika bebas PPN. Kosong = TIDAK.'],
             ['tipe_diskon', 'OPSIONAL', 'Pilih: nominal (potongan Rp), persen (potongan %), atau tanpa_diskon.'],
-            ['nilai_diskon', 'OPSIONAL', 'Nilai potongan (contoh: 20000 untuk Rp 20.000, atau 10 untuk 10%).'],
-            ['status', 'OPSIONAL', 'Pilih: active (langsung aktif), waiting_activation, suspended. Default: active.'],
-            ['tgl_aktivasi', 'OPSIONAL', 'Tanggal aktif berlangganan (Format: YYYY-MM-DD, contoh: 2026-01-15). Jika kosong, menggunakan tanggal hari ini.'],
-            ['id_pelanggan', 'OPSIONAL', 'ID Pelanggan 12 digit (Format sistem: [Region:3][STO:3][STB:3][Unik:3], cth: 001001001101). Jika kosong, otomatis di-generate sistem.'],
-            ['email', 'OPSIONAL', 'Alamat email pelanggan.'],
-            ['nik_ktp', 'OPSIONAL', 'Nomor KTP / Identitas pelanggan.'],
+            ['nilai_diskon', 'OPSIONAL', 'Nilai potongan: 20000 atau 20.000 untuk Rp 20.000; 10 untuk 10%. Persen maks. 100; nominal tidak boleh melebihi harga paket.'],
+            ['status', 'OPSIONAL', 'Pilih: active (langsung aktif), waiting_activation, suspended. Kosong = active. Hanya berlaku untuk pelanggan baru.'],
+            ['tgl_aktivasi', 'OPSIONAL', 'Tanggal aktif berlangganan (YYYY-MM-DD atau DD/MM/YYYY, contoh: 2026-01-15). Kosong = hari ini (status active). Tanggal yang tidak dikenali ditolak.'],
+            ['id_pelanggan', 'OPSIONAL', 'ID Pelanggan 12 digit (Format sistem: [Region:3][STO:3][STB:3][Unik:3], cth: 001001001101). Kosong = dibuat otomatis tanpa bentrok. ID yang sudah dipakai pelanggan lain ditolak.'],
+            ['email', 'OPSIONAL', 'Alamat email pelanggan (format email yang valid).'],
+            ['nik_ktp', 'OPSIONAL', 'Nomor KTP 16 digit. Kolom WAJIB berformat teks: bila berformat angka, Excel membulatkan digit terakhir dan NIK diabaikan.'],
             ['alamat', 'OPSIONAL', 'Alamat lokasi pemasangan.'],
             ['serial_number_onu', 'OPSIONAL', 'Nomor Serial Number modem / ONT.'],
-            ['latitude', 'OPSIONAL', 'Titik koordinat GPS lintang.'],
-            ['longitude', 'OPSIONAL', 'Titik koordinat GPS bujur.'],
+            ['latitude', 'OPSIONAL', 'Titik koordinat GPS lintang (-90 s/d 90). Titik atau koma desimal diterima (-6.2088 / -6,2088).'],
+            ['longitude', 'OPSIONAL', 'Titik koordinat GPS bujur (-180 s/d 180). Titik atau koma desimal diterima.'],
         ];
 
         $guideSheet->setCellValue('A8', 'Nama Kolom');
@@ -395,268 +402,357 @@ class CustomerImportService
     }
 
     /**
-     * Import customers from uploaded spreadsheet (.xlsx, .xls, or .csv)
+     * Import pelanggan dari spreadsheet (.xlsx, .xls, .csv).
+     *
+     * Setiap baris diurai & divalidasi lengkap dulu; baris yang bermasalah dilewati dengan alasan yang jelas
+     * (dulu nilai yang tidak dikenal diam-diam diganti nilai bawaan). Dengan opsi `dry_run` tidak ada yang
+     * disimpan: hasilnya pratinjau aksi per baris (dibuat / diperbarui / dilewati).
      */
     public function importFile(string $filePath, array $options = []): array
     {
         $duplicateAction = $options['duplicate_action'] ?? 'skip'; // 'skip' or 'update'
+        $dryRun = (bool) ($options['dry_run'] ?? false);
 
         $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($filePath);
         $reader->setReadDataOnly(true);
         $spreadsheet = $reader->load($filePath);
 
-        // Always target the main sheet (by name 'Format Import' or active sheet index 0)
         $sheet = $spreadsheet->getSheetByName('Format Import') ?: $spreadsheet->getSheet(0);
-        $rows = $sheet->toArray(null, true, true, true);
+        // Nilai mentah (formatData=false): dulu nilai dibaca sebagai teks hasil format Excel
+        // (mis. NIK menjadi "1.20511E+15", angka 20000 menjadi "20,000").
+        $rows = $sheet->toArray(null, true, false, true);
 
         if (count($rows) < 2) {
-            throw new Exception("File Excel kosong atau tidak memuat data yang dapat diimpor.");
+            throw new Exception('File Excel kosong atau tidak memuat data yang dapat diimpor.');
         }
 
-        // Detect header row (Row 1 or Row 2)
         $headerRow = null;
         $startIndex = 1;
-
         foreach ($rows as $rowIndex => $row) {
-            $rowValues = array_map('trim', array_map('strtolower', array_filter($row)));
+            $rowValues = array_map(fn ($v) => strtolower(trim($this->cellText($v))), array_filter($row, fn ($v) => $v !== null && $v !== ''));
             if (in_array('nama_pelanggan', $rowValues) && in_array('username', $rowValues)) {
                 $headerRow = $rowValues;
                 $startIndex = $rowIndex;
                 break;
             }
         }
-
-        if (!$headerRow) {
+        if (! $headerRow) {
             throw new Exception("Baris judul kolom (header 'nama_pelanggan', 'username') tidak ditemukan pada sheet.");
         }
 
         $colMap = [];
         foreach ($rows[$startIndex] as $colLetter => $headerName) {
-            $normalized = strtolower(trim((string)$headerName));
-            if (!empty($normalized)) {
+            $normalized = strtolower(trim($this->cellText($headerName)));
+            if ($normalized !== '') {
                 $colMap[$normalized] = $colLetter;
             }
         }
-
-        $requiredHeaders = ['nama_pelanggan', 'nama_paket', 'no_telepon'];
-        foreach ($requiredHeaders as $req) {
-            if (!isset($colMap[$req])) {
+        foreach (['nama_pelanggan', 'nama_paket', 'no_telepon'] as $req) {
+            if (! isset($colMap[$req])) {
                 throw new Exception("Kolom wajib '{$req}' tidak ditemukan pada template Excel.");
             }
         }
 
-        // Cache packages by name (case-insensitive)
-        $packages = Package::all()->keyBy(function ($item) {
-            return strtolower(trim($item->name));
-        });
-
-        // Company domain suffix for auto-generating username
+        $packages = Package::all()->keyBy(fn ($item) => strtolower(trim($item->name)));
         $companySuffix = \App\Models\Setting::where('key', 'company_domain')->first()?->value ?? 'net.id';
+        $defaultPrefix = (\App\Models\Region::first()?->code ?? '001') . (\App\Models\Sto::first()?->code ?? '001') . (\App\Models\Stb::first()?->code ?? '001');
 
         $totalProcessed = 0;
         $successCount = 0;
         $updatedCount = 0;
         $skippedCount = 0;
         $errors = [];
-        $notes = [];   // informasi per baris yang tidak menggagalkan baris
+        $notes = [];     // informasi per baris yang tidak menggagalkan baris
+        $preview = [];   // dry-run: rencana aksi per baris
+        $reservedCodes = [];
+        $seenUsernames = [];
+        $seenKtp = [];
 
-        // Loop data starting after header row
-        $currentRowIndex = 0;
         foreach ($rows as $rowIndex => $row) {
-            $currentRowIndex++;
             if ($rowIndex <= $startIndex) {
-                continue; // Skip badge row and header row
-            }
-
-            $name = trim((string)($row[$colMap['nama_pelanggan']] ?? ''));
-            $username = trim((string)($row[$colMap['username'] ?? ''] ?? ''));
-            $password = trim((string)($row[$colMap['password'] ?? ''] ?? ''));
-            $packageName = trim((string)($row[$colMap['nama_paket']] ?? ''));
-            $phone = trim((string)($row[$colMap['no_telepon']] ?? ''));
-
-            // Ignore completely empty rows
-            if (empty($name) && empty($username) && empty($packageName) && empty($phone)) {
                 continue;
             }
 
+            $rawCell = fn (string $key) => isset($colMap[$key]) ? ($row[$colMap[$key]] ?? null) : null;
+            $cell = fn (string $key) => trim($this->cellText($rawCell($key)));
+
+            $name = $cell('nama_pelanggan');
+            $username = $cell('username');
+            $password = $cell('password');
+            $packageName = $cell('nama_paket');
+            $phone = $cell('no_telepon');
+
+            if ($name === '' && $username === '' && $packageName === '' && $phone === '') {
+                continue;
+            }
             $totalProcessed++;
 
-            // Validate mandatory fields (nama_pelanggan and nama_paket are strictly required)
-            if (empty($name) || empty($packageName)) {
-                $errors[] = [
-                    'row' => $rowIndex,
-                    'username' => $username ?: ($name ?: '-'),
-                    'reason' => 'Nama pelanggan atau nama paket tidak boleh kosong.'
-                ];
+            // Username dari file (bukan yang dibuat otomatis) agar baris yang ditolak tidak tampak punya akun
+            $fileUsername = $username;
+            $fail = function (string $reason) use (&$errors, &$skippedCount, $rowIndex, $fileUsername, $name) {
+                $errors[] = ['row' => $rowIndex, 'username' => $fileUsername ?: ($name ?: '-'), 'reason' => $reason];
                 $skippedCount++;
+            };
+
+            if ($name === '' || $packageName === '') {
+                $fail('Nama pelanggan atau nama paket tidak boleh kosong.');
                 continue;
             }
-
-            // Find package
             $matchedPackage = $packages->get(strtolower($packageName));
-            if (!$matchedPackage) {
-                $errors[] = [
-                    'row' => $rowIndex,
-                    'username' => $username,
-                    'reason' => "Paket internet '{$packageName}' tidak ditemukan pada sistem billing."
-                ];
-                $skippedCount++;
+            if (! $matchedPackage) {
+                $fail("Paket internet '{$packageName}' tidak ditemukan pada sistem billing.");
                 continue;
             }
 
-            // Parse billing_type (prepaid / postpaid)
-            $billingType = strtolower(trim((string)($row[$colMap['tipe_tagihan'] ?? ''] ?? 'prepaid')));
-            if (!in_array($billingType, ['prepaid', 'postpaid'])) {
-                $billingType = 'prepaid';
+            $existing = $username !== '' ? Customer::where('username', $username)->first() : null;
+            if ($existing && $duplicateAction === 'skip') {
+                $fail('Username sudah ada (dilewati sesuai pengaturan).');
+                continue;
+            }
+            $isNew = ! $existing;
+
+            $problems = [];
+            $rowNotes = [];
+
+            if ($username !== '') {
+                if (isset($seenUsernames[strtolower($username)])) {
+                    $problems[] = "Username muncul lebih dari sekali di file (baris {$seenUsernames[strtolower($username)]}).";
+                }
+                $seenUsernames[strtolower($username)] = $rowIndex;
             }
 
-            // Parse billing_method (cycle, fixed, renewal)
-            $billingMethod = strtolower(trim((string)($row[$colMap['metode_tagihan'] ?? ''] ?? '')));
-            if (!in_array($billingMethod, ['cycle', 'fixed', 'renewal'])) {
-                $billingMethod = ($billingType === 'postpaid') ? 'cycle' : 'fixed';
+            // No. HP: wajib untuk pelanggan baru; angka 0 di depan yang hilang karena format angka Excel dikembalikan
+            if ($phone !== '') {
+                $phone = preg_replace('/[^\d+]/', '', $phone);
+                if (preg_match('/^8\d{8,12}$/', $phone)) {
+                    $phone = '0' . $phone;
+                    $rowNotes[] = 'No. HP tanpa angka 0 di depan; ditambahkan otomatis.';
+                }
+            } elseif ($isNew) {
+                $problems[] = 'no_telepon wajib diisi untuk pelanggan baru.';
             }
 
-            // Parse billing_due_day (1 - 28)
-            $billingDueDay = (int)($row[$colMap['tgl_jatuh_tempo'] ?? ''] ?? 20);
-            if ($billingDueDay < 1 || $billingDueDay > 28) {
-                $billingDueDay = 20;
+            // Tipe & metode tagihan, jatuh tempo, PPN: kosong = bawaan; nilai tidak dikenal = ditolak
+            $billingType = strtolower($cell('tipe_tagihan')) ?: 'prepaid';
+            if (! in_array($billingType, ['prepaid', 'postpaid'], true)) {
+                $problems[] = "tipe_tagihan '{$cell('tipe_tagihan')}' tidak dikenal (isi prepaid atau postpaid).";
+            }
+            $billingMethod = strtolower($cell('metode_tagihan')) ?: ($billingType === 'postpaid' ? 'cycle' : 'fixed');
+            if (! in_array($billingMethod, ['cycle', 'fixed', 'renewal'], true)) {
+                $problems[] = "metode_tagihan '{$cell('metode_tagihan')}' tidak dikenal (isi cycle, fixed atau renewal).";
+            }
+            $billingDueDay = 20;
+            if ($cell('tgl_jatuh_tempo') !== '') {
+                $d = $this->parseNumber($rawCell('tgl_jatuh_tempo'), 'money');
+                if ($d === null || floor($d) != $d || $d < 1 || $d > 28) {
+                    $problems[] = "tgl_jatuh_tempo '{$cell('tgl_jatuh_tempo')}' harus angka 1–28.";
+                } else {
+                    $billingDueDay = (int) $d;
+                }
+            }
+            $useTax = false;
+            $taxRaw = strtoupper($cell('kenakan_ppn'));
+            if ($taxRaw !== '') {
+                if (in_array($taxRaw, ['YA', 'YES', 'Y', '1', 'TRUE'], true)) {
+                    $useTax = true;
+                } elseif (! in_array($taxRaw, ['TIDAK', 'NO', 'N', '0', 'FALSE'], true)) {
+                    $problems[] = "kenakan_ppn '{$cell('kenakan_ppn')}' tidak dikenal (isi YA atau TIDAK).";
+                }
             }
 
-            // Parse PPN
-            $useTaxStr = strtoupper(trim((string)($row[$colMap['kenakan_ppn'] ?? ''] ?? '')));
-            $useTax = in_array($useTaxStr, ['YA', 'YES', '1', 'TRUE']);
-
-            // Parse discount
-            $discountTypeRaw = strtolower(trim((string)($row[$colMap['tipe_diskon'] ?? ''] ?? '')));
-            $discountType = null;
-            if (in_array($discountTypeRaw, ['nominal', 'fixed', 'rp'])) {
-                $discountType = 'fixed';
-            } elseif (in_array($discountTypeRaw, ['persen', 'percentage', '%'])) {
-                $discountType = 'percentage';
+            // Diskon: "20.000" = 20000 (dulu terbaca 20); persen maksimal 100
+            $discountTypeRaw = strtolower($cell('tipe_diskon'));
+            $discountType = match (true) {
+                in_array($discountTypeRaw, ['', 'tanpa_diskon', 'tanpa', '-'], true) => null,
+                in_array($discountTypeRaw, ['nominal', 'fixed', 'rp'], true) => 'fixed',
+                in_array($discountTypeRaw, ['persen', 'percentage', '%'], true) => 'percentage',
+                default => false,
+            };
+            if ($discountType === false) {
+                $problems[] = "tipe_diskon '{$cell('tipe_diskon')}' tidak dikenal (isi nominal, persen atau tanpa_diskon).";
+                $discountType = null;
             }
-
-            $discountValue = (float)($row[$colMap['nilai_diskon'] ?? ''] ?? 0);
+            $discountValue = 0.0;
+            if ($cell('nilai_diskon') !== '') {
+                $v = $this->parseNumber($rawCell('nilai_diskon'), 'money');
+                if ($v === null || $v < 0) {
+                    $problems[] = "nilai_diskon '{$cell('nilai_diskon')}' bukan angka yang valid.";
+                } else {
+                    $discountValue = $v;
+                }
+            }
+            if ($discountValue > 0 && $discountType === null && $discountTypeRaw === '') {
+                $problems[] = 'nilai_diskon diisi tapi tipe_diskon kosong (isi nominal atau persen).';
+            }
+            if ($discountType === 'percentage' && $discountValue > 100) {
+                $problems[] = "Diskon persen tidak boleh lebih dari 100 (terisi {$cell('nilai_diskon')}).";
+            }
+            if ($discountType === 'fixed' && $discountValue > (float) $matchedPackage->price) {
+                $problems[] = 'Diskon nominal melebihi harga paket.';
+            }
             if ($discountValue <= 0) {
                 $discountType = null;
-                $discountValue = 0;
+                $discountValue = 0.0;
             }
 
-            // Parse status
-            $status = strtolower(trim((string)($row[$colMap['status'] ?? ''] ?? 'active')));
-            if (!in_array($status, ['active', 'waiting_activation', 'suspended'])) {
+            // Status: hanya berlaku untuk pelanggan baru (pelanggan lama tidak diubah lewat impor)
+            $statusRaw = strtolower($cell('status'));
+            $status = $statusRaw ?: 'active';
+            if (! in_array($status, ['active', 'waiting_activation', 'suspended'], true)) {
+                if ($isNew) {
+                    $problems[] = "status '{$cell('status')}' tidak dikenal (isi active, waiting_activation atau suspended).";
+                }
                 $status = 'active';
             }
             $isActive = ($status === 'active');
 
-            // Parse customer code according to system billing rules (12 digits: Region[3] + STO[3] + STB[3] + Random[3])
-            $customerCode = trim((string)($row[$colMap['id_pelanggan'] ?? ''] ?? ''));
+            // ID pelanggan: angka 0 di depan dikembalikan; harus belum dipakai; dibuat otomatis tanpa bentrok
+            $customerCode = $cell('id_pelanggan');
+            if ($customerCode !== '' && (is_int($rawCell('id_pelanggan')) || is_float($rawCell('id_pelanggan'))) && ctype_digit($customerCode) && strlen($customerCode) < 12) {
+                $customerCode = str_pad($customerCode, 12, '0', STR_PAD_LEFT);
+                $rowNotes[] = "ID pelanggan berformat angka; angka 0 di depan dikembalikan ({$customerCode}).";
+            }
+            $codeFromFile = $customerCode !== '';
+            if (! $codeFromFile && $username !== '' && preg_match('/^(\d{9,12})/', $username, $m) && ! $existing) {
+                $customerCode = $m[1];
+            }
+            if ($customerCode !== '') {
+                if (! preg_match('/^[A-Za-z0-9\-]{1,20}$/', $customerCode)) {
+                    $problems[] = "ID pelanggan '{$customerCode}' tidak valid (huruf/angka, maks. 20).";
+                } elseif (in_array($customerCode, $reservedCodes, true)
+                    || Customer::where('customer_code', $customerCode)->when($existing, fn ($q) => $q->whereKeyNot($existing->id))->exists()) {
+                    if ($isNew && ! $codeFromFile) {
+                        $customerCode = '';   // dari username tapi sudah dipakai: buat baru
+                    } elseif ($isNew || $codeFromFile) {
+                        $problems[] = "ID pelanggan {$customerCode} sudah dipakai pelanggan lain.";
+                    }
+                }
+            }
+            if ($customerCode === '' && $isNew) {
+                $customerCode = Customer::nextFreeCode($defaultPrefix, $reservedCodes) ?? '';
+                if ($customerCode === '') {
+                    $problems[] = "Nomor ID pelanggan untuk prefix {$defaultPrefix} sudah habis; isi id_pelanggan manual.";
+                }
+            }
             $regCode = '001';
             $stCode = '001';
             $tbCode = '001';
-
-            if (empty($customerCode)) {
-                // If username was provided and starts with numbers before '@' (e.g. 001001001123@nextlink)
-                if (!empty($username) && preg_match('/^(\d{9,12})/i', $username, $matches)) {
-                    $customerCode = $matches[1];
-                } else {
-                    // Generate according to system billing convention: Region(3) + STO(3) + STB(3) + 3 Random Digits
-                    $firstReg = \App\Models\Region::first()?->code ?? '001';
-                    $firstSto = \App\Models\Sto::first()?->code ?? '001';
-                    $firstStb = \App\Models\Stb::first()?->code ?? '001';
-                    $customerCode = $firstReg . $firstSto . $firstStb . rand(100, 999);
-                }
-            }
-
-            // Extract region_code, sto_code, stb_code if customer_code is 12 digits
             if (strlen($customerCode) >= 9 && ctype_digit(substr($customerCode, 0, 9))) {
                 $regCode = substr($customerCode, 0, 3);
                 $stCode = substr($customerCode, 3, 3);
                 $tbCode = substr($customerCode, 6, 3);
             }
 
-            // Auto-generate username if blank (like the manual create form)
-            if (empty($username)) {
+            if ($username === '') {
                 $username = $customerCode . '@' . $companySuffix;
             }
-
-            // Auto-generate password if blank (random 8 alphanumeric chars)
-            if (empty($password)) {
+            if ($password === '') {
                 $password = strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
             }
 
-            // Parse activated_at (Tanggal Aktivasi)
-            $activatedAtRaw = trim((string)($row[$colMap['tgl_aktivasi'] ?? ''] ?? ''));
+            // Tanggal aktivasi: tanggal yang tidak dikenali ditolak (dulu diganti hari ini)
             $activatedAt = null;
-            if (!empty($activatedAtRaw)) {
-                try {
-                    // Check if numeric Excel timestamp or standard date string
-                    if (is_numeric($activatedAtRaw)) {
-                        $activatedAt = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float)$activatedAtRaw);
-                    } else {
-                        $activatedAt = \Carbon\Carbon::parse($activatedAtRaw);
-                    }
-                } catch (\Exception $e) {
-                    $activatedAt = now();
+            if ($cell('tgl_aktivasi') !== '') {
+                $activatedAt = $this->parseDate($rawCell('tgl_aktivasi'));
+                if (! $activatedAt) {
+                    $problems[] = "tgl_aktivasi '{$cell('tgl_aktivasi')}' tidak dikenali (pakai format YYYY-MM-DD).";
                 }
             } elseif ($isActive) {
                 $activatedAt = now();
             }
 
-            $email = trim((string)($row[$colMap['email'] ?? ''] ?? '')) ?: null;
-            $ktp = trim((string)($row[$colMap['nik_ktp'] ?? ''] ?? '')) ?: null;
-            $address = trim((string)($row[$colMap['alamat'] ?? ''] ?? '')) ?: null;
-            $onuSn = trim((string)($row[$colMap['serial_number_onu'] ?? ''] ?? '')) ?: null;
-            $lat = is_numeric($row[$colMap['latitude'] ?? '']) ? (float)$row[$colMap['latitude']] : null;
-            $lng = is_numeric($row[$colMap['longitude'] ?? '']) ? (float)$row[$colMap['longitude']] : null;
+            $email = $cell('email') ?: null;
+            if ($email !== null && ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $problems[] = "Email '{$email}' tidak valid.";
+            }
 
-            // Check existing customer
-            $existing = Customer::where('username', $username)->first();
-            // Kolom yang benar-benar diisi di file (mode perbarui hanya mengubah kolom yang diisi)
-            $raw = fn (string $key) => trim((string) ($row[$colMap[$key] ?? ''] ?? ''));
+            // NIK: sel berformat angka sudah dibulatkan Excel (maks. 15 digit) → tidak disimpan
+            $ktp = $cell('nik_ktp') ?: null;
+            if ($ktp !== null && (is_int($rawCell('nik_ktp')) || is_float($rawCell('nik_ktp'))) && strlen($ktp) >= 15) {
+                $rowNotes[] = 'NIK diabaikan: kolom berformat angka sehingga digit terakhir dibulatkan Excel. Ubah kolom nik_ktp ke format teks.';
+                $ktp = null;
+            }
+            if ($ktp !== null) {
+                if (isset($seenKtp[$ktp])) {
+                    $problems[] = "NIK {$ktp} muncul lebih dari sekali di file (baris {$seenKtp[$ktp]}).";
+                } elseif (Customer::where('ktp', $ktp)->when($existing, fn ($q) => $q->whereKeyNot($existing->id))->exists()) {
+                    $problems[] = "NIK {$ktp} sudah dipakai pelanggan lain.";
+                }
+                $seenKtp[$ktp] = $rowIndex;
+            }
 
-            if ($existing) {
-                if ($duplicateAction === 'skip') {
-                    $skippedCount++;
-                    $errors[] = [
-                        'row' => $rowIndex,
-                        'username' => $username,
-                        'reason' => 'Username sudah ada (dilewati sesuai pengaturan).'
-                    ];
+            $address = $cell('alamat') ?: null;
+            $onuSn = $cell('serial_number_onu') ?: null;
+
+            // Koordinat: koma desimal ("-6,2088") diterima; di luar rentang ditolak (dulu diam-diam diabaikan)
+            $lat = $lng = null;
+            foreach (['latitude' => 90, 'longitude' => 180] as $key => $limit) {
+                if ($cell($key) === '') {
                     continue;
                 }
+                $v = $this->parseNumber($rawCell($key), 'coord');
+                if ($v === null || abs($v) > $limit) {
+                    $problems[] = "{$key} '{$cell($key)}' tidak valid.";
+                } elseif ($key === 'latitude') {
+                    $lat = $v;
+                } else {
+                    $lng = $v;
+                }
+            }
 
-                // UPDATE existing customer — hanya kolom yang diisi. Dulu kolom kosong menimpa data lama
-                // (email, NIK, alamat, SN, koordinat, diskon, PPN) dan password kosong diganti password
-                // acak baru sehingga pelanggan terputus.
+            if ($problems) {
+                $fail(implode(' ', $problems));
+                continue;
+            }
+            if ($customerCode !== '') {
+                $reservedCodes[] = $customerCode;
+            }
+            foreach ($rowNotes as $n) {
+                $notes[] = ['row' => $rowIndex, 'username' => $username, 'reason' => $n];
+            }
+            if (! $isNew && $statusRaw !== '' && $status !== $existing->status) {
+                $notes[] = ['row' => $rowIndex, 'username' => $username,
+                    'reason' => "Status di file ('{$statusRaw}') diabaikan; status saat ini '{$existing->status}' tetap. Ubah lewat menu pelanggan."];
+            }
+
+            if ($dryRun) {
+                $preview[] = [
+                    'row' => $rowIndex, 'username' => $username, 'name' => $name,
+                    'action' => $isNew ? 'dibuat' : 'diperbarui',
+                    'detail' => $isNew
+                        ? "ID {$customerCode}, paket {$matchedPackage->name}, status {$status}"
+                        : ((int) $existing->package_id !== (int) $matchedPackage->id ? "paket → {$matchedPackage->name}" : 'kolom yang diisi diperbarui'),
+                ];
+                $isNew ? $successCount++ : $updatedCount++;
+                continue;
+            }
+
+            if ($existing) {
+                // UPDATE — hanya kolom yang diisi. Dulu kolom kosong menimpa data lama dan password kosong
+                // diganti password acak sehingga pelanggan terputus.
                 try {
-                    if ($raw('id_pelanggan') !== '' && Customer::where('customer_code', $customerCode)->whereKeyNot($existing->id)->exists()) {
-                        throw new Exception("ID pelanggan {$customerCode} sudah dipakai pelanggan lain.");
-                    }
-
                     $changes = ['name' => $name];
                     if ($phone !== '') $changes['phone'] = $phone;
-                    if ($raw('tipe_tagihan') !== '') $changes['billing_type'] = $billingType;
-                    if ($raw('metode_tagihan') !== '') $changes['billing_method'] = $billingMethod;
-                    if ($raw('tgl_jatuh_tempo') !== '') $changes['billing_due_day'] = $billingDueDay;
-                    if ($raw('kenakan_ppn') !== '') $changes['use_tax'] = $useTax;
-                    if ($raw('tipe_diskon') !== '' || $raw('nilai_diskon') !== '') {
+                    if ($cell('tipe_tagihan') !== '') $changes['billing_type'] = $billingType;
+                    if ($cell('metode_tagihan') !== '') $changes['billing_method'] = $billingMethod;
+                    if ($cell('tgl_jatuh_tempo') !== '') $changes['billing_due_day'] = $billingDueDay;
+                    if ($cell('kenakan_ppn') !== '') $changes['use_tax'] = $useTax;
+                    if ($cell('tipe_diskon') !== '' || $cell('nilai_diskon') !== '') {
                         $changes['discount_type'] = $discountType;
                         $changes['discount_value'] = $discountValue;
                     }
-                    if ($raw('tgl_aktivasi') !== '' && $activatedAt) $changes['activated_at'] = $activatedAt;
-                    if ($raw('id_pelanggan') !== '') {
+                    if ($cell('tgl_aktivasi') !== '' && $activatedAt) $changes['activated_at'] = $activatedAt;
+                    if ($codeFromFile) {
                         $changes += ['customer_code' => $customerCode, 'region_code' => $regCode, 'sto_code' => $stCode, 'stb_code' => $tbCode];
                     }
                     foreach (['email' => $email, 'ktp' => $ktp, 'address' => $address, 'onu_sn' => $onuSn, 'latitude' => $lat, 'longitude' => $lng] as $field => $value) {
                         if ($value !== null) $changes[$field] = $value;
                     }
-                    $newPassword = $raw('password') !== '' ? $password : null;
+                    $newPassword = $cell('password') !== '' ? $password : null;
                     if ($newPassword !== null) $changes['password'] = $newPassword;
 
                     DB::transaction(function () use ($existing, $changes, $newPassword, $matchedPackage, $username) {
                         $existing->update($changes);
-
-                        // Hanya isi jadwal tagihan bila belum ada (syncBillingDates() memajukan jadwal)
                         if ($existing->is_active && ! $existing->billing_next_date) {
                             $existing->syncBillingDates();
                         }
@@ -668,21 +764,14 @@ class CustomerImportService
                             app(PackageChangeService::class)->apply($existing->fresh(), $matchedPackage);
                         }
                     });
-
-                    // Status pelanggan lama tidak diubah lewat impor (aktivasi, isolir & dismantle punya alurnya sendiri)
-                    if ($raw('status') !== '' && $status !== $existing->status) {
-                        $notes[] = ['row' => $rowIndex, 'username' => $username,
-                            'reason' => "Status di file ('{$status}') diabaikan; status saat ini '{$existing->status}' tetap. Ubah lewat menu pelanggan."];
-                    }
                     $updatedCount++;
                 } catch (Exception $e) {
-                    $errors[] = ['row' => $rowIndex, 'username' => $username, 'reason' => $e->getMessage()];
-                    $skippedCount++;
+                    $fail($e->getMessage());
                 }
                 continue;
             }
 
-            // CREATE new customer
+            // CREATE
             try {
                 DB::transaction(function () use ($name, $username, $password, $matchedPackage, $phone, $billingType, $billingMethod, $billingDueDay, $useTax, $discountType, $discountValue, $status, $isActive, $customerCode, $regCode, $stCode, $tbCode, $activatedAt, $email, $ktp, $address, $onuSn, $lat, $lng) {
                     $customer = Customer::create([
@@ -721,48 +810,93 @@ class CustomerImportService
                         $customer->syncBillingDates();
                     }
 
-                    // Sync RADIUS Auth
-                    RadCheck::create([
-                        'username' => $username,
-                        'attribute' => 'Cleartext-Password',
-                        'op' => ':=',
-                        'value' => $password,
-                    ]);
-
-                    // Sync RADIUS UserGroup
-                    RadUserGroup::create([
-                        'username' => $username,
-                        'groupname' => $matchedPackage->name,
-                        'priority' => 1,
-                    ]);
+                    // updateOrCreate: sisa baris RADIUS lama untuk username yang sama tidak menjadi ganda
+                    RadCheck::updateOrCreate(['username' => $username, 'attribute' => 'Cleartext-Password'], ['op' => ':=', 'value' => $password]);
+                    RadUserGroup::updateOrCreate(['username' => $username], ['groupname' => $matchedPackage->name, 'priority' => 1]);
 
                     // Pelanggan terisolir di sistem lama: tetap terisolir (observer memindahkan ke grup ISOLIR).
-                    // Dulu observer mengubahnya menjadi "menunggu aktivasi" + membuat tiket aktivasi.
                     if ($status === 'suspended') {
                         $customer->update(['status' => Customer::STATUS_SUSPENDED, 'is_active' => false, 'suspended_at' => now()]);
                     }
                 });
-
                 $successCount++;
             } catch (Exception $e) {
                 Log::error("Failed to import customer row {$rowIndex}: " . $e->getMessage());
-                $errors[] = [
-                    'row' => $rowIndex,
-                    'username' => $username,
-                    'reason' => 'Kesalahan database: ' . $e->getMessage()
-                ];
-                $skippedCount++;
+                $fail('Kesalahan database: ' . $e->getMessage());
             }
         }
 
         return [
+            'dry_run' => $dryRun,
             'total_rows' => $totalProcessed,
             'success' => $successCount,
             'updated' => $updatedCount,
             'skipped' => $skippedCount,
             'errors' => $errors,
             'notes' => $notes,
+            'preview' => $preview,
         ];
+    }
+
+    /** Teks sel dari nilai mentah: angka bulat besar tidak menjadi notasi ilmiah (mis. NIK, No. HP). */
+    private function cellText(mixed $v): string
+    {
+        return match (true) {
+            $v === null => '',
+            is_bool($v) => $v ? '1' : '0',
+            is_int($v) => (string) $v,
+            is_float($v) && floor($v) == $v && abs($v) < 1e18 => sprintf('%.0f', $v),
+            default => (string) $v,
+        };
+    }
+
+    /**
+     * Angka dari sel. Mode 'money': "20.000" = 20000, "20.000,50" = 20000.5, "1,5" = 1.5.
+     * Mode 'coord': koma desimal ("-6,2088") diterima.
+     */
+    private function parseNumber(mixed $v, string $mode): ?float
+    {
+        if (is_int($v) || is_float($v)) {
+            return (float) $v;
+        }
+        $s = str_replace([' ', 'Rp', 'rp', 'RP', '%'], '', trim((string) $v));
+        if ($s === '') {
+            return null;
+        }
+        if ($mode === 'money') {
+            if (preg_match('/^-?\d{1,3}(\.\d{3})+(,\d+)?$/', $s)) {
+                $s = str_replace(['.', ','], ['', '.'], $s);
+            } elseif (preg_match('/^-?\d{1,3}(,\d{3})+(\.\d+)?$/', $s)) {
+                $s = str_replace(',', '', $s);
+            } elseif (preg_match('/^-?\d+,\d+$/', $s)) {
+                $s = str_replace(',', '.', $s);
+            }
+        } elseif (preg_match('/^-?\d+,\d+$/', $s)) {
+            $s = str_replace(',', '.', $s);
+        }
+
+        return is_numeric($s) ? (float) $s : null;
+    }
+
+    /** Tanggal dari sel: nomor seri Excel, YYYY-MM-DD, DD/MM/YYYY atau DD-MM-YYYY. */
+    private function parseDate(mixed $v): ?\Carbon\Carbon
+    {
+        try {
+            if (is_int($v) || is_float($v)) {
+                return \Carbon\Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float) $v));
+            }
+            $s = trim((string) $v);
+            foreach (['Y-m-d', 'Y/m/d', 'd/m/Y', 'd-m-Y', 'Y-m-d H:i:s'] as $format) {
+                $d = \Carbon\Carbon::createFromFormat('!' . $format, $s);
+                if ($d && $d->format($format) === $s && $d->year >= 2000 && $d->year <= 2099) {
+                    return $d;
+                }
+            }
+        } catch (\Throwable) {
+            // jatuh ke null
+        }
+
+        return null;
     }
 
     /**
@@ -946,6 +1080,12 @@ class CustomerImportService
             }
 
             $rowIdx++;
+        }
+
+        // Format teks agar No. HP / ID / NIK tidak rusak saat file ini diedit di Excel lalu diimpor ulang
+        foreach (['B', 'C', 'E', 'N', 'P', 'R'] as $textCol) {
+            $sheet->getStyle("{$textCol}3:{$textCol}" . max($rowIdx + 200, 1000))->getNumberFormat()
+                ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
         }
 
         // Apply borders to data area

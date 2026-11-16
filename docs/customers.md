@@ -70,16 +70,25 @@ Hanya **admin & administrator** (menu Pelanggan → *Impor Data* / *Ekspor Data*
 - **Dengan password PPPoE** — untuk migrasi ke sistem lain. File berisi password semua pelanggan; simpan dengan aman. Tercatat di Log Aktivitas.
 
 ### Impor
-1. Unduh **template**, isi sheet *Format Import* (lihat sheet *Contoh & Panduan*).
-2. Pilih cara menangani username yang sudah ada:
+1. Unduh **template**, isi sheet *Format Import* (lihat sheet *Contoh & Panduan*). Kolom username, password, No. HP, ID pelanggan, NIK dan SN ONU sudah berformat **teks** — jangan diubah ke angka, karena Excel menghapus angka 0 di depan dan membulatkan NIK 16 digit.
+2. Pilih file lalu klik **Cek dulu (pratinjau)**. Belum ada data yang disimpan; sistem menampilkan rencana per baris (*dibuat* / *diperbarui*), baris yang akan dilewati beserta alasannya, dan catatan. Bila sudah sesuai klik **Impor sekarang** (file tidak perlu diunggah ulang). Tombol **Langsung impor** melewati pratinjau.
+3. Pilih cara menangani username yang sudah ada:
    - **Lewati** — baris dengan username yang sudah ada tidak diproses.
    - **Perbarui** — hanya kolom yang **diisi** di file yang diubah. Kolom kosong — termasuk password — **tidak** menghapus data lama, jadi file hasil ekspor tanpa password aman diimpor ulang.
-3. Aturan mode *Perbarui*:
+4. Aturan mode *Perbarui*:
    - **Status pelanggan lama tidak diubah** lewat impor; perbedaan status ditampilkan sebagai catatan.
    - **Ganti paket** memakai alur resmi (grup RADIUS, putus sesi, profil ONU).
    - ID pelanggan yang sudah dipakai pelanggan lain ditolak per baris.
-4. Pelanggan **baru** berstatus *suspended* tetap terisolir (tidak menjadi "menunggu aktivasi"); berstatus *waiting_activation* mendapat tiket aktivasi.
-5. Hasil impor menampilkan baris yang dilewati/gagal beserta alasannya, dan **catatan** untuk baris yang tetap diproses.
+5. Aturan isi kolom (baris yang melanggar **dilewati dengan alasan**, tidak lagi diganti nilai bawaan diam-diam):
+   - **No. HP** wajib untuk pelanggan baru. Nomor yang kehilangan angka 0 di depan (mis. `81234…`) ditambahkan otomatis.
+   - **tipe_tagihan, metode_tagihan, status, kenakan_ppn, tipe_diskon**: kosong = nilai bawaan; nilai yang tidak dikenal ditolak.
+   - **nilai_diskon** boleh berformat Indonesia: `20.000` = Rp 20.000. Diskon persen maksimal 100; diskon nominal tidak boleh melebihi harga paket.
+   - **tgl_aktivasi**: `YYYY-MM-DD` atau `DD/MM/YYYY`; tanggal yang tidak dikenali ditolak.
+   - **latitude/longitude**: titik atau koma desimal (`-6,2088`) diterima; di luar rentang ditolak.
+   - **ID pelanggan** kosong dibuat otomatis tanpa bentrok. ID yang sudah dipakai pelanggan lain, username atau NIK yang muncul dua kali di file, dan NIK milik pelanggan lain ditolak.
+   - **NIK** dari kolom berformat angka diabaikan (dengan catatan) karena digit terakhirnya sudah dibulatkan Excel.
+6. Pelanggan **baru** berstatus *suspended* tetap terisolir (tidak menjadi "menunggu aktivasi"); berstatus *waiting_activation* mendapat tiket aktivasi.
+7. Hasil impor menampilkan baris yang dilewati/gagal beserta alasannya, dan **catatan** untuk baris yang tetap diproses.
 
 ---
 *Tips: isi koordinat dengan benar untuk memudahkan teknisi dan pemetaan jaringan.*

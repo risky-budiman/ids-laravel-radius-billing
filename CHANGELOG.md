@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.136] - 2026-11-16
+
+### Perbaikan
+- **import:** Preview before import, strict validation, Indonesian numbers, no ID collisions
+
 ## [v1.5.135] - 2026-11-16
 
 ### Perbaikan

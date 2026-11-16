@@ -152,6 +152,22 @@ class Customer extends Authenticatable
     }
 
     /**
+     * ID pelanggan 12 digit (wilayah 3 + STO 3 + STB 3 + nomor 3) yang belum dipakai.
+     * Dulu impor mengambil 3 digit acak tanpa cek, sehingga bisa bentrok dengan pelanggan lain.
+     * Mengembalikan null bila 900 nomor (100–999) untuk prefix itu sudah habis.
+     *
+     * @param  list<string>  $reserved  kode yang sudah dipakai dalam proses yang sama (mis. pratinjau impor)
+     */
+    public static function nextFreeCode(string $prefix9, array $reserved = []): ?string
+    {
+        $used = static::where('customer_code', 'like', $prefix9 . '%')->pluck('customer_code')
+            ->merge($reserved)->flip();
+        $free = array_values(array_filter(range(100, 999), fn ($n) => ! isset($used[$prefix9 . $n])));
+
+        return $free ? $prefix9 . $free[random_int(0, count($free) - 1)] : null;
+    }
+
+    /**
      * Sync and update the next billing dates based on type and method
      */
     public function syncBillingDates()

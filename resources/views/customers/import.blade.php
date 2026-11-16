@@ -50,27 +50,68 @@
 
         <!-- Import Results Detail (If any) -->
         @if(session('import_result'))
-            @php $res = session('import_result'); @endphp
-            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm space-y-4">
-                <h4 class="font-bold text-base text-gray-900 dark:text-white">Rekapitulasi Hasil Impor</h4>
+            @php $res = session('import_result'); $isPreview = ! empty($res['dry_run']); @endphp
+            <div class="bg-white dark:bg-gray-800 rounded-xl border {{ $isPreview ? 'border-indigo-200 dark:border-indigo-800' : 'border-gray-100 dark:border-gray-700' }} p-6 shadow-sm space-y-4">
+                @if($isPreview)
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                            <h4 class="font-bold text-base text-gray-900 dark:text-white">Pratinjau Impor — belum ada data yang disimpan</h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">File <span class="font-mono">{{ $res['file_name'] ?? '' }}</span>, mode
+                                <strong>{{ ($res['duplicate_action'] ?? 'skip') === 'update' ? 'Perbarui' : 'Lewati' }}</strong>. Periksa daftar di bawah, lalu klik <strong>Impor sekarang</strong>.</p>
+                        </div>
+                        @if(($res['success'] + $res['updated']) > 0 && ! empty($res['token']))
+                            <form method="POST" action="{{ route('customers.import.store') }}" class="flex gap-2">
+                                @csrf
+                                <input type="hidden" name="token" value="{{ $res['token'] }}">
+                                <input type="hidden" name="duplicate_action" value="{{ $res['duplicate_action'] ?? 'skip' }}">
+                                <input type="hidden" name="mode" value="import">
+                                <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl">Impor sekarang</button>
+                            </form>
+                        @endif
+                    </div>
+                @else
+                    <h4 class="font-bold text-base text-gray-900 dark:text-white">Rekapitulasi Hasil Impor</h4>
+                @endif
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-900/50">
                         <span class="text-xs text-gray-400">Total Baris Diproses</span>
                         <p class="text-2xl font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ $res['total_rows'] }}</p>
                     </div>
                     <div class="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/30">
-                        <span class="text-xs text-emerald-600 dark:text-emerald-400">Berhasil Dibuat</span>
+                        <span class="text-xs text-emerald-600 dark:text-emerald-400">{{ $isPreview ? 'Akan Dibuat' : 'Berhasil Dibuat' }}</span>
                         <p class="text-2xl font-semibold text-emerald-600 dark:text-emerald-400 mt-1">{{ $res['success'] }}</p>
                     </div>
                     <div class="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30">
-                        <span class="text-xs text-indigo-600 dark:text-indigo-400">Diperbarui</span>
+                        <span class="text-xs text-indigo-600 dark:text-indigo-400">{{ $isPreview ? 'Akan Diperbarui' : 'Diperbarui' }}</span>
                         <p class="text-2xl font-semibold text-indigo-600 dark:text-indigo-400 mt-1">{{ $res['updated'] }}</p>
                     </div>
                     <div class="p-4 rounded-xl bg-amber-50/50 dark:bg-amber-950/30">
-                        <span class="text-xs text-amber-600 dark:text-amber-400">Dilewati / Galat</span>
+                        <span class="text-xs text-amber-600 dark:text-amber-400">{{ $isPreview ? 'Akan Dilewati' : 'Dilewati / Galat' }}</span>
                         <p class="text-2xl font-semibold text-amber-600 dark:text-amber-400 mt-1">{{ $res['skipped'] }}</p>
                     </div>
                 </div>
+
+                @if($isPreview && ! empty($res['preview']))
+                    <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <h5 class="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-2">Rencana per baris:</h5>
+                        <div class="max-h-72 overflow-auto">
+                            <table class="w-full text-xs">
+                                <thead class="text-left text-gray-500"><tr><th class="py-1 pr-3">Baris</th><th class="pr-3">Username</th><th class="pr-3">Nama</th><th class="pr-3">Aksi</th><th>Rincian</th></tr></thead>
+                                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                    @foreach($res['preview'] as $p)
+                                        <tr>
+                                            <td class="py-1.5 pr-3">{{ $p['row'] }}</td>
+                                            <td class="pr-3 font-mono">{{ $p['username'] }}</td>
+                                            <td class="pr-3">{{ $p['name'] }}</td>
+                                            <td class="pr-3"><span class="px-1.5 py-0.5 rounded {{ $p['action'] === 'dibuat' ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700' }}">{{ $p['action'] }}</span></td>
+                                            <td class="text-gray-600 dark:text-gray-400">{{ $p['detail'] }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endif
 
                 @if(!empty($res['errors']))
                     <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
@@ -165,10 +206,13 @@
                         </div>
                     </div>
 
-                    <div class="flex justify-end pt-2">
-                        <button type="submit" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-sm transition-all flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                            Mulai Proses Impor
+                    <div class="flex flex-wrap justify-end gap-3 pt-2">
+                        <button type="submit" name="mode" value="import" onclick="return confirm('Impor langsung tanpa pratinjau?')" class="px-5 py-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold text-sm rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700">
+                            Langsung impor
+                        </button>
+                        <button type="submit" name="mode" value="preview" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-sm transition-all flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            Cek dulu (pratinjau)
                         </button>
                     </div>
                 </form>

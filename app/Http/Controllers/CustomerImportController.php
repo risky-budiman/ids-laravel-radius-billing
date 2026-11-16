@@ -48,36 +48,71 @@ class CustomerImportController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv,txt|max:20480', // max 20MB
+            // file tidak perlu diunggah ulang saat melanjutkan dari pratinjau (token)
+            'file' => 'required_without:token|file|mimes:xlsx,xls,csv,txt|max:20480', // max 20MB
+            'token' => 'nullable|string|size:36',
             'duplicate_action' => 'required|in:skip,update',
+            'mode' => 'nullable|in:preview,import',
         ], [
-            'file.required' => 'Silakan pilih file spreadsheet yang ingin diunggah.',
+            'file.required_without' => 'Silakan pilih file spreadsheet yang ingin diunggah.',
             'file.mimes' => 'Format file harus berupa Excel (.xlsx, .xls) atau CSV (.csv).',
             'file.max' => 'Ukuran file maksimal adalah 20 MB.',
         ]);
 
+        $disk = \Illuminate\Support\Facades\Storage::disk('local');
+        $options = ['duplicate_action' => $request->input('duplicate_action', 'skip')];
+
         try {
+            // 1) Lanjutkan impor dari pratinjau: file yang sama, tanpa unggah ulang
+            if ($request->filled('token')) {
+                $pending = session('import_pending');
+                if (! $pending || $pending['token'] !== $request->input('token') || ! $disk->exists($pending['path'])) {
+                    return redirect()->route('customers.import.index')->with('error', 'Pratinjau sudah kedaluwarsa. Unggah file lagi.');
+                }
+                $result = $this->importService->importFile($disk->path($pending['path']), $options);
+                $disk->delete($pending['path']);
+                session()->forget('import_pending');
+
+                return $this->finishImport($result, $pending['name']);
+            }
+
             $file = $request->file('file');
-            $options = [
-                'duplicate_action' => $request->input('duplicate_action', 'skip'),
-            ];
 
-            $result = $this->importService->importFile($file->getRealPath(), $options);
+            // 2) Pratinjau (dry-run): tidak ada yang disimpan; file disimpan sementara untuk dilanjutkan
+            if ($request->input('mode') === 'preview') {
+                $result = $this->importService->importFile($file->getRealPath(), $options + ['dry_run' => true]);
+                $old = session('import_pending');
+                if ($old) {
+                    $disk->delete($old['path']);
+                }
+                $token = (string) \Illuminate\Support\Str::uuid();
+                $path = $file->storeAs('imports', $token . '.' . ($file->getClientOriginalExtension() ?: 'xlsx'), 'local');
+                session(['import_pending' => ['token' => $token, 'path' => $path, 'name' => $file->getClientOriginalName(),
+                    'duplicate_action' => $options['duplicate_action']]]);
 
-            // Log activity
-            ActivityLog::create([
-                'user_id' => auth()->id(),
-                'action' => 'customers_imported',
-                'description' => "Impor pelanggan dari file '{$file->getClientOriginalName()}': {$result['success']} dibuat, {$result['updated']} diperbarui, {$result['skipped']} dilewati.",
-            ]);
+                return redirect()->route('customers.import.index')
+                    ->with('import_result', $result + ['token' => $token, 'file_name' => $file->getClientOriginalName(), 'duplicate_action' => $options['duplicate_action']]);
+            }
 
-            return redirect()->route('customers.import.index')
-                ->with('import_result', $result)
-                ->with('success', "Proses impor selesai! {$result['success']} pelanggan baru berhasil ditambahkan, {$result['updated']} diperbarui, dan {$result['skipped']} dilewati.");
+            // 3) Impor langsung
+            return $this->finishImport($this->importService->importFile($file->getRealPath(), $options), $file->getClientOriginalName());
         } catch (Exception $e) {
             return redirect()->route('customers.import.index')
                 ->with('error', "Gagal memproses file import: " . $e->getMessage());
         }
+    }
+
+    private function finishImport(array $result, string $fileName)
+    {
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'customers_imported',
+            'description' => "Impor pelanggan dari file '{$fileName}': {$result['success']} dibuat, {$result['updated']} diperbarui, {$result['skipped']} dilewati.",
+        ]);
+
+        return redirect()->route('customers.import.index')
+            ->with('import_result', $result)
+            ->with('success', "Proses impor selesai! {$result['success']} pelanggan baru berhasil ditambahkan, {$result['updated']} diperbarui, dan {$result['skipped']} dilewati.");
     }
 
     /**
