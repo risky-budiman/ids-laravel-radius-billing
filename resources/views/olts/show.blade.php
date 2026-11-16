@@ -1,6 +1,8 @@
 @php
     $isAdministrator = auth()->user()->isAdministrator();
     $canWebWrite = str_contains(strtoupper((string) $olt->olt_type), 'HSGQ') && filled($olt->web_username) && filled($olt->web_password);
+    $unsavedAt = $canWebWrite ? \Illuminate\Support\Facades\Cache::get("olt_unsaved_{$olt->id}") : null;
+    $savedAt = $canWebWrite ? \Illuminate\Support\Facades\Cache::get("olt_saved_at_{$olt->id}") : null;
     $online = ($status['status'] ?? null) === 'online';
     $state = ! $olt->is_active ? 'inactive' : ($status === null ? 'unknown' : ($online ? 'online' : 'offline'));
     $badge = ['online' => ['badge-success', 'Online'], 'offline' => ['badge-danger', 'Tidak merespons'],
@@ -41,6 +43,13 @@
                     <x-icon name="bolt" class="w-4 h-4" /> <span x-text="testing ? 'Menguji…' : 'Tes koneksi'"></span>
                 </button>
                 <a href="{{ route('olts.show', [$olt, 'refresh' => 1]) }}" class="btn-secondary"><x-icon name="refresh" class="w-4 h-4" /> Perbarui</a>
+                @if($canWebWrite)
+                    <form method="POST" action="{{ route('olts.save-config', $olt) }}" onsubmit="return confirm('Simpan konfigurasi OLT ke flash sekarang?')">@csrf
+                        <button class="{{ $unsavedAt ? 'btn-primary' : 'btn-secondary' }}" title="{{ $savedAt ? 'Terakhir disimpan ' . \Carbon\Carbon::createFromTimestamp($savedAt)->diffForHumans() : 'Simpan konfigurasi berjalan ke flash OLT' }}">
+                            <x-icon name="check" class="w-4 h-4" /> Simpan konfigurasi
+                        </button>
+                    </form>
+                @endif
                 @if($isAdministrator)
                     <a href="{{ route('olts.edit', $olt) }}" class="btn-primary"><x-icon name="settings" class="w-4 h-4" /> Ubah</a>
                 @endif
@@ -57,6 +66,13 @@
         @if(session('error'))
             <div class="flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300" role="alert">
                 <x-icon name="exclamation" class="w-5 h-5 shrink-0" /> {{ session('error') }}
+            </div>
+        @endif
+
+        @if($unsavedAt)
+            <div class="flex items-start gap-2.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300" role="alert">
+                <x-icon name="exclamation" class="w-5 h-5 shrink-0" />
+                <p>Ada perubahan di OLT yang <strong>belum tersimpan ke flash</strong> (sejak {{ \Carbon\Carbon::createFromTimestamp($unsavedAt)->diffForHumans() }}). Tekan <strong>Simpan konfigurasi</strong> agar tidak hilang saat OLT restart.</p>
             </div>
         @endif
 

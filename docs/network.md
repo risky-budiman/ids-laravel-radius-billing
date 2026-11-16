@@ -89,6 +89,7 @@ Butuh **Akses web OLT** terisi (Ubah OLT). Format perintah mengikuti aplikasi we
 - Sebelum reboot/ubah/hapus, MAC di posisi itu **dicocokkan dulu** di OLT; bila ONU sudah pindah posisi (layar basi) perintah dibatalkan agar tidak mengenai ONU pelanggan lain.
 - Di panel **Pekerjaan di OLT**: *Allow sekarang* (pilih port; default dari posisi ONU pelanggan) dan *Hapus dari OLT* (MAC dicari di semua port). Pekerjaan langsung ditutup atas nama pengguna.
 - Semua aksi tercatat di Log Aktivitas (`onu_allowed`, `onu_reboot`, `onu_rename`, `onu_delete`, dan `*_failed`).
+- **Simpan konfigurasi:** setelah allow, ubah nama/deskripsi, atau hapus ONU berhasil, konfigurasi OLT **otomatis disimpan ke flash** (menu *Save Config* web OLT), supaya tidak hilang saat OLT restart. Reboot ONU tidak mengubah konfigurasi sehingga tidak disimpan. Bila simpan gagal, halaman Kelola OLT menampilkan peringatan "belum tersimpan ke flash" sampai tombol **Simpan konfigurasi** (pojok kanan atas) berhasil. Simpan manual tercatat `olt_config_saved`, gagal simpan `olt_config_save_failed`.
 - Ganti profil T-CONT / bandwidth HSGQ belum otomatis.
 - Bila OLT tidak merespons SNMP, halaman menampilkan pesan gagal dan **daftar terakhir tetap ditampilkan** — port tidak lagi dianggap kosong dan statusnya tidak diubah.
 - Deteksi ulang port PON berjalan dalam satu transaksi: bila gagal di tengah, status port tidak berubah.

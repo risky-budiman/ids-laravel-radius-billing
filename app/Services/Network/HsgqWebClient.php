@@ -320,6 +320,15 @@ class HsgqWebClient
         return 'added';
     }
 
+    /**
+     * Simpan konfigurasi berjalan ke flash OLT (menu "Save Config" di web OLT: GET /system_save). Tanpa ini
+     * perubahan (allow, nama, hapus ONU) hilang bila OLT restart.
+     */
+    public function saveConfig(): void
+    {
+        $this->get('system_save');
+    }
+
     /** Hapus ONU dari daftar izin port (ONU terputus & harus di-allow ulang). */
     public function deleteOnu(int $port, int $onuId, string $mac): void
     {

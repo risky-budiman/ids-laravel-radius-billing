@@ -28,6 +28,7 @@ class HsgqOnuWriteTest extends TestCase
     /** @var array<int, array<string, mixed>> isi daftar izin palsu PON 2 */
     private array $allow = [];
     private array $deny = [];
+    private bool $saveOk = true;
 
     protected function setUp(): void
     {
@@ -49,6 +50,9 @@ class HsgqOnuWriteTest extends TestCase
             }
             if (str_contains($url, 'onu_allow_list?port_id') || (str_contains($url, 'onu_allow_list') && $r->method() === 'GET')) {
                 return Http::response(['code' => 1, 'data' => $this->allow]);
+            }
+            if (str_contains($url, 'system_save')) {
+                return Http::response($this->saveOk ? ['code' => 1] : ['code' => 2, 'message' => 'flash busy']);
             }
             if (str_contains($url, 'onu_deny_list')) {
                 return Http::response(['code' => 1, 'data' => $this->deny]);
@@ -123,7 +127,7 @@ class HsgqOnuWriteTest extends TestCase
             'onu_type' => '', 'onu_desc' => '']]], $this->posts('onu_allow_list?form=onucfg'));
 
         $this->postJson(route('olts.onus.allow', [$this->olt, $this->port]), ['mac' => 'E8:68:19:02:FF:70'])
-            ->assertOk()->assertJsonFragment(['message' => 'ONU sudah diizinkan di PON 1/2. ONU biasanya online ±1 menit kemudian.']);
+            ->assertOk()->assertJsonFragment(['message' => 'ONU sudah diizinkan di PON 1/2.']);
         $this->assertCount(1, $this->posts('onu_allow_list?form=onucfg'));
 
         $this->postJson(route('olts.onus.allow', [$this->olt, $this->port]), ['mac' => 'bukan-mac'])->assertStatus(422);
@@ -154,6 +158,45 @@ class HsgqOnuWriteTest extends TestCase
         // Detail OLT menampilkan tombol kerja langsung
         OltWorkItem::record($this->olt->id, 'provision', ['onu_sn' => '0A0B0C0D0E99']);
         $this->get(route('olts.show', $this->olt))->assertSee('Allow sekarang');
+    }
+
+    private function saves(): int
+    {
+        return collect(Http::recorded())->filter(fn ($pair) => str_contains($pair[0]->url(), 'system_save'))->count();
+    }
+
+    public function test_config_saved_after_changes_but_not_after_reboot_or_noop(): void
+    {
+        $this->actingAs($this->teknisi);
+        $this->postJson(route('olts.onus.reboot', [$this->olt, $this->port]), ['index' => '1/1/2:1', 'sn' => 'E8:68:19:02:FF:70'])->assertOk();
+        $this->assertSame(0, $this->saves(), 'reboot tidak mengubah konfigurasi');
+
+        $this->postJson(route('olts.onus.allow', [$this->olt, $this->port]), ['mac' => 'E8:68:19:02:FF:70'])->assertOk();
+        $this->assertSame(0, $this->saves(), 'ONU sudah diizinkan: tidak ada yang disimpan');
+
+        $this->postJson(route('olts.onus.info', [$this->olt, $this->port]), ['index' => '1/1/2:1', 'sn' => 'E8:68:19:02:FF:70', 'name' => 'X'])
+            ->assertOk()->assertJsonFragment(['message' => 'Nama & deskripsi ONU tersimpan di OLT. Konfigurasi OLT tersimpan.']);
+        $this->assertSame(1, $this->saves());
+
+        $this->postJson(route('olts.onus.allow', [$this->olt, $this->port]), ['mac' => 'AA:BB:CC:00:11:99'])->assertOk();
+        $this->postJson(route('olts.onus.delete', [$this->olt, $this->port]), ['index' => '1/1/2:1', 'sn' => 'E8:68:19:02:FF:70'])->assertOk();
+        $this->assertSame(3, $this->saves());
+    }
+
+    public function test_failed_save_is_flagged_until_manual_save_succeeds(): void
+    {
+        $this->saveOk = false;
+        $this->actingAs($this->teknisi);
+
+        $res = $this->postJson(route('olts.onus.info', [$this->olt, $this->port]), ['index' => '1/1/2:1', 'sn' => 'E8:68:19:02:FF:70', 'name' => 'X'])
+            ->assertOk()->assertJson(['success' => true]);
+        $this->assertStringContainsString('belum tersimpan', $res->json('message'));
+        $this->get(route('olts.show', $this->olt))->assertSee('belum tersimpan ke flash', false)->assertSee('Simpan konfigurasi');
+
+        $this->saveOk = true;
+        $this->post(route('olts.save-config', $this->olt))->assertSessionHas('success', 'Konfigurasi OLT tersimpan ke flash.');
+        $this->get(route('olts.show', $this->olt))->assertDontSee('belum tersimpan ke flash', false);
+        $this->assertTrue(ActivityLog::where('action', 'olt_config_saved')->exists());
     }
 
     public function test_write_actions_refused_without_web_access_or_on_zte(): void

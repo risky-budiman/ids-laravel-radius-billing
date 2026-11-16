@@ -290,6 +290,44 @@ class OltController extends Controller
     }
 
     /** Tes login API web OLT (HSGQ) — dipakai untuk registrasi/allow ONU dari aplikasi. */
+    /**
+     * Simpan konfigurasi OLT HSGQ ke flash setelah perubahan. Gagal simpan tidak membatalkan perubahan yang
+     * sudah diterapkan, tetapi ditandai "belum tersimpan" sampai berhasil disimpan.
+     *
+     * @return string kalimat tambahan untuk pesan ke pengguna
+     */
+    private function persistHsgq(Olt $olt, \App\Services\Network\HsgqWebClient $web): string
+    {
+        try {
+            $web->saveConfig();
+        } catch (\RuntimeException $e) {
+            \Illuminate\Support\Facades\Cache::forever("olt_unsaved_{$olt->id}", time());
+            \App\Models\ActivityLog::log('olt_config_save_failed', "Simpan konfigurasi OLT {$olt->name} GAGAL: {$e->getMessage()}", $olt);
+
+            return ' PERHATIAN: konfigurasi OLT belum tersimpan (' . $e->getMessage() . '). Tekan "Simpan konfigurasi" di halaman OLT agar tidak hilang saat OLT restart.';
+        }
+        \Illuminate\Support\Facades\Cache::forget("olt_unsaved_{$olt->id}");
+        \Illuminate\Support\Facades\Cache::forever("olt_saved_at_{$olt->id}", time());
+
+        return ' Konfigurasi OLT tersimpan.';
+    }
+
+    /** Tombol "Simpan konfigurasi" (HSGQ dengan akses web). */
+    public function saveConfig(Olt $olt)
+    {
+        $web = $this->hsgqWebOr422($olt);
+        if ($web instanceof \Illuminate\Http\JsonResponse) {
+            return back()->with('error', $web->getData(true)['message']);
+        }
+        $note = trim($this->persistHsgq($olt, $web));
+        $ok = ! \Illuminate\Support\Facades\Cache::has("olt_unsaved_{$olt->id}");
+        if ($ok) {
+            \App\Models\ActivityLog::log('olt_config_saved', "Konfigurasi OLT {$olt->name} disimpan ke flash.", $olt);
+        }
+
+        return back()->with($ok ? 'success' : 'error', $ok ? 'Konfigurasi OLT tersimpan ke flash.' : $note);
+    }
+
     public function testWebLogin(Olt $olt)
     {
         $client = new \App\Services\Network\HsgqWebClient($olt);
@@ -637,6 +675,9 @@ class OltController extends Controller
         }
         $this->forgetPortCache($port);
         \App\Models\ActivityLog::log("onu_{$action}", "{$labels[$action]} di {$olt->name}: posisi {$index}, MAC " . strtoupper($sn) . '.', $olt);
+        if ($action !== 'reboot') {   // reboot tidak mengubah konfigurasi
+            $message .= $this->persistHsgq($olt, $web);
+        }
 
         return response()->json(['success' => true, 'message' => $message]);
     }
@@ -737,8 +778,11 @@ class OltController extends Controller
         \App\Models\ActivityLog::log('onu_allowed', "Allow ONU di {$olt->name} {$pon}: MAC " . strtoupper($macaddr)
             . ($customer ? " (pelanggan {$customer->customer_code} {$customer->name})" : '') . " — {$state}.", $olt);
         $this->closeWorkFor($olt, 'provision', $macaddr, "Di-allow dari aplikasi di {$pon}.");
+        if ($state !== 'already') {
+            $message .= ' ONU biasanya online ±1 menit kemudian.' . $this->persistHsgq($olt, $web);
+        }
 
-        return ['ok' => true, 'message' => $message . ' ONU biasanya online ±1 menit kemudian.'];
+        return ['ok' => true, 'message' => $message];
     }
 
     /**
@@ -781,7 +825,7 @@ class OltController extends Controller
                         'note' => "Dihapus dari aplikasi (PON {$port->slot}/{$port->pon_port}:{$row['onu_id']})."]);
                     \App\Models\ActivityLog::log('onu_delete', "Hapus ONU di {$olt->name} PON {$port->slot}/{$port->pon_port}:{$row['onu_id']}, MAC {$item->onu_sn} (pekerjaan OLT).", $olt);
 
-                    return back()->with('success', "ONU {$item->onu_sn} dihapus dari PON {$port->slot}/{$port->pon_port}.");
+                    return back()->with('success', "ONU {$item->onu_sn} dihapus dari PON {$port->slot}/{$port->pon_port}." . $this->persistHsgq($olt, $web));
                 }
             }
         } catch (\RuntimeException $e) {

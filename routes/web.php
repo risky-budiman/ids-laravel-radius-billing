@@ -200,6 +200,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
             Route::post('olts/{olt}/ports/{port}/onus/delete', [\App\Http\Controllers\OltController::class, 'deleteOnu'])->name('olts.onus.delete');
             Route::post('olts/{olt}/ports/{port}/onus/allow', [\App\Http\Controllers\OltController::class, 'allowOnu'])->name('olts.onus.allow');
             Route::get('olts/{olt}/ports/{port}/onus/pending', [\App\Http\Controllers\OltController::class, 'pendingOnus'])->name('olts.onus.pending');
+            Route::post('olts/{olt}/save-config', [\App\Http\Controllers\OltController::class, 'saveConfig'])->name('olts.save-config');
             Route::post('olts/{olt}/work/{item}/run', [\App\Http\Controllers\OltController::class, 'runWork'])->name('olts.work.run');
             Route::post('olts/{olt}/work/verify', [\App\Http\Controllers\OltController::class, 'verifyWork'])->name('olts.work.verify');
             Route::post('olts/{olt}/work/{item}', [\App\Http\Controllers\OltController::class, 'resolveWork'])->name('olts.work.resolve');

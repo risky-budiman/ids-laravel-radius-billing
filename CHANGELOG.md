@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.155] - 2026-11-16
+
+### Fitur baru
+- **olt:** Save HSGQ config to flash after ONU changes + 'Simpan konfigurasi' button
+
 ## [v1.5.154] - 2026-11-16
 
 ### Perbaikan
