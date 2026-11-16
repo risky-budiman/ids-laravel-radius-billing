@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.159] - 2026-11-16
+
+### Fitur baru
+- **genieacs:** NBI login (Basic Auth) and one WiFi logic for the customer app
+
 ## [v1.5.158] - 2026-11-16
 
 ### Fitur baru

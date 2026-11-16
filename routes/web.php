@@ -452,6 +452,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         // Tambah/edit lewat modal di halaman daftar; controller tidak punya show/create/edit
         // (sebelumnya membuka URL-nya langsung = error 500)
         Route::resource('acs-servers', \App\Http\Controllers\AcsServerController::class)->except(['show', 'create', 'edit']);
+        Route::post('acs-servers/{acs_server}/test', [\App\Http\Controllers\AcsServerController::class, 'testConnection'])->name('acs-servers.test');
         Route::get('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'index'])->name('settings.company');
         Route::post('settings/company', [\App\Http\Controllers\CompanySettingsController::class, 'update'])->name('settings.company.update');
         Route::get('settings/isolation', [\App\Http\Controllers\IsolationSettingsController::class, 'index'])->name('settings.isolation');

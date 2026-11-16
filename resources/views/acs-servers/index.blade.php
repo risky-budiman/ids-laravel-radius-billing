@@ -22,6 +22,9 @@
                 <p>{{ session('success') }}</p>
             </div>
         @endif
+        @if(session('error'))
+            <div class="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900 text-rose-700 dark:text-rose-400 rounded-xl text-sm font-semibold" role="alert">{{ session('error') }}</div>
+        @endif
 
         @if($errors->any())
             <div class="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900 text-rose-700 dark:text-rose-400 rounded-xl flex flex-col gap-1 text-sm font-semibold">
@@ -55,6 +58,18 @@
                             <x-input-label for="url" value="URL Endpoint API" class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2" />
                             <input id="url" name="url" type="url" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm outline-none transition-all dark:text-gray-200" placeholder="http://10.0.0.1:7557" required />
                             <p class="mt-1.5 text-xs text-gray-400 dark:text-gray-500 font-medium">Sertakan port bila perlu (default GenieACS 7557)</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <x-input-label for="nbi_username" value="Username NBI" class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2" />
+                                <input id="nbi_username" name="nbi_username" type="text" autocomplete="off" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm outline-none dark:text-gray-200" placeholder="Opsional" />
+                            </div>
+                            <div>
+                                <x-input-label for="nbi_password" value="Password NBI" class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2" />
+                                <input id="nbi_password" name="nbi_password" type="password" autocomplete="new-password" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm outline-none dark:text-gray-200" placeholder="Opsional" />
+                            </div>
+                            <p class="col-span-2 -mt-1 text-xs text-gray-400 dark:text-gray-500">Disarankan: lindungi NBI GenieACS dengan login (Basic Auth lewat nginx) dan batasi aksesnya ke IP server billing. Password disimpan terenkripsi.</p>
                         </div>
 
                         <div>
@@ -105,6 +120,9 @@
                                             <span class="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
                                                 {{ $server->url }}
                                             </span>
+                                            <span class="mt-1 block text-xs {{ $server->nbi_username ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
+                                                {{ $server->nbi_username ? 'Dengan login NBI' : 'Tanpa login NBI' }}
+                                            </span>
                                         </td>
                                         <td class="px-6 py-4.5">
                                             @if($server->is_active)
@@ -120,15 +138,45 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4.5">
-                                            <div class="flex justify-center items-center">
-                                                <form action="{{ route('acs-servers.destroy', $server->id) }}" method="POST" onsubmit="return confirm('Delete this server connection details?');">
+                                            <div class="flex justify-center items-center gap-2">
+                                                <form action="{{ route('acs-servers.test', $server) }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" class="px-3 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 rounded-xl border border-gray-200 dark:border-gray-700">Tes</button>
+                                                </form>
+                                                <button type="button" onclick="document.getElementById('edit-acs-{{ $server->id }}').classList.toggle('hidden')" class="px-3 py-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/20 hover:bg-indigo-100 rounded-xl border border-indigo-100/40">Ubah</button>
+                                                <form action="{{ route('acs-servers.destroy', $server->id) }}" method="POST" onsubmit="return confirm('Hapus server ACS ini?');">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="px-4 py-2 text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 font-bold bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-950/40 rounded-xl border border-rose-100/30 dark:border-rose-900/30 transition-all ">
+                                                    <button type="submit" class="px-3 py-2 text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 font-bold bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-950/40 rounded-xl border border-rose-100/30 dark:border-rose-900/30 transition-all ">
                                                         Hapus
                                                     </button>
                                                 </form>
                                             </div>
+                                        </td>
+                                    </tr>
+                                    <tr id="edit-acs-{{ $server->id }}" class="hidden bg-gray-50/60 dark:bg-gray-900/30">
+                                        <td colspan="4" class="px-6 py-4 whitespace-normal">
+                                            <form action="{{ route('acs-servers.update', $server) }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                                @csrf
+                                                @method('PUT')
+                                                <label class="text-xs font-bold text-gray-500">Nama
+                                                    <input name="name" value="{{ $server->name }}" required class="mt-1 w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-gray-200"></label>
+                                                <label class="text-xs font-bold text-gray-500">URL
+                                                    <input name="url" type="url" value="{{ $server->url }}" required class="mt-1 w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-mono dark:text-gray-200"></label>
+                                                <label class="text-xs font-bold text-gray-500">Username NBI
+                                                    <input name="nbi_username" value="{{ $server->nbi_username }}" autocomplete="off" class="mt-1 w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-gray-200"></label>
+                                                <label class="text-xs font-bold text-gray-500">Password NBI
+                                                    <input name="nbi_password" type="password" autocomplete="new-password" placeholder="{{ $server->nbi_password ? 'Tersimpan — kosongkan bila tidak diubah' : 'Belum diisi' }}" class="mt-1 w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-gray-200"></label>
+                                                <label class="md:col-span-2 text-xs font-bold text-gray-500">Deskripsi
+                                                    <input name="description" value="{{ $server->description }}" class="mt-1 w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-gray-200"></label>
+                                                <div class="md:col-span-2 flex flex-wrap items-center gap-4">
+                                                    <label class="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300"><input type="checkbox" name="is_active" value="1" @checked($server->is_active) class="rounded border-gray-300 text-indigo-600"> Aktif</label>
+                                                    @if($server->nbi_username)
+                                                        <label class="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300"><input type="checkbox" name="clear_nbi_auth" value="1" class="rounded border-gray-300 text-rose-600"> Hapus login NBI</label>
+                                                    @endif
+                                                    <button class="ml-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold">Simpan</button>
+                                                </div>
+                                            </form>
                                         </td>
                                     </tr>
                                 @empty

@@ -20,16 +20,12 @@ class AcsServerController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'url' => 'required|url',
-            'description' => 'nullable|string',
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validate($this->serverRules());
+        $validated['is_active'] = $request->boolean('is_active');
 
         \App\Models\AcsServer::create($validated);
 
-        return redirect()->back()->with('success', 'ACS Server added successfully.');
+        return redirect()->back()->with('success', 'Server ACS ditambahkan.');
     }
 
     /**
@@ -37,21 +33,50 @@ class AcsServerController extends Controller
      */
     public function update(Request $request, \App\Models\AcsServer $acsServer)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'url' => 'required|url',
-            'description' => 'nullable|string',
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validate($this->serverRules());
+        $validated['is_active'] = $request->boolean('is_active');
+        // Password NBI kosong = tetap memakai yang tersimpan; centang "hapus login" untuk melepasnya
+        if (! filled($validated['nbi_password'] ?? null)) {
+            unset($validated['nbi_password']);
+        }
+        if ($request->boolean('clear_nbi_auth')) {
+            $validated['nbi_username'] = null;
+            $validated['nbi_password'] = null;
+        }
 
         $acsServer->update($validated);
 
-        return redirect()->back()->with('success', 'ACS Server updated successfully.');
+        return redirect()->back()->with('success', 'Server ACS diperbarui.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
+    private function serverRules(): array
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'url' => 'required|url|max:255',
+            'nbi_username' => 'nullable|string|max:100',
+            'nbi_password' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'is_active' => 'nullable|boolean',
+        ];
+    }
+
+    /** Tes koneksi & login NBI: membaca 1 perangkat. */
+    public function testConnection(\App\Models\AcsServer $acsServer)
+    {
+        try {
+            $res = \App\Services\GenieACSService::forServer($acsServer)->getDevices([], ['_id'], 0, 1);
+            $total = $res['total'] ?? null;
+
+            return back()->with('success', "Terhubung ke {$acsServer->name}" . ($total !== null ? " ({$total} perangkat)" : '') . '.');
+        } catch (\Throwable $e) {
+            return back()->with('error', "Tidak bisa terhubung ke {$acsServer->name}: " . \Illuminate\Support\Str::limit($e->getMessage(), 200));
+        }
+    }
+
     public function destroy(\App\Models\AcsServer $acsServer)
     {
         $acsServer->delete();

@@ -16,7 +16,7 @@ class WifiController extends Controller
     protected function getCustomerDevice(Request $request)
     {
         $customer = $request->user();
-        $server = AcsServer::first();
+        $server = AcsServer::preferred();   // dulu server pertama walau nonaktif
         
         if (!$server) {
             return [
@@ -133,41 +133,12 @@ class WifiController extends Controller
         $service = $res['service'];
         $instance = $request->instance;
 
-        // Detect Schema
-        $isTr181 = isset($device['Device']);
-        $isHuawei = false;
-
-        $manufacturer = $device['_deviceId']['_Manufacturer']
-            ?? $device['DeviceID']['Manufacturer']['_value']
-            ?? $device['Device']['DeviceInfo']['Manufacturer']['_value']
-            ?? '';
-        if (stripos($manufacturer, 'Huawei') !== false) {
-            $isHuawei = true;
-        }
-
-        $params = [];
-
-        if ($isTr181) {
-            $params["Device.WiFi.SSID.{$instance}.SSID"] = $request->wifi_ssid;
-            $params["Device.WiFi.Radio.{$instance}.Enable"] = "1";
-            if ($request->filled('wifi_password')) {
-                $params["Device.WiFi.AccessPoint.{$instance}.Security.KeyPassphrase"] = $request->wifi_password;
-            }
-        } else {
-            $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.SSID"] = $request->wifi_ssid;
-            $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.Enable"] = "1";
-            if ($request->filled('wifi_password')) {
-                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.PreSharedKey.1.PreSharedKey"] = $request->wifi_password;
-                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.KeyPassphrase"] = $request->wifi_password;
-                $params["InternetGatewayDevice.LANDevice.1.WLANConfiguration.{$instance}.X_ZTE-COM_KeyPassphrase"] = $request->wifi_password;
-            }
-        }
+        // Parameter WiFi dari logika yang sama dengan halaman admin. Dulu aplikasi pelanggan selalu mengirim
+        // parameter khusus ZTE (X_ZTE-COM_KeyPassphrase) ke semua merek, sehingga modem lain bisa menolak
+        // seluruh perubahan.
+        $params = $service->buildWifiParameters($device, $request->only(['wifi_ssid', 'wifi_password']), (int) $instance);
 
         try {
-            if ($isHuawei) {
-                $params["InternetGatewayDevice.Services.X_Huawei_SelfDefined.SaveConfig"] = "1";
-            }
-
             // Push set parameters task (includes ?timeout=5000&connection_request automatically)
             try {
                 $service->setParameters($deviceId, $params);
@@ -175,6 +146,9 @@ class WifiController extends Controller
                 // Task may still be queued in GenieACS even if we get a timeout/empty reply
                 Log::warning("setParameters response issue (task likely queued): " . $e->getMessage());
             }
+            $customer = $request->user();
+            GenieACSService::audit('acs_config_updated', $deviceId, $params,
+                ['by_customer' => $customer->customer_code ?? $customer->id, 'via' => 'aplikasi pelanggan']);
 
             return response()->json([
                 'success' => true,

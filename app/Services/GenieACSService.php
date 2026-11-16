@@ -11,9 +11,15 @@ class GenieACSService
 {
     protected ?string $baseUrl;
 
-    public function __construct(?string $baseUrl = null)
+    /** Login NBI (Basic Auth, mis. lewat reverse proxy nginx); null = NBI tanpa login. */
+    protected ?array $auth = null;
+
+    public function __construct(?string $baseUrl = null, ?string $username = null, ?string $password = null)
     {
         $this->baseUrl = $baseUrl;
+        if (filled($username)) {
+            $this->auth = [(string) $username, (string) $password];
+        }
     }
 
     /**
@@ -21,7 +27,7 @@ class GenieACSService
      */
     public static function forServer(AcsServer $server): self
     {
-        return new self($server->url);
+        return new self($server->url, $server->nbi_username, $server->nbi_password);
     }
 
     /**
@@ -513,7 +519,8 @@ class GenieACSService
      */
     public function buildWifiParameters(array $dev, array $input, int $instance = 1): array
     {
-        $mfg = $dev['_deviceId']['_Manufacturer'] ?? $dev['DeviceID']['Manufacturer']['_value'] ?? '';
+        $mfg = $dev['_deviceId']['_Manufacturer'] ?? $dev['DeviceID']['Manufacturer']['_value']
+            ?? $dev['Device']['DeviceInfo']['Manufacturer']['_value'] ?? $dev['InternetGatewayDevice']['DeviceInfo']['Manufacturer']['_value'] ?? '';
         $isHuawei = stripos($mfg, 'Huawei') !== false;
         $isZte = stripos($mfg, 'ZTE') !== false;
         $isTr181 = isset($dev['Device']) && !isset($dev['InternetGatewayDevice']);
@@ -658,7 +665,10 @@ class GenieACSService
 
         try {
             $pending = Http::timeout($timeout)->connectTimeout(min(10, $timeout));
-            
+            if ($this->auth) {
+                $pending = $pending->withBasicAuth($this->auth[0], $this->auth[1]);
+            }
+
             if ($method === 'GET') {
                 $response = $pending->acceptJson()->get($url);
             } elseif ($method === 'POST') {
@@ -687,6 +697,11 @@ class GenieACSService
                 ];
             }
 
+            if (in_array($response->status(), [401, 403], true)) {
+                throw new Exception($this->auth
+                    ? 'Login NBI GenieACS ditolak (periksa username/password di Server ACS).'
+                    : 'GenieACS meminta login (isi username/password NBI di Server ACS).');
+            }
             $errorBody = $response->body();
             Log::error("GenieACS API Error [{$url}]: " . $errorBody);
             throw new Exception("GenieACS API returned error: " . $response->status() . " - " . $errorBody);

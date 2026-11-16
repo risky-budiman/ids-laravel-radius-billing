@@ -149,7 +149,27 @@ Saat ini sistem baru **membaca** lewat API web (login, info perangkat, daftar iz
 - **Hak akses:** daftar & detail modem, refresh, reboot, ubah PPPoE/WiFi dan tag — **administrator & teknisi** (web dan aplikasi staf sama). **Factory reset** dan menambah/mengubah **server ACS** — administrator saja.
 - **Pencarian** mencocokkan sebagian teks (tidak peka huruf besar/kecil) pada ID perangkat, SN, tag, username PPPoE (boleh dengan atau tanpa `@domain`) dan IP WAN. Karakter seperti `.` atau `(` dicari apa adanya.
 - ID perangkat yang memuat spasi/`%20` (mis. `00259E-ZXHN%20F670L-…`) bisa dibuka.
-- **Jejak perubahan:** ubah konfigurasi (`acs_config_updated`, berisi parameter yang diubah; password/kunci WiFi disamarkan), reboot (`acs_rebooted`), factory reset (`acs_factory_reset`) dan ubah tag (`acs_tags_updated`) tercatat di **Log Aktivitas** beserta pelakunya.
+- **Jejak perubahan:** ubah konfigurasi (`acs_config_updated`, berisi parameter yang diubah; password/kunci WiFi disamarkan), reboot (`acs_rebooted`), factory reset (`acs_factory_reset`) dan ubah tag (`acs_tags_updated`) tercatat di **Log Aktivitas** beserta pelakunya. Ganti WiFi dari **aplikasi pelanggan** juga tercatat (kode pelanggan pada kolom *by_customer*).
+- **Aplikasi pelanggan** memakai logika WiFi yang sama dengan halaman admin (parameter per merek: ZTE, Huawei + SaveConfig, TR-181) dan server ACS yang **aktif**.
+
+### Mengamankan NBI GenieACS (disarankan)
+
+NBI GenieACS (port 7557) **tidak punya login bawaan**: siapa pun yang bisa menjangkaunya dapat mengubah WiFi, PPPoE atau me-reboot modem pelanggan. Pasang login & batasi IP lewat nginx, lalu isi **Username/Password NBI** di halaman Server GenieACS (klik **Ubah**, lalu **Tes**):
+
+```nginx
+server {
+    listen 7558;                       # port NBI yang dipakai aplikasi (URL: http://IP-ACS:7558)
+    allow 10.0.0.5;                    # IP server billing
+    deny all;
+    location / {
+        auth_basic "GenieACS NBI";
+        auth_basic_user_file /etc/nginx/genieacs-nbi.htpasswd;   # htpasswd -c ... nbi
+        proxy_pass http://127.0.0.1:7557;
+    }
+}
+```
+
+Lalu ubah GenieACS agar NBI hanya mendengar di localhost (`GENIEACS_NBI_INTERFACE=127.0.0.1`). Password NBI disimpan terenkripsi, tidak pernah ditampilkan atau dikirim lewat API. Daftar server menandai **Dengan/Tanpa login NBI**; bila GenieACS menolak login, pesan "Login NBI GenieACS ditolak" tampil.
 
 ### Kebutuhan Server untuk OLT SNMP
 Pastikan paket SNMP terinstall di server Ubuntu/Debian:

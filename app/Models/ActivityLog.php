@@ -27,8 +27,11 @@ class ActivityLog extends Model
     /** Catat aksi pengguna yang sedang login (subjek opsional). */
     public static function log(string $action, string $description, ?Model $subject = null, array $properties = []): self
     {
+        // Hanya staf: di API/portal pelanggan auth()->id() adalah ID pelanggan, bukan ID pengguna staf
+        $user = auth()->user();
+
         return static::create([
-            'user_id' => auth()->id(),
+            'user_id' => $user instanceof User ? $user->getKey() : null,
             'action' => $action,
             'description' => $description,
             'subject_type' => $subject?->getMorphClass(),

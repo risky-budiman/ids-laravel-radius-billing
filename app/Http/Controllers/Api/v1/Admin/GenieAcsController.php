@@ -38,6 +38,7 @@ class GenieAcsController extends Controller
                 'url' => $server->url,
                 'description' => $server->description,
                 'is_active' => (bool) $server->is_active,
+                'has_nbi_auth' => filled($server->nbi_username),   // password tidak pernah dikirim
                 'is_reachable' => $isOnline,
                 'device_count' => $deviceCount,
                 'created_at' => $server->created_at?->toIso8601String(),
@@ -59,6 +60,8 @@ class GenieAcsController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'url' => 'required|url',
+            'nbi_username' => 'nullable|string|max:100',
+            'nbi_password' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
@@ -82,9 +85,14 @@ class GenieAcsController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'url' => 'required|url',
+            'nbi_username' => 'nullable|string|max:100',
+            'nbi_password' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
+        if (! filled($validated['nbi_password'] ?? null)) {
+            unset($validated['nbi_password']);   // kosong = tetap memakai password tersimpan
+        }
 
         $server->update($validated);
 
