@@ -98,9 +98,11 @@ class AcsServerController extends Controller
         $skip = ($page - 1) * $perPage;
 
         $selectedServer = $serverId ? $servers->find($serverId) : $servers->first();
+        $status = in_array($request->get('status'), ['online', 'offline'], true) ? $request->get('status') : null;
         $devices = [];
         $total = 0;
         $error = null;
+        $stats = null;
 
         if ($selectedServer) {
             try {
@@ -108,6 +110,20 @@ class AcsServerController extends Controller
                 
                 // Pencarian & filter tag: $regex yang di-escape (dulu string "/kata/i" = teks biasa di NBI)
                 $query = \App\Services\GenieACSService::searchQuery($search, $tagFilter);
+                // Filter status: online = inform terakhir < 15 menit
+                $since = now()->subMinutes(\App\Support\AcsDevice::ONLINE_MINUTES)->utc()->format('Y-m-d\TH:i:s.v\Z');
+                $statusQ = ['online' => ['_lastInform' => ['$gt' => $since]], 'offline' => ['_lastInform' => ['$lte' => $since]]][$status] ?? null;
+                if ($statusQ) {
+                    $query = $query ? ['$and' => [$query, $statusQ]] : $statusQ;
+                }
+                // Ringkasan seluruh server (2 permintaan ringan: hanya header "total")
+                try {
+                    $stats['total'] = (int) ($service->getDevices([], ['_id'], 0, 1)['total'] ?? 0);
+                    $stats['online'] = (int) ($service->getDevices(['_lastInform' => ['$gt' => $since]], ['_id'], 0, 1)['total'] ?? 0);
+                    $stats['offline'] = max(0, $stats['total'] - $stats['online']);
+                } catch (\Exception) {
+                    $stats = null;
+                }
 
                 $projection = [
                     '_id', 
@@ -149,8 +165,11 @@ class AcsServerController extends Controller
                     'InternetGatewayDevice.X_ALU_OntOpticalParam.RXPower',
                     'Device.Optical.Interface.1.OpticalSignalLevel',
                     'Device.Optical.Interface.1.OpticalPowerRx',
+                    'Device.DeviceInfo.Manufacturer',
+                    'InternetGatewayDevice.DeviceInfo.Manufacturer',
+                    'VirtualParameters',
                 ];
-                
+
                 $response = $service->getDevices($query, $projection, $skip, $perPage);
                 $devices = $response['data'];
                 $apiTotal = $response['total'];
@@ -167,19 +186,22 @@ class AcsServerController extends Controller
                     $total = $apiTotal;
                 }
             } catch (\Exception $e) {
-                $error = "Failed to fetch devices from {$selectedServer->name}: " . $e->getMessage();
+                $error = "Gagal membaca perangkat dari {$selectedServer->name}: " . \Illuminate\Support\Str::limit($e->getMessage(), 200);
             }
         }
 
+        // Ringkasan per perangkat + pelanggan tertaut (username PPPoE, dengan atau tanpa @domain)
+        $rows = \App\Support\AcsDevice::attachCustomers(collect($devices)->map(fn ($d) => \App\Support\AcsDevice::summarize((array) $d)));
+
         // Manual Pagination
         $paginatedDevices = new \Illuminate\Pagination\LengthAwarePaginator(
-            $devices, $total, $perPage, $page, [
+            $rows, $total, $perPage, $page, [
                 'path' => $request->url(),
                 'query' => $request->query()
             ]
         );
 
-        return view('acs-servers.devices', compact('servers', 'selectedServer', 'paginatedDevices', 'error', 'search', 'tagFilter'));
+        return view('acs-servers.devices', compact('servers', 'selectedServer', 'paginatedDevices', 'error', 'search', 'tagFilter', 'status', 'stats'));
     }
 
     /**
@@ -234,8 +256,9 @@ class AcsServerController extends Controller
             }
             
             $wanConnections = $service->extractWanConnections($device ?? []);
+            $summary = $device ? \App\Support\AcsDevice::attachCustomers(collect([\App\Support\AcsDevice::summarize((array) $device)]))->first() : null;
 
-            return view('acs-servers.device-details', compact('device', 'server', 'deviceId', 'service', 'tasks', 'wanConnections'));
+            return view('acs-servers.device-details', compact('device', 'server', 'deviceId', 'service', 'tasks', 'wanConnections', 'summary'));
         } catch (\Exception $e) {
             return view('acs-servers.device-details', [
                 'device' => null,

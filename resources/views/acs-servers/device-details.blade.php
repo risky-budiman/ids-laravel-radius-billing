@@ -1,31 +1,45 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5 font-semibold">
-                    <a href="{{ route('acs-servers.devices') }}" class="hover:text-indigo-600 dark:hover:text-indigo-400">ONT Management</a>
-                    <span>/</span>
-                    <span class="text-indigo-500 dark:text-indigo-400">Rincian Perangkat</span>
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex items-center gap-3 min-w-0">
+                <a href="{{ route('acs-servers.devices', ['server_id' => $server->id]) }}" class="btn-ghost btn-icon" aria-label="Kembali ke daftar modem">
+                    <x-icon name="chevron-right" class="w-5 h-5 rotate-180" />
+                </a>
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h2 class="font-bold text-2xl text-surface-900 dark:text-white leading-tight truncate">
+                            {{ $summary['model'] ?? 'Modem' }}@if(! empty($summary['manufacturer']))<span class="font-normal text-surface-400"> · {{ $summary['manufacturer'] }}</span>@endif
+                        </h2>
+                        @if($summary)
+                            <span class="{{ $summary['online'] ? 'badge-success' : 'badge-gray' }}">
+                                <span class="w-1.5 h-1.5 rounded-full {{ $summary['online'] ? 'bg-emerald-500 animate-pulse' : 'bg-surface-400' }}"></span>
+                                {{ $summary['online'] ? 'Online' : 'Offline' }}
+                            </span>
+                        @endif
+                    </div>
+                    <p class="text-sm text-surface-500 dark:text-surface-400 truncate">
+                        <span class="font-mono">{{ $summary['serial'] ?? $deviceId }}</span>
+                        @if(! empty($summary['customer']))
+                            · <a href="{{ route('customers.show', $summary['customer']->id) }}" class="text-primary-700 hover:underline dark:text-primary-300">{{ $summary['customer']->name }}</a>
+                        @endif
+                    </p>
                 </div>
-                <h2 class="font-semibold text-3xl text-gray-800 dark:text-gray-100 tracking-tight leading-none">
-                    {{ $device['_id'] ?? 'Unknown Device' }}
-                </h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">Atur dan diagnosis perangkat pelanggan (CPE) lewat protokol TR-069</p>
             </div>
-            
-            <div class="flex flex-wrap items-center gap-3">
-                <a href="javascript:history.back()" class="px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold hover:bg-gray-50 dark:hover:bg-gray-700/50 shadow-sm transition-all flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    Kembali ke Daftar
-                </a>
-                <a href="{{ route('acs-servers.show-device', ['deviceId' => $deviceId, 'server_id' => $server->id]) }}" target="_blank" class="px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400 rounded-xl text-xs font-bold hover:bg-indigo-50 dark:hover:bg-indigo-950/30 shadow-sm transition-all">
-                    Lihat JSON Mentah
-                </a>
-                <button onclick="window.location.reload()" class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-sm flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5"></path></svg>
-                    Muat Ulang
-                </button>
-            </div>
+            @if($device ?? null)
+                <div class="flex flex-wrap items-center gap-2">
+                    <a href="{{ route('acs-servers.show-device', ['deviceId' => $deviceId, 'server_id' => $server->id]) }}" target="_blank" class="btn-ghost btn-sm">Data mentah</a>
+                    <button type="button" class="btn-secondary" onclick="triggerAcsSync(event, @js(route('acs-servers.refresh-device', ['deviceId' => $deviceId])), @js((string) $server->id), @js(csrf_token()))">
+                        <x-icon name="refresh" class="w-4 h-4" /> Sinkron data
+                    </button>
+                    @canroute('acs-servers.reboot')
+                        <form action="{{ route('acs-servers.reboot', ['deviceId' => $deviceId]) }}" method="POST" onsubmit="return confirm('Reboot modem ini? Internet pelanggan terputus ±1–2 menit.')">
+                            @csrf
+                            <input type="hidden" name="server_id" value="{{ $server->id }}">
+                            <button class="btn-danger"><x-icon name="bolt" class="w-4 h-4" /> Reboot</button>
+                        </form>
+                    @endcanroute
+                </div>
+            @endif
         </div>
     </x-slot>
 
@@ -47,10 +61,10 @@
         @if(isset($error))
             <div class="p-8 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-md text-center max-w-lg mx-auto">
                 <svg class="w-12 h-12 text-rose-500 mx-auto mb-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">Koneksi Gagal</h3>
+                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">Modem tidak bisa dibaca</h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">{{ $error }}</p>
                 <a href="javascript:history.back()" class="inline-flex px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-indigo-500/10">
-                    Kembali ke Daftar Perangkat
+                    Kembali ke daftar modem
                 </a>
             </div>
         @endif
@@ -147,117 +161,111 @@
             }
         @endphp
 
-        <!-- Unified Tab Layout Container (Full Width) -->
+        @php
+            $sv = fn (array $paths) => \App\Support\AcsDevice::first($device, $paths);
+            $uptimeSeconds = (int) ($sv(['InternetGatewayDevice.DeviceInfo.UpTime', 'Device.DeviceInfo.UpTime']) ?? 0);
+            $uptime = $uptimeSeconds ? (floor($uptimeSeconds / 86400) ? floor($uptimeSeconds / 86400) . ' hari ' . floor(($uptimeSeconds % 86400) / 3600) . ' jam'
+                : (floor($uptimeSeconds / 3600) ? floor($uptimeSeconds / 3600) . ' jam ' . floor(($uptimeSeconds % 3600) / 60) . ' menit' : floor($uptimeSeconds / 60) . ' menit')) : null;
+            $level = \App\Support\AcsDevice::signalLevel($summary['rx']);
+            $sigCls = ['good' => 'text-emerald-600 dark:text-emerald-400', 'warn' => 'text-amber-600 dark:text-amber-400', 'bad' => 'text-rose-600 dark:text-rose-400', 'none' => 'text-surface-400'][$level];
+            $sigBar = ['good' => 'bg-emerald-500', 'warn' => 'bg-amber-500', 'bad' => 'bg-rose-500', 'none' => 'bg-surface-300'][$level];
+            $info = array_filter([
+                'Merek' => $summary['manufacturer'] ?: null,
+                'Model' => $summary['model'] ?: null,
+                'Nomor seri' => $summary['serial'] ?: null,
+                'Firmware' => $sv(['InternetGatewayDevice.DeviceInfo.SoftwareVersion', 'DeviceID.SoftwareVersion', 'Device.DeviceInfo.SoftwareVersion']),
+                'Versi hardware' => $sv(['InternetGatewayDevice.DeviceInfo.HardwareVersion', 'Device.DeviceInfo.HardwareVersion']),
+                'Username PPPoE' => $summary['pppoe'],
+                'ID GenieACS' => $deviceId,
+                'Server ACS' => $server->name,
+            ], fn ($v) => $v !== null && $v !== '');
+        @endphp
+
+        {{-- Ringkasan cepat --}}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="card p-4">
+                <p class="text-xs font-medium text-surface-500">Inform terakhir</p>
+                <p class="mt-1 text-lg font-semibold text-surface-900 dark:text-white">{{ $summary['last_inform'] ? $summary['last_inform']->locale('id')->diffForHumans() : 'Belum pernah' }}</p>
+                <p class="text-xs text-surface-500">{{ $summary['last_inform']?->timezone(config('app.timezone'))->format('d/m/Y H:i:s') }}</p>
+            </div>
+            <div class="card p-4">
+                <p class="text-xs font-medium text-surface-500">Sinyal Rx</p>
+                <p class="mt-1 text-lg font-semibold tabular-nums {{ $sigCls }}">{{ $summary['rx'] !== null ? number_format($summary['rx'], 2) . ' dBm' : '—' }}</p>
+                @if($summary['rx'] !== null)
+                    <div class="mt-1.5 h-1.5 rounded-full bg-surface-200 dark:bg-surface-700 overflow-hidden">
+                        <div class="h-full rounded-full {{ $sigBar }}" style="width: {{ max(5, min(100, (($summary['rx'] + 35) / 27) * 100)) }}%"></div>
+                    </div>
+                @endif
+            </div>
+            <div class="card p-4">
+                <p class="text-xs font-medium text-surface-500">IP WAN</p>
+                <p class="mt-1 text-lg font-semibold font-mono text-surface-900 dark:text-white truncate">{{ $summary['ip'] ?: '—' }}</p>
+                <p class="text-xs text-surface-500 truncate">{{ $summary['pppoe'] ?: 'PPPoE tidak terbaca' }}</p>
+            </div>
+            <div class="card p-4">
+                <p class="text-xs font-medium text-surface-500">Waktu aktif modem</p>
+                <p class="mt-1 text-lg font-semibold text-surface-900 dark:text-white">{{ $uptime ?? '—' }}</p>
+                <p class="text-xs text-surface-500">sejak modem terakhir menyala</p>
+            </div>
+        </div>
+
         <div class="space-y-6">
-            <!-- Modern Tabs Selector -->
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none flex flex-wrap gap-2">
-                <button onclick="switchTab('tab-overview')" id="btn-tab-overview" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md shadow-indigo-500/10 transition-all">
-                    Ringkasan Sistem
-                </button>
-                <button onclick="switchTab('tab-diagnostics')" id="btn-tab-diagnostics" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-all">
-                    Diagnostics & Clients
-                </button>
-                <button onclick="switchTab('tab-wan')" id="btn-tab-wan" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-all">
-                    Pengaturan WAN
-                </button>
-                <button onclick="switchTab('tab-wireless')" id="btn-tab-wireless" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-all">
-                    Wi-Fi Configuration
-                </button>
+            {{-- Tab --}}
+            <div class="border-b border-surface-200 dark:border-surface-800">
+                <nav class="-mb-px flex gap-6 overflow-x-auto" aria-label="Bagian detail modem">
+                    @foreach(['tab-overview' => 'Ringkasan', 'tab-diagnostics' => 'Optik & perangkat terhubung', 'tab-wan' => 'WAN / PPPoE', 'tab-wireless' => 'Wi-Fi'] as $tabId => $tabLabel)
+                        <button type="button" onclick="switchTab('{{ $tabId }}')" id="btn-{{ $tabId }}"
+                                class="tab-btn whitespace-nowrap border-b-2 px-1 pb-3 text-sm font-medium transition-colors {{ $loop->first ? 'border-primary-600 text-primary-700 dark:text-primary-300' : 'border-transparent text-surface-500 hover:text-surface-800 dark:hover:text-surface-200' }}">
+                            {{ $tabLabel }}
+                        </button>
+                    @endforeach
+                </nav>
             </div>
 
-            <!-- Tab 1: System Overview -->
-            <div id="tab-overview" class="tab-content space-y-6">
-                <!-- CPE Identity Card -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none">
-                    <h3 class="text-base font-extrabold text-gray-800 dark:text-gray-100 mb-5 flex items-center gap-2">
-                        <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
-                        Identitas Perangkat
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Nomor Seri</p>
-                            <p class="text-sm font-mono text-indigo-600 dark:text-indigo-400 font-extrabold">{{ $serial }}</p>
-                        </div>
-                        <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Product Class / Model</p>
-                            <p class="text-sm font-bold text-gray-700 dark:text-gray-300">{{ $productClass }}</p>
-                        </div>
-                        <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Manufacturer</p>
-                            <p class="text-sm font-bold text-gray-700 dark:text-gray-300">{{ $manufacturer }}</p>
-                        </div>
-                        <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Inform Terakhir</p>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 font-semibold truncate">
-                                {{ isset($device['_lastInform']) ? \Carbon\Carbon::parse($device['_lastInform'])->diffForHumans() : 'Unknown' }}
-                                <span class="text-xs block text-gray-400 dark:text-gray-500 font-mono mt-0.5">{{ $device['_lastInform'] ?? '' }}</span>
-                            </p>
-                        </div>
+            {{-- Tab 1: Ringkasan --}}
+            <div id="tab-overview" class="tab-content grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <section class="card lg:col-span-2">
+                    <div class="card-header"><h3 class="card-title">Info perangkat</h3></div>
+                    <dl class="divide-y divide-surface-100 dark:divide-surface-800 text-sm">
+                        @foreach($info as $k => $v)
+                            <div class="flex justify-between gap-4 px-5 py-2.5">
+                                <dt class="text-surface-500">{{ $k }}</dt>
+                                <dd class="text-right font-medium text-surface-900 dark:text-white break-all {{ in_array($k, ['Nomor seri', 'ID GenieACS', 'Username PPPoE', 'Firmware']) ? 'font-mono text-xs' : '' }}">{{ $v }}</dd>
+                            </div>
+                        @endforeach
+                    </dl>
+                </section>
+                <section class="card">
+                    <div class="card-header"><h3 class="card-title">Pelanggan</h3></div>
+                    <div class="card-body text-sm">
+                        @if($summary['customer'])
+                            <p class="font-semibold text-surface-900 dark:text-white">{{ $summary['customer']->name }}</p>
+                            <p class="font-mono text-xs text-surface-500">{{ $summary['customer']->customer_code }} · {{ $summary['customer']->username }}</p>
+                            @canroute('customers.show')
+                                <a href="{{ route('customers.show', $summary['customer']->id) }}" class="btn-secondary btn-sm mt-3">Buka data pelanggan</a>
+                            @endcanroute
+                        @else
+                            <p class="text-surface-500">Belum tertaut ke pelanggan.</p>
+                            <p class="mt-1 text-xs text-surface-400">Modem ditautkan otomatis bila username PPPoE di modem sama dengan username pelanggan.</p>
+                        @endif
+                        @if($summary['tags'])
+                            <p class="mt-4 text-xs font-medium text-surface-500">Tag</p>
+                            <div class="mt-1 flex flex-wrap gap-1">
+                                @foreach($summary['tags'] as $tag)
+                                    <a href="{{ route('acs-servers.devices', ['server_id' => $server->id, 'tag' => $tag]) }}" class="rounded-md bg-primary-50 px-1.5 py-0.5 text-[11px] font-medium text-primary-700 hover:bg-primary-100 dark:bg-primary-500/10 dark:text-primary-300">{{ $tag }}</a>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
-                </div>
-
-                <!-- Hardware/Software Spec Card -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none">
-                    <h3 class="text-base font-extrabold text-gray-800 dark:text-gray-100 mb-5 flex items-center gap-2">
-                        <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
-                        Hardware Specifications
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold mb-1">Software version</p>
-                            <p class="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">
-                                {{ $device['InternetGatewayDevice']['DeviceInfo']['SoftwareVersion']['_value'] 
-                                   ?? $device['DeviceID']['SoftwareVersion']['_value'] 
-                                   ?? $device['Device']['DeviceInfo']['SoftwareVersion']['_value'] 
-                                   ?? 'N/A' }}
-                            </p>
-                        </div>
-                        <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold mb-1">Hardware version</p>
-                            <p class="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">
-                                {{ $device['InternetGatewayDevice']['DeviceInfo']['HardwareVersion']['_value'] 
-                                   ?? $device['Device']['DeviceInfo']['HardwareVersion']['_value'] 
-                                   ?? 'N/A' }}
-                            </p>
-                        </div>
-                        <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold mb-1">Waktu Aktif Perangkat</p>
-                            <p class="text-xs font-bold text-gray-700 dark:text-gray-300">
-                                @php
-                                    $uptimeSeconds = $device['InternetGatewayDevice']['DeviceInfo']['UpTime']['_value']
-                                        ?? $device['InternetGatewayDevice']['DeviceInfo']['SoftwareVersionUpTime']['_value']
-                                        ?? $device['Device']['DeviceInfo']['UpTime']['_value']
-                                        ?? null;
-                                    
-                                    if ($uptimeSeconds) {
-                                        $days = floor($uptimeSeconds / 86400);
-                                        $hours = floor(($uptimeSeconds % 86400) / 3600);
-                                        $minutes = floor(($uptimeSeconds % 3600) / 60);
-                                        
-                                        if ($days > 0) {
-                                            echo "{$days}d {$hours}h";
-                                        } elseif ($hours > 0) {
-                                            echo "{$hours}h {$minutes}m";
-                                        } else {
-                                            echo "{$minutes}m";
-                                        }
-                                    } else {
-                                        echo 'N/A';
-                                    }
-                                @endphp
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                </section>
             </div>
 
             <!-- Tab 2: Diagnostics & Clients -->
             <div id="tab-diagnostics" class="tab-content space-y-6 hidden">
                 <!-- Optical Transceiver Diagnostics Card -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none">
-                    <h3 class="text-base font-extrabold text-gray-800 dark:text-gray-100 mb-5 flex items-center gap-2">
-                        <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
-                        Diagnostik Transceiver Optik (GPON/EPON)
+                <div class="card p-6">
+                    <h3 class="text-base font-semibold text-surface-900 dark:text-white mb-5 flex items-center gap-2">
+                        Optik (GPON/EPON)
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
@@ -289,7 +297,7 @@
                             @endif
                         </div>
                         <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Transceiver Temperature</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 font-bold tracking-wider mb-1">Suhu transceiver</p>
                             @if($temperature !== null)
                                 <p class="text-base font-mono font-extrabold text-gray-750 dark:text-gray-300">
                                     {{ number_format($temperature, 1) }} °C
@@ -313,19 +321,18 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Active WLAN Hosts Card -->
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none">
+                    <div class="card p-6">
                         @php
                             $hostCount = $device['InternetGatewayDevice']['LANDevice'][1]['Hosts']['HostNumberOfEntries']['_value']
                                 ?? $device['Device']['Hosts']['HostNumberOfEntries']['_value']
                                 ?? 0;
                         @endphp
                         <div class="flex justify-between items-center mb-5">
-                            <h3 class="text-base font-extrabold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                                <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+                            <h3 class="text-base font-semibold text-surface-900 dark:text-white flex items-center gap-2">
                                 Perangkat WLAN Aktif
                             </h3>
                             <span class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 rounded-lg text-xs font-extrabold">
-                                {{ $hostCount }} Connected
+                                {{ $hostCount }} terhubung
                             </span>
                         </div>
 
@@ -361,9 +368,8 @@
                     </div>
 
                     <!-- ACS Task Queue -->
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none">
-                        <h3 class="text-base font-extrabold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-                            <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+                    <div class="card p-6">
+                        <h3 class="text-base font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2">
                             Antrean Tugas
                         </h3>
                         <div class="space-y-3">
@@ -404,13 +410,12 @@
                 @endphp
 
                 <!-- WAN Interfaces Overview -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none">
+                <div class="card p-6">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-5">
-                        <h3 class="text-base font-extrabold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                            <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
-                            Detected WAN Interfaces ({{ count($wanList) }})
+                        <h3 class="text-base font-semibold text-surface-900 dark:text-white flex items-center gap-2">
+                            Interface WAN terdeteksi ({{ count($wanList) }})
                         </h3>
-                        <span class="text-xs text-gray-400 font-medium">Model Data WAN TR-069</span>
+                        <span class="text-xs text-gray-400 font-medium">Interface aktif ditandai</span>
                     </div>
 
                     @if(!empty($wanList))
@@ -484,20 +489,16 @@
                 @endphp
 
                 <!-- WAN PPPoE & Network Configuration Form with Alpine.js Reactivity -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none"
+                <div class="card p-6"
                      x-data="wanConfigForm(@js($wanList), '{{ $activePppConn['path'] ?? '' }}')">
                     
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6">
                         <div>
-                            <h3 class="text-base font-extrabold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                                <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+                            <h3 class="text-base font-semibold text-surface-900 dark:text-white flex items-center gap-2">
                                 Konfigurasi PPPoE, VLAN & Binding Port
                             </h3>
-                            <p class="text-xs text-gray-400 mt-0.5">Parameter TR-069 Asli (Multi-Vendor Direct Mapping tanpa Virtual Parameter)</p>
+                            <p class="text-xs text-gray-400 mt-0.5">Perubahan dikirim langsung ke modem lewat TR-069 dan tercatat di Log Aktivitas.</p>
                         </div>
-                        <span class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold rounded-xl border border-indigo-100 dark:border-indigo-900/40">
-                            Pure Native TR-069
-                        </span>
                     </div>
 
                     <!-- Notification alerts inside form -->
@@ -603,7 +604,7 @@
                             </div>
                         </div>
 
-                        <!-- Row 4: Service Type & NAT Status -->
+                        <!-- Row 4: Service Type & Status NAT -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <!-- 4. Service Type Optional & Detected from Modem -->
                             <div>
@@ -627,9 +628,9 @@
                                 <p class="text-[11px] text-gray-400 mt-1">Membaca opsi umum modem serta service yang terdeteksi pada ONT saat ini.</p>
                             </div>
 
-                            <!-- NAT Status -->
+                            <!-- Status NAT -->
                             <div>
-                                <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">NAT Status</label>
+                                <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Status NAT</label>
                                 <select name="nat_enabled" x-model="natEnabled" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm font-semibold outline-none transition-all dark:text-gray-200">
                                     <option value="1">Enabled (Disarankan)</option>
                                     <option value="0">Nonaktif</option>
@@ -728,11 +729,10 @@
                         $wlanEnabled = $igdWlan['Enable']['_value'] ?? $devWlanRadio['Enable']['_value'] ?? null;
                     @endphp
 
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none">
+                    <div class="card p-6">
                         <div class="flex justify-between items-center mb-5">
-                            <h3 class="text-base font-extrabold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                                <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
-                                Wireless SSID Profile #{{ $i }} ({{ $band }})
+                            <h3 class="text-base font-semibold text-surface-900 dark:text-white flex items-center gap-2">
+                                Profil Wi-Fi #{{ $i }} ({{ $band }})
                             </h3>
                             @if($wlanEnabled === '1' || $wlanEnabled === true || $wlanEnabled === 'true')
                                 <span class="px-2.5 py-1 bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 rounded-lg text-xs font-extrabold border border-green-100/20 flex items-center gap-1.5">
@@ -790,28 +790,6 @@
                         </form>
                     </div>
                 @endfor
-            </div>
-        </div>
-
-        <!-- Quick Actions Panel at the bottom -->
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none mt-6">
-            <h3 class="text-base font-extrabold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-                <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
-                Aksi Cepat
-            </h3>
-            <div class="flex flex-wrap gap-3">
-                <form action="{{ route('acs-servers.reboot', ['deviceId' => $deviceId]) }}" method="POST" class="inline">
-                    @csrf
-                    <input type="hidden" name="server_id" value="{{ $server->id }}">
-                    <button type="submit" class="px-6 py-3 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold transition-all border border-rose-100/30 dark:border-rose-900/30  flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                        Reboot CPE
-                    </button>
-                </form>
-                <button onclick="triggerAcsSync(event, '{{ route('acs-servers.refresh-device', ['deviceId' => $deviceId]) }}', '{{ $server->id }}', '{{ csrf_token() }}')" class="px-6 py-3 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl text-xs font-bold transition-all border border-indigo-100/30 dark:border-indigo-900/30  flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5"></path></svg>
-                    Summon
-                </button>
             </div>
         </div>
 
@@ -902,16 +880,15 @@
                 // Show selected tab content
                 document.getElementById(tabId).classList.remove('hidden');
                 
-                // Reset all tab buttons to inactive
+                var on = ['border-primary-600', 'text-primary-700', 'dark:text-primary-300'];
+                var off = ['border-transparent', 'text-surface-500', 'hover:text-surface-800', 'dark:hover:text-surface-200'];
                 document.querySelectorAll('.tab-btn').forEach(function(btn) {
-                    btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md', 'shadow-indigo-500/10');
-                    btn.classList.add('text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-300');
+                    btn.classList.remove.apply(btn.classList, on);
+                    btn.classList.add.apply(btn.classList, off);
                 });
-                
-                // Set clicked tab button to active
                 var activeBtn = document.getElementById('btn-' + tabId);
-                activeBtn.classList.remove('text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-300');
-                activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-md', 'shadow-indigo-500/10');
+                activeBtn.classList.remove.apply(activeBtn.classList, off);
+                activeBtn.classList.add.apply(activeBtn.classList, on);
             }
 
             function wanConfigForm(wanList, defaultPath) {

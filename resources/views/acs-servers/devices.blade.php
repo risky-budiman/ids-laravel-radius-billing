@@ -1,290 +1,217 @@
+@php
+    $base = ['server_id' => $selectedServer?->id, 'q' => $search ?: null, 'tag' => $tagFilter ?: null, 'limit' => request('limit')];
+    $url = fn (array $over) => route('acs-servers.devices', array_filter(array_merge($base, $over), fn ($v) => $v !== null && $v !== ''));
+    $sig = ['good' => ['text-emerald-600 dark:text-emerald-400', 'bg-emerald-500'], 'warn' => ['text-amber-600 dark:text-amber-400', 'bg-amber-500'],
+        'bad' => ['text-rose-600 dark:text-rose-400', 'bg-rose-500'], 'none' => ['text-surface-400', 'bg-surface-300']];
+    $canReboot = \App\Support\RouteAccess::allows(auth()->user(), 'acs-servers.reboot');
+    $canTags = \App\Support\RouteAccess::allows(auth()->user(), 'acs-servers.update-tags');
+@endphp
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-                <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5 font-semibold">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                    <span>CPE Integrations</span>
-                    <span>/</span>
-                    <span class="text-indigo-500 dark:text-indigo-400">GenieACS</span>
-                </div>
-                <h2 class="font-semibold text-3xl text-gray-800 dark:text-gray-100 tracking-tight leading-none">
-                    {{ __('ONT Device Management') }}
-                </h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">Pantau dan kelola perangkat pelanggan (CPE) lewat GenieACS</p>
+                <h2 class="font-bold text-2xl text-surface-900 dark:text-white leading-tight">Modem Pelanggan</h2>
+                <p class="text-sm text-surface-500 dark:text-surface-400">Pantau & kelola modem (ONT/CPE) lewat GenieACS (TR-069).</p>
             </div>
-            
-            <div class="flex items-center gap-3">
-                <div class="px-5 py-2.5 bg-indigo-50   rounded-xl border border-indigo-100/50 dark:border-indigo-900/30 shadow-sm flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                    <span class="text-xs font-extrabold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">Total CPEs: {{ $paginatedDevices->total() }}</span>
-                </div>
+            <div class="flex items-center gap-2">
+                @if($servers->count() > 1)
+                    <form method="GET" action="{{ route('acs-servers.devices') }}">
+                        <select name="server_id" onchange="this.form.submit()" class="input py-2 text-sm" aria-label="Server ACS">
+                            @foreach($servers as $s)
+                                <option value="{{ $s->id }}" @selected(($selectedServer->id ?? null) === $s->id)>{{ $s->name }}</option>
+                            @endforeach
+                        </select>
+                    </form>
+                @elseif($selectedServer)
+                    <span class="badge-gray"><x-icon name="server" class="w-3.5 h-3.5" /> {{ $selectedServer->name }}</span>
+                @endif
+                @canroute('acs-servers.index')
+                    <a href="{{ route('acs-servers.index') }}" class="btn-secondary"><x-icon name="settings" class="w-4 h-4" /> Server ACS</a>
+                @endcanroute
             </div>
         </div>
     </x-slot>
 
-    <div class="max-w-7xl mx-auto space-y-6" x-data="deviceTagManager()">
-        <!-- Active Tag Banner if filtered -->
-        @if(!empty($tagFilter))
-            <div class="p-3.5 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl flex items-center justify-between shadow-sm">
-                <div class="flex items-center space-x-2">
-                    <span class="text-xs font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">Filtered by Tag:</span>
-                    <span class="inline-flex items-center px-3 py-1 bg-indigo-600 text-white rounded-xl text-xs font-semibold font-mono shadow-sm">
-                        {{ $tagFilter }}
-                    </span>
+    <div class="space-y-6" x-data="deviceTagManager()">
+        @foreach(['success' => 'emerald', 'error' => 'rose'] as $key => $c)
+            @if(session($key))
+                <div class="flex items-start gap-2.5 rounded-lg border border-{{ $c }}-200 bg-{{ $c }}-50 px-4 py-3 text-sm text-{{ $c }}-800 dark:border-{{ $c }}-500/20 dark:bg-{{ $c }}-500/10 dark:text-{{ $c }}-300" role="{{ $key === 'error' ? 'alert' : 'status' }}">
+                    <x-icon name="{{ $key === 'error' ? 'exclamation' : 'check-circle' }}" class="w-5 h-5 shrink-0" /> {{ session($key) }}
                 </div>
-                <a href="{{ route('acs-servers.devices', ['server_id' => request('server_id'), 'q' => request('q'), 'limit' => request('limit')]) }}" class="inline-flex items-center px-3 py-1 bg-white dark:bg-gray-800 hover:bg-rose-50 dark:hover:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold transition-all border border-rose-200 dark:border-rose-800">
-                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    Hapus Filter Tag
-                </a>
+            @endif
+        @endforeach
+
+        {{-- Ringkasan & filter status --}}
+        @if($stats)
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                @foreach([
+                    [null, 'Total modem', $stats['total'], 'text-surface-900 dark:text-white', 'cube'],
+                    ['online', 'Online', $stats['online'], 'text-emerald-600 dark:text-emerald-400', 'signal'],
+                    ['offline', 'Offline', $stats['offline'], $stats['offline'] ? 'text-amber-600 dark:text-amber-400' : 'text-surface-900 dark:text-white', 'x-circle'],
+                ] as [$key, $label, $value, $cls, $icon])
+                    <a href="{{ $url(['status' => $key, 'page' => null]) }}"
+                       class="card p-4 transition-colors hover:border-primary-300 {{ $status === $key ? 'ring-2 ring-primary-500 border-transparent' : '' }}">
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs font-medium text-surface-500">{{ $label }}</p>
+                            <x-icon :name="$icon" class="w-4 h-4 text-surface-400" />
+                        </div>
+                        <p class="mt-1 text-2xl font-semibold tabular-nums {{ $cls }}">{{ number_format($value, 0, ',', '.') }}</p>
+                        @if($key === 'online' && $stats['total'])
+                            <div class="mt-2 h-1.5 rounded-full bg-surface-200 dark:bg-surface-700 overflow-hidden">
+                                <div class="h-full rounded-full bg-emerald-500" style="width: {{ round($stats['online'] / $stats['total'] * 100) }}%"></div>
+                            </div>
+                        @endif
+                    </a>
+                @endforeach
+                <div class="card p-4">
+                    <p class="text-xs font-medium text-surface-500">Halaman ini</p>
+                    @php $linked = $paginatedDevices->getCollection()->filter(fn ($r) => $r['customer'])->count(); @endphp
+                    <p class="mt-1 text-2xl font-semibold tabular-nums text-surface-900 dark:text-white">{{ $linked }}<span class="text-base text-surface-400"> / {{ $paginatedDevices->count() }}</span></p>
+                    <p class="text-xs text-surface-500">tertaut ke pelanggan</p>
+                </div>
             </div>
         @endif
-
-        <!-- Search & Server Select Filter Card -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none p-4">
-            <form action="{{ route('acs-servers.devices') }}" method="GET" class="flex flex-col md:flex-row gap-4 items-center">
-                @if(!empty($tagFilter))
-                    <input type="hidden" name="tag" value="{{ $tagFilter }}">
-                @endif
-
-                <!-- Search Input with Modern Icon -->
-                <div class="relative w-full md:flex-grow">
-                    <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </div>
-                    <input type="text" name="q" value="{{ $search }}" 
-                        placeholder="Cari ID Pelanggan (username), tag, nomor seri, atau IP..." 
-                        class="w-full pl-12 pr-10 py-3.5 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl text-sm dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none" autocomplete="off">
-                    
-                    @if($search)
-                        <a href="{{ route('acs-servers.devices', ['server_id' => request('server_id'), 'tag' => request('tag'), 'limit' => request('limit')]) }}" class="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-rose-500 transition-colors" title="Hapus Pencarian">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </a>
-                    @endif
-                </div>
-                
-                <!-- Server Selector -->
-                <div class="relative w-full md:w-64 md:shrink-0">
-                    <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                    </div>
-                    <select name="server_id" class="w-full pl-11 pr-10 py-3.5 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all cursor-pointer appearance-none">
-                        @foreach($servers as $server)
-                            <option value="{{ $server->id }}" {{ ($selectedServer->id ?? null) == $server->id ? 'selected' : '' }}>
-                                {{ $server->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                
-                <!-- Limit Selector -->
-                <div class="relative w-full md:w-44 md:shrink-0">
-                    <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                    </div>
-                    <select name="limit" onchange="this.form.submit()" class="w-full pl-11 pr-10 py-3.5 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all cursor-pointer appearance-none">
-                        <option value="10" {{ request('limit') == 10 ? 'selected' : '' }}>10 / Page</option>
-                        <option value="25" {{ request('limit') == 25 || !request('limit') ? 'selected' : '' }}>25 / Page</option>
-                        <option value="50" {{ request('limit') == 50 ? 'selected' : '' }}>50 / Page</option>
-                        <option value="100" {{ request('limit') == 100 ? 'selected' : '' }}>100 / Page</option>
-                    </select>
-                </div>
-
-                <!-- Submit Button -->
-                <button type="submit" class="w-full md:w-auto px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700  text-white rounded-xl font-bold text-sm transition-all shadow-sm flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z"></path></svg>
-                    Terapkan Filter
-                </button>
-            </form>
-        </div>
 
         @if($error)
-            <div class="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900 text-rose-700 dark:text-rose-400 rounded-xl flex items-center gap-3 text-sm font-semibold">
-                <svg class="w-5 h-5 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                <p>{{ $error }}</p>
+            <div class="flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300" role="alert">
+                <x-icon name="exclamation" class="w-5 h-5 shrink-0" /> {{ $error }}
             </div>
         @endif
 
-        <!-- Device Grid/Table Card -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-100/10 dark:shadow-none overflow-hidden">
+        <div class="card overflow-hidden">
+            {{-- Pencarian --}}
+            <form action="{{ route('acs-servers.devices') }}" method="GET" class="flex flex-col gap-3 border-b border-surface-200 dark:border-surface-800 p-4 md:flex-row md:items-center">
+                @foreach(['server_id' => $selectedServer?->id, 'tag' => $tagFilter, 'status' => $status] as $k => $val)
+                    @if($val)<input type="hidden" name="{{ $k }}" value="{{ $val }}">@endif
+                @endforeach
+                <div class="relative w-full md:max-w-md">
+                    <x-icon name="search" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
+                    <input type="search" name="q" value="{{ $search }}" class="input pl-9" placeholder="Cari username PPPoE, SN, tag atau IP…" aria-label="Cari modem" autocomplete="off">
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    @if($status)
+                        <a href="{{ $url(['status' => null, 'page' => null]) }}" class="badge-primary hover:underline">{{ $status === 'online' ? 'Online' : 'Offline' }} ✕</a>
+                    @endif
+                    @if($tagFilter)
+                        <a href="{{ $url(['tag' => null, 'page' => null]) }}" class="badge-primary hover:underline">Tag: {{ $tagFilter }} ✕</a>
+                    @endif
+                </div>
+                <div class="flex items-center gap-2 md:ml-auto">
+                    <select name="limit" onchange="this.form.submit()" class="input py-2 text-sm w-auto" aria-label="Baris per halaman">
+                        @foreach([10, 25, 50, 100] as $n)
+                            <option value="{{ $n }}" @selected((int) request('limit', 25) === $n)>{{ $n }} / halaman</option>
+                        @endforeach
+                    </select>
+                    <button class="btn-primary"><x-icon name="search" class="w-4 h-4" /> Cari</button>
+                </div>
+            </form>
+
             <div class="overflow-x-auto">
-                <table class="w-full text-left whitespace-nowrap border-collapse">
-                    <thead>
-                        <tr class="bg-gray-50/50 dark:bg-gray-900/30 border-b border-gray-100 dark:border-gray-700/50">
-                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">IDPEL</th>
-                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tags</th>
-                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">ID / Serial Perangkat</th>
-                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Product Class</th>
-                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Alamat IP</th>
-                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Daya Rx</th>
-                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Inform Terakhir</th>
-                            <th class="px-6 py-4.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-center">Aksi</th>
+                <table class="w-full text-sm">
+                    <thead class="bg-surface-50 dark:bg-surface-900/60 text-left text-xs font-medium uppercase tracking-wide text-surface-500">
+                        <tr>
+                            <th class="px-4 py-3">Modem</th>
+                            <th class="px-4 py-3">Pelanggan</th>
+                            <th class="px-4 py-3">IP WAN</th>
+                            <th class="px-4 py-3">Sinyal Rx</th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3">Tag</th>
+                            <th class="px-4 py-3 text-right">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
-                        @forelse($paginatedDevices as $device)
+                    <tbody class="divide-y divide-surface-100 dark:divide-surface-800">
+                        @forelse($paginatedDevices as $d)
                             @php
-                                $id = $device['_id'] ?? 'Unknown';
-                                
-                                // Tags extraction
-                                $rawTags = $device['_tags'] ?? $device['Tags'] ?? [];
-                                $tags = is_array($rawTags) ? $rawTags : (is_string($rawTags) ? array_filter(explode(',', $rawTags)) : []);
-
-                                // Serial Number Fallbacks
-                                $serial = $device['_deviceId']['_SerialNumber']
-                                    ?? $device['DeviceID']['SerialNumber']['_value'] 
-                                    ?? $device['Device']['DeviceInfo']['SerialNumber']['_value']
-                                    ?? $device['InternetGatewayDevice']['DeviceInfo']['SerialNumber']['_value']
-                                    ?? null;
-                                if (!$serial) {
-                                    $parts = explode('-', $id);
-                                    $serial = end($parts);
-                                }
-                                
-                                // Product Class Fallbacks (standard first, VP fallback)
-                                $productClass = $device['_deviceId']['_ProductClass']
-                                    ?? $device['DeviceID']['ProductClass']['_value']
-                                    ?? $device['Device']['DeviceInfo']['ProductClass']['_value'] 
-                                    ?? $device['InternetGatewayDevice']['DeviceInfo']['ProductClass']['_value'] 
-                                    ?? $device['Device']['DeviceInfo']['ModelName']['_value']
-                                    ?? $device['InternetGatewayDevice']['DeviceInfo']['ModelName']['_value']
-                                    ?? $device['VirtualParameters']['ProductClass']['_value'] 
-                                    ?? 'N/A';
-                                
-                                // IP Address Fallbacks (standard first, VP fallback)
-                                $ip = $device['InternetGatewayDevice']['WANDevice'][1]['WANConnectionDevice'][1]['WANPPPConnection'][1]['ExternalIPAddress']['_value']
-                                    ?? $device['InternetGatewayDevice']['WANDevice'][1]['WANConnectionDevice'][2]['WANPPPConnection'][1]['ExternalIPAddress']['_value']
-                                    ?? $device['InternetGatewayDevice']['WANDevice'][1]['WANConnectionDevice'][1]['WANIPConnection'][1]['ExternalIPAddress']['_value']
-                                    ?? $device['Device']['IP']['Interface'][1]['IPv4Address'][1]['IPAddress']['_value']
-                                    ?? $device['Device']['WANDevice'][1]['WANConnectionDevice'][1]['WANPPPConnection'][1]['ExternalIPAddress']['_value']
-                                    ?? $device['Device']['WANDevice'][1]['WANConnectionDevice'][1]['WANIPConnection'][1]['ExternalIPAddress']['_value']
-                                    ?? $device['VirtualParameters']['wanip']['_value']
-                                    ?? $device['VirtualParameters']['IP']['_value'] 
-                                    ?? 'N/A';
-
-                                $lastInform = isset($device['_lastInform']) ? \Carbon\Carbon::parse($device['_lastInform'])->diffForHumans() : 'Never';
-
-                                // PPPoE Username / IDPEL Fallbacks (standard first, VP fallback)
-                                $idpel = $device['InternetGatewayDevice']['WANDevice'][1]['WANConnectionDevice'][1]['WANPPPConnection'][1]['Username']['_value']
-                                    ?? $device['InternetGatewayDevice']['WANDevice'][1]['WANConnectionDevice'][2]['WANPPPConnection'][1]['Username']['_value']
-                                    ?? $device['InternetGatewayDevice']['WANDevice'][1]['WANConnectionDevice'][1]['WANPPPConnection'][2]['Username']['_value']
-                                    ?? $device['Device']['PPP']['Interface'][1]['Username']['_value']
-                                    ?? $device['Device']['PPP']['Interface'][2]['Username']['_value']
-                                    ?? $device['VirtualParameters']['pppUsername']['_value']
-                                    ?? 'N/A';
-
-                                 // Rx Power Fallbacks & Scaling (standard vendor paths first, VP fallback)
-                                  $rxPowerRaw = $device['InternetGatewayDevice']['WANDevice'][1]['X_GponInterafceConfig']['RXPower']['_value']
-                                      ?? $device['InternetGatewayDevice']['WANDevice'][1]['X_HW_OpticalInfo']['RxPower']['_value']
-                                      ?? $device['InternetGatewayDevice']['WANDevice'][1]['WANConnectionDevice'][1]['X_ZTE-COM_WANPONInterfaceConfig']['RXPower']['_value']
-                                      ?? $device['InternetGatewayDevice']['WANDevice'][1]['X_ZTE-COM_Optical']['RxPower']['_value']
-                                      ?? $device['InternetGatewayDevice']['X_ALU_OntOpticalParam']['RXPower']['_value']
-                                      ?? $device['Device']['Optical']['Interface'][1]['OpticalSignalLevel']['_value']
-                                      ?? $device['Device']['Optical']['Interface'][1]['OpticalPowerRx']['_value']
-                                      ?? $device['VirtualParameters']['getponrx']['_value']
-                                      ?? null;
-
-                                 $rxPower = null;
-                                 $rxPowerColor = 'text-gray-400';
-                                 if ($rxPowerRaw !== null) {
-                                     $rxPower = (float) $rxPowerRaw;
-                                     if ($rxPower < -100) {
-                                         $rxPower = $rxPower / 100;
-                                     }
-                                     if ($rxPower < -1000) {
-                                         $rxPower = $rxPower / 10;
-                                     }
-                                     
-                                     if ($rxPower >= -24) {
-                                         $rxPowerColor = 'text-green-600 dark:text-green-400 font-extrabold';
-                                     } elseif ($rxPower >= -27) {
-                                         $rxPowerColor = 'text-amber-500 dark:text-amber-400 font-extrabold';
-                                     } else {
-                                         $rxPowerColor = 'text-rose-600 dark:text-rose-400 font-semibold animate-pulse';
-                                     }
-                                 }
+                                $detailUrl = route('acs-servers.device-details', ['deviceId' => $d['id'], 'server_id' => $selectedServer->id]);
+                                $level = \App\Support\AcsDevice::signalLevel($d['rx']);
                             @endphp
-                            <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-900/20 transition-all duration-200">
-                                <td class="px-6 py-4.5">
-                                    <span class="text-sm font-bold text-gray-800 dark:text-gray-200 font-mono">
-                                        {{ explode('@', $idpel)[0] }}
+                            <tr class="hover:bg-surface-50 dark:hover:bg-surface-800/40">
+                                <td class="px-4 py-3">
+                                    <a href="{{ $detailUrl }}" class="group flex items-center gap-3">
+                                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-100 text-surface-500 dark:bg-surface-800">
+                                            <x-icon name="chip" class="w-5 h-5" />
+                                        </span>
+                                        <span class="min-w-0">
+                                            <span class="block whitespace-nowrap font-medium text-surface-900 group-hover:text-primary-700 dark:text-white">{{ $d['model'] ?: 'Modem' }}
+                                                @if($d['manufacturer'])<span class="font-normal text-surface-400"> · {{ $d['manufacturer'] }}</span>@endif
+                                            </span>
+                                            <span class="block font-mono text-[11px] text-surface-500">{{ $d['serial'] }}</span>
+                                        </span>
+                                    </a>
+                                </td>
+                                <td class="px-4 py-3">
+                                    @if($d['customer'])
+                                        <a href="{{ route('customers.show', $d['customer']->id) }}" class="block hover:underline">
+                                            <span class="font-medium text-primary-700 dark:text-primary-300">{{ $d['customer']->name }}</span>
+                                            <span class="block font-mono text-[11px] text-surface-500">{{ $d['customer']->customer_code }}</span>
+                                        </a>
+                                    @elseif($d['pppoe'])
+                                        <span class="font-mono text-xs text-surface-700 dark:text-surface-300">{{ $d['pppoe'] }}</span>
+                                        <span class="block text-[11px] text-surface-400">belum tertaut</span>
+                                    @else
+                                        <span class="text-surface-400">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap font-mono text-xs text-surface-600 dark:text-surface-300">{{ $d['ip'] ?: '—' }}</td>
+                                <td class="px-4 py-3">
+                                    @if($d['rx'] !== null)
+                                        <span class="whitespace-nowrap font-semibold tabular-nums {{ $sig[$level][0] }}">{{ number_format($d['rx'], 2) }} dBm</span>
+                                        <div class="mt-1 h-1 w-20 rounded-full bg-surface-200 dark:bg-surface-700 overflow-hidden">
+                                            <div class="h-full rounded-full {{ $sig[$level][1] }}" style="width: {{ max(5, min(100, (($d['rx'] + 35) / 27) * 100)) }}%"></div>
+                                        </div>
+                                    @else
+                                        <span class="text-surface-400">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="{{ $d['online'] ? 'badge-success' : 'badge-gray' }}">
+                                        <span class="w-1.5 h-1.5 rounded-full {{ $d['online'] ? 'bg-emerald-500' : 'bg-surface-400' }}"></span>
+                                        {{ $d['online'] ? 'Online' : 'Offline' }}
+                                    </span>
+                                    <span class="mt-0.5 block whitespace-nowrap text-[11px] text-surface-500" title="{{ $d['last_inform']?->timezone(config('app.timezone'))->format('d/m/Y H:i') }}">
+                                        {{ $d['last_inform'] ? $d['last_inform']->locale('id')->diffForHumans() : 'belum pernah' }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4.5">
-                                    <div class="flex items-center gap-1.5 group">
-                                        @if(!empty($tags))
-                                            <div class="flex flex-wrap gap-1 max-w-[170px]">
-                                                @foreach($tags as $tag)
-                                                    <a href="{{ route('acs-servers.devices', ['server_id' => $selectedServer->id, 'tag' => trim($tag)]) }}" class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold tracking-tight bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:bg-indigo-900/40 dark:hover:bg-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60 font-mono transition-all duration-150" title="Klik untuk memfilter tag '{{ trim($tag) }}'">
-                                                        {{ trim($tag) }}
-                                                    </a>
-                                                @endforeach
-                                            </div>
-                                            <button type="button" @click="openTagModal('{{ addslashes($id) }}', {{ json_encode(array_values((array)$tags)) }}, '{{ addslashes($serial) }}')" class="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all" title="Ubah Tag">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                            </button>
-                                        @else
-                                            <button type="button" @click="openTagModal('{{ addslashes($id) }}', [], '{{ addslashes($serial) }}')" class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-300 bg-gray-50 hover:bg-indigo-50 dark:bg-gray-800 dark:hover:bg-indigo-950/40 border border-dashed border-gray-200 dark:border-gray-700 transition-colors">
-                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                                Tambah Tag
+                                <td class="px-4 py-3">
+                                    <div class="flex max-w-[15rem] flex-wrap items-center gap-1">
+                                        @foreach(array_slice($d['tags'], 0, 2) as $tag)
+                                            <a href="{{ $url(['tag' => $tag, 'page' => null]) }}" class="max-w-[8rem] truncate rounded-md bg-primary-50 px-1.5 py-0.5 text-[11px] font-medium text-primary-700 hover:bg-primary-100 dark:bg-primary-500/10 dark:text-primary-300" title="Filter tag {{ $tag }}">{{ $tag }}</a>
+                                        @endforeach
+                                        @if(count($d['tags']) > 2)
+                                            <span class="text-[11px] text-surface-500" title="{{ implode(', ', array_slice($d['tags'], 2)) }}">+{{ count($d['tags']) - 2 }}</span>
+                                        @endif
+                                        @if($canTags)
+                                            <button type="button" class="rounded p-0.5 text-surface-400 hover:text-primary-600" title="Ubah tag" aria-label="Ubah tag"
+                                                    @click='openTagModal(@json($d["id"]), @json($d["tags"]), @json($d["serial"]))'>
+                                                <x-icon name="plus" class="w-3.5 h-3.5" />
                                             </button>
                                         @endif
                                     </div>
                                 </td>
-                                <td class="px-6 py-4.5">
-                                    <div class="flex flex-col">
-                                        <a href="{{ route('acs-servers.device-details', ['deviceId' => $id, 'server_id' => $selectedServer->id]) }}" class="text-sm font-extrabold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-mono tracking-tight">
-                                            {{ $serial }}
-                                        </a>
-                                        <span class="text-xs text-gray-400 dark:text-gray-500 font-mono mt-0.5">{{ $id }}</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4.5">
-                                    <span class="px-3 py-1 bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold border border-gray-100 dark:border-gray-800">
-                                        {{ $productClass }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4.5">
-                                    <span class="text-sm font-mono font-semibold text-gray-600 dark:text-gray-400">
-                                        {{ $ip }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4.5">
-                                    @if($rxPower !== null)
-                                        <span class="text-sm font-mono {{ $rxPowerColor }}">
-                                            {{ number_format($rxPower, 2) }} dBm
-                                        </span>
-                                    @else
-                                        <span class="text-xs text-gray-400 dark:text-gray-500 italic">N/A</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4.5">
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="w-1.5 h-1.5 rounded-full {{ str_contains($lastInform, 'second') || str_contains($lastInform, 'minute') ? 'bg-green-500' : 'bg-gray-400' }}"></span>
-                                        <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">{{ $lastInform }}</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4.5">
-                                    <div class="flex justify-center items-center gap-4">
-                                        <a href="{{ route('acs-servers.show-device', ['deviceId' => $id, 'server_id' => $selectedServer->id]) }}" target="_blank" class="px-3 py-1.5 text-xs text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 font-bold bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-indigo-100 dark:hover:border-indigo-900/30 transition-all">
-                                            Lihat Data Mentah
-                                        </a>
-                                        <a href="{{ route('acs-servers.device-details', ['deviceId' => $id, 'server_id' => $selectedServer->id]) }}" class="px-4 py-1.5 text-xs text-white bg-indigo-600 hover:bg-indigo-700 font-bold rounded-xl shadow-md shadow-indigo-500/10 transition-all ">
-                                            Kelola CPE
-                                        </a>
+                                <td class="px-4 py-3 text-right whitespace-nowrap">
+                                    <div class="inline-flex items-center gap-1">
+                                        @if($canReboot)
+                                            <form method="POST" action="{{ route('acs-servers.reboot', ['deviceId' => $d['id'], 'server_id' => $selectedServer->id]) }}"
+                                                  onsubmit="return confirm('Reboot modem {{ $d['serial'] }}? Internet pelanggan terputus ±1–2 menit.')">@csrf
+                                                <button class="btn-ghost btn-icon h-8 w-8" title="Reboot modem" aria-label="Reboot modem"><x-icon name="refresh" class="w-4 h-4" /></button>
+                                            </form>
+                                        @endif
+                                        <a href="{{ $detailUrl }}" class="btn-secondary btn-sm">Kelola</a>
                                     </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-16 text-center">
-                                    <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Belum Ada Perangkat</h4>
-                                    <p class="text-xs text-gray-400">
-                                        @if($selectedServer)
-                                            Try adjusting your filter or search query.
+                                <td colspan="7" class="px-6 py-16 text-center">
+                                    <x-icon name="chip" class="mx-auto mb-3 w-10 h-10 text-surface-300" />
+                                    <p class="font-medium text-surface-700 dark:text-surface-300">Tidak ada modem</p>
+                                    <p class="text-sm text-surface-500">
+                                        @if(! $selectedServer)
+                                            Belum ada server GenieACS aktif.
+                                        @elseif($search || $tagFilter || $status)
+                                            Tidak ada yang cocok dengan pencarian/filter. <a href="{{ route('acs-servers.devices', ['server_id' => $selectedServer->id]) }}" class="text-primary-600 hover:underline">Hapus filter</a>
                                         @else
-                                            Please configure at least one active ACS server.
+                                            Server belum melaporkan perangkat.
                                         @endif
                                     </p>
                                 </td>
@@ -294,151 +221,81 @@
                 </table>
             </div>
 
-            <!-- Pagination (tampilan bersama: resources/views/vendor/pagination) -->
             @if($paginatedDevices->total() > 0)
-                <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700/50">
-                    {{ $paginatedDevices->links(null, ['label' => 'perangkat']) }}
+                <div class="border-t border-surface-200 dark:border-surface-800 px-5 py-3">
+                    {{ $paginatedDevices->links(null, ['label' => 'modem']) }}
                 </div>
             @endif
         </div>
 
-        <!-- Tag Edit Modal -->
-        <div x-show="showTagModal" class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/80 backdrop-blur-sm flex items-center justify-center p-4" style="display: none;">
-            <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-sm max-w-lg w-full overflow-hidden border border-gray-100 dark:border-gray-700 p-6" @click.away="showTagModal = false">
-                <!-- Modal Header -->
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Ubah Tag Perangkat</h3>
-                        <p class="text-xs text-gray-500 font-mono" x-text="'Device: ' + (activeSerial || activeDeviceId)"></p>
-                    </div>
-                    <button type="button" @click="showTagModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold">&times;</button>
-                </div>
+        <p class="text-xs text-surface-500">Online = modem mengirim laporan (inform) dalam {{ \App\Support\AcsDevice::ONLINE_MINUTES }} menit terakhir. Sinyal: hijau ≥ -24, kuning -24 s/d -27, merah &lt; -27 dBm.</p>
 
-                <!-- Current Tags list / pills -->
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tag Terpasang</label>
-                    <div class="p-3 bg-gray-50 dark:bg-gray-900/60 rounded-xl border border-gray-100 dark:border-gray-800 min-h-[50px] flex flex-wrap gap-1.5 items-center">
-                        <template x-for="(tag, index) in activeTags" :key="tag">
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-mono">
-                                <span x-text="tag"></span>
-                                <button type="button" @click="removeTag(index)" class="ml-1.5 text-indigo-400 hover:text-rose-500 font-bold text-sm">&times;</button>
-                            </span>
-                        </template>
-                        <template x-if="activeTags.length === 0">
-                            <span class="text-xs text-gray-400 italic">Belum ada tag. Ketik di bawah untuk menambah.</span>
-                        </template>
+        {{-- Ubah tag --}}
+        <template x-teleport="body">
+            <div x-show="showTagModal" x-cloak class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-surface-900/40 p-4 sm:p-10" @keydown.escape.window="showTagModal = false" @click.self="showTagModal = false">
+                <div class="w-full max-w-lg rounded-xl bg-white shadow-xl dark:bg-surface-900">
+                    <div class="flex items-start justify-between gap-3 border-b border-surface-200 p-5 dark:border-surface-800">
+                        <div>
+                            <h3 class="text-lg font-semibold text-surface-900 dark:text-white">Ubah tag modem</h3>
+                            <p class="font-mono text-xs text-surface-500" x-text="activeSerial || activeDeviceId"></p>
+                        </div>
+                        <button type="button" class="btn-ghost btn-icon" @click="showTagModal = false" aria-label="Tutup"><x-icon name="x" class="w-4 h-4" /></button>
                     </div>
-                </div>
-
-                <!-- Add New Tag Input -->
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tambah Tag Baru</label>
-                    <div class="flex gap-2">
-                        <input type="text" x-model="newTagInput" @keydown.enter.prevent="addInputTag()" placeholder="Nama tag..." class="flex-grow px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl text-sm font-semibold dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none">
-                        <button type="button" @click="addInputTag()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
-                            Tambah
-                        </button>
+                    <div class="space-y-4 p-5">
+                        <div class="flex min-h-[44px] flex-wrap items-center gap-1.5 rounded-lg border border-surface-200 p-2 dark:border-surface-700">
+                            <template x-for="(tag, index) in activeTags" :key="tag">
+                                <span class="inline-flex items-center gap-1 rounded-md bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+                                    <span x-text="tag"></span>
+                                    <button type="button" @click="removeTag(index)" class="text-primary-400 hover:text-rose-600" aria-label="Hapus tag">✕</button>
+                                </span>
+                            </template>
+                            <span x-show="activeTags.length === 0" class="text-xs text-surface-400">Belum ada tag.</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" x-model="newTagInput" @keydown.enter.prevent="addInputTag()" placeholder="Tag baru, mis. odp-12 atau nama pelanggan" class="input">
+                            <button type="button" @click="addInputTag()" class="btn-secondary">Tambah</button>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5">
+                            <template x-for="preset in ['VIP', 'Prioritas', 'Isolir', 'Gangguan']" :key="preset">
+                                <button type="button" @click="addPresetTag(preset)" class="rounded-md border border-dashed border-surface-300 px-2 py-0.5 text-xs text-surface-600 hover:border-primary-400 hover:text-primary-700 dark:border-surface-600 dark:text-surface-300">+ <span x-text="preset"></span></button>
+                            </template>
+                        </div>
                     </div>
-                </div>
-
-                <!-- Quick Presets -->
-                <div class="mb-6">
-                    <span class="block text-xs font-bold text-gray-400 mb-1.5">Quick Presets:</span>
-                    <div class="flex flex-wrap gap-1.5">
-                        <template x-for="preset in ['VIP', 'Isolir', 'GPON', 'EPON', 'Prioritas', 'Cluster-A']" :key="preset">
-                            <button type="button" @click="addPresetTag(preset)" class="px-2.5 py-1 bg-gray-100 dark:bg-gray-700/60 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30 text-gray-600 dark:text-gray-300 rounded-lg text-[11px] font-semibold transition-colors">
-                                + <span x-text="preset"></span>
-                            </button>
-                        </template>
+                    <div class="flex justify-end gap-2 border-t border-surface-200 p-4 dark:border-surface-800">
+                        <button type="button" @click="showTagModal = false" class="btn-secondary">Batal</button>
+                        <button type="button" @click="saveTags()" :disabled="isSaving" class="btn-primary"><span x-text="isSaving ? 'Menyimpan…' : 'Simpan tag'"></span></button>
                     </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                    <button type="button" @click="showTagModal = false" class="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
-                        Batal
-                    </button>
-                    <button type="button" @click="saveTags()" :disabled="isSaving" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700  text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center disabled:opacity-50">
-                        <svg x-show="isSaving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        <span x-text="isSaving ? 'Menyimpan...' : 'Simpan Tag'">Simpan Tag</span>
-                    </button>
                 </div>
             </div>
-        </div>
+        </template>
     </div>
 
     @push('scripts')
     <script>
         function deviceTagManager() {
             return {
-                showTagModal: false,
-                activeDeviceId: '',
-                activeSerial: '',
-                activeTags: [],
-                originalTags: [],
-                newTagInput: '',
-                isSaving: false,
-
+                showTagModal: false, activeDeviceId: '', activeSerial: '', activeTags: [], originalTags: [], newTagInput: '', isSaving: false,
                 openTagModal(deviceId, tags, serial) {
-                    this.activeDeviceId = deviceId;
-                    this.activeSerial = serial || deviceId;
-                    this.activeTags = Array.isArray(tags) ? [...tags] : [];
-                    this.originalTags = Array.isArray(tags) ? [...tags] : [];
-                    this.newTagInput = '';
-                    this.showTagModal = true;
+                    this.activeDeviceId = deviceId; this.activeSerial = serial || deviceId;
+                    this.activeTags = Array.isArray(tags) ? [...tags] : []; this.originalTags = [...this.activeTags];
+                    this.newTagInput = ''; this.showTagModal = true;
                 },
-
-                addInputTag() {
-                    const tag = this.newTagInput.trim();
-                    if (tag && !this.activeTags.includes(tag)) {
-                        this.activeTags.push(tag);
-                    }
-                    this.newTagInput = '';
-                },
-
-                addPresetTag(tag) {
-                    if (tag && !this.activeTags.includes(tag)) {
-                        this.activeTags.push(tag);
-                    }
-                },
-
-                removeTag(index) {
-                    this.activeTags.splice(index, 1);
-                },
-
+                addInputTag() { const t = this.newTagInput.trim(); if (t && !this.activeTags.includes(t)) this.activeTags.push(t); this.newTagInput = ''; },
+                addPresetTag(t) { if (!this.activeTags.includes(t)) this.activeTags.push(t); },
+                removeTag(i) { this.activeTags.splice(i, 1); },
                 saveTags() {
                     this.isSaving = true;
-                    const url = '{{ route('acs-servers.update-tags', ':id') }}'.replace(':id', encodeURIComponent(this.activeDeviceId));
-
+                    const url = @js(route('acs-servers.update-tags', ':id', false)).replace(':id', encodeURIComponent(this.activeDeviceId));
                     fetch(url, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            server_id: '{{ $selectedServer->id ?? '' }}',
-                            tags: this.activeTags,
-                            current_tags: this.originalTags
-                        })
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                        body: JSON.stringify({ server_id: @js($selectedServer->id ?? ''), tags: this.activeTags, current_tags: this.originalTags }),
                     })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            this.showTagModal = false;
-                            window.location.reload();
-                        } else {
-                            alert('Failed to update tags: ' + (data.message || 'Unknown error'));
-                        }
-                    })
-                    .catch(err => {
-                        alert('Network error while updating tags: ' + err.message);
-                    })
-                    .finally(() => {
-                        this.isSaving = false;
-                    });
-                }
+                        .then(r => r.json())
+                        .then(d => { if (d.success) { window.location.reload(); } else { alert('Gagal menyimpan tag: ' + (d.message || 'kesalahan tidak diketahui')); } })
+                        .catch(e => alert('Gagal menghubungi server: ' + e.message))
+                        .finally(() => this.isSaving = false);
+                },
             };
         }
     </script>

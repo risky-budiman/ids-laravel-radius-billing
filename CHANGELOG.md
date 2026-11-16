@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.160] - 2026-11-16
+
+### Fitur baru
+- **genieacs:** Redesigned modem list and detail pages
+
 ## [v1.5.159] - 2026-11-16
 
 ### Fitur baru
