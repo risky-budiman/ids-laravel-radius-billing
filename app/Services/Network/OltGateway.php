@@ -677,33 +677,52 @@ class OltGateway
     // PROVISIONING WRITE OPERATIONS (Telnet CLI)
     // ═════════════════════════════════════════════════════
 
+    /** Alasan gagal operasi tulis (telnet) terakhir, untuk ditampilkan/dicatat. */
+    protected ?string $lastWriteError = null;
+
+    public function lastWriteError(): ?string
+    {
+        return $this->lastWriteError;
+    }
+
+    /** Jalankan operasi tulis lewat service telnet & simpan alasan gagalnya. */
+    protected function telnetWrite(callable $op): mixed
+    {
+        $service = $this->provisioningService();
+        $result = $op($service);
+        $this->lastWriteError = $result === false ? ($service->lastError() ?? 'Operasi telnet gagal.') : null;
+
+        return $result;
+    }
+
+    /** Dipisah agar bisa diganti di tes. */
+    protected function provisioningService(): ZteOltProvisioningService
+    {
+        return new ZteOltProvisioningService($this->olt);
+    }
+
     public function provisionOnu(int $shelf, int $slot, int $port, string $sn, string $onuType, int $vlan = 100, string $description = 'NextLink-Customer', ?string $tcontProfile = null): string|false
     {
-        $service = new ZteOltProvisioningService($this->olt);
-        return $service->provisionOnu($shelf, $slot, $port, $sn, $onuType, $vlan, $description, $tcontProfile);
+        return $this->telnetWrite(fn ($s) => $s->provisionOnu($shelf, $slot, $port, $sn, $onuType, $vlan, $description, $tcontProfile));
     }
 
     public function deprovisionOnu(int $shelf, int $slot, int $port, int $onuId): bool
     {
-        $service = new ZteOltProvisioningService($this->olt);
-        return $service->deleteOnu($shelf, $slot, $port, $onuId);
+        return $this->telnetWrite(fn ($s) => $s->deleteOnu($shelf, $slot, $port, $onuId));
     }
 
     public function suspendOnu(int $shelf, int $slot, int $port, int $onuId): bool
     {
-        $service = new ZteOltProvisioningService($this->olt);
-        return $service->suspendOnu($shelf, $slot, $port, $onuId);
+        return $this->telnetWrite(fn ($s) => $s->suspendOnu($shelf, $slot, $port, $onuId));
     }
 
     public function resumeOnu(int $shelf, int $slot, int $port, int $onuId): bool
     {
-        $service = new ZteOltProvisioningService($this->olt);
-        return $service->resumeOnu($shelf, $slot, $port, $onuId);
+        return $this->telnetWrite(fn ($s) => $s->resumeOnu($shelf, $slot, $port, $onuId));
     }
 
     public function updateOnuProfile(int $shelf, int $slot, int $port, int $onuId, $package): bool
     {
-        $service = new ZteOltProvisioningService($this->olt);
-        return $service->updateOnuProfile($shelf, $slot, $port, $onuId, $package);
+        return $this->telnetWrite(fn ($s) => $s->updateOnuProfile($shelf, $slot, $port, $onuId, $package));
     }
 }

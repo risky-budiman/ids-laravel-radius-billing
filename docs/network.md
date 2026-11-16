@@ -54,6 +54,14 @@ Hasil setiap aksi (berhasil, dibatalkan beserta alasannya, atau gagal) tercatat 
 
 **Hapus ONU manual** (halaman OLT → Hapus ONU): isi **indeks** dan **SN ONU**. Format indeks yang diterima: `1/1/7:5`, `gpon-onu_1/1/7:5`, `1.1.7.5` atau `.1.1.7.5`.
 
+**Balasan OLT diperiksa.** Untuk registrasi, hapus, isolir/buka dan ganti profil ONU lewat telnet, sistem memastikan login sampai prompt `ZXAN#`. Setiap perintah juga harus dibalas prompt dan tidak berisi pesan error ZTE (`%Error …`, `%Code …`, `Invalid input …`). Bila ada yang gagal, perintah berikutnya tidak dijalankan. Alasannya tercatat di **Log Aktivitas**:
+- *login telnet ditolak* — periksa username/password OLT;
+- *mode enable ditolak* — periksa Enable Password;
+- *perintah '…' ditolak OLT: %Error …*;
+- *OLT tidak membalas perintah '…' (timeout)*.
+
+Registrasi ONU yang berhasil maupun gagal tercatat (`onu_provisioned` / `onu_provision_failed`).
+
 Hapus ONU otomatis belum didukung untuk OLT HSGQ — sistem mencatatnya di Log Aktivitas agar dihapus manual di OLT.
 
 ### Registrasi ONU & profil kecepatan

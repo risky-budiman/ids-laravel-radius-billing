@@ -60,7 +60,7 @@ class UpdateOnuJob implements ShouldQueue
             default => false,
         };
         if (! $ok) {
-            $this->audit('onu_action_failed', "ONU {$this->action} GAGAL di {$olt->name} posisi {$s}/{$sl}/{$p}:{$o}" . ($this->profile ? " (profil {$this->profile})" : '') . '.', $olt);
+            $this->audit('onu_action_failed', "ONU {$this->action} GAGAL di {$olt->name} posisi {$s}/{$sl}/{$p}:{$o}" . ($this->profile ? " (profil {$this->profile})" : '') . '. Alasan: ' . ($gateway->lastWriteError() ?? 'tidak diketahui') . '.', $olt);
         }
     }
 

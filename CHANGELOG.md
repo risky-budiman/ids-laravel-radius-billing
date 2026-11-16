@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.139] - 2026-11-16
+
+### Perbaikan
+- **olt:** Telnet replies are checked; failures carry a reason into the activity log
+
 ## [v1.5.138] - 2026-11-16
 
 ### Perbaikan

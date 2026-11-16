@@ -59,7 +59,8 @@ class DeprovisionOnuJob implements ShouldQueue
 
         $ok = $gateway->deprovisionOnu($pos['shelf'], $pos['slot'], $pos['port'], $pos['onu_id']);
         $this->audit($ok ? 'onu_deleted' : 'onu_delete_failed',
-            ($ok ? 'ONU dihapus' : 'Hapus ONU GAGAL') . " di {$olt->name}: SN {$this->sn}, posisi {$pos['shelf']}/{$pos['slot']}/{$pos['port']}:{$pos['onu_id']}.");
+            ($ok ? 'ONU dihapus' : 'Hapus ONU GAGAL') . " di {$olt->name}: SN {$this->sn}, posisi {$pos['shelf']}/{$pos['slot']}/{$pos['port']}:{$pos['onu_id']}."
+            . ($ok ? '' : ' Alasan: ' . ($gateway->lastWriteError() ?? 'tidak diketahui') . '.'));
     }
 
     /** Dipisah agar bisa diganti di tes. */

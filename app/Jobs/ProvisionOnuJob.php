@@ -32,7 +32,7 @@ class ProvisionOnuJob implements ShouldQueue
 
         Log::info("Starting background provisioning for customer: {$customer->name}");
 
-        $gateway = new OltGateway($customer->olt);
+        $gateway = app()->makeWith(OltGateway::class, ['olt' => $customer->olt]);
         
         // Port PON dari onu_index: ".1.1.7", "1.1.7.5", "1/1/7" atau "1/1/7:5" (dulu hanya format titik)
         $pos = (string) $customer->onu_index;
@@ -59,11 +59,17 @@ class ProvisionOnuJob implements ShouldQueue
             $customer->package?->olt_tcont_profile
         );
 
+        // Hasil registrasi tercatat di Log Aktivitas (dulu kegagalan hanya ada di log server)
         if ($result) {
             $customer->update(['onu_index' => $result]);
             Log::info("Provisioning successful for {$customer->name}: New Index is {$result}");
+            \App\Models\ActivityLog::create(['action' => 'onu_provisioned', 'subject_type' => \App\Models\Customer::class, 'subject_id' => $customer->id,
+                'description' => "ONU {$customer->onu_sn} pelanggan {$customer->name} terdaftar di {$customer->olt->name} posisi {$result}."]);
         } else {
-            Log::error("Provisioning failed for {$customer->name}");
+            $reason = $gateway->lastWriteError() ?? 'tidak diketahui';
+            Log::error("Provisioning failed for {$customer->name}: {$reason}");
+            \App\Models\ActivityLog::create(['action' => 'onu_provision_failed', 'subject_type' => \App\Models\Customer::class, 'subject_id' => $customer->id,
+                'description' => "Registrasi ONU {$customer->onu_sn} pelanggan {$customer->name} di {$customer->olt->name} GAGAL. Alasan: {$reason}"]);
         }
     }
 }
