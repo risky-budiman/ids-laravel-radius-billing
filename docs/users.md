@@ -41,6 +41,14 @@ Aturan saat mengubah akun:
 - **Administrator aktif terakhir** tidak bisa diturunkan, dinonaktifkan atau dihapus.
 - Perubahan role tercatat di **Log Aktivitas** (`user_role_changed`).
 
+### Penanda "Juga Sales"
+
+Sakelar **Aktifkan Fungsi Sales** memberi staf internal (administrator, admin, teknisi, kasir, CS) akses sales tambahan: dashboard sales, tambah pelanggan, dan bisa dipilih sebagai referal yang mendapat komisi. Akun seperti ini ditandai label **+ Sales** di daftar staf. Penanda diabaikan untuk role Sales (sudah otomatis) dan **Mitra**.
+
+### Menghapus Akun
+
+Akun yang **sudah punya riwayat** — tiket, balasan tiket, komisi, jurnal, transaksi kas, mutasi gudang, pelanggan referal, Log Aktivitas, dll. — **tidak bisa dihapus**. Sistem menampilkan riwayat yang ditemukan; **nonaktifkan** akun tersebut. Hanya akun yang belum pernah dipakai (mis. salah buat) yang bisa dihapus, dan penghapusannya tercatat (`user_deleted`).
+
 ## Keamanan Data
 
 - **Log Aktivitas**: administrator memantau perubahan penting (keuangan, pengaturan, OLT, role) di menu **Log Aktivitas**.

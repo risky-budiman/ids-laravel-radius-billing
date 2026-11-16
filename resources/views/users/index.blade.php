@@ -62,6 +62,10 @@
                                         <span class="px-3 py-1 text-xs rounded-full {{ $roleClasses[$user->role] ?? 'bg-gray-100 text-gray-600' }}">
                                             {{ $user->role === 'cs' ? 'CS' : $user->role }}
                                         </span>
+                                        @if($user->hasSalesFlag())
+                                            {{-- Dulu akses sales lewat penanda ini tidak terlihat di daftar --}}
+                                            <span class="ml-1 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" title="Juga punya akses & komisi sales">+ Sales</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-5 text-center">
                                         @if($user->is_active)
@@ -110,7 +114,7 @@
                                             </a>
 
                                             @if(auth()->user()->isAdministrator() && $user->id !== auth()->id())
-                                            <form action="{{ route('users.destroy', $user) }}" method="POST" onsubmit="return confirm('Hapus akun ini secara permanen?')" class="inline">
+                                            <form action="{{ route('users.destroy', $user) }}" method="POST" onsubmit="return confirm('Hapus akun ini secara permanen? Akun yang sudah punya riwayat (tiket, komisi, transaksi, log) tidak bisa dihapus — nonaktifkan saja.')" class="inline">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="p-2 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all shadow-sm border border-transparent hover:border-red-200" title="Hapus Akun">

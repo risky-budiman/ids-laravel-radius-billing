@@ -46,7 +46,7 @@
                                 </div>
                                 <span class="ml-3 text-sm font-bold text-gray-700 dark:text-gray-300 ">Aktifkan Fungsi Sales</span>
                             </label>
-                            <p class="mt-2 text-xs text-gray-400 leading-tight">Bila aktif, pengguna ini bisa dipilih sebagai referal sales untuk pelanggan baru dan mendapat komisi, apa pun perannya.</p>
+                            <p class="mt-2 text-xs text-gray-400 leading-tight">Bila aktif, pengguna ini juga mendapat akses sales (dashboard sales, tambah pelanggan) dan bisa dipilih sebagai referal yang mendapat komisi. Berlaku untuk staf internal; diabaikan untuk role Sales (sudah otomatis) dan Mitra. Tampil sebagai label "+ Sales" di daftar staf.</p>
                         </div>
 
                         <!-- Partner Fields (Conditional) -->

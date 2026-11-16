@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.135] - 2026-11-16
+
+### Perbaikan
+- **users:** Staff with history cannot be hard-deleted; "also sales" flag visible and internal-only
+
 ## [v1.5.134] - 2026-11-16
 
 ### Perbaikan

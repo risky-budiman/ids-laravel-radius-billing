@@ -49,7 +49,7 @@ class UserController extends Controller
             'bank_account_number' => $request->bank_account_number,
             'bank_account_name' => $request->bank_account_name,
             'is_active' => true,
-            'is_sales' => $request->has('is_sales'),
+            'is_sales' => $request->has('is_sales') && self::canBeAlsoSales($request->role),
         ]);
 
         return redirect()->route('users.index')->with('success', 'Staff account created successfully.');
@@ -92,7 +92,7 @@ class UserController extends Controller
             'bank_name' => $request->bank_name,
             'bank_account_number' => $request->bank_account_number,
             'bank_account_name' => $request->bank_account_name,
-            'is_sales' => $request->has('is_sales'),
+            'is_sales' => $request->has('is_sales') && self::canBeAlsoSales($role),
         ];
 
         if ($request->filled('password')) {
@@ -107,6 +107,12 @@ class UserController extends Controller
         }
 
         return redirect()->route('users.index')->with('success', 'Akun staf berhasil diperbarui.');
+    }
+
+    /** "Juga sales" hanya untuk staf internal; mitra (pihak luar) & sales (sudah sales) tidak. */
+    private static function canBeAlsoSales(?string $role): bool
+    {
+        return in_array($role, [User::ROLE_ADMINISTRATOR, User::ROLE_ADMIN, User::ROLE_TEKNISI, User::ROLE_KASIR, User::ROLE_CS], true);
     }
 
     public function toggleStatus(User $user)
@@ -141,8 +147,19 @@ class UserController extends Controller
             return back()->with('error', 'Administrator aktif terakhir tidak bisa dihapus.');
         }
 
-        $user->delete();
+        // Akun yang punya riwayat (tiket, komisi, jurnal, log, pelanggan referal...) tidak dihapus permanen:
+        // dulu riwayat ikut terhapus/terputus. Nonaktifkan saja.
+        $history = \App\Support\UserHistory::references($user);
+        if ($history) {
+            $detail = implode(', ', array_map(fn ($t, $n) => "{$t}: {$n}", array_keys($history), $history));
 
-        return redirect()->route('users.index')->with('success', 'Account deleted successfully.');
+            return back()->with('error', "Akun {$user->name} punya riwayat ({$detail}). Nonaktifkan akun ini, jangan dihapus.");
+        }
+
+        $name = $user->name;
+        $user->delete();
+        \App\Models\ActivityLog::log('user_deleted', "Akun staf {$name} (tanpa riwayat) dihapus.");
+
+        return redirect()->route('users.index')->with('success', 'Akun dihapus.');
     }
 }

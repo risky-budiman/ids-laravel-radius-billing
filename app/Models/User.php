@@ -72,13 +72,13 @@ class User extends Authenticatable
     public function hasRole(string|array $roles): bool
     {
         if (is_array($roles)) {
-            if (in_array(self::ROLE_SALES, $roles) && $this->is_sales) {
+            if (in_array(self::ROLE_SALES, $roles) && $this->hasSalesFlag()) {
                 return true;
             }
             return in_array($this->role, $roles);
         }
 
-        if ($roles === self::ROLE_SALES && $this->is_sales) {
+        if ($roles === self::ROLE_SALES && $this->hasSalesFlag()) {
             return true;
         }
 
@@ -92,7 +92,13 @@ class User extends Authenticatable
     public function isAdmin(): bool { return in_array($this->role, [self::ROLE_ADMINISTRATOR, self::ROLE_ADMIN]); }
     public function isTeknisi(): bool { return $this->role === self::ROLE_TEKNISI; }
     public function isKasir(): bool { return $this->role === self::ROLE_KASIR; }
-    public function isSales(): bool { return $this->role === self::ROLE_SALES || $this->is_sales; }
+    public function isSales(): bool { return $this->role === self::ROLE_SALES || $this->hasSalesFlag(); }
+
+    /** Penanda "juga sales" hanya berlaku untuk staf internal (bukan mitra/pelanggan). */
+    public function hasSalesFlag(): bool
+    {
+        return (bool) $this->is_sales && in_array($this->role, [self::ROLE_ADMINISTRATOR, self::ROLE_ADMIN, self::ROLE_TEKNISI, self::ROLE_KASIR, self::ROLE_CS], true);
+    }
     public function isMitra(): bool { return $this->role === self::ROLE_MITRA; }
     public function isCustomer(): bool { return $this->role === self::ROLE_CUSTOMER; }
     public function isCs(): bool { return $this->role === self::ROLE_CS; }
