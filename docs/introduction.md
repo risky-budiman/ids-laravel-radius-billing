@@ -17,6 +17,14 @@ Dokumentasi ini disusun secara sistematis untuk membantu Anda menguasai sistem d
 * **Teknis**: Konfigurasi jaringan, integrasi radius, dan inventaris barang.
 * **Administrasi**: Pengaturan hak akses pengguna dan profil perusahaan.
 
+## Navigasi Halaman (Pagination)
+
+Semua daftar panjang (pelanggan, invoice, tiket, log, jurnal, inventaris, perangkat GenieACS, dll.) memakai navigasi halaman yang sama:
+- ringkasan **"Menampilkan 51–100 dari 573 data"**;
+- tombol **Sebelumnya / Berikutnya** dan nomor halaman ringkas (halaman pertama, sekitar halaman aktif, terakhir; sisanya "…");
+- di ponsel cukup **Hal X / Y** dengan tombol panah;
+- bila nomor halaman sudah tidak ada (misalnya setelah filter mempersempit hasil), tampil "Halaman X kosong" dengan tautan ke halaman 1.
+
 ## Dukungan Sistem
 
 Jika Anda menemui kendala yang tidak tercakup dalam panduan ini, silakan merujuk ke bab **Troubleshooting** atau hubungi tim administrator IT perusahaan Anda.

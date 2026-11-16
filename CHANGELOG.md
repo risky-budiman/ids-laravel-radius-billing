@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.154] - 2026-11-16
+
+### Perbaikan
+- **ui:** One consistent pagination for every list
+
 ## [v1.5.153] - 2026-11-16
 
 ### Fitur baru
