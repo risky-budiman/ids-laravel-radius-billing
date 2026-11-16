@@ -92,7 +92,13 @@ Di **wizard aktivasi** (bagian OLT), setelah memilih *Source OLT* klik **Pilih d
 - ONU yang sudah dipakai pelanggan lain ditandai dan tidak bisa dipilih; ONU milik pelanggan yang sedang diaktifkan ditandai *Pelanggan ini*;
 - hasil baca disimpan 10 menit (sama dengan halaman port); **Baca ulang** membaca langsung dari OLT.
 
-Dipakai bila ONU sudah di-*allow* di OLT. Registrasi/allow ONU baru langsung dari aplikasi sedang disiapkan lewat API web OLT.
+Dipakai bila ONU sudah di-*allow* di OLT.
+
+### Akses web OLT HSGQ (persiapan registrasi ONU dari aplikasi)
+
+SNMP OLT HSGQ tidak menyediakan registrasi/allow ONU, sehingga registrasi dari aplikasi memakai **API web OLT**. Di **Ubah OLT → Akses web OLT** (tampil untuk tipe HSGQ) isi username & password halaman web OLT, port (bawaan 80) dan HTTPS bila dipakai, lalu klik **Tes login web**. Password disimpan terenkripsi dan tidak ditampilkan lagi.
+
+Saat ini sistem baru **membaca** lewat API web (login, info perangkat, daftar izin ONU). Tombol *Daftarkan/allow ONU* akan ditambahkan setelah format perintahnya dipastikan di OLT asli dengan ONU uji. Hindari salah password berulang: OLT bisa mengunci akun web.
 
 ### Data registrasi ONU (untuk dikerjakan di OLT)
 

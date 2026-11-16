@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.149] - 2026-11-16
+
+### Fitur baru
+- **olt:** HSGQ web API access (login + read allow list) as groundwork for ONU registration
+
 ## [v1.5.148] - 2026-11-16
 
 ### Fitur baru

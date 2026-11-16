@@ -186,6 +186,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
             // (didaftarkan dulu agar olts/create tidak tertangkap olts/{olt})
             Route::middleware('role:administrator')->group(function () {
                 Route::resource('olts', \App\Http\Controllers\OltController::class)->except(['index', 'show']);
+                Route::post('olts/{olt}/test-web-login', [\App\Http\Controllers\OltController::class, 'testWebLogin'])->name('olts.test-web-login');
             });
             Route::resource('olts', \App\Http\Controllers\OltController::class)->only(['index', 'show']);
             Route::post('olts/{olt}/test-connection', [\App\Http\Controllers\OltController::class, 'testConnection'])->name('olts.test-connection');

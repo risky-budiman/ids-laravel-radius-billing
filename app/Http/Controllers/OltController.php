@@ -72,6 +72,10 @@ class OltController extends Controller
             'snmp_v3_auth_password' => 'nullable|string|min:8|max:128',
             'snmp_v3_priv_protocol' => 'nullable|in:DES,AES',
             'snmp_v3_priv_password' => 'nullable|string|min:8|max:128',
+            'web_username' => 'nullable|string|max:64',
+            'web_password' => 'nullable|string|max:128',
+            'web_port' => 'nullable|integer|min:1|max:65535',
+            'web_https' => 'nullable|boolean',
             'olt_type' => 'required|string',
             'is_active' => 'nullable',
             'description' => 'nullable|string',
@@ -81,6 +85,8 @@ class OltController extends Controller
 
         $validated['snmp_write_community'] = $validated['snmp_write_community'] ?? 'private';
         $validated['is_active'] = $request->has('is_active');
+        $validated['web_https'] = $request->boolean('web_https');
+        $validated['web_port'] = $validated['web_port'] ?? ($validated['web_https'] ? 443 : 80);
         $this->ensureV3Credentials($validated);
         $olt = Olt::create($validated);
 
@@ -147,6 +153,10 @@ class OltController extends Controller
             'snmp_v3_auth_password' => 'nullable|string|min:8|max:128',
             'snmp_v3_priv_protocol' => 'nullable|in:DES,AES',
             'snmp_v3_priv_password' => 'nullable|string|min:8|max:128',
+            'web_username' => 'nullable|string|max:64',
+            'web_password' => 'nullable|string|max:128',
+            'web_port' => 'nullable|integer|min:1|max:65535',
+            'web_https' => 'nullable|boolean',
             'olt_type' => 'required|string',
             'is_active' => 'nullable',
             'description' => 'nullable|string',
@@ -157,12 +167,14 @@ class OltController extends Controller
         $validated['is_active'] = $request->has('is_active');
 
         // Kredensial & community tidak ditampilkan di form: kosong = tetap memakai yang lama
-        foreach (['snmp_read_community', 'snmp_write_community', 'snmp_v3_auth_password', 'snmp_v3_priv_password'] as $secret) {
+        foreach (['snmp_read_community', 'snmp_write_community', 'snmp_v3_auth_password', 'snmp_v3_priv_password', 'web_password'] as $secret) {
             if (blank($validated[$secret] ?? null)) {
                 unset($validated[$secret]);
             }
         }
 
+        $validated['web_https'] = $request->boolean('web_https');
+        $validated['web_port'] = $validated['web_port'] ?? ($validated['web_https'] ? 443 : 80);
         $this->ensureV3Credentials($validated, $olt);
         $olt->update($validated);
 
@@ -210,6 +222,21 @@ class OltController extends Controller
         if ($errors) {
             throw \Illuminate\Validation\ValidationException::withMessages($errors);
         }
+    }
+
+    /** Tes login API web OLT (HSGQ) — dipakai untuk registrasi/allow ONU dari aplikasi. */
+    public function testWebLogin(Olt $olt)
+    {
+        $client = new \App\Services\Network\HsgqWebClient($olt);
+        try {
+            $client->login();
+            $info = $client->boardInfo();
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Login web OLT berhasil'
+            . (isset($info['product_name']) ? " — {$info['product_name']}" : '') . (isset($info['fw_ver']) ? " (firmware {$info['fw_ver']})" : '') . '.']);
     }
 
     /**

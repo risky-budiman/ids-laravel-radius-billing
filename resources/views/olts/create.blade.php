@@ -7,7 +7,7 @@
 
     <div class="max-w-4xl mx-auto">
         <div class="card overflow-hidden">
-            <form action="{{ route('olts.store') }}" method="POST" class="p-8" x-data="{ ver: '{{ old('snmp_version', '2') }}' }">
+            <form action="{{ route('olts.store') }}" method="POST" class="p-8" x-data="{ type: '{{ old('olt_type', 'HSGQ_EPON') }}', ver: '{{ old('snmp_version', '2') }}' }">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Basic Info Section -->
@@ -23,7 +23,7 @@
 
                     <div class="space-y-2">
                         <label for="olt_type" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Tipe OLT</label>
-                        <select name="olt_type" id="olt_type" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
+                        <select name="olt_type" id="olt_type" x-model="type" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
                             <option value="HSGQ_EPON" {{ old('olt_type') == 'HSGQ_EPON' ? 'selected' : '' }}>HSGQ EPON (E04ID / E08L / Generic)</option>
                             <option value="ZTE_C320" {{ old('olt_type') == 'ZTE_C320' ? 'selected' : '' }}>ZTE ZXA10 C320</option>
                             <option value="ZTE_C300" {{ old('olt_type') == 'ZTE_C300' ? 'selected' : '' }}>ZTE ZXA10 C300</option>
@@ -129,6 +129,33 @@
                         <label for="snmp_write_community" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Write Community (RW)</label>
                         <input type="text" name="snmp_write_community" id="snmp_write_community" value="{{ old('snmp_write_community', 'private') }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
                         @error('snmp_write_community') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <!-- Akses web OLT (HSGQ): untuk registrasi/allow ONU dari aplikasi -->
+                    <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 rounded-xl border border-surface-200 dark:border-surface-700 p-4" x-show="type.startsWith('HSGQ')" x-cloak>
+                        <div class="md:col-span-2">
+                            <h3 class="text-sm font-semibold text-surface-900 dark:text-white">Akses web OLT (opsional)</h3>
+                            <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5">Login halaman web OLT HSGQ — dipakai untuk mendaftarkan/allow ONU langsung dari aplikasi (SNMP OLT HSGQ tidak menyediakan registrasi). Password disimpan terenkripsi.</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="web_username" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Username web</label>
+                            <input type="text" name="web_username" id="web_username" value="{{ old('web_username', '') }}" autocomplete="off" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500">
+                            @error('web_username') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="space-y-2">
+                            <label for="web_password" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Password web</label>
+                            <input type="password" name="web_password" id="web_password" autocomplete="new-password" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500" placeholder="Password login web OLT">
+                            @error('web_password') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="space-y-2">
+                            <label for="web_port" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Port web</label>
+                            <input type="number" name="web_port" id="web_port" value="{{ old('web_port', 80) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex items-end gap-3">
+                            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 pb-2">
+                                <input type="checkbox" name="web_https" value="1" @checked(old('web_https', false)) class="rounded border-gray-300 text-indigo-600"> HTTPS
+                            </label>
+                        </div>
                     </div>
 
                     <div class="flex items-center space-x-3 mt-4">
