@@ -6,6 +6,11 @@
     </x-slot>
 
     <div class="max-w-4xl mx-auto">
+        @if(session('error'))
+            <div class="mb-4 px-4 py-3 bg-rose-100/80 border border-rose-200 text-rose-700 rounded-xl dark:bg-rose-900/30 dark:border-rose-800 dark:text-rose-400" role="alert">
+                {{ session('error') }}
+            </div>
+        @endif
         <div class="card overflow-hidden">
             <form action="{{ route('olts.update', $olt->id) }}" method="POST" class="p-8">
                 @csrf

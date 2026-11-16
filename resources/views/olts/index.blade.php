@@ -12,6 +12,12 @@
         </div>
     </x-slot>
 
+    @if(session('error'))
+        <div class="mb-4 px-4 py-3 bg-rose-100/80 border border-rose-200 text-rose-700 rounded-xl dark:bg-rose-900/30 dark:border-rose-800 dark:text-rose-400" role="alert">
+            {{ session('error') }}
+        </div>
+    @endif
+
     @if(session('success'))
         <div class="mb-4 px-4 py-3 bg-green-100/80 border border-green-200 text-green-700 rounded-xl dark:bg-green-900/30 dark:border-green-800 dark:text-green-400">
             {{ session('success') }}

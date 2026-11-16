@@ -13,6 +13,11 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            @if(session('error'))
+                <div class="mb-4 px-4 py-3 bg-rose-100/80 border border-rose-200 text-rose-700 rounded-xl dark:bg-rose-900/30 dark:border-rose-800 dark:text-rose-400" role="alert">
+                    {{ session('error') }}
+                </div>
+            @endif
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-xl border border-gray-100 dark:border-gray-700">
                 <div class="p-8">
                     <div class="overflow-x-auto">

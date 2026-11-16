@@ -48,6 +48,24 @@ class User extends Authenticatable
     /** Customer Service: tiket, data kontak, lihat tagihan & status; ganti paket hanya lewat pengajuan. */
     const ROLE_CS = 'cs';
 
+    /** Role akun staf yang bisa dibuat/diubah (web & API) beserta labelnya. */
+    const STAFF_ROLES = [
+        self::ROLE_ADMINISTRATOR => 'Administrator',
+        self::ROLE_ADMIN => 'Admin',
+        self::ROLE_TEKNISI => 'Teknisi',
+        self::ROLE_KASIR => 'Kasir',
+        self::ROLE_SALES => 'Sales',
+        self::ROLE_CS => 'Customer Service (CS)',
+        self::ROLE_MITRA => 'Partner / Mitra',
+    ];
+
+    /** Apakah akun ini administrator aktif terakhir (tidak boleh diturunkan/dinonaktifkan/dihapus). */
+    public function isLastActiveAdministrator(): bool
+    {
+        return $this->role === self::ROLE_ADMINISTRATOR && $this->is_active
+            && ! static::where('role', self::ROLE_ADMINISTRATOR)->where('is_active', true)->whereKeyNot($this->getKey())->exists();
+    }
+
     /**
      * Check if user has specific role
      */

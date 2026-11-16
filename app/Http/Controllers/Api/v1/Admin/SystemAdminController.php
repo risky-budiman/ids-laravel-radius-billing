@@ -44,8 +44,9 @@ class SystemAdminController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
-            'role' => 'required|in:administrator,admin,teknisi,finance,kasir,customer_service',
+            // Sama dengan form web: min 8, role yang benar-benar ada (dulu finance/customer_service yang tidak dikenal sistem)
+            'password' => 'required|string|min:8',
+            'role' => ['required', \Illuminate\Validation\Rule::in(array_keys(User::STAFF_ROLES))],
             'phone' => 'nullable|string',
         ]);
 
@@ -70,6 +71,12 @@ class SystemAdminController extends Controller
     public function toggleUserStatus($id)
     {
         $user = User::findOrFail($id);
+        if ($user->id === request()->user()->id) {
+            return response()->json(['message' => 'Anda tidak bisa menonaktifkan akun sendiri.'], 422);
+        }
+        if ($user->isLastActiveAdministrator()) {
+            return response()->json(['message' => 'Administrator aktif terakhir tidak bisa dinonaktifkan.'], 422);
+        }
         $user->update(['is_active' => !$user->is_active]);
 
         $statusText = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';

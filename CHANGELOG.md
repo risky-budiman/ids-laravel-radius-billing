@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.131] - 2026-11-16
+
+### Perbaikan
+- **users:** Editing an administrator no longer demotes them; API staff roles match the web form
+
 ## [v1.5.130] - 2026-11-16
 
 ### Perbaikan

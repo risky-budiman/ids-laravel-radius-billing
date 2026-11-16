@@ -19,14 +19,7 @@ class UserController extends Controller
 
     public function create()
     {
-        $roles = [
-            User::ROLE_ADMIN => 'Admin',
-            User::ROLE_TEKNISI => 'Teknisi',
-            User::ROLE_KASIR => 'Kasir',
-            User::ROLE_SALES => 'Sales',
-            User::ROLE_CS => 'Customer Service (CS)',
-            User::ROLE_MITRA => 'Partner / Mitra'
-        ];
+        $roles = User::STAFF_ROLES;
         return view('users.create', compact('roles'));
     }
 
@@ -36,7 +29,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_TEKNISI, User::ROLE_KASIR, User::ROLE_SALES, User::ROLE_MITRA, User::ROLE_CS])],
+            'role' => ['required', Rule::in(array_keys(User::STAFF_ROLES))],
             'commission_rate' => 'nullable|numeric|min:0',
             'commission_type' => 'nullable|in:percentage,fixed',
             'bank_name' => 'nullable|string',
@@ -51,7 +44,7 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'commission_rate' => $request->commission_rate,
-            'commission_type' => $request->commission_type,
+            'commission_type' => $request->commission_type ?: 'percentage',
             'bank_name' => $request->bank_name,
             'bank_account_number' => $request->bank_account_number,
             'bank_account_name' => $request->bank_account_name,
@@ -64,15 +57,8 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        // Prevent editing the main administrator if needed, or allow it
-        $roles = [
-            User::ROLE_ADMIN => 'Admin',
-            User::ROLE_TEKNISI => 'Teknisi',
-            User::ROLE_KASIR => 'Kasir',
-            User::ROLE_SALES => 'Sales',
-            User::ROLE_CS => 'Customer Service (CS)',
-            User::ROLE_MITRA => 'Partner / Mitra'
-        ];
+        // Daftar memuat Administrator: dulu tidak ada, sehingga menyimpan form administrator lain menurunkannya jadi Admin
+        $roles = User::STAFF_ROLES;
         return view('users.edit', compact('user', 'roles'));
     }
 
@@ -82,7 +68,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|string|min:8|confirmed',
-            'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_TEKNISI, User::ROLE_KASIR, User::ROLE_SALES, User::ROLE_MITRA, User::ROLE_CS])],
+            'role' => ['required', Rule::in(array_keys(User::STAFF_ROLES))],
             'commission_rate' => 'nullable|numeric|min:0',
             'commission_type' => 'nullable|in:percentage,fixed',
             'bank_name' => 'nullable|string',
@@ -91,12 +77,18 @@ class UserController extends Controller
             'is_sales' => 'nullable',
         ]);
 
+        // Role akun sendiri tidak bisa diubah; administrator aktif terakhir tidak bisa diturunkan
+        $role = $user->id === auth()->id() ? $user->role : $request->role;
+        if ($role !== User::ROLE_ADMINISTRATOR && $user->isLastActiveAdministrator()) {
+            return back()->withInput()->with('error', 'Ini administrator aktif terakhir; role-nya tidak bisa diubah.');
+        }
+
         $data = [
             'name' => $request->name,
             'email' => $request->email,
-            'role' => $request->role,
+            'role' => $role,
             'commission_rate' => $request->commission_rate,
-            'commission_type' => $request->commission_type,
+            'commission_type' => $request->commission_type ?: ($user->commission_type ?: 'percentage'),
             'bank_name' => $request->bank_name,
             'bank_account_number' => $request->bank_account_number,
             'bank_account_name' => $request->bank_account_name,
@@ -107,16 +99,24 @@ class UserController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
+        $oldRole = $user->role;
         $user->update($data);
 
-        return redirect()->route('users.index')->with('success', 'Staff account updated successfully.');
+        if ($oldRole !== $role) {
+            \App\Models\ActivityLog::log('user_role_changed', "Role akun {$user->name} diubah dari {$oldRole} menjadi {$role}.", $user);
+        }
+
+        return redirect()->route('users.index')->with('success', 'Akun staf berhasil diperbarui.');
     }
 
     public function toggleStatus(User $user)
     {
         // Prevent deactivating own account
         if ($user->id === auth()->id()) {
-            return back()->with('error', 'You cannot deactivate your own account.');
+            return back()->with('error', 'Anda tidak bisa menonaktifkan akun sendiri.');
+        }
+        if ($user->isLastActiveAdministrator()) {
+            return back()->with('error', 'Administrator aktif terakhir tidak bisa dinonaktifkan.');
         }
 
         $user->update(['is_active' => !$user->is_active]);
@@ -135,7 +135,10 @@ class UserController extends Controller
     {
         // Prevent deleting own account
         if ($user->id === auth()->id()) {
-            return back()->with('error', 'You cannot delete your own account.');
+            return back()->with('error', 'Anda tidak bisa menghapus akun sendiri.');
+        }
+        if ($user->isLastActiveAdministrator()) {
+            return back()->with('error', 'Administrator aktif terakhir tidak bisa dihapus.');
         }
 
         $user->delete();
