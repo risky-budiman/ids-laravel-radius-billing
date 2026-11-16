@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.132] - 2026-11-16
+
+### Perbaikan
+- **mitra:** Partner accounts can log in and reach their own page
+
 ## [v1.5.131] - 2026-11-16
 
 ### Perbaikan

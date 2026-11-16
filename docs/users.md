@@ -14,9 +14,20 @@ Keamanan sistem bergantung pada pengelolaan akun staf dan hak aksesnya.
 | **Kasir** | Penerimaan pembayaran & setoran kas. |
 | **Sales** | Mendaftarkan pelanggan baru. |
 | **Customer Service (CS)** | Tiket, ubah kontak pelanggan, melihat tagihan & status; ganti paket hanya lewat **pengajuan** yang disetujui admin. |
-| **Partner / Mitra** | Data komisi mitra. *(Portal mitra masih dalam pengerjaan.)* |
+| **Partner / Mitra** | Hanya halaman mitranya sendiri: pelanggan yang dibawa, komisi, saldo & pengajuan penarikan, serta profil. |
 
 Dasbor, data keuangan dan Log Aktivitas hanya tampil untuk role yang berhak (lihat *Dasbor*).
+
+## Akun Mitra (Partner / Reseller)
+
+Admin membuat akun mitra di **Manajemen > Mitra & Reseller** (menu muncul bila modul mitra diaktifkan di pengaturan), lengkap dengan besaran komisi (persen atau nominal tetap) dan rekening bank.
+
+Setelah login, mitra langsung masuk ke **halaman mitranya** (bukan dasbor staf):
+- Daftar pelanggan yang terhubung ke mitra tersebut dan riwayat komisi.
+- Saldo komisi; tombol **Ajukan Penarikan** (minimal Rp 10.000, maksimal sebesar saldo).
+- **Riwayat penarikan** dan **Profil** (ganti password).
+
+Mitra tidak bisa membuka halaman mitra lain, daftar pelanggan, tagihan maupun menu staf lainnya. Pengajuan penarikan diproses admin (setujui, tandai dibayar dari rekening kas/bank, atau tolak).
 
 ## Membuat & Mengubah Akun Staf
 

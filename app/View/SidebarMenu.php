@@ -45,7 +45,9 @@ class SidebarMenu
         $sections = [];
 
         $sections[] = ['label' => null, 'items' => [
-            self::link('Dashboard', 'dashboard', 'home'),
+            $isMitra
+                ? self::link('Dashboard', 'partners.show', 'home', ['partners.show'], [$u->id])
+                : self::link('Dashboard', 'dashboard', 'home'),
         ]];
 
         // ---- Network Operations

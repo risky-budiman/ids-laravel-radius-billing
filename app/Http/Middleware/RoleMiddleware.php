@@ -29,6 +29,11 @@ class RoleMiddleware
             abort(403, 'Your account has been deactivated. Please contact the administrator.');
         }
 
+        // Mitra yang membuka dasbor staf (/admin) diarahkan ke halaman mitranya, bukan 403
+        if ($request->user()->isMitra() && $request->routeIs('dashboard')) {
+            return redirect()->route('partners.show', $request->user());
+        }
+
         if (!$request->user()->hasRole($roles)) {
             abort(403, 'Unauthorized: You do not have the required permissions to access this area.');
         }

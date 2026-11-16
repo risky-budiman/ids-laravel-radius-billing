@@ -32,6 +32,11 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended(route('customer.dashboard', absolute: false));
         }
 
+        // Mitra tidak punya dasbor staf: langsung ke halaman mitranya
+        if (Auth::user()->isMitra()) {
+            return redirect()->route('partners.show', Auth::user());
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

@@ -110,10 +110,6 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
     Route::post('radius/disconnect-all', [\App\Http\Controllers\Admin\RadiusController::class, 'disconnectAll'])->middleware('role:administrator,admin')->name('radius.disconnect-all');
     Route::post('radius/clear-stale', [\App\Http\Controllers\Admin\RadiusController::class, 'clearStaleSessions'])->middleware('role:administrator,admin,teknisi')->name('radius.clear-stale');
 
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
     // Paket: lihat semua staf; tambah/ubah harga/hapus hanya admin (dulu semua staf)
     Route::resource('packages', \App\Http\Controllers\PackageController::class)->except(['index', 'show'])->middleware('role:administrator,admin');
     Route::resource('packages', \App\Http\Controllers\PackageController::class)->only(['index', 'show']);
@@ -201,19 +197,6 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
     // CUSTOMER DELETE: Admin & Administrator only
     Route::middleware('role:administrator,admin')->group(function () {
         Route::delete('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'destroy'])->name('customers.destroy');
-    });
-
-    // PARTNER MANAGEMENT (B2B): Admin & Mitra
-    Route::middleware('role:administrator,admin,mitra')->group(function () {
-        Route::get('partners', [\App\Http\Controllers\PartnerController::class, 'index'])->name('partners.index');
-        Route::get('partners/create', [\App\Http\Controllers\PartnerController::class, 'create'])->name('partners.create');
-        Route::post('partners', [\App\Http\Controllers\PartnerController::class, 'store'])->name('partners.store');
-        Route::get('partners/withdrawals', [\App\Http\Controllers\PartnerController::class, 'withdrawals'])->name('partners.withdrawals');
-        Route::post('partners/withdrawals/request', [\App\Http\Controllers\PartnerController::class, 'requestWithdrawal'])->name('partners.withdrawals.request');
-        Route::post('partners/withdrawals/{withdrawal}/process', [\App\Http\Controllers\PartnerController::class, 'processWithdrawal'])->name('partners.withdrawals.process');
-        Route::get('partners/{partner}', [\App\Http\Controllers\PartnerController::class, 'show'])->name('partners.show');
-        Route::get('partners/{partner}/edit', [\App\Http\Controllers\PartnerController::class, 'edit'])->name('partners.edit');
-        Route::put('partners/{partner}', [\App\Http\Controllers\PartnerController::class, 'update'])->name('partners.update');
     });
 
     // SALES COMMISSION MANAGEMENT: Admin only
@@ -528,6 +511,28 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::post('/inspect', [\App\Http\Controllers\BackupController::class, 'inspect'])->name('inspect');
         Route::post('/restore', [\App\Http\Controllers\BackupController::class, 'restore'])->name('restore');
     });
+});
+
+
+// PARTNER / MITRA (B2B) — di luar grup staf di atas karena grup itu tidak memuat role mitra
+// (dulu akun mitra tidak bisa membuka halamannya sendiri sama sekali). URL & nama rute tetap.
+Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,mitra'])->group(function () {
+    Route::get('partners', [\App\Http\Controllers\PartnerController::class, 'index'])->name('partners.index');
+    Route::get('partners/create', [\App\Http\Controllers\PartnerController::class, 'create'])->name('partners.create');
+    Route::post('partners', [\App\Http\Controllers\PartnerController::class, 'store'])->name('partners.store');
+    Route::get('partners/withdrawals', [\App\Http\Controllers\PartnerController::class, 'withdrawals'])->name('partners.withdrawals');
+    Route::post('partners/withdrawals/request', [\App\Http\Controllers\PartnerController::class, 'requestWithdrawal'])->name('partners.withdrawals.request');
+    Route::post('partners/withdrawals/{withdrawal}/process', [\App\Http\Controllers\PartnerController::class, 'processWithdrawal'])->name('partners.withdrawals.process');
+    Route::get('partners/{partner}', [\App\Http\Controllers\PartnerController::class, 'show'])->name('partners.show');
+    Route::get('partners/{partner}/edit', [\App\Http\Controllers\PartnerController::class, 'edit'])->name('partners.edit');
+    Route::put('partners/{partner}', [\App\Http\Controllers\PartnerController::class, 'update'])->name('partners.update');
+});
+
+// Profil & ganti password: semua akun staf termasuk mitra
+Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknisi,kasir,sales,cs,mitra'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 // Admin Auth Routes
