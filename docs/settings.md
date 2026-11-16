@@ -1,31 +1,27 @@
-# Pengaturan Sistem
+# Pengaturan
 
-> **Lokasi Menu:** `Settings`
+> **Lokasi Menu:** `Pengaturan & Keamanan` (khusus administrator)
 
-Halaman Pengaturan memungkinkan Anda menyesuaikan identitas aplikasi agar sesuai dengan branding bisnis ISP Anda.
+| Menu | Isi |
+|---|---|
+| **Kelola Staf** | Akun staf, role, penanda "juga sales", nonaktifkan & reset sesi (lihat `docs/users.md`). |
+| **Hak Akses per Role** | Tabel fitur × role (Penuh / Lihat / Sebagian), dibaca langsung dari aturan yang ditegakkan aplikasi. |
+| **Pengaturan Aplikasi** | Identitas perusahaan (nama, alamat, kontak, logo — tampil di invoice, laporan, BA, halaman login & WhatsApp), **modul tambahan** (menu & perhitungan modul hanya muncul bila diaktifkan), **notifikasi tiket ke grup WhatsApp** (ID grup per jenis tiket). |
+| **Invoice & Portal** | Format & nomor invoice, NPWP, catatan kaki invoice, **portal pelanggan** dan **login OTP portal**. |
+| **Pengaturan Isolir** | Isolir lewat RADIUS (grup & IP isolir, mode rentang/pool), masa tenggang, dismantle otomatis, skrip MikroTik, daftar pelanggan terisolir (lihat `docs/billing.md`). |
+| **Pengaturan Instalasi** | Berita Acara instalasi & invoice biaya instalasi (batas bayar sebelum isolir). |
+| **Data Master** | Wilayah, STO, STB, ODC, ODP (dipakai kode pelanggan & lokasi). |
+| **Integrasi** | Payment Gateway, WhatsApp Gateway, Server GenieACS (dengan login NBI), Bot NOC (peringatan OLT/ONU). |
+| **Template / Broadcast / Riwayat Pesan** | Template WhatsApp (tagihan, pengingat, isolir, OTP, …), kirim broadcast, riwayat pengiriman. |
+| **Log Aktivitas** | Siapa mengubah apa & kapan (nilai lama → baru; data rahasia disamarkan). |
+| **Sistem & Log** | Log server dan pembaruan sistem. |
+| **Catatan Rilis** | Perubahan per versi (disusun otomatis dari riwayat rilis). |
+| **Backup & Restore** | Backup database harian (02:30) dan unduh/pulihkan. Simpan salinan di luar server. |
 
-## Profil Perusahaan
+## Pajak & Tutup Buku
 
-Akses menu **Settings > Company Profile** untuk mengatur data dasar:
-- **Nama Perusahaan**: Akan muncul di header aplikasi dan dokumen invoice.
-- **Alamat & Kontak**: Muncul sebagai footer di setiap invoice pelanggan.
-- **NPWP / Tax ID**: Diperlukan jika Anda mengenakan PPN kepada pelanggan.
-
-## Kustomisasi Branding (Premium)
-
-Anda dapat mengunggah aset visual perusahaan Anda:
-1. **Company Logo**: Gunakan logo dengan format horizontal/persegi untuk tampilan invoice dan laporan yang profesional.
-2. **App Icon (Favicon)**: Unggah ikon kecil (persegi) untuk mengubah logo yang muncul di tab browser dan sidebar navigasi.
-
-## Aturan Pajak & Keuangan
-
-### PPN (Pajak Pertambahan Nilai)
-Anda dapat mengatur mode pajak melalui menu **Accounting > Tax Settings**:
-- Pilih **Global Mode** jika ingin seluruh tagihan otomatis ditambah PPN (misal 11%).
-- Pilih **Individual Mode** jika Anda hanya ingin mengenakan PPN pada pelanggan tertentu (diatur pada profil pelanggan masing-masing).
-
-### Closing Period
-Atur tanggal "Lock" transaksi melalui menu **Accounting > Closing Period**. Transaksi di bawah tanggal tersebut tidak akan bisa dihapus atau diedit oleh admin mana pun untuk alasan keamanan data.
+- **PPN**: `Keuangan › Pusat Pajak PPN` — tarif & mode (per pelanggan atau global).
+- **Tutup Buku**: `Keuangan › Laporan Keuangan › Tutup Buku` — transaksi sebelum tanggal tutup buku tidak bisa ditambah, diubah atau dihapus.
 
 ---
-*Keamanan: Selalu jaga kerahasiaan password admin Anda dan lakukan backup database secara berkala.*
+*Keamanan: kredensial (gateway, OLT, GenieACS, SNMP) disimpan terenkripsi dan tidak pernah ditampilkan lagi setelah disimpan. Jangan mengganti `APP_KEY` di server — kredensial terenkripsi tidak akan terbaca.*

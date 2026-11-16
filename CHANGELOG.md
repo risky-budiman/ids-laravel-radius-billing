@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.165] - 2026-11-16
+
+### Peningkatan
+- Rewrite the outdated user guides; add deploy checklist and per-role guide
+
 ## [v1.5.164] - 2026-11-16
 
 ### Perbaikan

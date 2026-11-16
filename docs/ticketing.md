@@ -1,31 +1,38 @@
-# Sistem Tiket & Dukungan Teknis
+# Tiket & Gangguan
 
-> **Lokasi Menu:** `Support > Tickets`
+> **Lokasi Menu:** `Manajemen › Tiket`, `Rekap Tiket` · notifikasi: `Pengaturan Aplikasi › Notifikasi tiket ke grup WhatsApp`
 
-Gunakan modul Tiket untuk mengelola keluhan pelanggan dan tugas tim teknisi lapangan secara terorganisir.
+## Jenis Tiket
 
-## Membuat Tiket Baru
+| Jenis | Kode nomor | Keterangan |
+|---|---|---|
+| Gangguan | `TT` | Internet mati/lambat — dari staf atau laporan pelanggan di portal. |
+| Aktivasi | `AO` | Pemasangan pelanggan baru; dibuat saat pendaftaran, ditutup lewat **wizard aktivasi**. |
+| Dismantle | `DO` | Penarikan perangkat (pelanggan berhenti atau dismantle otomatis). |
+| Relokasi | `RL` | Pindah alamat. |
+| Maintenance | `MT` | Pekerjaan jaringan terjadwal. |
 
-Tiket dapat dibuat melalui menu **Support > Tickets > Create**.
+## Status
 
-### Jenis Tiket
-1. **Instalasi**: Untuk pemasangan pelanggan baru.
-2. **Gangguan**: Internet mati, lambat, atau koneksi tidak stabil.
-3. **Billing**: Pertanyaan terkait tagihan atau kesalahan nominal.
-4. **Dismantle**: Untuk proses pencabutan perangkat bagi pelanggan yang berhenti.
+**Open** → **Dikerjakan** (diambil petugas) → **Resolved** (selesai, menunggu konfirmasi) → **Closed**. Tiket *Resolved* ditutup otomatis setelah 24 jam. Tiket tertentu bisa berstatus *Menunggu persetujuan*.
 
-## Alur Kerja Tiket
+- Membatalkan tiket **aktivasi** membatalkan pelanggan yang menunggu aktivasi.
+- Membatalkan tiket **dismantle** mengembalikan pelanggan berlangganan (aktif bila tidak menunggak, atau tetap terisolir).
 
-1. **Open**: Tiket baru dibuat dan menunggu respon.
-2. **Assigned**: Tiket telah ditugaskan kepada teknisi tertentu.
-3. **In Progress**: Teknisi sedang bekerja menangani masalah di lapangan atau di sistem.
-4. **Resolved**: Masalah telah diperbaiki dan menunggu konfirmasi pelanggan.
-5. **Closed**: Tiket selesai dan tidak dapat diubah lagi.
+## Peringatan ke Grup WhatsApp
 
-## Prioritas Tiket
-- **Low**: Kendala ringan yang tidak mendesak.
-- **Medium**: Gangguan pada satu atau dua pelanggan.
-- **High/Urgent**: Gangguan masal (backbone putus) yang harus segera ditangani dalam hitungan jam.
+Setiap tiket baru dikirim ke grup WhatsApp teknisi (grup per jenis tiket, atau grup cadangan). Selain itu, **sekali per tiket**:
+
+- **Belum diambil**: tiket *open* tanpa petugas lebih dari 2 jam (setting `ticket_unclaimed_alert_hours`).
+- **Lewat SLA**: belum selesai lebih dari **24 jam** sejak dibuat, atau melewati tanggal jadwal (mis. aktivasi terjadwal).
+
+## Rekap Tiket
+
+> `Manajemen › Rekap Tiket`
+
+- **Kinerja per petugas**: tiket selesai, dibatalkan, masih terbuka, **rata-rata durasi**, **sesuai / lewat SLA** dan **% SLA** (SLA = selesai ≤ 24 jam sejak dibuat); teknisi aktif tanpa tiket tetap tampil.
+- **Per tipe tiket** dan **per bulan** (klik bulan untuk rincian tiketnya), serta tabel tiket diselesaikan per petugas per bulan.
+- **Ekspor Excel** untuk periode yang dipilih.
 
 ---
-*Tips: Selalu lampirkan foto hasil instalasi atau bukti perbaikan di bagian komentar tiket sebagai arsip teknis perusahaan.*
+*Tips: lampirkan foto hasil pekerjaan di balasan tiket sebagai arsip teknis.*

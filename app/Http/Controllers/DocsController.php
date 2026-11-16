@@ -34,7 +34,8 @@ class DocsController extends Controller
             'users',
             'network',
             'settings',
-            'troubleshooting'
+            'troubleshooting',
+            'deploy',
         ];
 
         // Get all doc files

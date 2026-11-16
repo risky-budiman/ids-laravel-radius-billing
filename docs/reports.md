@@ -1,34 +1,33 @@
-# Laporan Sistem
+# Laporan & KPI
 
-> **Lokasi Menu:** `Accounting > Reports`
+> **Lokasi Menu:** `Keuangan & Akuntansi › KPI Bisnis`, `Laporan Keuangan` (Jurnal Umum, Laba Rugi, Neraca, Arus Kas, Pusat Pajak PPN, Tutup Buku), `Rekening Koran` · `Tagihan & Status › Piutang` · `Manajemen › Rekap Tiket`
 
-Sistem menyediakan berbagai laporan untuk membantu Anda menganalisis performa bisnis dan kepatuhan pajak.
+## KPI Bisnis (administrator & admin)
 
-## Laporan Pajak (Tax Summary)
+| Ukuran | Definisi |
+|---|---|
+| **MRR** | Jumlah harga paket bulanan (setelah diskon, tanpa PPN) pelanggan yang berlangganan di akhir bulan. Memakai harga paket saat ini. |
+| **ARPU** | MRR ÷ jumlah pelanggan berlangganan di akhir bulan. |
+| **Churn** | Pelanggan berhenti dalam bulan ÷ pelanggan berlangganan di awal bulan. |
+| **Ditagih / Diterima** | Invoice langganan (tanpa booster & instalasi), tanpa PPN; ditagih menurut tanggal terbit, diterima menurut tanggal lunas. |
 
-Laporan ini sangat penting jika ISP Anda telah terdaftar sebagai PKP (Pengusaha Kena Pajak).
-- Menampilkan total PPN Keluaran yang dipungut dari pelanggan.
-- Dapat difilter berdasarkan bulan dan tahun.
-- Digunakan sebagai dasar pengisian SPT Masa PPN.
+Pelanggan dihitung berlangganan sejak tanggal aktivasi sampai tanggal berhenti; pelanggan terisolir tetap dihitung karena tetap ditagih. Grafik *MRR per bulan* dan *Pelanggan baru vs berhenti* disertai rincian per bulan.
 
-## Laporan Buku Besar (Ledger)
+## Laporan Keuangan
 
-Menampilkan mutasi uang masuk dan keluar pada setiap akun kas, bank, maupun piutang.
-- **Pencarian Akun**: Anda dapat melihat riwayat satu akun tertentu (misal: Kas Kecil).
-- **Semua Akun**: Menampilkan rekapitulasi seluruh transaksi dalam satu periode untuk audit menyeluruh.
+- **Laba Rugi**: pendapatan (diakui saat invoice dibayar) dikurangi beban.
+- **Neraca**: Aset = Kewajiban + Ekuitas pada tanggal tertentu.
+- **Arus Kas** (metode langsung): dihitung dari jurnal akun Kas & Bank (1001 dan turunannya). Setiap penerimaan/pengeluaran diklasifikasikan menurut **akun lawannya**: pendapatan → operasional masuk, beban → operasional keluar, ekuitas/kewajiban → pendanaan. Klasifikasi per kode akun bisa diatur di **Pengaturan klasifikasi** pada laporan; yang tidak masuk mana pun tampil sebagai *lainnya* agar saldo tetap cocok. Penerimaan dari pelanggan termasuk aktivitas operasional.
+- **Pusat Pajak PPN**: PPN keluaran (dari pelanggan) & masukan (pembelian) per periode, sebagai dasar SPT Masa PPN.
+- **Rekening Koran**: mutasi dan saldo per rekening Kas & Bank.
+- **Jurnal Umum / Buku Besar**: semua jurnal otomatis & manual, bisa difilter per akun.
 
-## Laporan Laba Rugi (Profit & Loss)
+**Ekspor Excel** tersedia untuk KPI Bisnis, Buku Besar, Arus Kas, Rekening Koran dan Rekap Tiket (tombol di halaman masing-masing).
 
-Memberikan gambaran kesehatan bisnis:
-- **Pendapatan**: Total invoice lunas + biaya instalasi.
-- **Beban**: Gaji, listrik, bandwidth, sewa kantor.
-- **Laba Bersih**: Hasil akhir yang benar-benar menjadi keuntungan perusahaan.
+## Piutang
 
-## Ekspor Data
+Umur piutang & daftar yang akan diisolir — lihat `docs/billing.md` › *Piutang*.
 
-Seluruh laporan di atas dapat diunduh dalam format:
-- **Excel**: Untuk pengolahan data lebih lanjut atau audit manual.
-- **PDF**: Untuk dokumen fisik yang siap dicetak dan diarsipkan secara profesional.
+## Rekap Tiket
 
----
-*Tips: Lakukan pemeriksaan laporan Laba Rugi setiap akhir bulan untuk memantau efisiensi biaya operasional Anda.*
+Kinerja petugas & SLA — lihat `docs/ticketing.md` › *Rekap Tiket*.

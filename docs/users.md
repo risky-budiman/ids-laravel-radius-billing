@@ -24,6 +24,35 @@ Menu **Pengaturan & Keamanan › Hak Akses per Role** (khusus administrator) men
 
 Menu di sidebar dan tombol di halaman (mis. *Paket Baru*, *Ubah*, *Aksi Massal*, *Catat Pemasukan*) mengikuti aturan yang sama: role yang tidak berhak tidak lagi melihat tombol yang ujungnya "403 Unauthorized". Aturan akses tidak bisa diubah dari layar agar tidak ada celah tidak sengaja; perubahan dilakukan oleh pengembang dan langsung terlihat di tabel ini.
 
+## Panduan Singkat per Role
+
+**Administrator** — pemilik sistem
+- Harian: cek Dashboard, Piutang (*akan diisolir*), Rekap Tiket, peringatan NOC.
+- Mengatur staf & hak akses, Pengaturan Aplikasi/Isolir/Instalasi/Invoice & Portal, Integrasi (gateway, WhatsApp, GenieACS, Bot NOC), OLT (tambah/ubah/hapus), Backup.
+- Menyetujui pengajuan ganti paket, hapus buku piutang macet, tutup buku.
+
+**Admin** — operasional & keuangan
+- Daftarkan & ubah pelanggan, invoice & pembayaran (manual/massal), cocokkan Mutasi Bank yang menunggu, impor/ekspor pelanggan.
+- Kas & Bank, jurnal, laporan keuangan, KPI; menyetujui pengajuan ganti paket.
+
+**Teknisi** — lapangan & jaringan
+- Ambil tiket (*Tiket*), jalankan **wizard aktivasi** (pilih ONU dari OLT, modem & material, BA instalasi) dan **dismantle**.
+- Pantau NOC, OLT (port, ONU, *Pekerjaan di OLT*, allow/reboot ONU HSGQ) dan modem di GenieACS (sinkron, Wi-Fi, PPPoE).
+- Di data pelanggan hanya mengubah kontak & lokasi; ganti paket lewat pengajuan.
+
+**Kasir** — penerimaan uang
+- Terima pembayaran invoice, lalu **Setoran Kasir** ke rekening; lihat Piutang.
+
+**Sales** — pendaftaran
+- Daftarkan pelanggan baru, pantau *Referal Saya* dan *Dompet & Mutasi* komisi.
+
+**Customer Service (CS)** — layanan pelanggan
+- Tiket & keluhan, ubah kontak pelanggan, lihat tagihan & status, ajukan ganti paket (disetujui admin).
+
+**Mitra** — hanya halaman mitranya (pelanggan yang dibawa, komisi, penarikan).
+
+Rincian akses tiap halaman & aksi: **Hak Akses per Role**.
+
 ## Akun Mitra (Partner / Reseller)
 
 Admin membuat akun mitra di **Manajemen > Mitra & Reseller** (menu muncul bila modul mitra diaktifkan di pengaturan), lengkap dengan besaran komisi (persen atau nominal tetap) dan rekening bank.
