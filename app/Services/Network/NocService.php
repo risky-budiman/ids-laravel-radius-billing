@@ -66,44 +66,112 @@ class NocService
         return strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $sn));
     }
 
+    /** Kunci login pelanggan: username tanpa @domain (huruf kecil). */
+    public static function loginKey(?string $v): string
+    {
+        return strtolower(trim(explode('@', (string) $v)[0]));
+    }
+
+    /** MAC/SN untuk disimpan di data pelanggan: MAC 12 heksa → "E8:68:19:02:FF:70", lainnya huruf besar. */
+    public static function storableSn(string $sn): string
+    {
+        $hex = strtoupper(preg_replace('/[^A-Fa-f0-9]/', '', $sn));
+
+        return strlen($hex) === 12 && ! preg_match('/[^0-9A-F]/', $hex) && str_contains($sn, ':') ? implode(':', str_split($hex, 2)) : strtoupper(trim($sn));
+    }
+
     /**
-     * Cocokkan hasil pindai ke pelanggan OLT ini, perbarui cache sinyal & riwayat. Pelanggan yang ONU-nya tidak
-     * ditemukan di OLT (padahal semua port terbaca) ditandai `not_found`.
+     * Cocokkan baris ONU ke pelanggan: (1) SN/MAC yang dinormalkan, lalu (2) NAMA ONU = username pelanggan
+     * tanpa @domain atau kode pelanggan (OLT HSGQ menamai ONU dengan ID PPPoE). Nama yang dipakai lebih dari
+     * satu pelanggan diabaikan agar tidak salah tautkan. Kandidat: pelanggan OLT ini + yang OLT-nya belum diisi.
      *
-     * @return array{matched: int, not_found: int, los: list<string>, critical: list<string>}
+     * @return array<string, array{customer: Customer, via: string}>  [index ONU => kecocokan]
+     */
+    public function matchRows(Olt $olt, array $rows): array
+    {
+        $candidates = Customer::where(fn ($q) => $q->where('olt_id', $olt->id)->orWhereNull('olt_id'))
+            ->whereNotIn('status', [Customer::STATUS_CANCELED])->get();
+        $bySn = [];
+        $byLogin = [];
+        foreach ($candidates as $c) {
+            if ($k = self::norm($c->onu_sn)) {
+                $bySn[$k] = $c;
+            }
+            foreach (array_unique(array_filter([self::loginKey($c->username), strtolower(trim((string) $c->customer_code))])) as $k) {
+                $byLogin[$k] = isset($byLogin[$k]) && $byLogin[$k]->id !== $c->id ? false : $c;   // false = ambigu
+            }
+        }
+
+        $out = [];
+        $used = [];
+        foreach ($rows as $row) {
+            $c = $bySn[self::norm($row['sn'] ?? null)] ?? null;
+            $via = 'sn';
+            if (! $c) {
+                $name = strtolower(trim((string) ($row['name'] ?? '')));
+                $c = $name !== '' ? ($byLogin[$name] ?? null) : null;
+                $via = 'name';
+            }
+            if ($c && ! isset($used[$c->id]) && isset($row['index'])) {
+                $used[$c->id] = true;
+                $out[(string) $row['index']] = ['customer' => $c, 'via' => $via];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Tautkan pelanggan ke ONU: OLT, posisi, dan MAC/SN (bila kosong, atau bila $replaceSn). Dipakai penautan
+     * otomatis (nama ONU) & manual.
+     */
+    public function linkCustomer(Customer $customer, Olt $olt, array $row, bool $replaceSn = false): void
+    {
+        $data = ['olt_id' => $olt->id];
+        if (! empty($row['index'])) {
+            $data['onu_index'] = (string) $row['index'];
+        }
+        if (! empty($row['sn']) && ($replaceSn || ! filled($customer->onu_sn))) {
+            $data['onu_sn'] = self::storableSn((string) $row['sn']);
+        }
+        $customer->forceFill($data)->saveQuietly();
+    }
+
+    /**
+     * Cocokkan hasil pindai ke pelanggan, tautkan yang baru cocok, perbarui cache sinyal & riwayat. Pelanggan
+     * OLT ini yang ONU-nya tidak ditemukan (padahal semua port terbaca) ditandai `not_found`.
+     *
+     * @return array{matched: int, linked: int, not_found: int, los: list<string>, critical: list<string>}
      */
     public function syncCustomers(Olt $olt, array $scan, bool $collectAlerts = false, int $realertHours = 6): array
     {
-        $byKey = [];
-        foreach ($scan['onus'] as $row) {
-            if ($k = self::norm($row['sn'] ?? null)) {
-                $byKey[$k] = $row;
+        $allRead = $scan['ports_read'] === $scan['ports_total'];
+        $result = ['matched' => 0, 'linked' => 0, 'not_found' => 0, 'los' => [], 'critical' => []];
+        $matches = $this->matchRows($olt, $scan['onus']);
+        $rowsByIndex = collect($scan['onus'])->keyBy(fn ($r) => (string) ($r['index'] ?? ''));
+        $matchedIds = collect($matches)->map(fn ($m) => $m['customer']->id)->all();
+        $previous = CustomerSignalCache::whereIn('customer_id', $matchedIds)->get()->keyBy('customer_id');
+
+        // Pelanggan OLT ini ber-SN yang tidak ditemukan sama sekali
+        if ($allRead) {
+            $missing = Customer::where('olt_id', $olt->id)->whereNotNull('onu_sn')->where('onu_sn', '!=', '')
+                ->whereNotIn('id', $matchedIds)->get(['id', 'onu_index']);
+            foreach ($missing as $m) {
+                $old = CustomerSignalCache::where('customer_id', $m->id)->value('onu_index');
+                CustomerSignalCache::updateOrCreate(['customer_id' => $m->id],
+                    ['status' => 'not_found', 'rx_power' => null, 'last_polled_at' => now(), 'onu_index' => $old ?? (string) $m->onu_index]);
+                $result['not_found']++;
             }
         }
-        $allRead = $scan['ports_read'] === $scan['ports_total'];
-        $result = ['matched' => 0, 'not_found' => 0, 'los' => [], 'critical' => []];
 
-        // Pelanggan OLT ini + pelanggan ber-SN yang belum diisi OLT-nya (mis. hasil impor): tertaut lewat SN
-        $customers = Customer::where(fn ($q) => $q->where('olt_id', $olt->id)->orWhereNull('olt_id'))
-            ->whereNotNull('onu_sn')->where('onu_sn', '!=', '')->get();
-        $previous = CustomerSignalCache::whereIn('customer_id', $customers->pluck('id'))->get()->keyBy('customer_id');
-
-        foreach ($customers as $customer) {
-            $row = $byKey[self::norm($customer->onu_sn)] ?? null;
+        foreach ($matches as $index => $match) {
+            $customer = $match['customer'];
+            $row = $rowsByIndex[$index];
             $prev = $previous[$customer->id] ?? null;
-            if (! $row) {
-                if ($allRead && (int) $customer->olt_id === (int) $olt->id) {
-                    CustomerSignalCache::updateOrCreate(['customer_id' => $customer->id],
-                        ['status' => 'not_found', 'rx_power' => null, 'last_polled_at' => now(), 'onu_index' => $prev?->onu_index ?? (string) $customer->onu_index]);
-                    $result['not_found']++;
-                }
-
-                continue;
-            }
             $result['matched']++;
-            if (! $customer->olt_id) {
-                $customer->forceFill(['olt_id' => $olt->id])->saveQuietly();
-                $result['linked'] = ($result['linked'] ?? 0) + 1;
+            if (! $customer->olt_id || ! filled($customer->onu_sn)) {
+                $this->linkCustomer($customer, $olt, $row);
+                $result['linked']++;
             }
             $dbm = is_numeric($row['signal'] ?? null) ? (float) $row['signal'] : null;
             $status = strtolower((string) ($row['status'] ?? 'unknown'));

@@ -558,8 +558,8 @@ class OltController extends Controller
     private function enrichOnus(Olt $olt, \App\Models\OltPonPort $port, array $onus, bool $fresh): array
     {
         $norm = fn ($sn) => strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $sn));
-        $customers = \App\Models\Customer::where('olt_id', $olt->id)->whereNotNull('onu_sn')
-            ->get(['id', 'customer_code', 'name', 'onu_sn', 'status'])->keyBy(fn ($c) => $norm($c->onu_sn));
+        // Pelanggan tertaut: SN/MAC, atau nama ONU = username tanpa @domain / kode pelanggan (sama dengan NOC)
+        $matches = app(\App\Services\Network\NocService::class)->matchRows($olt, $onus);
 
         $descriptions = [];
         $descError = null;
@@ -582,9 +582,12 @@ class OltController extends Controller
 
         foreach ($onus as &$onu) {
             $key = $norm($onu['sn'] ?? '');
-            $c = $customers[$key] ?? null;
+            $m = $matches[(string) ($onu['index'] ?? '')] ?? null;
+            $c = $m['customer'] ?? null;
             $onu['customer'] = $c ? ['id' => $c->id, 'code' => $c->customer_code, 'name' => $c->name, 'status' => $c->status,
-                'url' => route('customers.show', $c->id)] : null;
+                'url' => route('customers.show', $c->id),
+                // via nama ONU & belum tersimpan: tampil "cocok", tertaut permanen saat Sinkron ONU / Tautkan
+                'linked' => $m['via'] === 'sn' && (int) $c->olt_id === (int) $olt->id, 'via' => $m['via']] : null;
             $web = $descriptions[$key] ?? null;
             if ($web) {
                 if (($web['description'] ?? '') !== '') {

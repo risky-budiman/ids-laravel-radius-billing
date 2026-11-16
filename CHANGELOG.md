@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.168] - 2026-11-16
+
+### Fitur baru
+- **noc:** Link existing customers to ONUs (auto by ONU name, suggestions, manual)
+
 ## [v1.5.167] - 2026-11-16
 
 ### Fitur baru

@@ -90,6 +90,161 @@ class NocController extends Controller
         return response()->json(['success' => true, 'count' => count($data['onus']), 'data' => $data]);
     }
 
+    /**
+     * Penautan ONU ↔ pelanggan per OLT, dari hasil pindai terakhir (cache port). Usulan: nama ONU = username/
+     * kode pelanggan, atau deskripsi ONU (web OLT HSGQ) = nama pelanggan — keduanya harus unik.
+     */
+    public function linking(Request $request)
+    {
+        $olts = Olt::where('is_active', true)->with('ponPorts')->orderBy('name')->get();
+        $oltId = $request->integer('olt') ?: $olts->first()?->id;
+        $olt = $olts->firstWhere('id', $oltId);
+        $tab = in_array($request->get('tab'), ['suggested', 'unlinked', 'linked'], true) ? $request->get('tab') : 'suggested';
+        $data = $olt ? $this->linkingData($olt) : ['rows' => [], 'scanned' => false];
+        $counts = collect($data['rows'])->countBy('state')->all() + ['linked' => 0, 'suggested' => 0, 'unlinked' => 0];
+        $rows = collect($data['rows'])->where('state', $tab)->values();
+
+        return view('noc.linking', compact('olts', 'olt', 'tab', 'rows', 'counts') + ['scanned' => $data['scanned']]);
+    }
+
+    /** @return array{rows: list<array>, scanned: bool} */
+    private function linkingData(Olt $olt): array
+    {
+        $rows = [];
+        $desc = [];
+        $scanned = false;
+        $web = null;   // satu login web OLT untuk semua port (salah login berulang bisa mengunci akun)
+        $hasWeb = str_contains(strtoupper((string) $olt->olt_type), 'HSGQ') && filled($olt->web_username) && filled($olt->web_password);
+        foreach ($olt->ponPorts as $port) {
+            $portRows = Cache::get("olt_port_data_{$port->id}");
+            if (! is_array($portRows)) {
+                continue;
+            }
+            $scanned = true;
+            $portDesc = Cache::get("olt_port_desc_{$port->id}");
+            if ($portDesc === null && $hasWeb) {
+                try {
+                    $web ??= new \App\Services\Network\HsgqWebClient($olt, 10);
+                    $portDesc = $web->onuDetails((int) $port->pon_port);
+                    Cache::put("olt_port_desc_{$port->id}", $portDesc, now()->addMinutes(10));
+                } catch (\Throwable) {
+                    $hasWeb = false;   // jangan coba port lain bila login/akses gagal
+                    $portDesc = [];
+                }
+            }
+            $desc += (array) $portDesc;
+            foreach ($portRows as $r) {
+                $rows[] = $r + ['port_id' => $port->id];
+            }
+        }
+        $matches = $this->noc->matchRows($olt, $rows);
+
+        // Usulan dari deskripsi ONU = nama pelanggan (unik, belum dipakai ONU lain)
+        $usedIds = collect($matches)->map(fn ($m) => $m['customer']->id)->all();
+        $byName = Customer::where(fn ($q) => $q->where('olt_id', $olt->id)->orWhereNull('olt_id'))
+            ->whereNotIn('status', [Customer::STATUS_CANCELED])->whereNotIn('id', $usedIds)->get()
+            ->groupBy(fn ($c) => mb_strtolower(trim($c->name)));
+
+        $out = [];
+        foreach ($rows as $r) {
+            $key = NocService::norm($r['sn'] ?? null);
+            $description = trim((string) ($desc[$key]['description'] ?? ''));
+            $m = $matches[(string) $r['index']] ?? null;
+            $c = $m['customer'] ?? null;
+            $reason = null;
+            if ($c && $m['via'] === 'sn' && (int) $c->olt_id === (int) $olt->id) {
+                $state = 'linked';
+            } elseif ($c) {
+                $state = 'suggested';
+                $reason = $m['via'] === 'sn' ? 'MAC/SN sama' : 'nama ONU = username/kode pelanggan';
+            } elseif ($description !== '' && ($cands = $byName[mb_strtolower($description)] ?? collect())->count() === 1) {
+                $c = $cands->first();
+                $state = 'suggested';
+                $reason = 'deskripsi ONU = nama pelanggan';
+            } else {
+                $state = 'unlinked';
+            }
+            $out[] = ['index' => (string) $r['index'], 'port_id' => $r['port_id'], 'name' => (string) ($r['name'] ?? ''), 'sn' => (string) ($r['sn'] ?? ''),
+                'description' => $description, 'status' => $r['status'] ?? null, 'signal' => $r['signal'] ?? null,
+                'state' => $state, 'reason' => $reason, 'customer' => $c];
+        }
+        usort($out, fn ($a, $b) => strnatcmp($a['index'], $b['index']));
+
+        return ['rows' => $out, 'scanned' => $scanned];
+    }
+
+    /** Baris ONU dari cache port OLT menurut posisi. */
+    private function cachedRow(Olt $olt, string $index): ?array
+    {
+        foreach ($olt->ponPorts()->pluck('id') as $portId) {
+            foreach ((array) Cache::get("olt_port_data_{$portId}", []) as $r) {
+                if ((string) ($r['index'] ?? '') === $index) {
+                    return $r;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /** Tautkan satu pelanggan ke ONU (menyimpan OLT, posisi & MAC/SN ONU di data pelanggan). */
+    public function link(Request $request)
+    {
+        $data = $request->validate(['olt_id' => 'required|integer|exists:olts,id', 'index' => 'required|string|max:40',
+            'customer_id' => 'required|integer|exists:customers,id']);
+        $olt = Olt::findOrFail($data['olt_id']);
+        $row = $this->cachedRow($olt, $data['index']);
+        if (! $row) {
+            return response()->json(['success' => false, 'message' => 'Data ONU kedaluwarsa. Klik Sinkron ONU lalu coba lagi.'], 422);
+        }
+        $customer = Customer::findOrFail($data['customer_id']);
+        $key = NocService::norm($row['sn'] ?? null);
+        $owner = $key ? Customer::whereKeyNot($customer->id)->whereNotNull('onu_sn')->get(['id', 'name', 'customer_code', 'onu_sn'])
+            ->first(fn ($c) => NocService::norm($c->onu_sn) === $key) : null;
+        if ($owner) {
+            return response()->json(['success' => false, 'message' => "ONU ini sudah tertaut ke {$owner->customer_code} {$owner->name}. Lepas tautannya dulu."], 422);
+        }
+
+        $before = $customer->only(['olt_id', 'onu_sn', 'onu_index']);
+        $this->noc->linkCustomer($customer, $olt, $row, replaceSn: true);
+        \App\Models\CustomerSignalCache::where('customer_id', $customer->id)->delete();   // terisi ulang saat sinkron berikutnya
+        \App\Models\ActivityLog::log('onu_linked', "Pelanggan {$customer->customer_code} {$customer->name} ditautkan ke ONU {$row['sn']} ({$olt->name} {$data['index']}).",
+            $customer, ['old' => $before, 'new' => $customer->fresh()->only(['olt_id', 'onu_sn', 'onu_index'])]);
+
+        return response()->json(['success' => true, 'message' => "{$customer->name} ditautkan ke ONU " . strtoupper((string) $row['sn']) . '.']);
+    }
+
+    /** Tautkan semua usulan di satu OLT sekaligus. */
+    public function linkSuggested(Request $request)
+    {
+        $olt = Olt::with('ponPorts')->findOrFail($request->validate(['olt_id' => 'required|integer|exists:olts,id'])['olt_id']);
+        $n = 0;
+        foreach ($this->linkingData($olt)['rows'] as $r) {
+            if ($r['state'] !== 'suggested' || ! $r['customer']) {
+                continue;
+            }
+            $this->noc->linkCustomer($r['customer'], $olt, ['index' => $r['index'], 'sn' => $r['sn']],
+                replaceSn: ! filled($r['customer']->onu_sn) || $r['reason'] !== 'MAC/SN sama');
+            $n++;
+        }
+        \App\Models\ActivityLog::log('onu_linked_bulk', "{$n} pelanggan ditautkan ke ONU di {$olt->name} (usulan otomatis).");
+
+        return back()->with('success', "{$n} pelanggan ditautkan. Klik Sinkron ONU untuk mengisi sinyal & status mereka.");
+    }
+
+    /** Lepas tautan ONU dari pelanggan (MAC/SN & posisi dikosongkan). */
+    public function unlink(Customer $customer)
+    {
+        $before = $customer->only(['olt_id', 'onu_sn', 'onu_index']);
+        $customer->forceFill(['onu_sn' => null, 'onu_index' => null])->saveQuietly();
+        \App\Models\CustomerSignalCache::where('customer_id', $customer->id)->delete();
+        \App\Models\ActivityLog::log('onu_unlinked', "Tautan ONU pelanggan {$customer->customer_code} {$customer->name} dilepas.", $customer, ['old' => $before]);
+
+        return request()->wantsJson()
+            ? response()->json(['success' => true, 'message' => 'Tautan ONU dilepas.'])
+            : back()->with('success', 'Tautan ONU dilepas.');
+    }
+
     public function signals(Request $request)
     {
         $filter = in_array($request->get('filter'), ['critical', 'warn', 'good', 'down', 'not_found', 'nodata'], true) ? $request->get('filter') : null;

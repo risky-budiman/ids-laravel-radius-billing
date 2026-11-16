@@ -56,6 +56,7 @@ class SidebarMenu
                 self::link('Ringkasan Jaringan', 'noc.index'),
                 self::link('Sinyal Optik', 'noc.signals', null, ['noc.signals', 'noc.history']),
                 self::link('ONU Belum Terdaftar', 'noc.discovery'),
+                self::link('Penautan ONU', 'noc.linking'),
             ]),
             self::link('Data OLT', 'olts.index', 'server', ['olts.*'], [], ($oltWork = \App\Models\OltWorkItem::pending()->count()) ? (string) $oltWork : null),
             self::link('GenieACS', 'acs-servers.devices', 'chip', ['acs-servers.devices', 'acs-servers.device-details']),

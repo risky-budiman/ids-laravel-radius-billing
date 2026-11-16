@@ -86,6 +86,16 @@ Satu form untuk tambah & ubah: Identitas (nama, tipe, IP, lokasi, koordinat + Li
 - **Riwayat sinyal** (tombol *Grafik*): grafik Rx 24 jam / 7 hari / 30 hari dengan garis -24 & -27 dBm dan titik **ONU putus**, rata-rata, terlemah/terkuat, jumlah putus, catatan.
 - **ONU Belum Terdaftar**: **Pindai sekarang** mencari ONU yang tersambung tapi belum diizinkan — HSGQ lewat web OLT (belum diizinkan & daftar tolak; butuh *Akses web OLT*), ZTE lewat SNMP. Hasil disimpan 5 menit; OLT yang tidak bisa dibaca/tidak didukung diberi keterangan (bukan "0 ONU"). ONU yang SN-nya cocok dengan pelanggan ditautkan; **Allow** langsung dari daftar (HSGQ).
 
+### Menautkan pelanggan lama ke ONU
+
+Pelanggan yang didaftarkan sebelum fitur OLT (atau hasil impor) belum punya **OLT, posisi & MAC ONU**, sehingga sinyal, status & peringatan NOC tidak berjalan untuk mereka. Cara menautkan:
+
+1. **Otomatis saat Sinkron ONU** — bila **nama ONU di OLT = username pelanggan** (tanpa `@domain`) **atau kode pelanggan**. OLT HSGQ umumnya menamai ONU dengan ID PPPoE (mis. `20391582228`), jadi sebagian besar pelanggan tertaut sendiri. Nama yang cocok ke lebih dari satu pelanggan dilewati.
+2. **NOC Center › Penautan ONU** — per OLT, tiga kelompok: *Usulan* (MAC sama, nama ONU = username/kode, atau **deskripsi ONU = nama pelanggan** dari web OLT), *Belum tertaut* (cari pelanggan lalu tautkan) dan *Sudah tertaut* (bisa **Lepas**). Tombol **Tautkan semua usulan** sekaligus.
+3. **Halaman port OLT › Detail ONU › Tautkan ke pelanggan** — cari nama/kode/username.
+
+Menautkan menyimpan OLT, posisi & MAC ONU di data pelanggan (tercatat `onu_linked` di Log Aktivitas); satu ONU tidak bisa ditautkan ke dua pelanggan. Untuk OLT EPON (HSGQ) identitas ONU adalah **MAC**, bukan SN di label modem (`HWTC…`).
+
 ### Halaman port OLT
 
 - **Halaman port** langsung tampil; daftar ONU diambil di latar. Hasil scan disimpan 10 menit; **Sinkron langsung** memindai ulang. Isinya:

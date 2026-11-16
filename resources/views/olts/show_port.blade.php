@@ -117,6 +117,7 @@
                                         <a :href="onu.customer.url" class="block hover:underline">
                                             <span class="font-medium text-primary-700 dark:text-primary-300" x-text="onu.customer.name"></span>
                                             <span class="block font-mono text-[11px] text-surface-500" x-text="onu.customer.code"></span>
+                                            <span x-show="!onu.customer.linked" class="block text-[11px] text-primary-600">cocok lewat nama ONU</span>
                                         </a>
                                     </template>
                                     <span x-show="!onu.customer" class="badge-gray">Belum ditautkan</span>
@@ -199,6 +200,30 @@
                                 <template x-if="selected.customer">
                                     <a :href="selected.customer.url" class="btn-secondary w-full justify-start"><x-icon name="user" class="w-4 h-4" /> Buka data pelanggan</a>
                                 </template>
+                                @canroute('noc.link')
+                                    {{-- Tautkan ONU ke pelanggan (pelanggan lama yang belum punya data ONU) --}}
+                                    <div class="rounded-lg border border-surface-200 p-3 dark:border-surface-700" x-data="{ q: '', results: [], open: false }">
+                                        <p class="text-xs font-medium text-surface-600 dark:text-surface-300"
+                                           x-text="selected.customer && selected.customer.linked ? 'Ganti pelanggan tertaut' : (selected.customer ? 'Simpan tautan (cocok lewat nama ONU)' : 'Tautkan ke pelanggan')"></p>
+                                        <template x-if="selected.customer && !selected.customer.linked">
+                                            <button type="button" class="btn-primary btn-sm mt-2 w-full" @click="linkCustomer(selected, selected.customer.id, selected.customer.name)">Tautkan ke <span x-text="selected.customer.name"></span></button>
+                                        </template>
+                                        <div class="relative mt-2">
+                                            <input type="search" x-model="q" @input.debounce.300ms="lookup(q).then(r => { results = r; open = true; })"
+                                                   class="input py-1.5 text-xs" placeholder="Cari nama / kode / username…" aria-label="Cari pelanggan">
+                                            <ul x-show="open && results.length" x-cloak @click.outside="open = false" class="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-surface-200 bg-white py-1 shadow-lg dark:border-surface-700 dark:bg-surface-900">
+                                                <template x-for="c in results" :key="c.id">
+                                                    <li><button type="button" class="block w-full px-3 py-1.5 text-left text-xs hover:bg-surface-50 dark:hover:bg-surface-800" @click="open = false; linkCustomer(selected, c.id, c.label)">
+                                                        <span class="font-medium text-surface-900 dark:text-white" x-text="c.label"></span><span class="block text-surface-500" x-text="c.detail"></span>
+                                                    </button></li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                        <template x-if="selected.customer && selected.customer.linked">
+                                            <button type="button" class="mt-2 text-xs text-rose-600 hover:underline" @click="unlinkCustomer(selected)">Lepas tautan dari <span x-text="selected.customer.name"></span></button>
+                                        </template>
+                                    </div>
+                                @endcanroute
                                 <button type="button" class="btn-secondary w-full justify-start" :disabled="!caps?.reboot || busy" @click="reboot(selected)">
                                     <x-icon name="refresh" class="w-4 h-4" /> <span x-text="busy ? 'Mengirim…' : 'Reboot ONU'"></span>
                                 </button>
@@ -353,6 +378,22 @@
                     });
                 },
                 toast(m) { window.showGlobalToast ? window.showGlobalToast(m) : alert(m); },
+                lookup(q) {
+                    if (!q || q.length < 2) return Promise.resolve([]);
+                    return fetch(@js(route('api.customers.lookup', [], false)) + '?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } }).then(r => r.json()).catch(() => []);
+                },
+                linkCustomer(o, customerId, name) {
+                    if (!confirm('Tautkan ONU ' + this.position(o) + ' (' + String(o.sn || '').toUpperCase() + ') ke ' + name + '?')) return;
+                    this.post(@js(route('noc.link', [], false)), { olt_id: {{ $olt->id }}, index: o.index, customer_id: customerId })
+                        .then(r => { this.toast(r.message); if (r.ok) { this.selected = null; this.load(false); } })
+                        .catch(() => this.toast('Gagal menghubungi server'));
+                },
+                unlinkCustomer(o) {
+                    if (!confirm('Lepas tautan ONU dari ' + o.customer.name + '?')) return;
+                    this.post(@js(route('noc.unlink', '__ID__', false)).replace('__ID__', o.customer.id), {})
+                        .then(r => { this.toast(r.message); if (r.ok) { this.selected = null; this.load(false); } })
+                        .catch(() => this.toast('Gagal menghubungi server'));
+                },
                 saveInfo() {
                     const o = this.selected;
                     if (/\s/.test(this.infoForm.name)) { this.toast('Nama ONU tidak boleh berisi spasi.'); return; }
