@@ -10,9 +10,9 @@ Keamanan sistem bergantung pada pengelolaan akun staf dan hak aksesnya.
 |---|---|
 | **Administrator** | Akses penuh: pengaturan aplikasi, pengguna, NAS, log, NOC & OLT (termasuk tambah/ubah/hapus OLT). |
 | **Admin** | Operasional & keuangan: pelanggan, tagihan, keuangan, impor/ekspor pelanggan, menyetujui pengajuan ganti paket. Tidak bisa mengubah pengaturan aplikasi & akun staf. |
-| **Teknisi** | Aktivasi (wizard), dismantle, tiket, NOC & pemantauan OLT (tanpa mengubah konfigurasi OLT). |
+| **Teknisi** | Aktivasi (wizard), dismantle, tiket, NOC & pemantauan OLT (tanpa mengubah konfigurasi OLT). Di data pelanggan hanya mengubah kontak & wilayah/STO/STB; ganti paket lewat pengajuan. |
 | **Kasir** | Penerimaan pembayaran & setoran kas. |
-| **Sales** | Mendaftarkan pelanggan baru. |
+| **Sales** | Mendaftarkan pelanggan baru. Di data pelanggan hanya mengubah kontak; ganti paket lewat pengajuan; tidak melihat password PPPoE. |
 | **Customer Service (CS)** | Tiket, ubah kontak pelanggan, melihat tagihan & status; ganti paket hanya lewat **pengajuan** yang disetujui admin. |
 | **Partner / Mitra** | Hanya halaman mitranya sendiri: pelanggan yang dibawa, komisi, saldo & pengajuan penarikan, serta profil. |
 

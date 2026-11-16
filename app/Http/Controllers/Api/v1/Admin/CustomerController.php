@@ -314,6 +314,22 @@ class CustomerController extends Controller
     {
         $customer = Customer::findOrFail($id);
 
+        // Sama dengan form web: admin semua field; teknisi kontak + data teknis/lokasi; sales kontak saja.
+        // Dulu teknisi & sales bisa mengganti paket tanpa pengajuan, tagihan, password, sales & mitra lewat API.
+        $user = $this->user();
+        $allowed = null;
+        if (! $user->isAdmin()) {
+            $allowed = ['phone', 'email', 'address'];
+            if ($user->isTeknisi()) {
+                $allowed = array_merge($allowed, ['latitude', 'longitude', 'olt_id', 'onu_sn', 'onu_index', 'odc_id', 'odp_id', 'odp_port', 'description']);
+            }
+            // Field wajib diisi dari data tersimpan agar validasi lolos; nilainya tidak ikut disimpan
+            $request->merge([
+                'name' => $customer->name, 'package_id' => $customer->package_id, 'billing_type' => $customer->billing_type,
+                'billing_method' => $customer->billing_method, 'customer_type' => $customer->customer_type ?: 'personal',
+            ]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
@@ -340,8 +356,19 @@ class CustomerController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        DB::transaction(function () use ($customer, $validated, $request) {
+        $ignoredFields = [];
+        if ($allowed !== null) {
+            $ignoredFields = array_values(array_diff(array_keys($validated), $allowed, ['name', 'package_id', 'billing_type', 'billing_method', 'customer_type']));
+            $validated = \Illuminate\Support\Arr::only($validated, $allowed);
+        }
+        $isAdmin = $allowed === null;
+
+        DB::transaction(function () use ($customer, $validated, $request, $isAdmin) {
             $customer->update($validated);
+
+            if (! $isAdmin) {
+                return;   // password & paket hanya admin (ganti paket: ajukan lewat pengajuan)
+            }
 
             // Update password in RADIUS if provided
             if ($request->filled('password')) {
@@ -370,6 +397,8 @@ class CustomerController extends Controller
 
         return response()->json([
             'message' => 'Data pelanggan berhasil diperbarui',
+            // Field yang hanya boleh diubah admin dan diabaikan untuk role ini
+            'ignored_fields' => $ignoredFields,
         ]);
     }
 

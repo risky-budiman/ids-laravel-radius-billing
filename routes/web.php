@@ -143,9 +143,11 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
     });
     Route::middleware('role:administrator,admin,cs')->group(function () {
         Route::patch('customers/{customer}/contact', [\App\Http\Controllers\CustomerContactController::class, 'update'])->name('customers.contact.update');
-        Route::post('customers/{customer}/package-requests', [\App\Http\Controllers\PackageChangeRequestController::class, 'store'])->name('package-requests.store');
         Route::get('package-requests', [\App\Http\Controllers\PackageChangeRequestController::class, 'index'])->name('package-requests.index');
     });
+    // Ajukan ganti paket: teknisi & sales juga (form edit tidak lagi bisa mengganti paket langsung)
+    Route::post('customers/{customer}/package-requests', [\App\Http\Controllers\PackageChangeRequestController::class, 'store'])
+        ->middleware('role:administrator,admin,cs,teknisi,sales')->name('package-requests.store');
     Route::middleware('role:administrator,admin')->group(function () {
         Route::post('package-requests/{packageRequest}/approve', [\App\Http\Controllers\PackageChangeRequestController::class, 'approve'])->name('package-requests.approve');
         Route::post('package-requests/{packageRequest}/reject', [\App\Http\Controllers\PackageChangeRequestController::class, 'reject'])->name('package-requests.reject');

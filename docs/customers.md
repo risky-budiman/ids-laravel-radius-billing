@@ -30,6 +30,22 @@ Pelanggan baru berstatus **Menunggu aktivasi** dan otomatis mendapat tiket aktiv
 | Menunggu dismantle | Diajukan penarikan perangkat | Tidak |
 | Dicabut (dismantled) / Batal | Berhenti berlangganan | Tidak |
 
+## Siapa Bisa Mengubah Apa (Edit Pelanggan)
+
+| Data | Admin / Administrator | Teknisi | Sales |
+|---|---|---|---|
+| No. HP, email, alamat | ✔ | ✔ | ✔ |
+| Wilayah, STO, STB | ✔ | ✔ | – |
+| Nama, NIK/NPWP, prioritas | ✔ | – | – |
+| Username & password PPPoE | ✔ | lihat saja | tidak ditampilkan |
+| Paket, jenis/metode tagihan, tanggal tagihan | ✔ | – | – |
+| Diskon, PPN, biaya instalasi, status Aktif/Terisolir | ✔ | – | – |
+| Referal sales & mitra (beserta komisinya) | ✔ | – | – |
+
+Field yang tidak boleh diubah tetap tampil tapi terkunci, dan server mengabaikannya walau dikirim (berlaku juga untuk API aplikasi staf; respons API menyebut field yang diabaikan di `ignored_fields`). Teknisi dan sales yang perlu mengganti paket memakai **Ajukan ganti paket**.
+
+Referal sales dan mitra hanya berubah bila bagiannya ada di form. Menyimpan form saat modul mitra/komisi sales nonaktif — atau oleh teknisi/sales — **tidak** menghapus tautan sales/mitra pelanggan.
+
 Di **Edit Pelanggan**, status hanya bisa diubah antara **Aktif** dan **Terisolir**. Status lain berubah lewat alurnya sendiri (wizard aktivasi, dismantle) dan ditampilkan apa adanya di form. Menyimpan form edit tidak mengubah koordinat bila form tidak mengirimnya.
 
 ## Ubah Kontak
@@ -38,7 +54,7 @@ Tombol **Ubah kontak** di halaman pelanggan (admin & CS) hanya mengubah **No. HP
 
 ## Ganti Paket (lewat pengajuan)
 
-1. Di halaman pelanggan klik **Ajukan ganti paket**, pilih paket baru dan tulis alasannya (admin & CS).
+1. Di halaman pelanggan klik **Ajukan ganti paket**, pilih paket baru dan tulis alasannya (admin, CS, teknisi & sales).
 2. Pengajuan muncul di **Manajemen > Pengajuan Ganti Paket** dengan selisih harga per bulan.
 3. Admin/administrator **Setujui** atau **Tolak** (alasan wajib).
 4. Saat disetujui paket langsung berganti: grup RADIUS paket baru (tetap terisolir bila sedang diisolir), sesi diputus agar kecepatan baru berlaku, profil T-CONT ONU diganti bila paket punya *Profil T-CONT OLT*. Tagihan berikutnya memakai harga baru.

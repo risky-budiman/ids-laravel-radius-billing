@@ -2,8 +2,8 @@
     $u = auth()->user();
     $canTech = $u->isAdmin() || $u->isTeknisi();
     $isCs = $u->isCs();
-    // CS & admin: ubah kontak + ajukan ganti paket (disetujui admin/administrator)
-    $canRequestPackage = ($u->isAdmin() || $isCs) && ! in_array($customer->status, \App\Models\Customer::TERMINATED_STATUSES, true);
+    // Ajukan ganti paket (disetujui admin/administrator): admin, CS, teknisi & sales. Ubah kontak: admin & CS
+    $canRequestPackage = ($u->isAdmin() || $isCs || $u->isTeknisi() || $u->isSales()) && ! in_array($customer->status, \App\Models\Customer::TERMINATED_STATUSES, true);
     $pendingPackageRequest = \App\Models\PackageChangeRequest::with('toPackage:id,name')->where('customer_id', $customer->id)->where('status', 'pending')->first();
     $statusMap = [
         'active' => ['badge-success', 'Aktif'],

@@ -345,7 +345,11 @@ class CustomerController extends Controller
             ->where('attribute', 'Cleartext-Password')
             ->first();
         $customer->password = $radCheck ? $radCheck->value : ($customer->password ?? '');
-        $olts = \App\Models\Olt::where('is_active', true)->get();
+        // Password PPPoE hanya untuk admin & teknisi (dulu sales melihatnya di form edit)
+        if (! auth()->user()->isAdmin() && ! auth()->user()->isTeknisi()) {
+            $customer->password = '';
+        }
+        $olts =\App\Models\Olt::where('is_active', true)->get();
         $odcs = \App\Models\Odc::all();
         $odps = \App\Models\Odp::all();
         $partners = User::where('role', User::ROLE_MITRA)->get();
@@ -354,8 +358,59 @@ class CustomerController extends Controller
         return view('customers.edit', compact('customer', 'packages', 'regions', 'stos', 'stbs', 'olts', 'odcs', 'odps', 'partners', 'sales'));
     }
 
+    /**
+     * Field form edit yang hanya boleh diubah admin/administrator. Untuk role lain nilainya dipaksa sama
+     * dengan data tersimpan (dulu teknisi & sales bisa mengganti paket tanpa pengajuan, memberi diskon,
+     * mematikan PPN, mengubah jenis tagihan/biaya instalasi dan password PPPoE).
+     */
+    private const ADMIN_ONLY_FIELDS = [
+        'username', 'password', 'customer_type', 'name', 'ktp',
+        'billing_type', 'billing_method', 'billing_day', 'billing_due_day',
+        'package_id', 'discount_type', 'discount_value', 'installation_fee', 'is_active',
+        'partner_id', 'commission_rate', 'commission_type', 'sales_id', 'sales_commission_rate', 'sales_commission_type',
+    ];
+
+    /** Wilayah/STO/STB: admin & teknisi. Sales hanya kontak (HP, email, alamat). */
+    private const TECH_FIELDS = ['region_code', 'sto_code', 'stb_code', 'description'];
+
+    /** @return array<string, mixed> */
+    private function lockedEditValues(Customer $customer, User $user): array
+    {
+        if ($user->isAdmin()) {
+            return [];
+        }
+
+        $locked = self::ADMIN_ONLY_FIELDS;
+        if (! $user->isTeknisi()) {
+            $locked = array_merge($locked, self::TECH_FIELDS);
+        }
+
+        $values = [];
+        foreach ($locked as $field) {
+            $values[$field] = match ($field) {
+                'password' => \App\Models\Radius\RadCheck::where('username', $customer->username)
+                    ->where('attribute', 'Cleartext-Password')->value('value') ?? $customer->password,
+                'is_active' => $customer->is_active ? '1' : '0',
+                default => $customer->getRawOriginal($field),
+            };
+        }
+
+        return $values;
+    }
+
     public function update(Request $request, Customer $customer)
     {
+        // Role non-admin: field terbatas dikembalikan ke nilai tersimpan apa pun yang dikirim form
+        $locked = $this->lockedEditValues($customer, $request->user());
+        if ($locked) {
+            $request->merge($locked);
+            if ($customer->use_tax) {
+                $request->merge(['use_tax' => '1']);
+            } else {
+                $request->request->remove('use_tax');
+            }
+        }
+
         // Pre-sanitize coordinates before validation
         if ($request->has('latitude')) {
             $request->merge(['latitude' => str_replace(',', '.', $request->input('latitude'))]);
@@ -440,12 +495,18 @@ class CustomerController extends Controller
             if ($request->has('longitude')) {
                 $updateData['longitude'] = $longitude;
             }
-            $updateData['partner_id'] = $validated['partner_id'] ?? null;
-            $updateData['commission_rate'] = $validated['commission_rate'] ?? null;
-            $updateData['commission_type'] = $validated['commission_type'] ?? null;
-            $updateData['sales_id'] = $validated['sales_id'] ?? null;
-            $updateData['sales_commission_rate'] = $validated['sales_commission_rate'] ?? null;
-            $updateData['sales_commission_type'] = $validated['sales_commission_type'] ?? null;
+            // Mitra & sales referal hanya diubah bila bagiannya ada di form (dulu dikosongkan saat form tidak
+            // memuatnya: teknisi/sales menyimpan → sales referal hilang; modul mitra nonaktif → tautan mitra hilang)
+            if ($request->has('partner_id')) {
+                $updateData['partner_id'] = $validated['partner_id'] ?? null;
+                $updateData['commission_rate'] = $validated['commission_rate'] ?? null;
+                $updateData['commission_type'] = $validated['commission_type'] ?? null;
+            }
+            if ($request->has('sales_id')) {
+                $updateData['sales_id'] = $validated['sales_id'] ?? null;
+                $updateData['sales_commission_rate'] = $validated['sales_commission_rate'] ?? null;
+                $updateData['sales_commission_type'] = $validated['sales_commission_type'] ?? null;
+            }
             $updateData['discount_type'] = $validated['discount_type'] ?? null;
             $updateData['discount_value'] = $validated['discount_value'] ?? 0;
             $updateData['use_tax'] = $request->has('use_tax');

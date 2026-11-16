@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.134] - 2026-11-16
+
+### Perbaikan
+- **customers:** Edit form limited by role; saving no longer wipes sales/partner links
+
 ## [v1.5.133] - 2026-11-16
 
 ### Perbaikan

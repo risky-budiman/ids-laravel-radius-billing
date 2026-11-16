@@ -9,7 +9,20 @@
         <form action="{{ route('customers.update', $customer) }}" method="POST" enctype="multipart/form-data" class="p-8">
             @csrf
             @method('PUT')
+            @php
+                // Admin: semua field. Teknisi: kontak + wilayah/STO/STB. Sales: kontak saja.
+                // Field lain tetap ditampilkan tapi terkunci; server juga mengabaikannya.
+                $canAdmin = auth()->user()->isAdmin();
+                $canTech = $canAdmin || auth()->user()->isTeknisi();
+            @endphp
 
+            @unless($canAdmin)
+                <div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+                    Anda hanya bisa mengubah {{ $canTech ? 'No. HP, email, alamat dan wilayah/STO/STB' : 'No. HP, email dan alamat' }}.
+                    Paket, diskon, PPN, tagihan dan akun PPPoE diubah oleh admin. Untuk ganti paket gunakan
+                    <a href="{{ route('customers.show', $customer) }}" class="font-semibold underline">Ajukan ganti paket</a> di halaman pelanggan.
+                </div>
+            @endunless
 
             <!-- Section: RADIUS Auth -->
             <div class="mb-6 p-5 sm:p-6 rounded-xl border border-surface-200 dark:border-surface-800">
@@ -26,19 +39,26 @@
 
                     <div>
                         <x-input-label for="username" :value="__('PPPoE / Hotspot Username')" />
-                        <x-text-input id="username" name="username" type="text" class="mt-1 block w-full font-mono" :value="old('username', $customer->username)" required />
+                        <x-text-input id="username" name="username" type="text" class="mt-1 block w-full font-mono" :value="old('username', $customer->username)" :disabled="! $canAdmin" required />
                         <x-input-error class="mt-2" :messages="$errors->get('username')" />
                     </div>
 
                     <div>
                         <div class="flex justify-between items-end mb-1">
                             <x-input-label for="password" :value="__('Network Password')" />
+                            @if($canAdmin)
                             <button type="button" id="regen_password" class="text-indigo-600 text-xs hover:text-indigo-800 transition-colors flex items-center">
                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                                 Regenerate
                             </button>
+                            @endif
                         </div>
-                        <x-text-input id="password" name="password" type="text" class="block w-full font-mono" :value="old('password', $customer->password)" required />
+                        @if($canTech)
+                            <x-text-input id="password" name="password" type="text" class="block w-full font-mono" :value="$canAdmin ? old('password', $customer->password) : $customer->password" :disabled="! $canAdmin" required />
+                        @else
+                            {{-- Sales tidak melihat password PPPoE (sama seperti halaman detail) --}}
+                            <x-text-input id="password" type="text" class="block w-full font-mono" value="••••••••" disabled />
+                        @endif
                         <x-input-error class="mt-2" :messages="$errors->get('password')" />
                     </div>
                 </div>
@@ -54,7 +74,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
                         <x-input-label for="customer_type" :value="__('Customer Priority Type')" />
-                        <select id="customer_type" name="customer_type" class="mt-1 input" required>
+                        <select id="customer_type" name="customer_type" class="mt-1 input" @disabled(! $canAdmin) required>
                             <option value="personal" {{ old('customer_type', $customer->customer_type) == 'personal' ? 'selected' : '' }}>Personal / Residential</option>
                             <option value="corporate" {{ old('customer_type', $customer->customer_type) == 'corporate' ? 'selected' : '' }}>Corporate / Business</option>
                             <option value="vip" {{ old('customer_type', $customer->customer_type) == 'vip' ? 'selected' : '' }}>VIP / Prioritas Tinggi</option>
@@ -63,12 +83,12 @@
 
                     <div>
                         <x-input-label for="name" :value="__('Full Name / Company Name')" />
-                        <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $customer->name)" required />
+                        <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $customer->name)" :disabled="! $canAdmin" required />
                     </div>
 
                     <div>
                         <x-input-label for="ktp" :value="__('Nomor KTP (NIK) / NPWP')" />
-                        <x-text-input id="ktp" name="ktp" type="text" class="mt-1 block w-full" :value="old('ktp', $customer->ktp)" placeholder="16 Digit NIK" />
+                        <x-text-input id="ktp" name="ktp" type="text" class="mt-1 block w-full" :value="old('ktp', $customer->ktp)" placeholder="16 Digit NIK" :disabled="! $canAdmin" />
                     </div>
 
                     <div>
@@ -90,7 +110,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <x-input-label for="region_code" :value="__('Region')" />
-                        <select id="region_code" name="region_code" class="mt-1 input" required>
+                        <select id="region_code" name="region_code" class="mt-1 input" @disabled(! $canTech) required>
                             <option value="">-- Pilih Wilayah --</option>
                             @foreach($regions as $r)
                                 <option value="{{ $r->code }}" data-id="{{ $r->id }}" {{ old('region_code', $customer->region_code) == $r->code ? 'selected' : '' }}>[{{ $r->code }}] {{ $r->name }}</option>
@@ -99,7 +119,7 @@
                     </div>
                     <div>
                         <x-input-label for="sto_code" :value="__('STO')" />
-                        <select id="sto_code" name="sto_code" class="mt-1 input" required>
+                        <select id="sto_code" name="sto_code" class="mt-1 input" @disabled(! $canTech) required>
                             <option value="">-- Pilih STO --</option>
                             @foreach($stos as $s)
                                 <option value="{{ $s->code }}" data-id="{{ $s->id }}" data-region-id="{{ $s->region_id }}" class="hidden" {{ old('sto_code', $customer->sto_code) == $s->code ? 'selected' : '' }}>[{{ $s->code }}] {{ $s->name }}</option>
@@ -108,7 +128,7 @@
                     </div>
                     <div>
                         <x-input-label for="stb_code" :value="__('STB')" />
-                        <select id="stb_code" name="stb_code" class="mt-1 input" required>
+                        <select id="stb_code" name="stb_code" class="mt-1 input" @disabled(! $canTech) required>
                             <option value="">-- Pilih STB --</option>
                             @foreach($stbs as $t)
                                 <option value="{{ $t->code }}" data-sto-id="{{ $t->sto_id }}" class="hidden" {{ old('stb_code', $customer->stb_code) == $t->code ? 'selected' : '' }}>[{{ $t->code }}] {{ $t->name }}</option>
@@ -119,6 +139,8 @@
             </div>
 
 
+            {{-- Tagihan, mitra/sales, paket, diskon, PPN, status & biaya: hanya admin (terkunci untuk role lain) --}}
+            <fieldset @disabled(! $canAdmin) class="min-w-0 {{ $canAdmin ? '' : 'opacity-70' }}">
             <!-- Section: Billing Configuration -->
             <div class="pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Billing Configuration</h3>
@@ -297,7 +319,7 @@
                     <div>
                         <x-input-label for="is_active" :value="__('Account Status')" />
                         @if(in_array($customer->status, \App\Models\Customer::BILLABLE_STATUSES, true))
-                            <select id="is_active" name="is_active" class="mt-1 input" {{ auth()->user()->isSales() ? 'disabled' : '' }}>
+                            <select id="is_active" name="is_active" class="mt-1 input">
                                 <option value="1" {{ old('is_active', $customer->is_active) == '1' ? 'selected' : '' }}>Aktif</option>
                                 <option value="0" {{ old('is_active', $customer->is_active) == '0' ? 'selected' : '' }}>Terisolir</option>
                             </select>
@@ -323,7 +345,7 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 text-sm">Rp</span>
                             </div>
-                            <input type="text" id="display_installation_fee" placeholder="0,00" class="block w-full pl-10 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" oninput="formatCurrency(this, 'installation_fee')" onblur="finalizeCurrency(this, 'installation_fee')">
+                            <input type="text" id="display_installation_fee" placeholder="0,00" @unless($canAdmin) style="opacity:.6;cursor:not-allowed" @endunless class="block w-full pl-10 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 rounded-md shadow-sm" oninput="formatCurrency(this, 'installation_fee')" onblur="finalizeCurrency(this, 'installation_fee')">
                             <input type="hidden" id="installation_fee" name="installation_fee" value="{{ old('installation_fee', $customer->installation_fee) }}">
                         </div>
                         <p class="mt-1 text-xs text-surface-500 dark:text-surface-400">Biaya pemasangan awal.</p>
@@ -331,6 +353,7 @@
                     </div>
                 </div>
             </div>
+            </fieldset>
 
             <div class="flex items-center justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
                 <a href="{{ route('customers.index') }}" class="mr-4 text-gray-600 dark:text-gray-400 hover:underline">Batal</a>
@@ -451,6 +474,8 @@
             var regionSelect = document.getElementById('region_code');
             var stoSelect = document.getElementById('sto_code');
             var stbSelect = document.getElementById('stb_code');
+            // Wilayah/STO/STB terkunci untuk sales: jangan dibuka lagi oleh skrip filter
+            var locationLocked = @json(! $canTech);
 
             function filterStos(preserveValue) {
                 var selectedOption = regionSelect.options[regionSelect.selectedIndex];
@@ -459,7 +484,7 @@
                 if(!preserveValue) stoSelect.value = '';
                 
                 if(regionId) {
-                    stoSelect.disabled = false;
+                    stoSelect.disabled = locationLocked;
                     for(var i = 0; i < stoSelect.options.length; i++) {
                         var opt = stoSelect.options[i];
                         if(opt.value === "") continue;
@@ -485,7 +510,7 @@
                 if(!preserveValue) stbSelect.value = '';
 
                 if(stoId) {
-                    stbSelect.disabled = false;
+                    stbSelect.disabled = locationLocked;
                     for(var i = 0; i < stbSelect.options.length; i++) {
                         var opt = stbSelect.options[i];
                         if(opt.value === "") continue;
