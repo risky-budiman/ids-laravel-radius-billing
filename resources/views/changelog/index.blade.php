@@ -19,9 +19,9 @@
                 <h2>Riwayat Pembaruan</h2>
                 <p class="page-subtitle">Versi terpasang <span class="font-mono font-semibold">{{ $currentVersion }}</span> · perubahan per versi, terbaru di atas.</p>
             </div>
-            @if(auth()->user()->isAdministrator())
+            @canroute('changelog.store')
                 <button type="button" x-data @click="$dispatch('open-modal', 'add-changelog')" class="btn-secondary btn-sm">Tambah catatan manual</button>
-            @endif
+            @endcanroute
         </div>
     </x-slot>
 
@@ -90,6 +90,7 @@
         <div>{{ $changelogs->links() }}</div>
     </div>
 
+    @canroute('changelog.store')
     <x-modal name="add-changelog" focusable>
         <form method="post" action="{{ route('changelog.store') }}" class="p-6 space-y-4">
             @csrf
@@ -128,4 +129,5 @@
             </div>
         </form>
     </x-modal>
+    @endcanroute
 </x-app-layout>

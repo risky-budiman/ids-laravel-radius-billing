@@ -30,7 +30,7 @@
 
     {{-- Brand --}}
     <div class="flex items-center justify-between h-16 px-4 shrink-0 border-b border-surface-200 dark:border-surface-800">
-        <a href="{{ $isPortal ? route('customer.dashboard') : route('dashboard') }}" class="flex items-center gap-3 min-w-0">
+        <a href="{{ $isPortal ? route('customer.dashboard') : (auth()->user()?->isMitra() ? route('partners.show', auth()->user()) : route('dashboard')) }}" class="flex items-center gap-3 min-w-0">
             @if($logo)
                 <img src="{{ asset('storage/' . $logo) }}" alt="" class="w-8 h-8 rounded-lg object-contain bg-white ring-1 ring-surface-200 dark:ring-surface-700">
             @else

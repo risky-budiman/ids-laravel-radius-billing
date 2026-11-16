@@ -23,6 +23,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // @canroute('packages.create') … @endcanroute — tampilkan tombol/tautan hanya bila rutenya boleh dibuka
+        // pengguna ini (sumber yang sama dengan middleware role pada rute; lihat App\Support\RouteAccess).
+        \Illuminate\Support\Facades\Blade::if('canroute', function (string ...$routes) {
+            $user = auth()->user();
+            if (! $user instanceof \App\Models\User) {
+                return false;
+            }
+            foreach ($routes as $route) {
+                if (! \App\Support\RouteAccess::allows($user, $route)) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
         // Limiter terpisah untuk verifikasi & kirim ulang OTP portal. `throttle:N,1` biasa memakai satu
         // penghitung per IP untuk semua rute, sehingga beberapa kali salah ketik kode memblokir "kirim ulang".
         \Illuminate\Support\Facades\RateLimiter::for('portal-otp-verify', fn ($request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(20)->by('verify|' . $request->ip()));

@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.157] - 2026-11-16
+
+### Fitur baru
+- **roles:** Route roles as the single source of access; 'Hak Akses per Role' page
+
 ## [v1.5.156] - 2026-11-16
 
 ### Fitur baru

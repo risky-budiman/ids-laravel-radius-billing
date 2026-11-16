@@ -390,6 +390,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
     Route::middleware('role:administrator')->group(function () {
         Route::resource('nas', \App\Http\Controllers\NasController::class);
         Route::resource('users', \App\Http\Controllers\UserController::class);
+        Route::get('access-matrix', \App\Http\Controllers\AccessMatrixController::class)->name('access.matrix');
         Route::post('users/{user}/toggle-status', [\App\Http\Controllers\UserController::class, 'toggleStatus'])->name('users.toggle-status');
         Route::post('users/{user}/reset-sessions', [\App\Http\Controllers\UserController::class, 'resetSessions'])->name('users.reset-sessions');
         

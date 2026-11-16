@@ -63,7 +63,7 @@
                         @forelse($toBeSuspended as $s)
                             <tr>
                                 <td>
-                                    <a href="{{ route('customers.show', $s['customer']) }}" class="font-medium text-primary-600 hover:underline dark:text-primary-400">{{ $s['customer']->name }}</a>
+                                    @canroute('customers.show')<a href="{{ route('customers.show', $s['customer']) }}" class="font-medium text-primary-600 hover:underline dark:text-primary-400">{{ $s['customer']->name }}</a>@else<span class="font-medium text-surface-900 dark:text-white">{{ $s['customer']->name }}</span>@endcanroute
                                     <span class="block text-xs text-surface-500">{{ $s['customer']->customer_code }}</span>
                                 </td>
                                 <td class="text-xs whitespace-nowrap">{{ $s['customer']->phone ?: '—' }}</td>
@@ -140,7 +140,7 @@
                             <tr>
                                 <td class="min-w-[12rem]">
                                     @if($c['customer'])
-                                        <a href="{{ route('customers.show', $c['customer']) }}" class="font-medium text-primary-600 hover:underline dark:text-primary-400">{{ $c['customer']->name }}</a>
+                                        @canroute('customers.show')<a href="{{ route('customers.show', $c['customer']) }}" class="font-medium text-primary-600 hover:underline dark:text-primary-400">{{ $c['customer']->name }}</a>@else<span class="font-medium text-surface-900 dark:text-white">{{ $c['customer']->name }}</span>@endcanroute
                                         <span class="block text-xs text-surface-500">{{ $c['customer']->customer_code }} · {{ $c['invoice_count'] }} invoice</span>
                                     @else
                                         <span class="text-surface-400">Pelanggan dihapus</span>

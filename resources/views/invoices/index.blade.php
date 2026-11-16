@@ -371,7 +371,8 @@ Alasan:'); if (!r) return false; this.reason.value = r;">
         </div>
 
         <!-- Bulk Payment Modal -->
-        <div x-show="showBulkPayModal" 
+        @canroute('invoices.bulk-mark-paid')
+        <div x-show="showBulkPayModal"
              class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm" 
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 scale-95"
@@ -429,8 +430,10 @@ Alasan:'); if (!r) return false; this.reason.value = r;">
                 </form>
             </div>
         </div>
+        @endcanroute
         <!-- Create Invoice Modal -->
-        <div x-show="showCreateModal" 
+        @canroute('invoices.store')
+        <div x-show="showCreateModal"
              class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm" 
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 scale-95"
@@ -613,6 +616,7 @@ Alasan:'); if (!r) return false; this.reason.value = r;">
                 </div>
             </div>
         </div>
+        @endcanroute
     </div>
 
 

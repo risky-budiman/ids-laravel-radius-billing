@@ -10,12 +10,12 @@
                 </p>
             </div>
             <div class="flex gap-3">
-                @if(auth()->user()->isAdministrator())
+                @canroute('accounting.coa.store')
                 <button @click="$dispatch('open-modal', 'add-account')" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm shadow-indigo-500/20">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     Tambah Akun Baru
                 </button>
-                @endif
+                @endcanroute
             </div>
         </div>
     </x-slot>
@@ -88,7 +88,11 @@
         </div>
     </div>
 
-    <!-- Modal: Tambah Akun (Minimal Implementation for Demo) -->
+    {{-- Akun induk untuk pilihan "Induk" (dipakai modal tambah & ubah) --}}
+    @php $rootSelects = \App\Models\ChartOfAccount::whereNull('parent_id')->orderBy('code')->get(); @endphp
+
+    <!-- Modal: Tambah Akun -->
+    @canroute('accounting.coa.store')
     <x-modal name="add-account" focusable>
         <form method="post" action="{{ route('accounting.coa.store') }}" class="p-8">
             @csrf
@@ -126,7 +130,6 @@
                                     if($children->count() > 0) $renderOptions($children, $depth + 1);
                                 }
                             };
-                            $rootSelects = \App\Models\ChartOfAccount::whereNull('parent_id')->orderBy('code')->get();
                             $renderOptions($rootSelects);
                         @endphp
                     </select>
@@ -139,6 +142,7 @@
             </div>
         </form>
     </x-modal>
+    @endcanroute
 
     <!-- Modal: Edit Akun -->
     <x-modal name="edit-account" focusable>

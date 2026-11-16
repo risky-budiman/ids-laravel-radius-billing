@@ -19,9 +19,10 @@ class AppShellRenderTest extends TestCase
     {
         return [
             'administrator' => ['administrator', ['Kelola Staf', 'Bagan Akun (COA)', 'Backup &amp; Restore'], []],
-            'admin' => ['admin', ['Pelanggan', 'Desain Invoice', 'Bagan Akun (COA)'], ['Kelola Staf', 'Backup &amp; Restore']],
+            // Desain Invoice khusus administrator (rute invoice-templates.* role:administrator); dulu menunya tampil lalu 403
+            'admin' => ['admin', ['Pelanggan', 'Bagan Akun (COA)'], ['Kelola Staf', 'Backup &amp; Restore', 'Desain Invoice']],
             'teknisi' => ['teknisi', ['Data OLT', 'Pengguna Online', 'Gudang'], ['Desain Invoice', 'Bagan Akun (COA)']],
-            'kasir' => ['kasir', ['Desain Invoice', 'Kas &amp; Bank'], ['Bagan Akun (COA)', 'Pelanggan', 'Laporan Keuangan']],
+            'kasir' => ['kasir', ['Kas &amp; Bank'], ['Bagan Akun (COA)', 'Pelanggan', 'Laporan Keuangan', 'Desain Invoice']],
             'sales' => ['sales', ['Dashboard Sales', 'Pelanggan', 'Tiket'], ['Desain Invoice', 'Kelola Staf']],
         ];
     }

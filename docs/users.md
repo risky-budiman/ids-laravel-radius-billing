@@ -18,6 +18,12 @@ Keamanan sistem bergantung pada pengelolaan akun staf dan hak aksesnya.
 
 Dasbor, data keuangan dan Log Aktivitas hanya tampil untuk role yang berhak (lihat *Dasbor*).
 
+### Hak Akses per Role (rincian)
+
+Menu **Pengaturan & Keamanan › Hak Akses per Role** (khusus administrator) menampilkan tabel fitur × role: **Penuh** (semua halaman & aksi), **Lihat** (hanya melihat), **Sebagian** (klik fitur untuk melihat aksi mana saja yang boleh), atau **—**. Tabel ini dibaca langsung dari aturan yang ditegakkan aplikasi, jadi selalu sesuai kenyataan.
+
+Menu di sidebar dan tombol di halaman (mis. *Paket Baru*, *Ubah*, *Aksi Massal*, *Catat Pemasukan*) mengikuti aturan yang sama: role yang tidak berhak tidak lagi melihat tombol yang ujungnya "403 Unauthorized". Aturan akses tidak bisa diubah dari layar agar tidak ada celah tidak sengaja; perubahan dilakukan oleh pengembang dan langsung terlihat di tabel ini.
+
 ## Akun Mitra (Partner / Reseller)
 
 Admin membuat akun mitra di **Manajemen > Mitra & Reseller** (menu muncul bila modul mitra diaktifkan di pengaturan), lengkap dengan besaran komisi (persen atau nominal tetap) dan rekening bank.

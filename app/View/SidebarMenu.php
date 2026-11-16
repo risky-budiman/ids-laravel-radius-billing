@@ -159,6 +159,7 @@ class SidebarMenu
         if ($isAdministrator) {
             $sections[] = ['label' => 'Pengaturan & Keamanan', 'items' => [
                 self::link('Kelola Staf', 'users.index', 'user-cog', ['users.*']),
+                self::link('Hak Akses per Role', 'access.matrix', 'shield-check', ['access.matrix']),
                 self::link('Pengaturan Aplikasi', 'settings.index', 'settings', ['settings.index', 'settings.update']),
                 self::link('Invoice & Portal', 'settings.company', 'receipt', ['settings.company*']),
                 self::link('Pengaturan Isolir', 'settings.isolation', 'shield-check', ['settings.isolation*']),
@@ -197,7 +198,7 @@ class SidebarMenu
         }
         $sections[] = ['label' => 'Aplikasi', 'items' => $app];
 
-        return self::finalize($sections);
+        return self::finalize($sections, $u);
     }
 
     // ------------------------------------------------------------------
@@ -228,12 +229,17 @@ class SidebarMenu
     /**
      * Buang route yang tidak terdaftar & section kosong, lalu tandai item aktif.
      */
-    protected static function finalize(array $sections): array
+    protected static function finalize(array $sections, ?User $staff = null): array
     {
         $request = request();
 
-        $resolve = function (array $link) use ($request) {
+        $resolve = function (array $link) use ($request, $staff) {
             if (! \Illuminate\Support\Facades\Route::has($link['route'])) {
+                return null;
+            }
+            // Menu staf hanya tampil bila rutenya memang boleh dibuka (sumber: middleware role pada rute)
+            if ($staff && ! \App\Support\RouteAccess::allows($staff, $link['route'])
+                && ! ($staff->isMitra() && $link['route'] === 'partners.show')) {
                 return null;
             }
             $link['url'] = route($link['route'], $link['params']);

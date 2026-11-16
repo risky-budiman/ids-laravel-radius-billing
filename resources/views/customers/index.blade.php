@@ -146,6 +146,7 @@
             </div>
 
             <!-- Bulk Action Bar -->
+            @canroute('customers.bulk-action')
             <div class="px-6 py-3 bg-slate-50 dark:bg-slate-900/30 border-b border-gray-100 dark:border-gray-700/50 flex flex-col md:flex-row items-center gap-3">
                 <span class="text-xs font-medium text-surface-500 dark:text-surface-400">Aksi Massal:</span>
                 <div class="flex items-center gap-2">
@@ -161,6 +162,7 @@
                     <button type="submit" onclick="return confirm('Apakah Anda yakin ingin menerapkan aksi massal ini?')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm hover:shadow-indigo-500/20">Terapkan</button>
                 </div>
             </div>
+            @endcanroute
 
             <div class="overflow-x-auto">
                 <table class="w-full text-left whitespace-nowrap">
@@ -258,7 +260,9 @@
                                             @endif
 
                                             <a href="{{ route('customers.show', $customer) }}" class="text-gray-400 hover:text-indigo-600 dark:text-gray-500 dark:hover:text-indigo-400 text-xs font-bold transition-colors">Rincian</a>
+                                            @canroute('customers.edit')
                                             <a href="{{ route('customers.edit', $customer) }}" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 text-xs font-bold transition-colors">Ubah</a>
+                                            @endcanroute
                                             
                                             @if(auth()->user()->isAdmin())
                                             <form action="{{ route('customers.destroy', $customer) }}" method="POST" onsubmit="return confirm('Hapus pelanggan ini secara permanen?')">
