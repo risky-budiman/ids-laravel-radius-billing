@@ -882,29 +882,12 @@ class OltController extends Controller
         return response()->json(['onus' => $onus, 'failed_ports' => $failedPorts, 'olt' => $olt->name]);
     }
 
-    /** Perbarui cache sinyal NOC & indeks ONU pelanggan dari hasil scan port. */
+    /**
+     * Perbarui cache sinyal NOC dari hasil pindai satu port (pencocokan SN/MAC dinormalkan, sama dengan NOC).
+     * Hanya satu port terbaca, jadi tidak ada yang ditandai "tidak ada di OLT".
+     */
     private function syncSignalCache(Olt $olt, array $onus): void
     {
-        foreach ($onus as $onuData) {
-            if (empty($onuData['sn'])) {
-                continue;
-            }
-            $customer = \App\Models\Customer::where('olt_id', $olt->id)->where('onu_sn', $onuData['sn'])->first();
-            if (! $customer) {
-                continue;
-            }
-            \App\Models\CustomerSignalCache::updateOrCreate(
-                ['customer_id' => $customer->id],
-                [
-                    'onu_index' => $onuData['index'],
-                    'rx_power' => is_numeric($onuData['signal'] ?? null) ? $onuData['signal'] : null,
-                    'status' => $onuData['status'] ?? null,
-                    'last_polled_at' => now(),
-                ]
-            );
-            if (($onuData['status'] ?? null) === 'online' && $customer->onu_index !== $onuData['index']) {
-                $customer->update(['onu_index' => $onuData['index']]);
-            }
-        }
+        app(\App\Services\Network\NocService::class)->syncCustomers($olt, ['onus' => $onus, 'ports_read' => 0, 'ports_total' => 1]);
     }
 }

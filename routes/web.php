@@ -180,7 +180,9 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
             Route::get('noc', [\App\Http\Controllers\NocController::class, 'index'])->name('noc.index');
             Route::get('noc/discovery', [\App\Http\Controllers\NocController::class, 'discovery'])->name('noc.discovery');
             Route::get('noc/signals', [\App\Http\Controllers\NocController::class, 'signals'])->name('noc.signals');
-        Route::get('noc/history/{customer}', [\App\Http\Controllers\NocController::class, 'history'])->name('noc.history');
+            Route::get('noc/history/{customer}', [\App\Http\Controllers\NocController::class, 'history'])->name('noc.history');
+            Route::post('noc/sync', [\App\Http\Controllers\NocController::class, 'sync'])->name('noc.sync');
+            Route::post('noc/discovery/scan', [\App\Http\Controllers\NocController::class, 'scanDiscovery'])->name('noc.discovery.scan');
 
             // OLT Management
             // Tambah/ubah/hapus OLT (kredensial perangkat) hanya administrator; teknisi melihat & memantau

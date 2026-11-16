@@ -36,8 +36,9 @@ class NocOltPortTest extends TestCase
         $this->assertSame(['OLT Mati'], $res['skipped']);
         $this->assertNotNull(Cache::get('noc_unconfigured'), 'hasil scan di-cache');
 
+        // Dasbor NOC tidak memindai SNMP saat dibuka (pindai ONU dari halaman Pencarian ONU)
         $teknisi = User::factory()->create(['role' => 'teknisi', 'is_active' => true]);
-        $this->actingAs($teknisi)->get(route('noc.index'))->assertOk()->assertSee('Tidak terpindai: OLT Mati');
+        $this->actingAs($teknisi)->get(route('noc.index'))->assertOk()->assertSee('OLT Mati')->assertSee('Tidak merespons');
     }
 
     public function test_olt_list_shows_cached_health_without_polling(): void

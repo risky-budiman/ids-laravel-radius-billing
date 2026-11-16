@@ -29,7 +29,7 @@ class NocSnapshot
             $data = [];
             foreach ($olts as $olt) {
                 try {
-                    $data[$olt->id] = (new OltGateway($olt))->getOltStatus();
+                    $data[$olt->id] = app()->makeWith(OltGateway::class, ['olt' => $olt])->getOltStatus();
                 } catch (\Throwable) {
                     $data[$olt->id] = ['status' => 'offline', 'cpu' => 0, 'uptime' => 'N/A', 'temp' => 0];
                 }

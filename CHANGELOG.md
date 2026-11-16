@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.167] - 2026-11-16
+
+### Fitur baru
+- **noc:** NOC Center rebuilt — working ONU polling for HSGQ, correct numbers, no queue, new pages
+
 ## [v1.5.166] - 2026-11-16
 
 ### Fitur baru

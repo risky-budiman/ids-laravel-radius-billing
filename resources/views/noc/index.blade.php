@@ -1,220 +1,195 @@
+@php
+    $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
+    $pct = fn ($a, $b) => $b > 0 ? round($a / $b * 100) : 0;
+    $statusLabel = ['offline' => 'Mati', 'los' => 'LOS', 'dying-gasp' => 'Listrik padam', 'not_found' => 'Tidak ada di OLT'];
+    $lastSync = $stats['last_sync_at'] ? \Carbon\Carbon::createFromTimestamp($stats['last_sync_at'])->locale('id') : null;
+    $sigTotal = $stats['signal_good'] + $stats['signal_warn'] + $stats['signal_critical'];
+@endphp
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-                <h2 class="font-bold text-2xl text-gray-900 dark:text-white tracking-tight">
-                    NOC Center (Operasional Jaringan)
-                </h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Pusat pemantauan infrastruktur jaringan dan perangkat pelanggan secara real-time.
+                <h2 class="font-bold text-2xl text-surface-900 dark:text-white leading-tight">NOC Center</h2>
+                <p class="text-sm text-surface-500 dark:text-surface-400">
+                    Kondisi jaringan & ONU pelanggan.
+                    <span x-data title="{{ $lastSync?->format('d/m/Y H:i') }}">Data ONU terakhir: <strong>{{ $lastSync ? $lastSync->diffForHumans() : 'belum pernah' }}</strong></span>
                 </p>
             </div>
-            <div class="flex gap-3">
-                <a href="{{ route('noc.index', ['refresh' => 1]) }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm shadow-indigo-500/20">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    Muat Ulang Status
-                </a>
+            <div class="flex items-center gap-2" x-data="nocSync()">
+                <span x-show="msg" x-cloak class="max-w-xs text-xs" :class="ok ? 'text-emerald-600' : 'text-rose-600'" x-text="msg"></span>
+                <a href="{{ route('noc.index', ['refresh' => 1]) }}" class="btn-secondary" title="Baca ulang CPU, suhu & uptime OLT"><x-icon name="server" class="w-4 h-4" /> Status OLT</a>
+                <button type="button" class="btn-primary" :disabled="busy" @click="run()">
+                    <svg x-show="busy" x-cloak class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    <x-icon name="refresh" class="w-4 h-4" x-show="!busy" />
+                    <span x-text="busy ? 'Membaca ONU semua OLT…' : 'Sinkron ONU'"></span>
+                </button>
             </div>
         </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            
-            <!-- NOC Quick Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
-                <!-- Online Users -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
-                            <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                        </div>
-                        <span class="flex h-3 w-3 relative">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                        </span>
-                    </div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Pengguna Online</p>
-                    <h3 class="text-3xl font-semibold text-gray-900 dark:text-white tabular-nums">{{ $stats['online'] }}</h3>
-                </div>
-
-                <!-- Offline Users -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-xl">
-                            <svg class="w-6 h-6 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-3.536 5 5 0 015-5m-9.193 9.193a9 9 0 01-2.121-6.364 9 9 0 019-9"></path></svg>
-                        </div>
-                    </div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Pengguna Offline</p>
-                    <h3 class="text-3xl font-semibold text-rose-600 dark:text-rose-400 tabular-nums">{{ $stats['offline'] }}</h3>
-                </div>
-
-                <!-- Discovery -->
-                <a href="{{ route('noc.discovery') }}" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:border-amber-400 transition-colors group">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl">
-                            <svg class="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        </div>
-                        <span class="text-xs font-bold text-amber-600 group-hover:underline">Discovery</span>
-                    </div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Discovery ONU</p>
-                    <h3 class="text-3xl font-semibold text-gray-900 dark:text-white tabular-nums">{{ $stats['unconfigured'] }}</h3>
-                    @if(! empty($stats['unconfigured_unscanned']))
-                        <p class="mt-1 text-xs text-amber-700 dark:text-amber-400">Tidak terpindai: {{ implode(', ', $stats['unconfigured_unscanned']) }}</p>
+    <div class="space-y-6">
+        {{-- Ringkasan --}}
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
+            <a href="{{ route('online-users.index') }}" class="card p-4 transition-colors hover:border-primary-300">
+                <div class="flex items-center justify-between"><p class="text-xs font-medium text-surface-500">PPPoE online</p><x-icon name="signal" class="w-4 h-4 text-surface-400" /></div>
+                <p class="mt-1 text-2xl font-semibold tabular-nums text-surface-900 dark:text-white">{{ $fmt($stats['pppoe_online']) }}<span class="text-base font-normal text-surface-400"> / {{ $fmt($stats['customers_active']) }}</span></p>
+                <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-200 dark:bg-surface-700"><div class="h-full rounded-full bg-emerald-500" style="width: {{ $pct($stats['pppoe_online'], $stats['customers_active']) }}%"></div></div>
+                <p class="mt-1.5 text-xs text-surface-500">{{ $fmt($stats['pppoe_offline']) }} pelanggan aktif offline{{ $stats['isolated_online'] ? ' · ' . $fmt($stats['isolated_online']) . ' terisolir tersambung' : '' }}</p>
+            </a>
+            <a href="{{ route('noc.signals', ['filter' => 'down']) }}" class="card p-4 transition-colors hover:border-primary-300">
+                <div class="flex items-center justify-between"><p class="text-xs font-medium text-surface-500">ONU online</p><x-icon name="chip" class="w-4 h-4 text-surface-400" /></div>
+                <p class="mt-1 text-2xl font-semibold tabular-nums text-surface-900 dark:text-white">{{ $fmt($stats['onu_online']) }}<span class="text-base font-normal text-surface-400"> / {{ $fmt($stats['onu_tracked']) }}</span></p>
+                <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-200 dark:bg-surface-700"><div class="h-full rounded-full bg-emerald-500" style="width: {{ $pct($stats['onu_online'], $stats['onu_tracked']) }}%"></div></div>
+                <p class="mt-1.5 text-xs {{ $stats['onu_down'] ? 'text-rose-600' : 'text-surface-500' }}">{{ $fmt($stats['onu_down']) }} mati{{ $stats['onu_not_found'] ? ' · ' . $fmt($stats['onu_not_found']) . ' tidak ada di OLT' : '' }}</p>
+            </a>
+            <a href="{{ route('noc.signals', ['filter' => 'critical']) }}" class="card p-4 transition-colors hover:border-primary-300">
+                <div class="flex items-center justify-between"><p class="text-xs font-medium text-surface-500">Sinyal optik</p><x-icon name="trending-down" class="w-4 h-4 text-surface-400" /></div>
+                <p class="mt-1 text-2xl font-semibold tabular-nums {{ $stats['signal_critical'] ? 'text-rose-600' : 'text-surface-900 dark:text-white' }}">{{ $fmt($stats['signal_critical']) }}<span class="text-base font-normal text-surface-400"> kritis</span></p>
+                <div class="mt-2 flex h-1.5 overflow-hidden rounded-full bg-surface-200 dark:bg-surface-700">
+                    @if($sigTotal)
+                        <div class="bg-emerald-500" style="width: {{ $pct($stats['signal_good'], $sigTotal) }}%"></div>
+                        <div class="bg-amber-500" style="width: {{ $pct($stats['signal_warn'], $sigTotal) }}%"></div>
+                        <div class="bg-rose-500" style="width: {{ $pct($stats['signal_critical'], $sigTotal) }}%"></div>
                     @endif
-                </a>
-
-                <!-- Critical Signals -->
-                <a href="{{ route('noc.signals', ['filter' => 'critical']) }}" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:border-rose-400 transition-colors group">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-xl text-rose-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2"></path></svg>
-                        </div>
-                        <span class="text-xs font-bold text-rose-600 group-hover:underline">Pantau</span>
-                    </div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Sinyal Lemah</p>
-                    <h3 class="text-3xl font-semibold text-gray-900 dark:text-white tabular-nums">{{ $stats['critical_signals'] }}</h3>
-                </a>
-
-                <!-- Tickets -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
-                        </div>
-                    </div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Tiket Gangguan</p>
-                    <h3 class="text-3xl font-semibold text-gray-900 dark:text-white tabular-nums">{{ $stats['open_tickets'] }}</h3>
                 </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Main Monitoring Area -->
-                <div class="lg:col-span-2 space-y-8">
-                    <!-- OLT Status Section -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                        <div class="p-6 border-b border-gray-50 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
-                            <h3 class="font-bold text-gray-900 dark:text-white flex items-center">
-                                <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
-                                Pemantauan Infrastruktur Langsung
-                            </h3>
-                            <span class="text-xs text-gray-500 font-mono">Sinkron terakhir: {{ now()->format('H:i:s') }}</span>
-                        </div>
-                        @if($olts->isEmpty())
-                        <div class="p-12 text-center">
-                            <div class="inline-flex p-4 bg-gray-50 dark:bg-gray-900 rounded-full mb-4">
-                                <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
-                            </div>
-                            <h4 class="text-lg font-bold text-gray-900 dark:text-white">Belum Ada OLT Terdaftar</h4>
-                            <p class="text-sm text-gray-500 max-w-xs mx-auto mt-2">Hubungkan OLT Anda via SNMP untuk memantau trafik PON Port dan redaman ONU secara otomatis.</p>
-                            @if(auth()->user()->isAdministrator())
-                            <a href="{{ route('olts.create') }}" class="mt-6 inline-block px-6 py-2 bg-gray-900 dark:bg-white dark:text-gray-900 text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity">
-                                + Daftarkan OLT
-                            </a>
-                            @endif
-                        </div>
-                        @else
-                        <div class="p-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                @foreach($olts as $olt)
-                                    <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-700">
-                                        <div class="flex justify-between items-start mb-3">
-                                            <div class="flex items-center">
-                                                <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 mr-3">
-                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
-                                                </div>
-                                                <div>
-                                                    <h4 class="font-bold text-gray-900 dark:text-white">{{ $olt->name }}</h4>
-                                                    <p class="text-xs text-gray-500 font-mono">{{ $olt->ip_address }}</p>
-                                                </div>
-                                            </div>
-                                            <span class="flex h-2 w-2 relative">
-                                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full {{ $olt->is_active ? 'bg-emerald-400' : 'bg-gray-400' }} opacity-75"></span>
-                                                <span class="relative inline-flex rounded-full h-2 w-2 {{ $olt->is_active ? 'bg-emerald-500' : 'bg-gray-500' }}"></span>
-                                            </span>
-                                        </div>
-                                        <div class="grid grid-cols-3 gap-2 text-xs font-bold tracking-wider text-gray-400">
-                                            @php
-                                                $stats = $oltStats[$olt->id] ?? ['status' => 'offline', 'cpu' => 0, 'uptime' => 'N/A', 'temp' => 0];
-                                                $cpuColor = $stats['cpu'] > 70 ? 'text-rose-500' : ($stats['cpu'] > 40 ? 'text-amber-500' : 'text-gray-900 dark:text-gray-200');
-                                            @endphp
-                                            <div class="bg-white dark:bg-gray-800 p-2 rounded-lg text-center">
-                                                <span class="block {{ $cpuColor }} text-xs">{{ $stats['cpu'] }}%</span>
-                                                CPU
-                                            </div>
-                                            <div class="bg-white dark:bg-gray-800 p-2 rounded-lg text-center">
-                                                <span class="block {{ $stats['status'] === 'online' ? 'text-emerald-500' : 'text-rose-500' }} text-xs">
-                                                    {{ strtoupper($stats['status']) }}
-                                                </span>
-                                                STATUS
-                                            </div>
-                                            <div class="bg-white dark:bg-gray-800 p-2 rounded-lg text-center">
-                                                <span class="block text-gray-900 dark:text-gray-200 text-xs">{{ $stats['temp'] }}°C</span>
-                                                TEMP
-                                            </div>
-                                        </div>
-                                        <div class="mt-2 text-xs text-gray-400 font-mono text-center truncate px-2">
-                                            UPTIME: {{ $stats['uptime'] }}
-                                        </div>
-                                        <div class="mt-4">
-                                            <a href="{{ route('olts.show', $olt->id) }}" class="block w-full py-2 bg-white dark:bg-gray-800 text-center text-xs font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-100 transition-colors border border-gray-100 dark:border-gray-700">
-                                                RINCIAN
-                                            </a>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Right Sidebar: Recent Activity & Discovery -->
-                <div class="space-y-8">
-                    <!-- New Discovery Sidebar -->
-                    <div class="bg-gray-900 rounded-xl p-6 text-white shadow-sm">
-                        <h3 class="font-bold mb-4 flex items-center">
-                            <svg class="w-5 h-5 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            Deteksi Otomatis
-                        </h3>
-                        <div class="p-4 bg-white/5 rounded-xl border border-white/10 text-center">
-                            <p class="text-xs text-indigo-200 mb-4">Mencari ONU baru yang terdeteksi di PON Port OLT...</p>
-                            <div class="flex justify-center space-x-1 mb-4">
-                                <div class="w-1 h-4 bg-indigo-500 animate-bounce"></div>
-                                <div class="w-1 h-4 bg-indigo-400 animate-bounce" style="animation-delay: 0.1s"></div>
-                                <div class="w-1 h-4 bg-indigo-300 animate-bounce" style="animation-delay: 0.2s"></div>
-                            </div>
-                            <span class="text-xs text-indigo-300">Scanning...</span>
-                        </div>
-                    </div>
-
-                    <!-- Network Tools -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                        <h3 class="font-bold text-gray-900 dark:text-white mb-4">Alat Teknisi</h3>
-                        <div class="space-y-3">
-                            <button class="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors group">
-                                <div class="flex items-center">
-                                    <div class="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm mr-3">
-                                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                    </div>
-                                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">Ping Test</span>
-                                </div>
-                                <svg class="w-4 h-4 text-gray-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                            </button>
-                            <button class="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors group">
-                                <div class="flex items-center">
-                                    <div class="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm mr-3">
-                                        <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                    </div>
-                                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">Reboot ONU</span>
-                                </div>
-                                <svg class="w-4 h-4 text-gray-400 group-hover:text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+                <p class="mt-1.5 text-xs text-surface-500">{{ $fmt($stats['signal_good']) }} baik · {{ $fmt($stats['signal_warn']) }} waspada</p>
+            </a>
+            <a href="{{ route('noc.discovery') }}" class="card p-4 transition-colors hover:border-primary-300">
+                <div class="flex items-center justify-between"><p class="text-xs font-medium text-surface-500">ONU belum terdaftar</p><x-icon name="search" class="w-4 h-4 text-surface-400" /></div>
+                @if($unregistered)
+                    <p class="mt-1 text-2xl font-semibold tabular-nums {{ count($unregistered['onus']) ? 'text-amber-600' : 'text-surface-900 dark:text-white' }}">{{ count($unregistered['onus']) }}</p>
+                    <p class="mt-1.5 text-xs text-surface-500">dipindai {{ \Carbon\Carbon::createFromTimestamp($unregistered['at'])->locale('id')->diffForHumans() }}</p>
+                @else
+                    <p class="mt-1 text-2xl font-semibold text-surface-300 dark:text-surface-600">—</p>
+                    <p class="mt-1.5 text-xs text-primary-600">Pindai sekarang →</p>
+                @endif
+            </a>
+            <a href="{{ route('tickets.index', ['type' => 'gangguan']) }}" class="card col-span-2 p-4 transition-colors hover:border-primary-300 lg:col-span-1">
+                <div class="flex items-center justify-between"><p class="text-xs font-medium text-surface-500">Tiket gangguan terbuka</p><x-icon name="ticket" class="w-4 h-4 text-surface-400" /></div>
+                <p class="mt-1 text-2xl font-semibold tabular-nums {{ $openFaults ? 'text-amber-600' : 'text-surface-900 dark:text-white' }}">{{ $fmt($openFaults) }}</p>
+                <p class="mt-1.5 text-xs text-surface-500">belum selesai</p>
+            </a>
         </div>
+
+        {{-- OLT --}}
+        <section>
+            <div class="mb-3 flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-surface-900 dark:text-white">OLT</h3>
+                <a href="{{ route('olts.index') }}" class="text-xs text-primary-600 hover:underline">Kelola OLT →</a>
+            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                @forelse($olts as $olt)
+                    @php
+                        $s = $oltStats[$olt->id] ?? null;
+                        $up = ($s['status'] ?? null) === 'online';
+                        $cpu = (int) ($s['cpu'] ?? 0);
+                        $temp = (int) ($s['temp'] ?? 0);
+                        $o = $oltOnus[$olt->id] ?? null;
+                    @endphp
+                    <a href="{{ route('olts.show', $olt) }}" class="card p-4 transition-colors hover:border-primary-300">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="truncate font-semibold text-surface-900 dark:text-white">{{ $olt->name }}</p>
+                                <p class="font-mono text-xs text-surface-500">{{ $olt->ip_address }} · {{ $olt->typeLabel() }}</p>
+                            </div>
+                            <span class="{{ $up ? 'badge-success' : ($s ? 'badge-danger' : 'badge-gray') }}">
+                                @if($up)<span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>@endif
+                                {{ $up ? 'Online' : ($s ? 'Tidak merespons' : 'Belum dicek') }}
+                            </span>
+                        </div>
+                        <div class="mt-4 grid grid-cols-4 gap-2 text-center">
+                            <div><p class="text-[11px] text-surface-500">ONU</p><p class="text-sm font-semibold tabular-nums text-surface-900 dark:text-white">{{ $o ? $o['online'] . '/' . $o['total'] : '—' }}</p></div>
+                            <div><p class="text-[11px] text-surface-500">CPU</p><p class="text-sm font-semibold tabular-nums {{ $cpu >= 85 ? 'text-rose-600' : 'text-surface-900 dark:text-white' }}">{{ $up ? $cpu . '%' : '—' }}</p></div>
+                            <div><p class="text-[11px] text-surface-500">Suhu</p><p class="text-sm font-semibold tabular-nums {{ $temp >= 65 ? 'text-rose-600' : ($temp >= 55 ? 'text-amber-600' : 'text-surface-900 dark:text-white') }}">{{ $up && $temp ? $temp . '°C' : '—' }}</p></div>
+                            <div><p class="text-[11px] text-surface-500">Uptime</p><p class="truncate text-sm font-semibold text-surface-900 dark:text-white">{{ $up ? ($s['uptime'] ?? '—') : '—' }}</p></div>
+                        </div>
+                        @if($o && $o['total'])
+                            <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-200 dark:bg-surface-700"><div class="h-full rounded-full bg-emerald-500" style="width: {{ $pct($o['online'], $o['total']) }}%"></div></div>
+                        @endif
+                    </a>
+                @empty
+                    <div class="card p-6 text-sm text-surface-500">Belum ada OLT aktif. <a href="{{ route('olts.index') }}" class="text-primary-600 hover:underline">Tambah OLT</a></div>
+                @endforelse
+            </div>
+        </section>
+
+        {{-- Yang perlu ditindaklanjuti --}}
+        <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <section class="card overflow-hidden">
+                <div class="card-header flex items-center justify-between">
+                    <div>
+                        <h3 class="card-title">ONU pelanggan aktif bermasalah</h3>
+                        <p class="text-xs text-surface-500">Mati / LOS / tidak ditemukan di OLT pada sinkron terakhir.</p>
+                    </div>
+                    <a href="{{ route('noc.signals', ['filter' => 'down']) }}" class="text-xs text-primary-600 hover:underline">Semua →</a>
+                </div>
+                <ul class="divide-y divide-surface-100 dark:divide-surface-800">
+                    @forelse($down as $row)
+                        <li>
+                            <a href="{{ route('noc.history', $row->customer_id) }}" class="flex items-center justify-between gap-3 px-5 py-2.5 hover:bg-surface-50 dark:hover:bg-surface-800/40">
+                                <span class="min-w-0">
+                                    <span class="block truncate text-sm font-medium text-surface-900 dark:text-white">{{ $row->customer->name }}</span>
+                                    <span class="block font-mono text-[11px] text-surface-500">{{ $row->customer->customer_code }} · {{ $row->onu_index }}</span>
+                                </span>
+                                <span class="text-right">
+                                    <span class="badge-danger">{{ $statusLabel[$row->status] ?? $row->status }}</span>
+                                    <span class="block text-[11px] text-surface-500">{{ $row->last_polled_at?->locale('id')->diffForHumans() }}</span>
+                                </span>
+                            </a>
+                        </li>
+                    @empty
+                        <li class="px-5 py-8 text-center text-sm text-surface-500"><x-icon name="check-circle" class="mx-auto mb-1 w-6 h-6 text-emerald-500" /> Tidak ada ONU pelanggan aktif yang mati.</li>
+                    @endforelse
+                </ul>
+            </section>
+
+            <section class="card overflow-hidden">
+                <div class="card-header flex items-center justify-between">
+                    <div>
+                        <h3 class="card-title">Sinyal kritis terlemah</h3>
+                        <p class="text-xs text-surface-500">Rx &lt; {{ \App\Services\Network\NocService::CRITICAL_DBM }} dBm — cek konektor, kabel drop atau splitter.</p>
+                    </div>
+                    <a href="{{ route('noc.signals', ['filter' => 'critical']) }}" class="text-xs text-primary-600 hover:underline">Semua →</a>
+                </div>
+                <ul class="divide-y divide-surface-100 dark:divide-surface-800">
+                    @forelse($critical as $row)
+                        <li>
+                            <a href="{{ route('noc.history', $row->customer_id) }}" class="flex items-center justify-between gap-3 px-5 py-2.5 hover:bg-surface-50 dark:hover:bg-surface-800/40">
+                                <span class="min-w-0">
+                                    <span class="block truncate text-sm font-medium text-surface-900 dark:text-white">{{ $row->customer->name }}</span>
+                                    <span class="block font-mono text-[11px] text-surface-500">{{ $row->customer->customer_code }} · {{ $row->onu_index }}</span>
+                                </span>
+                                <span class="whitespace-nowrap text-sm font-semibold tabular-nums text-rose-600">{{ number_format($row->rx_power, 2) }} dBm</span>
+                            </a>
+                        </li>
+                    @empty
+                        <li class="px-5 py-8 text-center text-sm text-surface-500"><x-icon name="check-circle" class="mx-auto mb-1 w-6 h-6 text-emerald-500" /> Tidak ada sinyal kritis.</li>
+                    @endforelse
+                </ul>
+            </section>
+        </div>
+
+        <p class="text-xs text-surface-500">
+            <strong>Sinkron ONU</strong> membaca semua ONU di semua OLT (± beberapa detik per OLT) lalu memperbarui status & sinyal pelanggan.
+            Pemantauan otomatis & peringatan WhatsApp diatur di
+            @canroute('integrations.noc-bot')<a href="{{ route('integrations.noc-bot') }}" class="text-primary-600 hover:underline">Integrasi › Bot NOC</a>@else Integrasi › Bot NOC @endcanroute.
+        </p>
     </div>
+
+    @push('scripts')
+    <script>
+        function nocSync() {
+            return {
+                busy: false, msg: '', ok: true,
+                run() {
+                    this.busy = true; this.msg = '';
+                    fetch(@js(route('noc.sync', [], false)), { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content } })
+                        .then(async r => { const d = await r.json().catch(() => ({})); this.ok = r.ok && d.success; this.msg = d.message || ('HTTP ' + r.status); if (this.ok) setTimeout(() => location.reload(), 1200); })
+                        .catch(() => { this.ok = false; this.msg = 'Gagal menghubungi server.'; })
+                        .finally(() => this.busy = false);
+                },
+            };
+        }
+    </script>
+    @endpush
 </x-app-layout>

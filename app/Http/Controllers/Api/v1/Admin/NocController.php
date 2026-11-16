@@ -18,17 +18,16 @@ class NocController extends Controller
      */
     public function index(Request $request)
     {
-        $onlineCount = RadAcct::online()->distinct('username')->count('username');
-        $activeCustomers = Customer::where('status', 'active')->count();
-        $offlineCount = max(0, $activeCustomers - $onlineCount);
+        // Angka sama dengan dasbor web (NocService): online = pelanggan AKTIF yang punya sesi PPPoE
+        $dash = app(\App\Services\Network\NocService::class)->dashboard();
 
         $olts = Olt::where('is_active', true)->withCount('ponPorts')->get();
 
         // Sama dengan dasbor web: cache 5 menit & OLT offline tidak dipindai (dulu dipindai setiap panggilan)
         $fresh = $request->boolean('refresh');
         $statuses = \App\Services\Network\NocSnapshot::oltStatuses($olts, $fresh);
-        $unconfigured = \App\Services\Network\NocSnapshot::unconfigured($olts, $fresh);
-        $unconfiguredList = $unconfigured['onus'];
+        $unregistered = \Illuminate\Support\Facades\Cache::get('noc_unregistered');
+        $unconfiguredList = $unregistered['onus'] ?? [];
 
         $oltTelemetry = [];
         foreach ($olts as $olt) {
@@ -47,20 +46,24 @@ class NocController extends Controller
             ];
         }
 
-        $criticalCount = CustomerSignalCache::where('rx_power', '<', -27)->count();
-        $warningCount = CustomerSignalCache::whereBetween('rx_power', [-27, -24])->count();
-        $goodCount = CustomerSignalCache::where('rx_power', '>', -24)->count();
-
         return response()->json([
             'stats' => [
-                'total_ont' => Customer::whereNotNull('activated_at')->count(),
-                'online_ont' => $onlineCount,
-                'offline_ont' => $offlineCount,
+                // Kunci lama dipertahankan untuk aplikasi staf
+                'total_ont' => $dash['onu_tracked'],
+                'online_ont' => $dash['pppoe_online'],
+                'offline_ont' => $dash['pppoe_offline'],
                 'unconfigured_count' => count($unconfiguredList),
-                'unconfigured_unscanned' => array_merge($unconfigured['skipped'], $unconfigured['failed']),
-                'signals_good' => $goodCount,
-                'signals_warning' => $warningCount,
-                'signals_critical' => $criticalCount,
+                'unconfigured_unscanned' => collect($unregistered['olts'] ?? [])->where('state', '!=', 'ok')->pluck('name')->values()->all(),
+                'signals_good' => $dash['signal_good'],
+                'signals_warning' => $dash['signal_warn'],
+                'signals_critical' => $dash['signal_critical'],
+                'customers_active' => $dash['customers_active'],
+                'onu_online' => $dash['onu_online'],
+                'onu_down' => $dash['onu_down'],
+                'onu_not_found' => $dash['onu_not_found'],
+                'isolated_online' => $dash['isolated_online'],
+                'last_sync_at' => $dash['last_sync_at'] ? date('c', $dash['last_sync_at']) : null,
+                'unregistered_scanned_at' => isset($unregistered['at']) ? date('c', $unregistered['at']) : null,
             ],
             'olts' => $oltTelemetry,
             'unconfigured_onus' => $unconfiguredList,
@@ -70,26 +73,15 @@ class NocController extends Controller
     /**
      * List all unconfigured ONUs discovered via SNMP across OLTs.
      */
-    public function discovery()
+    public function discovery(Request $request)
     {
-        $olts = Olt::where('is_active', true)->get();
-        $unconfiguredList = [];
-
-        foreach ($olts as $olt) {
-            try {
-                $gateway = new OltGateway($olt);
-                $onus = $gateway->scanUnconfiguredOnus();
-                foreach ($onus as $onu) {
-                    $unconfiguredList[] = array_merge($onu, [
-                        'olt_id' => $olt->id,
-                        'olt_name' => $olt->name,
-                    ]);
-                }
-            } catch (\Throwable $e) {}
-        }
+        // Sama dengan web: HSGQ lewat web OLT (menunggu izin), ZTE lewat SNMP; disimpan 5 menit
+        $data = app(\App\Services\Network\NocService::class)->unregistered($request->boolean('refresh'));
 
         return response()->json([
-            'unconfigured_onus' => $unconfiguredList,
+            'unconfigured_onus' => $data['onus'],
+            'olts' => $data['olts'],
+            'scanned_at' => date('c', $data['at']),
         ]);
     }
 

@@ -62,7 +62,7 @@ Satu form untuk tambah & ubah: Identitas (nama, tipe, IP, lokasi, koordinat + Li
 > **Lokasi:** `Pengaturan > Integrasi > NOC Bot` → *Pemantauan otomatis OLT & peringatan*
 
 **Bawaan: Nonaktif.** Bila diaktifkan (setiap 5/10/15/30/60 menit; butuh cron `schedule:run`):
-- status & sinyal semua ONU dibaca lewat SNMP dan grafik riwayat sinyal terisi;
+- status & sinyal semua ONU dibaca per port PON (sama dengan Sinkron ONU) dan grafik riwayat sinyal terisi;
 - peringatan dikirim ke **Telegram** dan/atau **WhatsApp** (nomor atau grup) yang diisi di halaman yang sama:
   - **OLT mati** — sekali, lalu **OLT kembali online** saat pulih;
   - **ONU putus** (LOS / dying-gasp / offline) — hanya pelanggan **aktif** yang sebelumnya online;
@@ -70,10 +70,24 @@ Satu form untuk tambah & ubah: Identitas (nama, tipe, IP, lokasi, koordinat + Li
   - per pelanggan paling sering **sekali per 6 jam**, digabung dalam **satu pesan per OLT**;
 - riwayat sinyal lebih dari 30 hari dibersihkan setiap hari (`noc:prune`).
 
-### Dasbor NOC & halaman port
+### NOC Center
 
-- Status OLT dan jumlah **ONU belum terdaftar** di dasbor NOC (web & aplikasi) disimpan **5 menit**. Klik **Refresh** untuk memindai ulang.
-- OLT yang **offline tidak dipindai** (dasbor tidak menunggu timeout). OLT yang offline atau gagal dipindai ditampilkan sebagai *"Tidak terpindai: …"*, sehingga angka 0 tidak disalahartikan.
+> **Lokasi Menu:** `Operasional Jaringan › NOC Center` — Ringkasan Jaringan, Sinyal Optik, ONU Belum Terdaftar (administrator & teknisi)
+
+**Cara kerja:** ONU dibaca **per port PON** (HSGQ & ZTE — jalur yang sama dengan halaman port OLT) lalu dicocokkan ke pelanggan lewat **SN/MAC** (huruf besar/kecil & pemisah tidak berpengaruh). Pelanggan ber-SN yang OLT-nya belum diisi (mis. hasil impor) otomatis ditautkan ke OLT tempat ONU-nya ditemukan; posisi ONU yang berpindah diperbarui. Sebelum v1.5.167 pemantauan memakai tabel SNMP khusus ZTE sehingga untuk OLT HSGQ sinyal, status, peringatan & riwayat tidak pernah terisi.
+
+- **Sinkron ONU** (tombol di Ringkasan & Sinyal Optik): membaca semua ONU semua OLT **langsung** (± beberapa detik per OLT; tanpa antrean). Pemantauan terjadwal (`noc:monitor`) memakai jalur yang sama.
+- **Ringkasan Jaringan**:
+  - **PPPoE online** = pelanggan **aktif** yang punya sesi (sesi ganda dihitung sekali; pelanggan terisolir yang tersambung disebut terpisah);
+  - **ONU online / mati / tidak ada di OLT** dan **sinyal** baik/waspada/kritis — hanya pelanggan berlangganan (aktif & terisolir);
+  - kartu per OLT (status, CPU, suhu, uptime, ONU online/total dari pindai terakhir; **Status OLT** membaca ulang CPU/suhu/uptime);
+  - daftar **ONU pelanggan aktif bermasalah** dan **sinyal kritis terlemah** (klik untuk riwayat).
+- **Sinyal Optik**: semua pelanggan ber-SN, terburuk di atas; filter Kritis / Waspada / Baik / Mati / **Tidak ada di OLT** (SN pelanggan tidak ditemukan saat semua port terbaca — ONU diganti atau SN salah) / Belum terbaca; cari nama/kode/username/SN; filter OLT.
+- **Riwayat sinyal** (tombol *Grafik*): grafik Rx 24 jam / 7 hari / 30 hari dengan garis -24 & -27 dBm dan titik **ONU putus**, rata-rata, terlemah/terkuat, jumlah putus, catatan.
+- **ONU Belum Terdaftar**: **Pindai sekarang** mencari ONU yang tersambung tapi belum diizinkan — HSGQ lewat web OLT (belum diizinkan & daftar tolak; butuh *Akses web OLT*), ZTE lewat SNMP. Hasil disimpan 5 menit; OLT yang tidak bisa dibaca/tidak didukung diberi keterangan (bukan "0 ONU"). ONU yang SN-nya cocok dengan pelanggan ditautkan; **Allow** langsung dari daftar (HSGQ).
+
+### Halaman port OLT
+
 - **Halaman port** langsung tampil; daftar ONU diambil di latar. Hasil scan disimpan 10 menit; **Sinkron langsung** memindai ulang. Isinya:
   - ringkasan port: total ONU, online, offline, sinyal kritis, rata-rata Rx;
   - tabel ONU: posisi, nama & MAC/SN, **deskripsi**, **pelanggan yang tertaut** (klik untuk membuka data pelanggan), sinyal Rx berwarna (≥ -24 baik, -24 s/d -27 waspada, < -27 dBm kritis), jarak, status;

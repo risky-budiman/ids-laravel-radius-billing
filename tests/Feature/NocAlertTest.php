@@ -38,18 +38,21 @@ class NocAlertTest extends TestCase
         $this->olt = Olt::create(['name' => 'OLT Pusat', 'ip_address' => '10.0.0.5', 'snmp_port' => 161, 'snmp_version' => 2,
             'snmp_read_community' => 'public', 'telnet_port' => 23, 'olt_type' => 'ZTE_C320', 'is_active' => true]);
 
-        // Gateway palsu: hasil per SN diatur dari tes
+        \App\Models\OltPonPort::create(['olt_id' => $this->olt->id, 'slot' => 1, 'pon_port' => 1, 'status' => 'active']);
+
+        // Gateway palsu: ONU per port (jalur yang sama dengan halaman port OLT), hasil per SN diatur dari tes
         $this->gw = new class($this->olt) extends OltGateway {
             public array $result = [];
             public bool $down = false;
-            public function bulkWalkAllOnus(): array
+            public function getOnusOnPort(int $shelf, int $slot, int $port): array
             {
                 if ($this->down) throw new \RuntimeException('timeout');
-                return ['sns' => ['x' => 'y'], 'statuses' => [], 'signals' => []];
-            }
-            public function matchCustomerInBulkData(array $bulk, $index, $sn): array
-            {
-                return ($this->result[$sn] ?? []) + ['rx_power' => null, 'status' => 'unknown', 'real_index' => null];
+                $rows = [];
+                foreach ($this->result as $sn => $r) {
+                    $rows[] = ['index' => '1.1.1.' . (count($rows) + 1), 'sn' => strtolower($sn), 'status' => $r['status'] ?? 'online',
+                        'signal' => $r['rx_power'] ?? 'N/A'];
+                }
+                return $rows;
             }
             public function getOltStatus(): array { return ['status' => $this->down ? 'offline' : 'online']; }
         };

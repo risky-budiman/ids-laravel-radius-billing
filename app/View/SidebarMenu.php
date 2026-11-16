@@ -55,7 +55,7 @@ class SidebarMenu
             self::group('NOC Center', 'chart-bar', [
                 self::link('Ringkasan Jaringan', 'noc.index'),
                 self::link('Sinyal Optik', 'noc.signals', null, ['noc.signals', 'noc.history']),
-                self::link('Pencarian ONU Massal', 'noc.discovery'),
+                self::link('ONU Belum Terdaftar', 'noc.discovery'),
             ]),
             self::link('Data OLT', 'olts.index', 'server', ['olts.*'], [], ($oltWork = \App\Models\OltWorkItem::pending()->count()) ? (string) $oltWork : null),
             self::link('GenieACS', 'acs-servers.devices', 'chip', ['acs-servers.devices', 'acs-servers.device-details']),
