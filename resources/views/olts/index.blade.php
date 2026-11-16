@@ -4,9 +4,11 @@
             <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
                 {{ __('OLT Management') }}
             </h2>
+            @if(auth()->user()->isAdministrator())
             <a href="{{ route('olts.create') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm shadow-indigo-500/30">
                 + Tambah OLT
             </a>
+            @endif
         </div>
     </x-slot>
 
@@ -70,13 +72,15 @@
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         Kelola
                     </a>
-                    <form action="{{ route('olts.destroy', $olt->id) }}" method="POST" class="flex" onsubmit="return confirm('WARNING: Are you sure you want to delete this OLT?');">
+                    @if(auth()->user()->isAdministrator())
+                    <form action="{{ route('olts.destroy', $olt->id) }}" method="POST" class="flex" onsubmit="return confirm('Hapus OLT ini? OLT yang masih dipakai pelanggan tidak bisa dihapus.');">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="w-full flex items-center justify-center px-2 py-2 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-xl hover:bg-rose-100 transition-all" title="Hapus OLT">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </form>
+                    @endif
                 </div>
             </div>
         @endforeach
@@ -88,7 +92,9 @@
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Belum ada perangkat OLT</h3>
                 <p class="text-gray-500 dark:text-gray-400 mb-6">Mulai dengan menambahkan perangkat OLT pertama.</p>
+                @if(auth()->user()->isAdministrator())
                 <a href="{{ route('olts.create') }}" class="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all">Tambah OLT Pertama</a>
+                @endif
             </div>
         @endif
     </div>

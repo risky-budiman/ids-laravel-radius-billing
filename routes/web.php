@@ -182,7 +182,12 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::get('noc/history/{customer}', [\App\Http\Controllers\NocController::class, 'history'])->name('noc.history');
 
             // OLT Management
-            Route::resource('olts', \App\Http\Controllers\OltController::class);
+            // Tambah/ubah/hapus OLT (kredensial perangkat) hanya administrator; teknisi melihat & memantau
+            // (didaftarkan dulu agar olts/create tidak tertangkap olts/{olt})
+            Route::middleware('role:administrator')->group(function () {
+                Route::resource('olts', \App\Http\Controllers\OltController::class)->except(['index', 'show']);
+            });
+            Route::resource('olts', \App\Http\Controllers\OltController::class)->only(['index', 'show']);
             Route::post('olts/{olt}/test-connection', [\App\Http\Controllers\OltController::class, 'testConnection'])->name('olts.test-connection');
             Route::post('olts/{olt}/auto-discover-ports', [\App\Http\Controllers\OltController::class, 'autoDiscoverPorts'])->name('olts.auto-discover-ports');
             Route::post('olts/{olt}/generate-ports', [\App\Http\Controllers\OltController::class, 'generatePorts'])->name('olts.generate-ports');

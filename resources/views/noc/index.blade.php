@@ -104,9 +104,11 @@
                             </div>
                             <h4 class="text-lg font-bold text-gray-900 dark:text-white">Belum Ada OLT Terdaftar</h4>
                             <p class="text-sm text-gray-500 max-w-xs mx-auto mt-2">Hubungkan OLT Anda via SNMP untuk memantau trafik PON Port dan redaman ONU secara otomatis.</p>
+                            @if(auth()->user()->isAdministrator())
                             <a href="{{ route('olts.create') }}" class="mt-6 inline-block px-6 py-2 bg-gray-900 dark:bg-white dark:text-gray-900 text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity">
                                 + Daftarkan OLT
                             </a>
+                            @endif
                         </div>
                         @else
                         <div class="p-6">

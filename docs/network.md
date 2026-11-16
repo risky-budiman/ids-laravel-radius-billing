@@ -27,6 +27,14 @@ Sistem mendukung integrasi ke OLT ZTE (C300, C320, C600) dan HSGQ. Pemantauan me
 - **Data Pelanggan (ONU)**: Menampilkan Serial Number, Nama, Status Online/Offline, dan Daya Optik (Rx Power dalam satuan dBm) secara langsung via SNMP walk.
 - **Auto-Scan Modem Baru (Discovery)**: Memindai modem/ONU baru yang belum terkonfigurasi.
 
+### Hak akses & kredensial OLT
+
+- **Tambah, ubah dan hapus OLT hanya administrator.** Teknisi tetap bisa melihat OLT, tes koneksi, sinkron port dan melihat ONU.
+- **Password, enable password, read community dan write community disimpan terenkripsi** memakai `APP_KEY`. Jangan mengganti `APP_KEY` di server produksi: kredensial OLT tidak bisa dibaca lagi dan harus diisi ulang.
+- Form **Ubah OLT** tidak menampilkan community maupun password. Kosongkan kolomnya untuk tetap memakai nilai lama; isi hanya bila ingin menggantinya.
+- **OLT yang masih dipakai pelanggan tidak bisa dihapus.** Pindahkan pelanggan ke OLT lain terlebih dahulu.
+- Tambah, ubah dan hapus OLT tercatat di **Log Aktivitas** (`olt_created`, `olt_updated`, `olt_deleted`).
+
 ### Keamanan aksi tulis ke ONU
 
 Hapus ONU (dismantle, hapus pelanggan, hapus manual), isolir/buka ONU dan ganti profil kecepatan **hanya dijalankan bila SN di posisi ONU tersebut sama dengan SN pelanggan**. Sistem membaca SN di posisi itu lewat SNMP terlebih dahulu:
@@ -60,6 +68,8 @@ sudo apt install -y php8.3-snmp snmp
 3. **SNMP Version**: `v2c` (Rekomendasi).
 4. **Read Community (RO)**: Community string untuk membaca status (contoh: `public` atau `yabero`).
 5. **Write Community (RW)**: Community string untuk perintah modifikasi (contoh: `private` atau `yaberw`).
+
+Community dan password disimpan terenkripsi dan tidak ditampilkan lagi setelah disimpan (lihat *Hak akses & kredensial OLT*).
 
 ---
 *Teknis: Pastikan port 1812/1813 UDP (Radius) dan port 161 UDP (SNMP) pada firewall/routing jaringan Anda dapat berkomunikasi dengan lancar.*

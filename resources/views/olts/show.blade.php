@@ -10,9 +10,11 @@
                 </h2>
             </div>
             <div class="flex space-x-2">
+                @if(auth()->user()->isAdministrator())
                 <a href="{{ route('olts.edit', $olt->id) }}" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
                     Ubah OLT
                 </a>
+                @endif
             </div>
         </div>
     </x-slot>

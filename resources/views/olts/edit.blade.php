@@ -78,13 +78,13 @@
 
                     <div class="space-y-2">
                         <label for="snmp_read_community" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Read Community</label>
-                        <input type="text" name="snmp_read_community" id="snmp_read_community" value="{{ old('snmp_read_community', $olt->snmp_read_community) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" required>
+                        <input type="password" name="snmp_read_community" id="snmp_read_community" value="" autocomplete="new-password" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="Tersimpan — kosongkan untuk tetap memakai yang lama">
                         @error('snmp_read_community') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="space-y-2">
                         <label for="snmp_write_community" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Write Community (RW)</label>
-                        <input type="text" name="snmp_write_community" id="snmp_write_community" value="{{ old('snmp_write_community', $olt->snmp_write_community) }}" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
+                        <input type="password" name="snmp_write_community" id="snmp_write_community" value="" autocomplete="new-password" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all" placeholder="{{ $olt->snmp_write_community ? 'Tersimpan — kosongkan untuk tetap memakai yang lama' : 'Belum diisi' }}">
                         @error('snmp_write_community') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
@@ -127,7 +127,7 @@
             </form>
 
             <div class="px-8 pb-8 flex justify-start">
-                <form action="{{ route('olts.destroy', $olt->id) }}" method="POST" onsubmit="return confirm('WARNING: Are you sure you want to delete this OLT? This will NOT delete subscribers but will break their OLT link.');">
+                <form action="{{ route('olts.destroy', $olt->id) }}" method="POST" onsubmit="return confirm('Hapus OLT ini secara permanen? OLT yang masih dipakai pelanggan tidak bisa dihapus.');">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="text-red-500 text-xs font-bold uppercase hover:underline">Hapus Perangkat Permanen</button>

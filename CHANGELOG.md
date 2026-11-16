@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.130] - 2026-11-16
+
+### Perbaikan
+- **olt:** Credentials encrypted, hidden from the edit form; OLT changes for administrators only
+
 ## [v1.5.129] - 2026-11-16
 
 ### Perbaikan

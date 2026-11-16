@@ -55,6 +55,8 @@ class OltController extends Controller
         $validated['is_active'] = $request->has('is_active');
         $olt = Olt::create($validated);
 
+        \App\Models\ActivityLog::log('olt_created', "OLT '{$olt->name}' ({$olt->ip_address}) ditambahkan.", $olt);
+
         return redirect()->route('olts.index')->with('success', 'OLT added successfully.');
     }
 
@@ -71,12 +73,12 @@ class OltController extends Controller
                 foreach ($ports as $port) {
                     OltPonPort::updateOrCreate(
                         [
-                            'olt_id' => $olt->id, 
-                            'slot' => $port['slot'], 
+                            'olt_id' => $olt->id,
+                            'slot' => $port['slot'],
                             'pon_port' => $port['port']
                         ],
                         [
-                            'status' => $port['status'] ?? 'inactive', 
+                            'status' => $port['status'] ?? 'inactive',
                             'description' => $port['description'] ?? "Port {$port['slot']}/{$port['port']}"
                         ]
                     );
@@ -108,7 +110,7 @@ class OltController extends Controller
             'ip_address' => 'required|ip',
             'snmp_port' => 'required|integer',
             'snmp_version' => 'required|integer|in:1,2',
-            'snmp_read_community' => 'required|string',
+            'snmp_read_community' => 'nullable|string',
             'snmp_write_community' => 'nullable|string',
             'telnet_port' => 'nullable|integer',
             'username' => 'nullable|string',
@@ -121,22 +123,21 @@ class OltController extends Controller
             'longitude' => 'nullable|string',
         ]);
 
-        $validated['snmp_write_community'] = $validated['snmp_write_community'] ?? 'private';
         $validated['telnet_port'] = $validated['telnet_port'] ?? 23;
         $validated['is_active'] = $request->has('is_active');
-        
-        // Only update passwords if filled
-        if (empty($validated['password'])) {
-            unset($validated['password']);
-        }
-        
-        if (empty($validated['enable_password'])) {
-            unset($validated['enable_password']);
+
+        // Kredensial & community tidak ditampilkan di form: kosong = tetap memakai yang lama
+        foreach (['password', 'enable_password', 'snmp_read_community', 'snmp_write_community'] as $secret) {
+            if (blank($validated[$secret] ?? null)) {
+                unset($validated[$secret]);
+            }
         }
 
         $olt->update($validated);
 
-        return redirect()->route('olts.index')->with('success', 'OLT updated successfully.');
+        \App\Models\ActivityLog::log('olt_updated', "OLT '{$olt->name}' ({$olt->ip_address}) diperbarui.", $olt);
+
+        return redirect()->route('olts.index')->with('success', 'OLT berhasil diperbarui.');
     }
 
     /**
@@ -144,8 +145,18 @@ class OltController extends Controller
      */
     public function destroy(Olt $olt)
     {
+        // Tolak bila masih ada pelanggan yang terhubung (dulu tautan OLT pelanggan hilang diam-diam)
+        $linked = $olt->customers()->count();
+        if ($linked > 0) {
+            return back()->with('error', "OLT '{$olt->name}' masih dipakai {$linked} pelanggan. Pindahkan pelanggan ke OLT lain terlebih dahulu.");
+        }
+
+        $name = $olt->name;
         $olt->delete();
-        return redirect()->route('olts.index')->with('success', 'OLT deleted successfully.');
+
+        \App\Models\ActivityLog::log('olt_deleted', "OLT '{$name}' dihapus.");
+
+        return redirect()->route('olts.index')->with('success', 'OLT berhasil dihapus.');
     }
 
     /**
@@ -218,12 +229,12 @@ class OltController extends Controller
             foreach ($ports as $port) {
                 OltPonPort::updateOrCreate(
                     [
-                        'olt_id' => $olt->id, 
-                        'slot' => $port['slot'], 
+                        'olt_id' => $olt->id,
+                        'slot' => $port['slot'],
                         'pon_port' => $port['port']
                     ],
                     [
-                        'status' => $port['status'] ?? 'inactive', 
+                        'status' => $port['status'] ?? 'inactive',
                         'description' => $port['description'] ?? "Port {$port['slot']}/{$port['port']}"
                     ]
                 );
@@ -272,7 +283,7 @@ class OltController extends Controller
 
             // Store result in cache (expires in 10 minutes)
             \Illuminate\Support\Facades\Cache::put("olt_port_data_{$port->id}", $onus, now()->addMinutes(10));
-            
+
             // Sync Port Status to Database
             $newStatus = count($onus) > 0 ? 'active' : 'inactive';
             $port->update(['status' => $newStatus]);
@@ -320,7 +331,7 @@ class OltController extends Controller
     public function syncAllPorts(Olt $olt)
     {
         $ports = $olt->ponPorts;
-        
+
         foreach ($ports as $index => $port) {
             // Dispatch with a slight delay for each port to avoid OLT lockout
             \App\Jobs\FetchOltPortDataJob::dispatch($olt, $port)
@@ -350,7 +361,7 @@ class OltController extends Controller
                 return [];
             }
         });
-        
+
         return response()->json([
             'onus' => $onus ?: [],
             'status' => 'ready'
