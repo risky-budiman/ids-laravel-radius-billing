@@ -40,6 +40,29 @@ class NocOltPortTest extends TestCase
         $this->actingAs($teknisi)->get(route('noc.index'))->assertOk()->assertSee('Tidak terpindai: OLT Mati');
     }
 
+    public function test_olt_list_shows_cached_health_without_polling(): void
+    {
+        $up = $this->olt('OLT Hidup');
+        $down = $this->olt('OLT Mati');
+        $new = $this->olt('OLT Baru');
+        Cache::put('noc_olt_stats', [
+            $up->id => ['status' => 'online', 'cpu' => 91, 'temp' => 40, 'uptime' => '3d 4h'],
+            $down->id => ['status' => 'offline', 'cpu' => 0, 'temp' => 0, 'uptime' => 'N/A'],
+        ], 300);
+        Cache::put('noc_olt_stats_at', now()->subMinutes(2), 300);
+        $teknisi = User::factory()->create(['role' => 'teknisi', 'is_active' => true]);
+
+        $t = microtime(true);
+        $this->actingAs($teknisi)->get(route('olts.index'))->assertOk()
+            ->assertSee('1 / 3')                       // OLT online dari cache
+            ->assertSee('91%')->assertSee('3d 4h')
+            ->assertSee('Tidak merespons')->assertSee('Belum dicek')
+            ->assertSee('ZTE ZXA10 C320')->assertDontSee('ZTE_C320')
+            ->assertSee('Dicek 2 menit yang lalu')
+            ->assertDontSee(route('olts.edit', $up));   // teknisi tidak bisa mengubah
+        $this->assertLessThan(3, microtime(true) - $t, 'halaman daftar tidak boleh memindai SNMP');
+    }
+
     public function test_port_page_uses_cache_and_rejects_ports_of_other_olts(): void
     {
         $a = $this->olt('OLT A');

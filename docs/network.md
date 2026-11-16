@@ -27,6 +27,16 @@ Sistem mendukung integrasi ke OLT ZTE (C300, C320, C600) dan HSGQ. Akses ke OLT 
 - **Data Pelanggan (ONU)**: Menampilkan Serial Number, Nama, Status Online/Offline, dan Daya Optik (Rx Power dalam satuan dBm) secara langsung via SNMP walk.
 - **Auto-Scan Modem Baru (Discovery)**: Memindai modem/ONU baru yang belum terkonfigurasi.
 
+### Halaman daftar OLT
+
+> **Lokasi Menu:** `Operasional Jaringan > Data OLT`
+
+- **Ringkasan** di atas: total OLT, OLT online, pelanggan terhubung, dan ONU bersinyal kritis.
+- Setiap kartu OLT menampilkan status (**Online** / **Tidak merespons** / **Belum dicek** / **Nonaktif**), tipe & teknologi (EPON/GPON), versi SNMP, jumlah port PON, CPU, suhu, uptime, serta jumlah pelanggan dan ONU online/offline/kritis.
+- Status diambil dari hasil pengecekan terakhir (disimpan 5 menit), jadi halaman langsung tampil tanpa menunggu SNMP. **Perbarui status** memeriksa semua OLT saat itu juga; **Tes koneksi** memeriksa satu OLT dan hasilnya tampil di kartunya.
+- Angka ONU online/offline/kritis berasal dari pemantauan otomatis atau halaman port; bila belum ada data, tampil `—`.
+- Kotak pencarian menyaring OLT berdasarkan nama, IP, lokasi atau tipe.
+
 ### Pemantauan otomatis & peringatan NOC
 
 > **Lokasi:** `Pengaturan > Integrasi > NOC Bot` → *Pemantauan otomatis OLT & peringatan*

@@ -13,10 +13,37 @@ class OltController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $olts = Olt::withCount('ponPorts')->get();
-        return view('olts.index', compact('olts'));
+        $olts = Olt::withCount(['ponPorts', 'customers'])->orderBy('name')->get();
+
+        // Status perangkat dari cache NOC (tanpa SNMP saat halaman dibuka); "Perbarui status" memeriksa langsung
+        $statuses = $request->boolean('refresh')
+            ? \App\Services\Network\NocSnapshot::oltStatuses($olts->where('is_active', true), true)
+            : \App\Services\Network\NocSnapshot::cachedStatuses();
+        $checkedAt = \App\Services\Network\NocSnapshot::cachedAt();
+
+        // Ringkasan ONU per OLT dari cache sinyal (diisi pemantauan otomatis / halaman port)
+        $onuStats = \App\Models\CustomerSignalCache::query()
+            ->join('customers', 'customers.id', '=', 'customer_signal_caches.customer_id')
+            ->whereNotNull('customers.olt_id')
+            ->groupBy('customers.olt_id')
+            ->selectRaw("customers.olt_id,
+                SUM(CASE WHEN customer_signal_caches.status = 'online' THEN 1 ELSE 0 END) AS online,
+                SUM(CASE WHEN customer_signal_caches.status <> 'online' THEN 1 ELSE 0 END) AS offline,
+                SUM(CASE WHEN customer_signal_caches.rx_power < -27 THEN 1 ELSE 0 END) AS critical")
+            ->get()->keyBy('olt_id');
+
+        $summary = [
+            'total' => $olts->count(),
+            'active' => $olts->where('is_active', true)->count(),
+            'online' => collect($statuses)->filter(fn ($s) => ($s['status'] ?? null) === 'online')->count(),
+            'checked' => ! empty($statuses),
+            'customers' => (int) $olts->sum('customers_count'),
+            'critical' => (int) $onuStats->sum('critical'),
+        ];
+
+        return view('olts.index', compact('olts', 'statuses', 'checkedAt', 'onuStats', 'summary'));
     }
 
     /**

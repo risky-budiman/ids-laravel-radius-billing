@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.146] - 2026-11-16
+
+### Fitur baru
+- **olt:** Redesigned OLT list — live health, ONU summary, labelled actions
+
 ## [v1.5.145] - 2026-11-16
 
 ### Perbaikan

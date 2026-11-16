@@ -51,6 +51,31 @@ class Olt extends Model
         return $this->hasMany(OltPonPort::class);
     }
 
+    /** Tipe OLT => label tampilan (satu sumber untuk daftar, detail & form). */
+    public const TYPES = [
+        'HSGQ_EPON' => 'HSGQ EPON',
+        'ZTE_C320' => 'ZTE ZXA10 C320',
+        'ZTE_C300' => 'ZTE ZXA10 C300',
+        'HIOSO' => 'Hioso',
+        'OTHER' => 'Lainnya',
+    ];
+
+    public function typeLabel(): string
+    {
+        return self::TYPES[$this->olt_type] ?? str_replace('_', ' ', (string) $this->olt_type);
+    }
+
+    /** Teknologi PON untuk badge: EPON (HSGQ/Hioso) atau GPON (ZTE). */
+    public function ponTechnology(): string
+    {
+        return str_contains(strtoupper((string) $this->olt_type), 'ZTE') ? 'GPON' : 'EPON';
+    }
+
+    public function snmpVersionLabel(): string
+    {
+        return match ((int) $this->snmp_version) { 1 => 'v1', 3 => 'v3', default => 'v2c' };
+    }
+
     public function customers(): HasMany
     {
         return $this->hasMany(Customer::class);

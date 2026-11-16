@@ -24,6 +24,7 @@ class NocSnapshot
         }
 
         return Cache::remember('noc_olt_stats', self::TTL, function () use ($olts) {
+            Cache::put('noc_olt_stats_at', now(), self::TTL);
             $data = [];
             foreach ($olts as $olt) {
                 try {
@@ -35,6 +36,17 @@ class NocSnapshot
 
             return $data;
         });
+    }
+
+    /** Status OLT dari cache saja (tanpa SNMP), mis. untuk halaman daftar OLT. */
+    public static function cachedStatuses(): array
+    {
+        return Cache::get('noc_olt_stats', []);
+    }
+
+    public static function cachedAt(): ?\Illuminate\Support\Carbon
+    {
+        return Cache::get('noc_olt_stats_at');
     }
 
     /**
