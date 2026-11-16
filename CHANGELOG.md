@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.142] - 2026-11-16
+
+### Fitur baru
+- **olt:** HSGQ ONU list over SNMP, mapped from a real HSGQ-E04ID; fix FreeDSx walks
+
 ## [v1.5.141] - 2026-11-16
 
 ### Fitur baru

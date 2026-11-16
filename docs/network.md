@@ -56,7 +56,15 @@ Di **Ubah OLT → Metode Akses**:
   - **registrasi, hapus dan ganti profil ONU tidak dijalankan otomatis**. Setiap kejadian dicatat di Log Aktivitas (`onu_provision_skipped`, `onu_delete_skipped`, `onu_action_skipped`) agar dikerjakan manual di OLT;
   - isolir/buka cukup lewat RADIUS (ONU tidak di-*shutdown*);
   - tombol *Hapus ONU Manual* diganti keterangan;
-  - **daftar ONU OLT HSGQ masih membutuhkan telnet**, karena OID tabel ONU HSGQ belum tersedia (butuh MIB vendor).
+  - daftar ONU OLT HSGQ juga dibaca lewat SNMP (lihat di bawah).
+
+### Daftar ONU OLT HSGQ (EPON) lewat SNMP
+
+Daftar ONU per port PON HSGQ (MAC, nama, Rx power, jarak) dibaca lewat **SNMP**, sehingga tidak lagi butuh telnet. Telnet hanya dipakai sebagai cadangan bila tabel SNMP tidak terbaca dan metode aksesnya *SNMP + Telnet*.
+- OID dipetakan langsung dari OLT **HSGQ-E04ID** (firmware IR_V3.3.3ID_Rel) dan dicocokkan dengan CLI pada 238 ONU: MAC, nama dan posisi 100% sama, selisih Rx ≤ 0,01 dBm.
+- **Status:** ONU dengan nilai optik dianggap *online*, tanpa nilai optik dianggap *offline*. Saat pemetaan dibuat semua ONU sedang online, jadi tampilan ONU yang benar-benar offline perlu dicek sekali (cabut satu ONU uji lalu buka halaman port).
+- Deskripsi ONU (mis. nama pelanggan) tidak tersedia di SNMP HSGQ; yang tampil adalah *nama* ONU.
+- Model/firmware HSGQ lain mungkin memakai OID berbeda. Bila daftar kosong, laporkan model & firmware-nya.
 
 ### Hak akses & kredensial OLT
 

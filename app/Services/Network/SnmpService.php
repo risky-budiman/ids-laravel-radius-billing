@@ -194,9 +194,14 @@ class SnmpService
 
         // ── METHOD 3: FreeDSx Pure PHP Library ──
         try {
+            // SnmpWalk diiterasi dengan hasOids()/next() — dulu di-foreach langsung sehingga selalu kosong
             $walk = $this->getFreeDsxClient()->walk($cleanOid);
-            foreach ($walk as $item) {
-                $oidStr = '.' . ltrim($item->getOid()->toString(), '.');
+            while ($walk->hasOids()) {
+                $item = $walk->next();
+                $oidStr = '.' . ltrim((string) $item->getOid(), '.');
+                if (! str_starts_with($oidStr, '.' . $cleanOid . '.')) {
+                    break;   // keluar dari subtree
+                }
                 $val = $item->getValue();
                 $results[$oidStr] = is_object($val) && method_exists($val, 'getValue') ? $val->getValue() : $val;
             }
@@ -306,6 +311,43 @@ class SnmpService
         } catch (Exception $e) {
             return [];
         }
+    }
+
+    /**
+     * Walk kolom biner (mis. MAC) dengan nilai selalu berupa hex huruf kecil tanpa pemisah ("001a69431229").
+     *
+     * walk() biasa tidak cocok untuk data biner: ekstensi PHP & FreeDSx mengembalikan byte mentah, sedangkan
+     * snmpwalk CLI menampilkan "Hex-STRING: 00 1A …" atau — bila byte-nya kebetulan bisa dicetak — STRING acak.
+     */
+    public function walkHexSafe(string $oid): array
+    {
+        $cleanOid = ltrim($oid, '.');
+        $raw = [];
+        try {
+            if (! function_exists('snmp2_real_walk') && strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
+                // CLI dengan -Ox: semua OCTET STRING ditampilkan sebagai hex
+                $cmd = "snmpwalk -On -Ox -v{$this->version}c -c " . escapeshellarg($this->community) . " -t {$this->timeout} -r 1 "
+                    . escapeshellarg($this->getTargetAddress()) . ' ' . escapeshellarg('.' . $cleanOid) . ' 2>/dev/null';
+                $output = (string) shell_exec($cmd);
+                if (preg_match_all('/^\.?(\d+(?:\.\d+)*)\s+=\s+Hex-STRING:\s*([0-9A-Fa-f ]+)$/m', $output, $m, PREG_SET_ORDER)) {
+                    foreach ($m as $row) {
+                        $raw['.' . $row[1]] = strtolower(str_replace(' ', '', trim($row[2])));
+                    }
+
+                    return $raw;
+                }
+            }
+            foreach ($this->walk($cleanOid) as $k => $v) {
+                $v = (string) $v;
+                $raw[$k] = preg_match('/^([0-9A-Fa-f]{2}[ :]?)+$/', trim($v)) && strlen(trim($v)) > 2 * 6 - 1 && preg_match('/[ :]/', $v)
+                    ? strtolower(preg_replace('/[^0-9A-Fa-f]/', '', $v))
+                    : bin2hex($v);
+            }
+        } catch (\Throwable) {
+            return [];
+        }
+
+        return $raw;
     }
 
     public function getHost(): string

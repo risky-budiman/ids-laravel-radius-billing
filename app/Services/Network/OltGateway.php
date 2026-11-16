@@ -277,6 +277,56 @@ class OltGateway
     // ═════════════════════════════════════════════════════
 
     /**
+     * Daftar ONU HSGQ (EPON) di satu port PON lewat SNMP. null = tabel ONU tidak terbaca (pakai cadangan telnet).
+     *
+     * Status: ONU yang punya nilai Rx valid = online. Saat pemetaan dibuat semua 238 ONU sedang online, sehingga
+     * bentuk data ONU offline di SNMP (baris hilang atau Rx kosong) belum teramati — keduanya dianggap offline.
+     */
+    protected function hsgqOnusViaSnmp(int $port): ?array
+    {
+        $names = $this->snmp()->walkSafe(HsgqOids::ONU_NAME_TABLE);
+        if (empty($names)) {
+            return null;
+        }
+        $macs = $this->snmp()->walkHexSafe(HsgqOids::ONU_MAC_TABLE);
+        $rx = $this->snmp()->walkSafe(HsgqOids::ONU_RX_POWER_TABLE);
+        $dist = $this->snmp()->walkSafe(HsgqOids::ONU_DISTANCE_TABLE);
+
+        $base = HsgqOids::PON_INDEX_BASE + 256 * ($port - 1);
+        $onus = [];
+        foreach ($names as $oid => $name) {
+            $ifIndex = (int) substr($oid, strrpos($oid, '.') + 1);
+            $onuId = $ifIndex - $base;
+            if ($onuId < 1 || $onuId > 255) {
+                continue;   // ONU port lain
+            }
+            $hex = $macs[HsgqOids::ONU_MAC_TABLE . ".{$ifIndex}"] ?? '';
+            $mac = strlen($hex) === 12 ? implode(':', str_split($hex, 2)) : '';
+            $rawRx = $rx[HsgqOids::ONU_RX_POWER_TABLE . ".{$ifIndex}.0.0"] ?? null;
+            $signal = is_numeric($rawRx) && (int) $rawRx !== HsgqOids::OPTICAL_NA && (int) $rawRx > -6000 && (int) $rawRx < 1000
+                ? round((int) $rawRx / 100, 2) : 'N/A';
+            $online = is_float($signal) || is_int($signal);
+
+            $onus[] = [
+                'index' => "1.1.{$port}.{$onuId}",
+                'onu_id' => $onuId,
+                'sn' => $mac,   // EPON: MAC dipakai sebagai identitas ONU (sama dengan versi CLI)
+                'name' => trim((string) $name),
+                'description' => '-',
+                'type' => 'EPON ONU',
+                'status' => $online ? 'online' : 'offline',
+                'signal' => $signal,
+                'distance' => is_numeric($dist[HsgqOids::ONU_DISTANCE_TABLE . ".{$ifIndex}"] ?? null) ? (int) $dist[HsgqOids::ONU_DISTANCE_TABLE . ".{$ifIndex}"] : null,
+                'reg_time' => null,
+                'reason' => $online ? 'Normal (Online)' : 'Tidak ada data optik',
+            ];
+        }
+        usort($onus, fn ($a, $b) => $a['onu_id'] <=> $b['onu_id']);
+
+        return $onus;
+    }
+
+    /**
      * Get all registered ONUs on a specific PON port via SNMP (or HSGQ CLI fallback).
      * Returns: index, onu_id, sn, name, type, status, signal
      */
@@ -284,9 +334,13 @@ class OltGateway
     {
         // ── 1. Khusus Tipe OLT HSGQ (EPON / GPON) ──
         if (str_contains(strtoupper($this->olt->olt_type ?? ''), 'HSGQ')) {
-            // Daftar ONU HSGQ masih lewat telnet: OID tabel ONU HSGQ belum tersedia (butuh MIB vendor)
+            // SNMP dulu (OID dipetakan dari OLT HSGQ asli); telnet hanya cadangan bila tabel SNMP tidak terbaca
+            $snmpOnus = $this->hsgqOnusViaSnmp($port);
+            if ($snmpOnus !== null) {
+                return $snmpOnus;
+            }
             if (! $this->olt->usesTelnet()) {
-                throw new \RuntimeException('Daftar ONU OLT HSGQ masih membutuhkan telnet (OID ONU HSGQ belum tersedia). Ubah metode akses ke SNMP + Telnet.');
+                throw new \RuntimeException("Tabel ONU SNMP OLT HSGQ {$this->olt->name} tidak terbaca dan metode akses SNMP saja (tanpa telnet).");
             }
             Log::info("HSGQ: Fetching ONUs on PON port {$port} for OLT: {$this->olt->name}");
             $cliService = new HsgqCliService($this->olt);
