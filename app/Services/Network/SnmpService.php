@@ -24,6 +24,16 @@ class SnmpService
     protected int $version;
     protected int $timeout; // seconds
 
+    /**
+     * SNMPv3 (USM): user, level (noAuthNoPriv|authNoPriv|authPriv), auth (MD5|SHA|SHA256), priv (DES|AES).
+     * v1/v2c mengirim community — termasuk community tulis — tanpa enkripsi.
+     */
+    protected array $v3 = [];
+
+    public const V3_LEVELS = ['noAuthNoPriv', 'authNoPriv', 'authPriv'];
+    public const V3_AUTH = ['MD5', 'SHA', 'SHA256'];
+    public const V3_PRIV = ['DES', 'AES'];
+
     public function __construct(string $host, string $community = 'public', int $port = 161, int $version = 2, int $timeout = 3)
     {
         $this->host = trim($host);
@@ -38,13 +48,145 @@ class SnmpService
      */
     public static function fromOlt(Olt $olt): self
     {
-        return new self(
+        $service = new self(
             $olt->ip_address,
             $olt->snmp_read_community ?: 'public',
             (int)($olt->snmp_port ?: 161),
             (int)($olt->snmp_version ?: 2),
             3
         );
+        if ((int) $olt->snmp_version === 3) {
+            $service->withV3((string) $olt->snmp_v3_user, (string) ($olt->snmp_v3_level ?: 'authPriv'),
+                $olt->snmp_v3_auth_protocol, $olt->snmp_v3_auth_password, $olt->snmp_v3_priv_protocol, $olt->snmp_v3_priv_password);
+        }
+
+        return $service;
+    }
+
+    /** Untuk perintah SET: v1/v2c memakai community tulis; v3 memakai user yang sama (hak tulis diatur di OLT). */
+    public static function forWrite(Olt $olt): self
+    {
+        if ((int) $olt->snmp_version === 3) {
+            return self::fromOlt($olt);
+        }
+
+        return new self($olt->ip_address, $olt->snmp_write_community ?: 'private', (int) ($olt->snmp_port ?: 161), (int) ($olt->snmp_version ?: 2), 3);
+    }
+
+    public function withV3(string $user, string $level = 'authPriv', ?string $authProtocol = 'SHA', ?string $authPassword = null,
+        ?string $privProtocol = 'AES', ?string $privPassword = null): self
+    {
+        $this->version = 3;
+        $this->v3 = [
+            'user' => $user,
+            'level' => in_array($level, self::V3_LEVELS, true) ? $level : 'authPriv',
+            'auth_protocol' => in_array($authProtocol, self::V3_AUTH, true) ? $authProtocol : 'SHA',
+            'auth_password' => (string) $authPassword,
+            'priv_protocol' => in_array($privProtocol, self::V3_PRIV, true) ? $privProtocol : 'AES',
+            'priv_password' => (string) $privPassword,
+        ];
+        $this->client = null;
+
+        return $this;
+    }
+
+    protected function v3UsesAuth(): bool
+    {
+        return in_array($this->v3['level'] ?? '', ['authNoPriv', 'authPriv'], true);
+    }
+
+    protected function v3UsesPriv(): bool
+    {
+        return ($this->v3['level'] ?? '') === 'authPriv';
+    }
+
+    /**
+     * Argumen versi & kredensial untuk perintah net-snmp. Dulu v1 menghasilkan "-v1c" (tidak valid).
+     */
+    public function cliAuthArgs(): string
+    {
+        if ($this->version === 3) {
+            $args = '-v3 -u ' . escapeshellarg($this->v3['user'] ?? '') . ' -l ' . escapeshellarg($this->v3['level'] ?? 'authPriv');
+            if ($this->v3UsesAuth()) {
+                $args .= ' -a ' . ($this->v3['auth_protocol'] === 'SHA256' ? 'SHA-256' : $this->v3['auth_protocol'])
+                    . ' -A ' . escapeshellarg($this->v3['auth_password']);
+            }
+            if ($this->v3UsesPriv()) {
+                $args .= ' -x ' . $this->v3['priv_protocol'] . ' -X ' . escapeshellarg($this->v3['priv_password']);
+            }
+
+            return $args;
+        }
+
+        return ($this->version === 1 ? '-v1' : '-v2c') . ' -c ' . escapeshellarg($this->community);
+    }
+
+    /** Opsi FreeDSx untuk versi yang dipakai. */
+    public function freeDsxOptions(): array
+    {
+        $options = ['host' => $this->host, 'port' => $this->port, 'version' => $this->version, 'timeout' => $this->timeout, 'retries' => 1];
+        if ($this->version !== 3) {
+            return $options + ['community' => $this->community];
+        }
+
+        return $options + [
+            'user' => $this->v3['user'] ?? '',
+            'use_auth' => $this->v3UsesAuth(),
+            'auth_mech' => $this->v3UsesAuth() ? ['MD5' => 'md5', 'SHA' => 'sha1', 'SHA256' => 'sha256'][$this->v3['auth_protocol']] : null,
+            'auth_pwd' => $this->v3UsesAuth() ? $this->v3['auth_password'] : null,
+            'use_priv' => $this->v3UsesPriv(),
+            'priv_mech' => $this->v3UsesPriv() ? ['DES' => 'des', 'AES' => 'aes128'][$this->v3['priv_protocol']] : null,
+            'priv_pwd' => $this->v3UsesPriv() ? $this->v3['priv_password'] : null,
+        ];
+    }
+
+    /** Ekstensi php-snmp: GET sesuai versi; null bila tidak tersedia/gagal. */
+    protected function nativeGet(string $target, string $oid, int $timeoutMicro): mixed
+    {
+        if (! extension_loaded('snmp')) {
+            return null;
+        }
+        try {
+            if (function_exists('snmp_set_quick_print')) snmp_set_quick_print(1);
+            if (function_exists('snmp_set_valueretrieval')) snmp_set_valueretrieval(SNMP_VALUE_PLAIN);
+            $res = match ($this->version) {
+                1 => @snmpget($target, $this->community, $oid, $timeoutMicro, 1),
+                3 => @snmp3_get($target, $this->v3['user'], $this->v3['level'], $this->v3['auth_protocol'], $this->v3['auth_password'],
+                    $this->v3['priv_protocol'], $this->v3['priv_password'], $oid, $timeoutMicro, 1),
+                default => @snmp2_get($target, $this->community, $oid, $timeoutMicro, 1),
+            };
+
+            return $res === false ? null : $res;
+        } catch (\Throwable $e) {
+            Log::debug('Native SNMP get failed: ' . $e->getMessage());
+
+            return null;
+        }
+    }
+
+    /** Ekstensi php-snmp: WALK sesuai versi; null bila tidak tersedia/gagal. */
+    protected function nativeWalk(string $target, string $oid, int $timeoutMicro): ?array
+    {
+        if (! extension_loaded('snmp')) {
+            return null;
+        }
+        try {
+            if (function_exists('snmp_set_quick_print')) snmp_set_quick_print(1);
+            if (function_exists('snmp_set_oid_numeric_print')) snmp_set_oid_numeric_print(1);
+            if (function_exists('snmp_set_valueretrieval')) snmp_set_valueretrieval(SNMP_VALUE_PLAIN);
+            $res = match ($this->version) {
+                1 => @snmprealwalk($target, $this->community, $oid, $timeoutMicro, 1),
+                3 => @snmp3_real_walk($target, $this->v3['user'], $this->v3['level'], $this->v3['auth_protocol'], $this->v3['auth_password'],
+                    $this->v3['priv_protocol'], $this->v3['priv_password'], $oid, $timeoutMicro, 1),
+                default => @snmp2_real_walk($target, $this->community, $oid, $timeoutMicro, 1),
+            };
+
+            return is_array($res) && $res ? $res : null;
+        } catch (\Throwable $e) {
+            Log::debug('Native SNMP walk failed: ' . $e->getMessage());
+
+            return null;
+        }
     }
 
     /**
@@ -53,14 +195,7 @@ class SnmpService
     protected function getFreeDsxClient(): SnmpClient
     {
         if (!$this->client) {
-            $this->client = new SnmpClient([
-                'host'      => $this->host,
-                'port'      => $this->port,
-                'community' => $this->community,
-                'version'   => $this->version,
-                'timeout'   => $this->timeout,
-                'retries'   => 1,
-            ]);
+            $this->client = new SnmpClient($this->freeDsxOptions());
         }
         return $this->client;
     }
@@ -82,33 +217,16 @@ class SnmpService
         $target = $this->getTargetAddress();
         $timeoutMicro = $this->timeout * 1000000;
 
-        // ── METHOD 1: PHP Native SNMP Extension ──
-        if (function_exists('snmp2_get') && $this->version == 2) {
-            try {
-                if (function_exists('snmp_set_quick_print')) snmp_set_quick_print(1);
-                if (function_exists('snmp_set_valueretrieval')) snmp_set_valueretrieval(SNMP_VALUE_PLAIN);
-                $res = @snmp2_get($target, $this->community, '.' . $cleanOid, $timeoutMicro, 1);
-                if ($res !== false && $res !== null) {
-                    return trim((string)$res, "\" \r\n");
-                }
-            } catch (\Throwable $e) {
-                Log::debug("Native snmp2_get failed: " . $e->getMessage());
-            }
-        } elseif (function_exists('snmpget') && $this->version == 1) {
-            try {
-                if (function_exists('snmp_set_quick_print')) snmp_set_quick_print(1);
-                if (function_exists('snmp_set_valueretrieval')) snmp_set_valueretrieval(SNMP_VALUE_PLAIN);
-                $res = @snmpget($target, $this->community, '.' . $cleanOid, $timeoutMicro, 1);
-                if ($res !== false && $res !== null) {
-                    return trim((string)$res, "\" \r\n");
-                }
-            } catch (\Throwable $e) {}
+        // ── METHOD 1: PHP Native SNMP Extension (v1/v2c/v3) ──
+        $res = $this->nativeGet($target, '.' . $cleanOid, $timeoutMicro);
+        if ($res !== null) {
+            return trim((string) $res, "\" \r\n");
         }
 
         // ── METHOD 2: System CLI snmpget (Linux / macOS) ──
         if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
             try {
-                $cmd = "snmpget -On -v{$this->version}c -c " . escapeshellarg($this->community) . " -t {$this->timeout} -r 1 " . escapeshellarg($target) . " " . escapeshellarg('.' . $cleanOid) . " 2>&1";
+                $cmd = "snmpget -On " . $this->cliAuthArgs() . " -t {$this->timeout} -r 1 " . escapeshellarg($target) . " " . escapeshellarg('.' . $cleanOid) . " 2>&1";
                 $output = shell_exec($cmd);
                 if ($output && preg_match('/=\s*(\w+):\s*(.*)/i', $output, $matches)) {
                     return trim($matches[2], "\" \r\n");
@@ -122,7 +240,7 @@ class SnmpService
         try {
             return $this->getFreeDsxClient()->getValue($cleanOid);
         } catch (Exception $e) {
-            Log::warning("SNMP GET Failed for {$target} (v{$this->version}c, {$this->community}) OID .{$cleanOid}: " . $e->getMessage());
+            Log::warning("SNMP GET Failed for {$target} (SNMP v{$this->version}) OID .{$cleanOid}: " . $e->getMessage());
             throw $e;
         }
     }
@@ -138,45 +256,20 @@ class SnmpService
         $timeoutMicro = $this->timeout * 1000000;
         $results = [];
 
-        // ── METHOD 1: PHP Native SNMP Extension ──
-        if (function_exists('snmp2_real_walk') && $this->version == 2) {
-            try {
-                if (function_exists('snmp_set_quick_print')) snmp_set_quick_print(1);
-                if (function_exists('snmp_set_oid_numeric_print')) snmp_set_oid_numeric_print(1);
-                if (function_exists('snmp_set_valueretrieval')) snmp_set_valueretrieval(SNMP_VALUE_PLAIN);
-                $nativeWalk = @snmp2_real_walk($target, $this->community, '.' . $cleanOid, $timeoutMicro, 1);
-
-                if (is_array($nativeWalk) && !empty($nativeWalk)) {
-                    foreach ($nativeWalk as $k => $v) {
-                        $key = '.' . ltrim($k, '.');
-                        $results[$key] = trim((string)$v, "\" \r\n");
-                    }
-                    return $results;
-                }
-            } catch (\Throwable $e) {
-                Log::debug("Native snmp2_real_walk failed: " . $e->getMessage());
+        // ── METHOD 1: PHP Native SNMP Extension (v1/v2c/v3) ──
+        $nativeWalk = $this->nativeWalk($target, '.' . $cleanOid, $timeoutMicro);
+        if ($nativeWalk !== null) {
+            foreach ($nativeWalk as $k => $v) {
+                $results['.' . ltrim($k, '.')] = trim((string) $v, "\" \r\n");
             }
-        } elseif (function_exists('snmprealwalk') && $this->version == 1) {
-            try {
-                if (function_exists('snmp_set_quick_print')) snmp_set_quick_print(1);
-                if (function_exists('snmp_set_oid_numeric_print')) snmp_set_oid_numeric_print(1);
-                if (function_exists('snmp_set_valueretrieval')) snmp_set_valueretrieval(SNMP_VALUE_PLAIN);
-                $nativeWalk = @snmprealwalk($target, $this->community, '.' . $cleanOid, $timeoutMicro, 1);
 
-                if (is_array($nativeWalk) && !empty($nativeWalk)) {
-                    foreach ($nativeWalk as $k => $v) {
-                        $key = '.' . ltrim($k, '.');
-                        $results[$key] = trim((string)$v, "\" \r\n");
-                    }
-                    return $results;
-                }
-            } catch (\Throwable $e) {}
+            return $results;
         }
 
         // ── METHOD 2: System CLI snmpwalk (Linux / macOS) ──
         if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
             try {
-                $cmd = "snmpwalk -On -v{$this->version}c -c " . escapeshellarg($this->community) . " -t {$this->timeout} -r 1 " . escapeshellarg($target) . " " . escapeshellarg('.' . $cleanOid) . " 2>&1";
+                $cmd = "snmpwalk -On " . $this->cliAuthArgs() . " -t {$this->timeout} -r 1 " . escapeshellarg($target) . " " . escapeshellarg('.' . $cleanOid) . " 2>&1";
                 $output = shell_exec($cmd);
 
                 if ($output && !str_contains($output, 'No response') && !str_contains($output, 'Timeout') && !str_contains($output, 'Unknown user')) {
@@ -221,10 +314,15 @@ class SnmpService
         $target = $this->getTargetAddress();
 
         // 1. Try Native PHP ext-snmp
-        if (function_exists('snmp2_set') && $this->version == 2) {
+        if (extension_loaded('snmp')) {
             try {
                 $typeChar = is_int($value) ? 'i' : 's';
-                $res = @snmp2_set($target, $this->community, '.' . $cleanOid, $typeChar, $value, $this->timeout * 1000000, 1);
+                $res = match ($this->version) {
+                    1 => @snmpset($target, $this->community, '.' . $cleanOid, $typeChar, $value, $this->timeout * 1000000, 1),
+                    3 => @snmp3_set($target, $this->v3['user'], $this->v3['level'], $this->v3['auth_protocol'], $this->v3['auth_password'],
+                        $this->v3['priv_protocol'], $this->v3['priv_password'], '.' . $cleanOid, $typeChar, $value, $this->timeout * 1000000, 1),
+                    default => @snmp2_set($target, $this->community, '.' . $cleanOid, $typeChar, $value, $this->timeout * 1000000, 1),
+                };
                 if ($res) return true;
             } catch (\Throwable $e) {}
         }
@@ -233,7 +331,7 @@ class SnmpService
         if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
             try {
                 $typeChar = is_int($value) ? 'i' : 's';
-                $cmd = "snmpset -v{$this->version}c -c " . escapeshellarg($this->community) . " " . escapeshellarg($target) . " " . escapeshellarg('.' . $cleanOid) . " {$typeChar} " . escapeshellarg((string)$value) . " 2>&1";
+                $cmd = "snmpset " . $this->cliAuthArgs() . " " . escapeshellarg($target) . " " . escapeshellarg('.' . $cleanOid) . " {$typeChar} " . escapeshellarg((string)$value) . " 2>&1";
                 $output = shell_exec($cmd);
                 if ($output && !str_contains($output, 'Error')) return true;
             } catch (\Throwable $e) {}
@@ -279,7 +377,7 @@ class SnmpService
 
             return [
                 'status'  => false,
-                'message' => "No SNMP response from {$this->host}:{$this->port} with community '{$this->community}'. Check routing, firewall, and SNMP ACL."
+                'message' => "OLT {$this->host}:{$this->port} tidak menjawab SNMP v{$this->version}. Periksa routing, firewall, ACL SNMP dan kredensial (community / user SNMPv3)."
             ];
         } catch (Exception $e) {
             return [
@@ -324,9 +422,9 @@ class SnmpService
         $cleanOid = ltrim($oid, '.');
         $raw = [];
         try {
-            if (! function_exists('snmp2_real_walk') && strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
+            if (! extension_loaded('snmp') && strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
                 // CLI dengan -Ox: semua OCTET STRING ditampilkan sebagai hex
-                $cmd = "snmpwalk -On -Ox -v{$this->version}c -c " . escapeshellarg($this->community) . " -t {$this->timeout} -r 1 "
+                $cmd = "snmpwalk -On -Ox " . $this->cliAuthArgs() . " -t {$this->timeout} -r 1 "
                     . escapeshellarg($this->getTargetAddress()) . ' ' . escapeshellarg('.' . $cleanOid) . ' 2>/dev/null';
                 $output = (string) shell_exec($cmd);
                 if (preg_match_all('/^\.?(\d+(?:\.\d+)*)\s+=\s+Hex-STRING:\s*([0-9A-Fa-f ]+)$/m', $output, $m, PREG_SET_ORDER)) {

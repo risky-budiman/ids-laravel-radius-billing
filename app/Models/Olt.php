@@ -17,6 +17,12 @@ class Olt extends Model
         'snmp_version',
         'snmp_read_community',
         'snmp_write_community',
+        'snmp_v3_user',
+        'snmp_v3_level',
+        'snmp_v3_auth_protocol',
+        'snmp_v3_auth_password',
+        'snmp_v3_priv_protocol',
+        'snmp_v3_priv_password',
         'telnet_port',
         'username',
         'password',
@@ -30,7 +36,7 @@ class Olt extends Model
     ];
 
     /** Kredensial tidak ikut terserialisasi (JSON/array) */
-    protected $hidden = ['password', 'enable_password', 'snmp_read_community', 'snmp_write_community'];
+    protected $hidden = ['password', 'enable_password', 'snmp_read_community', 'snmp_write_community', 'snmp_v3_auth_password', 'snmp_v3_priv_password'];
 
     protected $casts = [
         // Disimpan terenkripsi dengan APP_KEY (dulu teks biasa)
@@ -38,6 +44,8 @@ class Olt extends Model
         'enable_password' => 'encrypted',
         'snmp_read_community' => 'encrypted',
         'snmp_write_community' => 'encrypted',
+        'snmp_v3_auth_password' => 'encrypted',
+        'snmp_v3_priv_password' => 'encrypted',
         'is_active' => 'boolean',
         'snmp_port' => 'integer',
         'telnet_port' => 'integer',

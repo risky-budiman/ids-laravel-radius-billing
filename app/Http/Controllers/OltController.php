@@ -36,9 +36,15 @@ class OltController extends Controller
             'name' => 'required|string|max:255',
             'ip_address' => 'required|ip',
             'snmp_port' => 'required|integer',
-            'snmp_version' => 'required|integer|in:1,2',
-            'snmp_read_community' => 'required|string',
+            'snmp_version' => 'required|integer|in:1,2,3',
+            'snmp_read_community' => 'required_unless:snmp_version,3|nullable|string',
             'snmp_write_community' => 'nullable|string',
+            'snmp_v3_user' => 'nullable|required_if:snmp_version,3|string|max:64',
+            'snmp_v3_level' => 'nullable|required_if:snmp_version,3|in:noAuthNoPriv,authNoPriv,authPriv',
+            'snmp_v3_auth_protocol' => 'nullable|in:MD5,SHA,SHA256',
+            'snmp_v3_auth_password' => 'nullable|string|min:8|max:128',
+            'snmp_v3_priv_protocol' => 'nullable|in:DES,AES',
+            'snmp_v3_priv_password' => 'nullable|string|min:8|max:128',
             'telnet_port' => 'nullable|integer',
             'username' => 'nullable|string',
             'password' => 'nullable|string',
@@ -55,6 +61,7 @@ class OltController extends Controller
         $validated['telnet_port'] = $validated['telnet_port'] ?? 23;
         $validated['is_active'] = $request->has('is_active');
         $validated['access_method'] = $validated['access_method'] ?? Olt::ACCESS_SNMP_TELNET;
+        $this->ensureV3Credentials($validated);
         $olt = Olt::create($validated);
 
         \App\Models\ActivityLog::log('olt_created', "OLT '{$olt->name}' ({$olt->ip_address}) ditambahkan.", $olt);
@@ -111,9 +118,15 @@ class OltController extends Controller
             'name' => 'required|string|max:255',
             'ip_address' => 'required|ip',
             'snmp_port' => 'required|integer',
-            'snmp_version' => 'required|integer|in:1,2',
+            'snmp_version' => 'required|integer|in:1,2,3',
             'snmp_read_community' => 'nullable|string',
             'snmp_write_community' => 'nullable|string',
+            'snmp_v3_user' => 'nullable|required_if:snmp_version,3|string|max:64',
+            'snmp_v3_level' => 'nullable|required_if:snmp_version,3|in:noAuthNoPriv,authNoPriv,authPriv',
+            'snmp_v3_auth_protocol' => 'nullable|in:MD5,SHA,SHA256',
+            'snmp_v3_auth_password' => 'nullable|string|min:8|max:128',
+            'snmp_v3_priv_protocol' => 'nullable|in:DES,AES',
+            'snmp_v3_priv_password' => 'nullable|string|min:8|max:128',
             'telnet_port' => 'nullable|integer',
             'username' => 'nullable|string',
             'password' => 'nullable|string',
@@ -134,12 +147,13 @@ class OltController extends Controller
         }
 
         // Kredensial & community tidak ditampilkan di form: kosong = tetap memakai yang lama
-        foreach (['password', 'enable_password', 'snmp_read_community', 'snmp_write_community'] as $secret) {
+        foreach (['password', 'enable_password', 'snmp_read_community', 'snmp_write_community', 'snmp_v3_auth_password', 'snmp_v3_priv_password'] as $secret) {
             if (blank($validated[$secret] ?? null)) {
                 unset($validated[$secret]);
             }
         }
 
+        $this->ensureV3Credentials($validated, $olt);
         $olt->update($validated);
 
         \App\Models\ActivityLog::log('olt_updated', "OLT '{$olt->name}' ({$olt->ip_address}) diperbarui.", $olt);
@@ -164,6 +178,28 @@ class OltController extends Controller
         \App\Models\ActivityLog::log('olt_deleted', "OLT '{$name}' dihapus.");
 
         return redirect()->route('olts.index')->with('success', 'OLT berhasil dihapus.');
+    }
+
+    /**
+     * SNMPv3: password autentikasi wajib untuk level authNoPriv/authPriv, password enkripsi untuk authPriv
+     * (boleh kosong saat ubah bila sudah tersimpan).
+     */
+    private function ensureV3Credentials(array $data, ?Olt $olt = null): void
+    {
+        if ((int) ($data['snmp_version'] ?? 0) !== 3) {
+            return;
+        }
+        $level = $data['snmp_v3_level'] ?? 'authPriv';
+        $errors = [];
+        if (in_array($level, ['authNoPriv', 'authPriv'], true) && blank($data['snmp_v3_auth_password'] ?? $olt?->snmp_v3_auth_password)) {
+            $errors['snmp_v3_auth_password'] = 'Password autentikasi SNMPv3 wajib diisi (minimal 8 karakter).';
+        }
+        if ($level === 'authPriv' && blank($data['snmp_v3_priv_password'] ?? $olt?->snmp_v3_priv_password)) {
+            $errors['snmp_v3_priv_password'] = 'Password enkripsi SNMPv3 wajib diisi (minimal 8 karakter).';
+        }
+        if ($errors) {
+            throw \Illuminate\Validation\ValidationException::withMessages($errors);
+        }
     }
 
     /**

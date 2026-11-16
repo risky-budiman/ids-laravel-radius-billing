@@ -708,12 +708,7 @@ class OltGateway
 
             $intIndex = ZteOids::onuIndex((int)$parts[0], (int)$parts[1], (int)$parts[2], (int)$parts[3]);
 
-            $writeSnmp = new SnmpService(
-                $this->olt->ip_address,
-                $this->olt->snmp_write_community ?: 'private',
-                (int)($this->olt->snmp_port ?: 161),
-                (int)($this->olt->snmp_version ?: 2)
-            );
+            $writeSnmp = SnmpService::forWrite($this->olt);
 
             foreach (ZteOids::ONU_ADMIN_OP_OIDS as $oid) {
                 try {

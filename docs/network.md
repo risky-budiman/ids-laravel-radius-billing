@@ -121,11 +121,22 @@ sudo apt install -y php8.3-snmp snmp
 ### Parameter Konfigurasi OLT di Web UI:
 1. **IP Address**: IP Management OLT yang dapat dijangkau oleh server billing.
 2. **SNMP Port**: Port default `161` (UDP).
-3. **SNMP Version**: `v2c` (Rekomendasi).
+3. **SNMP Version**: `v2c`, atau **`v3`** bila OLT mendukungnya (disarankan untuk keamanan — lihat di bawah).
 4. **Read Community (RO)**: Community string untuk membaca status (contoh: `public` atau `yabero`).
 5. **Write Community (RW)**: Community string untuk perintah modifikasi (contoh: `private` atau `yaberw`).
 
 Community dan password disimpan terenkripsi dan tidak ditampilkan lagi setelah disimpan (lihat *Hak akses & kredensial OLT*).
+
+### SNMPv3 (disarankan)
+
+SNMP v1/v2c mengirim community — termasuk community *write* — **tanpa enkripsi** di jaringan. Dengan **Version 3**, OLT diakses memakai user SNMPv3:
+- **Tingkat keamanan**: `authPriv` (autentikasi + enkripsi, disarankan), `authNoPriv`, atau `noAuthNoPriv`.
+- **Autentikasi**: SHA, SHA-256 atau MD5. **Enkripsi**: AES-128 atau DES.
+- Password autentikasi & enkripsi minimal **8 karakter**, disimpan terenkripsi, dan tidak ditampilkan lagi (kosongkan saat ubah untuk tetap memakai yang lama).
+- User yang sama dipakai untuk membaca dan menulis; hak tulisnya diatur di OLT.
+- Buat dulu user SNMPv3 di OLT dengan protokol & password yang sama, lalu klik **Tes Koneksi**.
+
+Pesan *Tes Koneksi* dan log tidak lagi menampilkan community string.
 
 ---
 *Teknis: Pastikan port 1812/1813 UDP (Radius) dan port 161 UDP (SNMP) pada firewall/routing jaringan Anda dapat berkomunikasi dengan lancar.*

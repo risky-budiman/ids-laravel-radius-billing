@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.143] - 2026-11-16
+
+### Fitur baru
+- **snmp:** SNMPv3 (user + auth + privacy) for OLTs; fix v1 CLI flag; community no longer leaked
+
 ## [v1.5.142] - 2026-11-16
 
 ### Fitur baru

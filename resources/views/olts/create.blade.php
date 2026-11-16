@@ -7,7 +7,7 @@
 
     <div class="max-w-4xl mx-auto">
         <div class="card overflow-hidden">
-            <form action="{{ route('olts.store') }}" method="POST" class="p-8">
+            <form action="{{ route('olts.store') }}" method="POST" class="p-8" x-data="{ ver: '{{ old('snmp_version', '2') }}' }">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Basic Info Section -->
@@ -67,11 +67,56 @@
 
                     <div class="space-y-2">
                         <label for="snmp_version" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">SNMP Version</label>
-                        <select name="snmp_version" id="snmp_version" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
+                        <select name="snmp_version" id="snmp_version" x-model="ver" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 transition-all">
                             <option value="1" {{ old('snmp_version') == '1' ? 'selected' : '' }}>Version 1</option>
                             <option value="2" {{ old('snmp_version', '2') == '2' ? 'selected' : '' }}>Version 2c</option>
+                            <option value="3" {{ old('snmp_version', '2') == '3' ? 'selected' : '' }}>Version 3 (aman: user + enkripsi)</option>
                         </select>
                         @error('snmp_version') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <!-- SNMPv3 (USM): tampil bila versi 3 -->
+                    <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 rounded-xl border border-indigo-100 dark:border-indigo-900/40 p-4" x-show="ver === '3'" x-cloak>
+                        <p class="md:col-span-2 text-xs text-gray-500 dark:text-gray-400">SNMPv3 memakai user + autentikasi + enkripsi, sehingga kredensial tidak dikirim terbuka seperti community v1/v2c. Buat user yang sama di OLT. Password minimal 8 karakter.</p>
+                        <div class="space-y-2">
+                            <label for="snmp_v3_user" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">User SNMPv3</label>
+                            <input type="text" name="snmp_v3_user" id="snmp_v3_user" value="{{ old('snmp_v3_user', '') }}" autocomplete="off" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500">
+                            @error('snmp_v3_user') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="space-y-2">
+                            <label for="snmp_v3_level" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Tingkat keamanan</label>
+                            <select name="snmp_v3_level" id="snmp_v3_level" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500">
+                                @foreach(['authPriv' => 'authPriv — autentikasi + enkripsi (disarankan)', 'authNoPriv' => 'authNoPriv — autentikasi saja', 'noAuthNoPriv' => 'noAuthNoPriv — tanpa keamanan'] as $v => $label)
+                                    <option value="{{ $v }}" @selected(old('snmp_v3_level', 'authPriv') === $v)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="snmp_v3_auth_protocol" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Protokol autentikasi</label>
+                            <select name="snmp_v3_auth_protocol" id="snmp_v3_auth_protocol" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500">
+                                @foreach(['SHA' => 'SHA', 'SHA256' => 'SHA-256', 'MD5' => 'MD5'] as $v => $label)
+                                    <option value="{{ $v }}" @selected(old('snmp_v3_auth_protocol', 'SHA') === $v)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="snmp_v3_auth_password" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Password autentikasi</label>
+                            <input type="password" name="snmp_v3_auth_password" id="snmp_v3_auth_password" autocomplete="new-password" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500" placeholder="Minimal 8 karakter">
+                            @error('snmp_v3_auth_password') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="space-y-2">
+                            <label for="snmp_v3_priv_protocol" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Protokol enkripsi</label>
+                            <select name="snmp_v3_priv_protocol" id="snmp_v3_priv_protocol" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500">
+                                @foreach(['AES' => 'AES-128', 'DES' => 'DES'] as $v => $label)
+                                    <option value="{{ $v }}" @selected(old('snmp_v3_priv_protocol', 'AES') === $v)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="snmp_v3_priv_password" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Password enkripsi</label>
+                            <input type="password" name="snmp_v3_priv_password" id="snmp_v3_priv_password" autocomplete="new-password" class="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500" placeholder="Minimal 8 karakter">
+                            @error('snmp_v3_priv_password') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
                     </div>
 
                     <div class="space-y-2">
