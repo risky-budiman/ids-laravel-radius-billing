@@ -19,6 +19,15 @@ Schedule::command('app:send-invoice-reminders')->dailyAt('09:00')->withoutOverla
 Schedule::command('app:backup-database')->dailyAt('02:30')->withoutOverlapping(120);
 Schedule::command('customer:check-grace-period')->everyMinute();
 
+// Pemantauan NOC (status & sinyal ONU + peringatan Telegram/WhatsApp): NONAKTIF bawaan.
+// Diaktifkan & diatur intervalnya di Integrasi › NOC Bot (setting noc_monitor_interval: 5/10/15/30/60 menit).
+Schedule::command('noc:monitor')->everyFiveMinutes()->withoutOverlapping(30)->when(function () {
+    $minutes = (int) get_setting('noc_monitor_interval', 0);
+
+    return $minutes > 0 && now()->minute % $minutes === 0;
+});
+Schedule::command('noc:prune 30')->dailyAt('03:20')->when(fn () => (int) get_setting('noc_monitor_interval', 0) > 0);
+
 // FUP & Quota Management
 Schedule::command('app:sync-usage')->everyFiveMinutes();
 Schedule::command('app:reset-usage')->monthlyOn(1, '00:00');

@@ -26,7 +26,8 @@ class IntegrationController extends Controller
 
     public function updateNocBot(Request $request)
     {
-        $data = $request->only(['telegram_bot_token', 'telegram_noc_chat_id', 'whatsapp_noc_number', 'whatsapp_noc_target_type']);
+        $request->validate(['noc_monitor_interval' => 'nullable|integer|in:0,5,10,15,30,60']);
+        $data = $request->only(['telegram_bot_token', 'telegram_noc_chat_id', 'whatsapp_noc_number', 'whatsapp_noc_target_type', 'noc_monitor_interval']);
 
         foreach ($data as $key => $value) {
             \App\Models\Setting::updateOrCreate(

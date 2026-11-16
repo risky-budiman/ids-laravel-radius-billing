@@ -27,6 +27,19 @@ Sistem mendukung integrasi ke OLT ZTE (C300, C320, C600) dan HSGQ. Pemantauan me
 - **Data Pelanggan (ONU)**: Menampilkan Serial Number, Nama, Status Online/Offline, dan Daya Optik (Rx Power dalam satuan dBm) secara langsung via SNMP walk.
 - **Auto-Scan Modem Baru (Discovery)**: Memindai modem/ONU baru yang belum terkonfigurasi.
 
+### Pemantauan otomatis & peringatan NOC
+
+> **Lokasi:** `Pengaturan > Integrasi > NOC Bot` → *Pemantauan otomatis OLT & peringatan*
+
+**Bawaan: Nonaktif.** Bila diaktifkan (setiap 5/10/15/30/60 menit; butuh cron `schedule:run`):
+- status & sinyal semua ONU dibaca lewat SNMP dan grafik riwayat sinyal terisi;
+- peringatan dikirim ke **Telegram** dan/atau **WhatsApp** (nomor atau grup) yang diisi di halaman yang sama:
+  - **OLT mati** — sekali, lalu **OLT kembali online** saat pulih;
+  - **ONU putus** (LOS / dying-gasp / offline) — hanya pelanggan **aktif** yang sebelumnya online;
+  - **sinyal kritis** di bawah **-27 dBm**;
+  - per pelanggan paling sering **sekali per 6 jam**, digabung dalam **satu pesan per OLT**;
+- riwayat sinyal lebih dari 30 hari dibersihkan setiap hari (`noc:prune`).
+
 ### Dasbor NOC & halaman port
 
 - Status OLT dan jumlah **ONU belum terdaftar** di dasbor NOC (web & aplikasi) disimpan **5 menit**. Klik **Refresh** untuk memindai ulang.

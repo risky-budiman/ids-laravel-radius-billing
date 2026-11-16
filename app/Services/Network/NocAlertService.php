@@ -2,48 +2,52 @@
 
 namespace App\Services\Network;
 
+use App\Jobs\SendCustomWhatsappMessageJob;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Models\Setting;
-use App\Services\WhatsAppService;
 
+/**
+ * Peringatan NOC ke Telegram dan/atau WhatsApp (nomor atau grup, Integrasi › NOC Bot).
+ * Dipanggil oleh noc:monitor (dulu layanan ini tidak dipanggil di mana pun).
+ */
 class NocAlertService
 {
-    /**
-     * Send Alert to NOC Group via Telegram and/or WhatsApp.
-     */
-    public function sendAlert(string $message)
+    public function configured(): bool
+    {
+        return (get_setting('telegram_bot_token') && get_setting('telegram_noc_chat_id')) || get_setting('whatsapp_noc_number');
+    }
+
+    public function sendAlert(string $message): void
     {
         $this->sendToTelegram($message);
         $this->sendToWhatsApp($message);
     }
 
-    protected function sendToTelegram(string $message)
+    protected function sendToTelegram(string $message): void
     {
         $token = get_setting('telegram_bot_token');
         $chatId = get_setting('telegram_noc_chat_id');
-
-        if (!$token || !$chatId) {
+        if (! $token || ! $chatId) {
             return;
         }
 
         try {
-            Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+            Http::timeout(10)->post("https://api.telegram.org/bot{$token}/sendMessage", [
                 'chat_id' => $chatId,
-                'text' => "⚠️ *NOC ALERT*\n\n" . $message,
-                'parse_mode' => 'Markdown'
+                'text' => "⚠️ NOC ALERT\n\n" . $message,
             ]);
-        } catch (\Exception $e) {
-            Log::error("Telegram Alert Error: " . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Telegram Alert Error: ' . $e->getMessage());
         }
     }
 
-    protected function sendToWhatsApp(string $message)
+    protected function sendToWhatsApp(string $message): void
     {
         $target = get_setting('whatsapp_noc_number');
-        if (!$target) return;
-
-        $waService = new WhatsAppService();
-        $waService->sendMessage($target, "⚠️ *NOC ALERT*\n\n" . $message);
+        if (! $target) {
+            return;
+        }
+        // Lewat antrean (jeda anti-ban) seperti peringatan tiket; target boleh nomor atau ID grup
+        SendCustomWhatsappMessageJob::dispatch($target, "⚠️ *NOC ALERT*\n\n" . $message);
     }
 }

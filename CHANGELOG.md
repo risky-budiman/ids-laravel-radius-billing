@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.140] - 2026-11-16
+
+### Fitur baru
+- **noc:** Alerts for OLT down/recovery, ONU loss and critical signal; monitoring schedule behind a setting
+
 ## [v1.5.139] - 2026-11-16
 
 ### Perbaikan

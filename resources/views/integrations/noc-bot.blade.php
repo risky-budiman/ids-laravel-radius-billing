@@ -69,6 +69,24 @@
                                 <p class="text-xs text-amber-500 font-bold italic">• Penting: Nomor pengirim (Fonnte) harus sudah bergabung di grup tersebut.</p>
                             </div>
                         </div>
+
+                        {{-- Pemantauan otomatis (noc:monitor): bawaan nonaktif --}}
+                        <div class="pt-6 border-t border-gray-100 dark:border-gray-700">
+                            <x-input-label for="noc_monitor_interval" value="Pemantauan otomatis OLT & peringatan" />
+                            @php $nocInterval = (int) get_setting('noc_monitor_interval', 0); @endphp
+                            <select id="noc_monitor_interval" name="noc_monitor_interval" class="mt-1 input md:w-1/2">
+                                <option value="0" @selected($nocInterval === 0)>Nonaktif</option>
+                                @foreach([5, 10, 15, 30, 60] as $m)
+                                    <option value="{{ $m }}" @selected($nocInterval === $m)>Setiap {{ $m }} menit</option>
+                                @endforeach
+                            </select>
+                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                Bila aktif, sistem membaca status & sinyal semua ONU lewat SNMP, mengisi grafik sinyal, dan mengirim peringatan ke Telegram/WhatsApp di atas:
+                                OLT mati &amp; pulih, ONU pelanggan aktif yang putus (LOS/dying-gasp/offline), dan sinyal kritis &lt; -27 dBm
+                                (per pelanggan paling sering sekali per 6 jam, digabung per OLT). Data riwayat sinyal &gt; 30 hari dibersihkan setiap hari.
+                                Butuh cron <code>schedule:run</code> aktif di server.
+                            </p>
+                        </div>
                     </div>
 
                     <div class="px-8 py-6 bg-gray-50 dark:bg-gray-900/50 flex justify-end items-center border-t border-gray-100 dark:border-gray-700">
