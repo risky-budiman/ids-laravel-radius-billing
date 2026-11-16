@@ -411,8 +411,10 @@ class AcsServerController extends Controller
             // Bersihkan perintah sinkron rusak dari versi lama yang masih tertahan untuk modem ini
             $cleaned = $service->deleteBrokenRefreshTasks($deviceId);
 
-            $service->pushTask($deviceId, ['name' => 'refreshObject', 'objectName' => $rootObject]);
-            $msg = 'Perintah sinkron terkirim. Data modem diperbarui dalam beberapa detik — muat ulang halaman.'
+            $state = $service->refreshDevice($deviceId, $rootObject);
+            $msg = ($state === 'done'
+                    ? 'Data modem sudah diperbarui — muat ulang halaman untuk melihatnya.'
+                    : 'Perintah sinkron terkirim. Modem sedang membaca ulang datanya (bisa ±1 menit) — muat ulang halaman setelahnya.')
                 . ($cleaned ? " ({$cleaned} perintah sinkron lama yang gagal dibersihkan.)" : '');
 
             if ($request->ajax() || $request->wantsJson()) {

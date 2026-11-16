@@ -674,19 +674,14 @@
                     })
                 })
                 .then(function(response) {
-                    if (!response.ok) throw new Error("HTTP error " + response.status);
-                    return response.json();
+                    return response.json().catch(function() { return { success: false, message: 'HTTP ' + response.status }; });
                 })
                 .then(function(data) {
-                    if (data.success) {
-                        showToast("Perintah refresh berhasil dikirim. Sinkronisasi berjalan di latar belakang.", "success");
-                    } else {
-                        showToast("Gagal me-refresh: " + data.message, "error");
-                    }
+                    showToast(data.message || (data.success ? 'Perintah sinkron terkirim.' : 'Sinkron gagal.'), data.success ? 'success' : 'error');
                 })
                 .catch(function(error) {
                     console.error(error);
-                    showToast("Gagal menghubungi server GenieACS untuk refresh.", "error");
+                    showToast('Tidak bisa menghubungi server aplikasi. Periksa koneksi lalu coba lagi.', 'error');
                 });
             }
 

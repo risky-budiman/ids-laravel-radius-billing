@@ -63,12 +63,34 @@ class AcsDeviceListTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => 'teknisi', 'is_active' => true]));
 
         $this->postJson(route('acs-servers.refresh-device', ['deviceId' => $id]), ['server_id' => $server->id])
-            ->assertOk()->assertJson(['success' => true])->assertJsonFragment(['message' => 'Perintah sinkron terkirim. Data modem diperbarui dalam beberapa detik — muat ulang halaman. (1 perintah sinkron lama yang gagal dibersihkan.)']);
+            ->assertOk()->assertJson(['success' => true])
+            ->assertJsonFragment(['message' => 'Perintah sinkron terkirim. Modem sedang membaca ulang datanya (bisa ±1 menit) — muat ulang halaman setelahnya. (1 perintah sinkron lama yang gagal dibersihkan.)']);
 
         Http::assertSent(fn (HttpRequest $r) => $r->method() === 'DELETE' && str_ends_with($r->url(), '/tasks/task_rusak'));
         Http::assertNotSent(fn (HttpRequest $r) => $r->method() === 'DELETE' && str_contains($r->url(), 'task_lain'));
         Http::assertSent(fn (HttpRequest $r) => $r->method() === 'POST' && ($r->data()['name'] ?? null) === 'refreshObject'
             && $r->data()['objectName'] === 'InternetGatewayDevice');
+    }
+
+    public function test_sync_reports_success_when_genieacs_holds_the_reply(): void
+    {
+        $server = AcsServer::create(['name' => 'Pusat', 'url' => 'http://acs.test', 'is_active' => true]);
+        $id = '00259E-HG8546M-HWTC1';
+        Http::fake(function (HttpRequest $r) use ($id) {
+            if ($r->method() === 'POST') {
+                throw new \Illuminate\Http\Client\ConnectionException('cURL error 28: Operation timed out after 12001 milliseconds');
+            }
+            if (str_contains($r->url(), '/tasks')) {
+                return Http::response([['_id' => 't1', 'name' => 'refreshObject', 'objectName' => 'InternetGatewayDevice', 'device' => $id]]);
+            }
+
+            return Http::response([$this->device('HWTC1', 'x', 1)]);
+        });
+        $this->actingAs(User::factory()->create(['role' => 'teknisi', 'is_active' => true]));
+
+        // Dulu: 500 "Gagal menghubungi server GenieACS untuk refresh" padahal perintahnya sudah di antrean
+        $this->postJson(route('acs-servers.refresh-device', ['deviceId' => $id]), ['server_id' => $server->id])
+            ->assertOk()->assertJson(['success' => true])->assertJsonFragment(['message' => 'Perintah sinkron terkirim. Modem sedang membaca ulang datanya (bisa ±1 menit) — muat ulang halaman setelahnya.']);
     }
 
     public function test_detail_page_renders_all_tabs(): void

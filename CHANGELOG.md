@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.163] - 2026-11-16
+
+### Perbaikan
+- **genieacs:** 'Sinkron data' no longer reports failure while the modem is still refreshing
+
 ## [v1.5.162] - 2026-11-16
 
 ### Perbaikan

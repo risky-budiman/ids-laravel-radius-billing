@@ -163,6 +163,37 @@ class GenieACSService
     }
 
     /**
+     * Minta modem membaca ulang seluruh parameternya. Membaca semua parameter bisa lebih dari 30 detik dan
+     * NBI menahan balasan selama itu (dulu tampil "Gagal menghubungi server GenieACS"); perintah sudah tercatat
+     * di antrean begitu dikirim, jadi tidak ditunggu sampai selesai.
+     *
+     * @return string done (selesai dijalankan) | queued (tercatat, sedang/akan diproses modem)
+     */
+    public function refreshDevice(string $deviceId, string $rootObject): string
+    {
+        $task = ['name' => 'refreshObject', 'objectName' => rtrim($rootObject, '.')];
+        try {
+            $res = $this->pushTask($deviceId, $task, 12, true, 3000);
+
+            return ($res['data']['_id'] ?? null) && empty($res['data']['fault']) && ($res['status'] ?? 200) === 200 ? 'done' : 'queued';
+        } catch (Exception $e) {
+            // Balasan habis waktu: anggap terkirim bila perintahnya memang sudah ada di antrean modem
+            $timedOut = str_contains($e->getMessage(), 'cURL error 28') || stripos($e->getMessage(), 'timed out') !== false;
+            if ($timedOut) {
+                try {
+                    foreach ((array) ($this->getTasks($deviceId)['data'] ?? []) as $t) {
+                        if (($t['name'] ?? '') === 'refreshObject' && ($t['objectName'] ?? '') === $task['objectName']) {
+                            return 'queued';
+                        }
+                    }
+                } catch (Exception) {
+                }
+            }
+            throw $e;
+        }
+    }
+
+    /**
      * Hapus perintah refreshObject rusak dari versi lama aplikasi (nama objek berakhiran titik → fault
      * "Invalid parameter path" yang tertahan di antrean modem). Hanya perintah sinkron buatan aplikasi yang
      * cocok persis yang dihapus; perintah lain tidak disentuh. @return int jumlah yang dihapus
@@ -715,6 +746,7 @@ class GenieACSService
                 $totalVal = $totalHeader !== null ? (int) $totalHeader : (is_array($jsonData) ? count($jsonData) : null);
 
                 return [
+                    'status' => $response->status(),   // 200 = tugas dijalankan, 202 = masih di antrean
                     'data' => $jsonData,
                     'total' => $totalVal
                 ];

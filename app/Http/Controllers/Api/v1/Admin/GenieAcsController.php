@@ -316,11 +316,12 @@ class GenieAcsController extends Controller
             } catch (\Throwable $e) {}
 
             $service->deleteBrokenRefreshTasks($deviceId);
-            $service->pushTask($deviceId, ['name' => 'refreshObject', 'objectName' => $rootObject]);
+            $state = $service->refreshDevice($deviceId, $rootObject);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Tugas Sinkronisasi / Refresh berhasil didorong. ONT akan memperbarui telemetri saat terhubung.',
+                'state' => $state,
+                'message' => $state === 'done' ? 'Data modem sudah diperbarui.' : 'Perintah sinkron terkirim; modem sedang membaca ulang datanya.',
             ]);
         } catch (Exception $e) {
             return response()->json([
