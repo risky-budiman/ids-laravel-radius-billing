@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.137] - 2026-11-16
+
+### Perbaikan
+- **genieacs:** Real regex search, IDs with spaces, same roles on web and API, actions logged
+
 ## [v1.5.136] - 2026-11-16
 
 ### Perbaikan

@@ -136,55 +136,8 @@ class GenieAcsController extends Controller
 
         try {
             $service = GenieACSService::forServer($server);
-            $query = [];
-
-            // 1. Tag filter
-            if (!empty($tagFilter)) {
-                $cleanTag = trim($tagFilter);
-                $query['_tags'] = '/' . $cleanTag . '/i';
-            }
-
-            // 2. Search query
-            if (!empty($search)) {
-                $cleanSearch = trim($search);
-                $cleanIdpel = explode('@', $cleanSearch)[0];
-
-                $orConditions = [
-                    ['_id' => '/' . $cleanSearch . '/i'],
-                    ['_tags' => $cleanSearch],
-                    ['_tags' => '/' . $cleanSearch . '/i'],
-                    ['_tags' => '/' . $cleanIdpel . '/i'],
-                    ['Tags' => '/' . $cleanSearch . '/i'],
-                    ['VirtualParameters.tag' => '/' . $cleanSearch . '/i'],
-                    ['VirtualParameters.tags' => '/' . $cleanSearch . '/i'],
-                    ['_deviceId._SerialNumber' => '/' . $cleanSearch . '/i'],
-                    ['DeviceID.SerialNumber' => '/' . $cleanSearch . '/i'],
-                    ['Device.DeviceInfo.SerialNumber' => '/' . $cleanSearch . '/i'],
-                    ['InternetGatewayDevice.DeviceInfo.SerialNumber' => '/' . $cleanSearch . '/i'],
-                    ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username' => '/' . $cleanIdpel . '/i'],
-                    ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.Username' => '/' . $cleanIdpel . '/i'],
-                    ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.Username' => '/' . $cleanIdpel . '/i'],
-                    ['Device.PPP.Interface.1.Username' => '/' . $cleanIdpel . '/i'],
-                    ['Device.PPP.Interface.2.Username' => '/' . $cleanIdpel . '/i'],
-                    ['VirtualParameters.pppUsername' => '/' . $cleanIdpel . '/i'],
-                    ['VirtualParameters.IP' => '/' . $cleanSearch . '/i'],
-                    ['VirtualParameters.wanip' => '/' . $cleanSearch . '/i'],
-                    ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress' => '/' . $cleanSearch . '/i'],
-                    ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.ExternalIPAddress' => '/' . $cleanSearch . '/i'],
-                    ['Device.IP.Interface.1.IPv4Address.1.IPAddress' => '/' . $cleanSearch . '/i'],
-                ];
-
-                if (isset($query['_tags'])) {
-                    $query = [
-                        '$and' => [
-                            ['_tags' => $query['_tags']],
-                            ['$or' => $orConditions]
-                        ]
-                    ];
-                } else {
-                    $query['$or'] = $orConditions;
-                }
-            }
+            // Sama dengan web: $regex yang di-escape
+            $query = GenieACSService::searchQuery($search, $tagFilter);
 
             $projection = [
                 '_id',
@@ -318,6 +271,7 @@ class GenieAcsController extends Controller
         try {
             $service = GenieACSService::forServer($server);
             $service->reboot($deviceId);
+            GenieACSService::audit('acs_rebooted', $deviceId, [], ['server_id' => $server->id, 'via' => 'api']);
 
             return response()->json([
                 'success' => true,
@@ -381,6 +335,7 @@ class GenieAcsController extends Controller
         try {
             $service = GenieACSService::forServer($server);
             $service->factoryReset($deviceId);
+            GenieACSService::audit('acs_factory_reset', $deviceId, [], ['server_id' => $server->id, 'via' => 'api']);
 
             return response()->json([
                 'success' => true,
@@ -489,6 +444,7 @@ class GenieAcsController extends Controller
             } catch (\Exception $e) {
                 Log::warning("setParameters response note (task likely queued): " . $e->getMessage());
             }
+            GenieACSService::audit('acs_config_updated', $deviceId, $params, ['server_id' => $server->id, 'via' => 'api']);
 
             return response()->json([
                 'success' => true,
@@ -528,6 +484,7 @@ class GenieAcsController extends Controller
         try {
             $service = GenieACSService::forServer($server);
             $service->syncTags($deviceId, $newTags, $currentTags);
+            GenieACSService::audit('acs_tags_updated', $deviceId, [], ['tags' => array_values($newTags), 'via' => 'api']);
 
             return response()->json([
                 'success' => true,

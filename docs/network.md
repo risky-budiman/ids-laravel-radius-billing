@@ -56,6 +56,15 @@ Hapus ONU otomatis belum didukung untuk OLT HSGQ — sistem mencatatnya di Log A
 - SN harus 8–16 huruf/angka; selain itu registrasi ditolak.
 - Saat paket pelanggan diganti, profil T-CONT ONU ikut diganti **bila** paket baru punya Profil T-CONT. Bila kosong, langkah ini dilewati — kecepatan internet tetap diatur RADIUS/MikroTik.
 
+## Manajemen Modem Pelanggan (GenieACS / TR-069)
+
+> **Lokasi Menu:** `Operasional Jaringan > GenieACS` (server ACS: `Pengaturan > Integrasi > Server GenieACS`)
+
+- **Hak akses:** daftar & detail modem, refresh, reboot, ubah PPPoE/WiFi dan tag — **administrator & teknisi** (web dan aplikasi staf sama). **Factory reset** dan menambah/mengubah **server ACS** — administrator saja.
+- **Pencarian** mencocokkan sebagian teks (tidak peka huruf besar/kecil) pada ID perangkat, SN, tag, username PPPoE (boleh dengan atau tanpa `@domain`) dan IP WAN. Karakter seperti `.` atau `(` dicari apa adanya.
+- ID perangkat yang memuat spasi/`%20` (mis. `00259E-ZXHN%20F670L-…`) bisa dibuka.
+- **Jejak perubahan:** ubah konfigurasi (`acs_config_updated`, berisi parameter yang diubah; password/kunci WiFi disamarkan), reboot (`acs_rebooted`), factory reset (`acs_factory_reset`) dan ubah tag (`acs_tags_updated`) tercatat di **Log Aktivitas** beserta pelakunya.
+
 ### Kebutuhan Server untuk OLT SNMP
 Pastikan paket SNMP terinstall di server Ubuntu/Debian:
 ```bash

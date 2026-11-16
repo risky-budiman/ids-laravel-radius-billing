@@ -81,57 +81,8 @@ class AcsServerController extends Controller
             try {
                 $service = \App\Services\GenieACSService::forServer($selectedServer);
                 
-                $query = [];
-                
-                // 1. Tag specific filter if provided
-                if ($tagFilter) {
-                    $cleanTag = trim($tagFilter);
-                    $query['_tags'] = '/' . $cleanTag . '/i';
-                }
-
-                // 2. Global search bar (Tags, IDPEL, Serial, IP)
-                if ($search) {
-                    $cleanSearch = trim($search);
-                    $cleanIdpel = explode('@', $cleanSearch)[0];
-                    
-                    // Search by _id, Tags, Serial Number, IP, or PPPoE Username (clean IDPEL)
-                    $orConditions = [
-                        ['_id' => '/' . $cleanSearch . '/i'],
-                        ['_tags' => $cleanSearch],
-                        ['_tags' => '/' . $cleanSearch . '/i'],
-                        ['_tags' => '/' . $cleanIdpel . '/i'],
-                        ['Tags' => '/' . $cleanSearch . '/i'],
-                        ['VirtualParameters.tag' => '/' . $cleanSearch . '/i'],
-                        ['VirtualParameters.tags' => '/' . $cleanSearch . '/i'],
-                        ['_deviceId._SerialNumber' => '/' . $cleanSearch . '/i'],
-                        ['DeviceID.SerialNumber' => '/' . $cleanSearch . '/i'],
-                        ['Device.DeviceInfo.SerialNumber' => '/' . $cleanSearch . '/i'],
-                        ['InternetGatewayDevice.DeviceInfo.SerialNumber' => '/' . $cleanSearch . '/i'],
-                        ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username' => '/' . $cleanIdpel . '/i'],
-                        ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.Username' => '/' . $cleanIdpel . '/i'],
-                        ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.Username' => '/' . $cleanIdpel . '/i'],
-                        ['Device.PPP.Interface.1.Username' => '/' . $cleanIdpel . '/i'],
-                        ['Device.PPP.Interface.2.Username' => '/' . $cleanIdpel . '/i'],
-                        ['VirtualParameters.pppUsername' => '/' . $cleanIdpel . '/i'],
-                        ['VirtualParameters.IP' => '/' . $cleanSearch . '/i'],
-                        ['VirtualParameters.wanip' => '/' . $cleanSearch . '/i'],
-                        ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress' => '/' . $cleanSearch . '/i'],
-                        ['InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.ExternalIPAddress' => '/' . $cleanSearch . '/i'],
-                        ['Device.IP.Interface.1.IPv4Address.1.IPAddress' => '/' . $cleanSearch . '/i'],
-                    ];
-
-                    if (isset($query['_tags'])) {
-                        // Both tag filter and search active
-                        $query = [
-                            '$and' => [
-                                ['_tags' => $query['_tags']],
-                                ['$or' => $orConditions]
-                            ]
-                        ];
-                    } else {
-                        $query['$or'] = $orConditions;
-                    }
-                }
+                // Pencarian & filter tag: $regex yang di-escape (dulu string "/kata/i" = teks biasa di NBI)
+                $query = \App\Services\GenieACSService::searchQuery($search, $tagFilter);
 
                 $projection = [
                     '_id', 
@@ -351,6 +302,8 @@ class AcsServerController extends Controller
                 \Illuminate\Support\Facades\Log::warning("setParameters response issue (task likely queued): " . $e->getMessage());
             }
 
+            \App\Services\GenieACSService::audit('acs_config_updated', $deviceId, $params, ['server_id' => $server->id, 'via' => 'web']);
+
             $successMsg = "Konfigurasi PPPoE/Jaringan berhasil dikirim ke perangkat. Task telah masuk antrean GenieACS dan Connection Request telah dikirim.";
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -380,7 +333,8 @@ class AcsServerController extends Controller
 
         try {
             $service->reboot($deviceId);
-            return back()->with('success', "Reboot command sent successfully.");
+            \App\Services\GenieACSService::audit('acs_rebooted', $deviceId, [], ['server_id' => $server->id, 'via' => 'web']);
+            return back()->with('success', "Perintah reboot terkirim.");
         } catch (\Exception $e) {
             return back()->with('error', "Failed to reboot: " . $e->getMessage());
         }
@@ -447,6 +401,7 @@ class AcsServerController extends Controller
         try {
             $service = \App\Services\GenieACSService::forServer($server);
             $service->syncTags($deviceId, $newTags, $currentTags);
+            \App\Services\GenieACSService::audit('acs_tags_updated', $deviceId, [], ['tags' => array_values($newTags), 'via' => 'web']);
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([

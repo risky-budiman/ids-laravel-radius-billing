@@ -363,6 +363,18 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         });
     });
 
+    // GenieACS — perangkat pelanggan: administrator & teknisi (sama dengan menu NOC & API aplikasi).
+    // Dulu hanya administrator padahal menu tampil untuk teknisi (403). Server ACS tetap administrator.
+    Route::middleware('role:administrator,teknisi')->group(function () {
+        Route::get('acs-devices/details/{deviceId}', [\App\Http\Controllers\AcsServerController::class, 'deviceDetails'])->name('acs-servers.device-details')->where('deviceId', '[^/]+');
+        Route::get('acs-devices/{deviceId}/show', [\App\Http\Controllers\AcsServerController::class, 'showDeviceRaw'])->name('acs-servers.show-device')->where('deviceId', '[^/]+');
+        Route::post('acs-devices/{deviceId}/update-config', [\App\Http\Controllers\AcsServerController::class, 'updateConfig'])->name('acs-servers.update-config')->where('deviceId', '[^/]+');
+        Route::post('acs-devices/{deviceId}/reboot', [\App\Http\Controllers\AcsServerController::class, 'reboot'])->name('acs-servers.reboot')->where('deviceId', '[^/]+');
+        Route::post('acs-devices/{deviceId}/refresh', [\App\Http\Controllers\AcsServerController::class, 'refreshDevice'])->name('acs-servers.refresh-device')->where('deviceId', '[^/]+');
+        Route::post('acs-devices/{deviceId}/update-tags', [\App\Http\Controllers\AcsServerController::class, 'updateDeviceTags'])->name('acs-servers.update-tags')->where('deviceId', '[^/]+');
+        Route::get('acs-devices', [\App\Http\Controllers\AcsServerController::class, 'devices'])->name('acs-servers.devices');
+    });
+
     // SYSTEM ADMINISTRATION: Administrator ONLY
     Route::middleware('role:administrator')->group(function () {
         Route::resource('nas', \App\Http\Controllers\NasController::class);
@@ -424,13 +436,6 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::get('integrations/noc-bot', [\App\Http\Controllers\IntegrationController::class, 'nocBot'])->name('integrations.noc-bot');
         Route::post('integrations/update', [\App\Http\Controllers\IntegrationController::class, 'update'])->name('integrations.update');
         Route::post('integrations/noc-bot', [\App\Http\Controllers\IntegrationController::class, 'updateNocBot'])->name('integrations.noc-bot.update');
-        Route::get('acs-devices/details/{deviceId}', [\App\Http\Controllers\AcsServerController::class, 'deviceDetails'])->name('acs-servers.device-details')->where('deviceId', '[a-zA-Z0-9\-\.]+');
-        Route::get('acs-devices/{deviceId}/show', [\App\Http\Controllers\AcsServerController::class, 'showDeviceRaw'])->name('acs-servers.show-device')->where('deviceId', '[a-zA-Z0-9\-\.]+');
-        Route::post('acs-devices/{deviceId}/update-config', [\App\Http\Controllers\AcsServerController::class, 'updateConfig'])->name('acs-servers.update-config')->where('deviceId', '[a-zA-Z0-9\-\.]+');
-        Route::post('acs-devices/{deviceId}/reboot', [\App\Http\Controllers\AcsServerController::class, 'reboot'])->name('acs-servers.reboot')->where('deviceId', '[a-zA-Z0-9\-\.]+');
-        Route::post('acs-devices/{deviceId}/refresh', [\App\Http\Controllers\AcsServerController::class, 'refreshDevice'])->name('acs-servers.refresh-device')->where('deviceId', '[a-zA-Z0-9\-\.]+');
-        Route::post('acs-devices/{deviceId}/update-tags', [\App\Http\Controllers\AcsServerController::class, 'updateDeviceTags'])->name('acs-servers.update-tags')->where('deviceId', '[a-zA-Z0-9\-\.]+');
-        Route::get('acs-devices', [\App\Http\Controllers\AcsServerController::class, 'devices'])->name('acs-servers.devices');
         // Tambah/edit lewat modal di halaman daftar; controller tidak punya show/create/edit
         // (sebelumnya membuka URL-nya langsung = error 500)
         Route::resource('acs-servers', \App\Http\Controllers\AcsServerController::class)->except(['show', 'create', 'edit']);

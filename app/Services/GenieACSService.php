@@ -33,6 +33,74 @@ class GenieACSService
     }
 
     /**
+     * Catat aksi ke modem pelanggan di Log Aktivitas (dulu ubah PPPoE/WiFi, reboot & factory reset tidak
+     * tercatat). Nilai parameter yang berisi password/kunci WiFi disamarkan.
+     *
+     * @param  array<string, mixed>  $params  path parameter TR-069 => nilai (bentuk yang dikirim ke setParameters)
+     */
+    public static function audit(string $action, string $deviceId, array $params = [], array $extra = []): void
+    {
+        $changes = [];
+        foreach ($params as $name => $value) {
+            $changes[$name] = preg_match('/pass|key|secret/i', (string) $name) ? '••••' : (is_array($value) ? ($value[0] ?? null) : $value);
+        }
+        $labels = [
+            'acs_config_updated' => 'Konfigurasi modem diubah',
+            'acs_rebooted' => 'Modem di-reboot',
+            'acs_factory_reset' => 'Modem di-factory reset',
+            'acs_tags_updated' => 'Tag modem diubah',
+        ];
+        \App\Models\ActivityLog::log($action, ($labels[$action] ?? $action) . " ({$deviceId})", null,
+            array_filter(['device_id' => $deviceId, 'parameters' => $changes ?: null] + $extra, fn ($v) => $v !== null));
+    }
+
+    /** Field yang dicari oleh kotak pencarian perangkat (nilai = jenis kata kunci). */
+    private const SEARCH_FIELDS = [
+        '_id' => 'text', '_tags' => 'text', 'Tags' => 'text', 'VirtualParameters.tag' => 'text', 'VirtualParameters.tags' => 'text',
+        '_deviceId._SerialNumber' => 'text', 'DeviceID.SerialNumber' => 'text',
+        'Device.DeviceInfo.SerialNumber' => 'text', 'InternetGatewayDevice.DeviceInfo.SerialNumber' => 'text',
+        'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username' => 'idpel',
+        'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.Username' => 'idpel',
+        'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.Username' => 'idpel',
+        'Device.PPP.Interface.1.Username' => 'idpel', 'Device.PPP.Interface.2.Username' => 'idpel',
+        'VirtualParameters.pppUsername' => 'idpel',
+        'VirtualParameters.IP' => 'text', 'VirtualParameters.wanip' => 'text',
+        'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress' => 'text',
+        'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.ExternalIPAddress' => 'text',
+        'Device.IP.Interface.1.IPv4Address.1.IPAddress' => 'text',
+    ];
+
+    /**
+     * Query MongoDB (NBI GenieACS) untuk kotak pencarian & filter tag.
+     *
+     * Dulu dikirim string "/kata/i": NBI meneruskannya ke MongoDB sebagai teks biasa (bukan regex), sehingga
+     * hanya kecocokan persis yang ditemukan. Sekarang memakai $regex dengan kata kunci yang di-escape
+     * (karakter seperti "." atau "(" tidak lagi dianggap pola).
+     */
+    public static function searchQuery(?string $search, ?string $tag = null): array
+    {
+        $contains = fn (string $s) => ['$regex' => preg_quote($s, '/'), '$options' => 'i'];
+        $query = [];
+
+        $tag = trim((string) $tag);
+        if ($tag !== '') {
+            $query['_tags'] = $contains($tag);
+        }
+
+        $search = trim((string) $search);
+        if ($search !== '') {
+            $idpel = explode('@', $search)[0];
+            $or = [['_tags' => $search]];
+            foreach (self::SEARCH_FIELDS as $field => $kind) {
+                $or[] = [$field => $contains($kind === 'idpel' ? $idpel : $search)];
+            }
+            $query = $query ? ['$and' => [['_tags' => $query['_tags']], ['$or' => $or]]] : ['$or' => $or];
+        }
+
+        return $query;
+    }
+
+    /**
      * Get devices with optional query and projection.
      * Query can be like: ["_id" => "OUI-Product-SN"]
      * Projection can be like: ["_id", "_lastInform", "Device.DeviceInfo.ProductClass"]
@@ -506,7 +574,7 @@ class GenieACSService
      */
     public function addTag(string $deviceId, string $tag)
     {
-        $endpoint = "devices/" . urlencode($deviceId) . "/tags/" . urlencode(trim($tag));
+        $endpoint = "devices/" . rawurlencode($deviceId) . "/tags/" . rawurlencode(trim($tag));
         return $this->request('POST', $endpoint);
     }
 
@@ -515,7 +583,7 @@ class GenieACSService
      */
     public function deleteTag(string $deviceId, string $tag)
     {
-        $endpoint = "devices/" . urlencode($deviceId) . "/tags/" . urlencode(trim($tag));
+        $endpoint = "devices/" . rawurlencode($deviceId) . "/tags/" . rawurlencode(trim($tag));
         return $this->request('DELETE', $endpoint);
     }
 
@@ -560,7 +628,7 @@ class GenieACSService
      */
     public function pushTask(string $deviceId, array $task, int $phpTimeout = 30, bool $connectionRequest = true, int $genieTimeoutMs = 5000)
     {
-        $endpoint = "devices/" . urlencode($deviceId) . "/tasks";
+        $endpoint = "devices/" . rawurlencode($deviceId) . "/tasks";
         
         // Build GenieACS query parameters
         $queryParts = [];

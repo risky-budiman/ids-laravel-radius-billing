@@ -135,12 +135,6 @@ Route::prefix('v1/admin')->name('api.admin.')->group(function () {
 
             // GenieACS — perangkat pelanggan
             Route::get('/genieacs/servers', [AdminGenieAcsController::class, 'servers']);
-            Route::get('/genieacs/devices', [AdminGenieAcsController::class, 'devices']);
-            Route::get('/genieacs/devices/{deviceId}', [AdminGenieAcsController::class, 'showDevice']);
-            Route::post('/genieacs/devices/{deviceId}/reboot', [AdminGenieAcsController::class, 'rebootDevice']);
-            Route::post('/genieacs/devices/{deviceId}/refresh', [AdminGenieAcsController::class, 'refreshDevice']);
-            Route::post('/genieacs/devices/{deviceId}/config', [AdminGenieAcsController::class, 'updateConfig']);
-            Route::post('/genieacs/devices/{deviceId}/tags', [AdminGenieAcsController::class, 'updateTags']);
         });
 
         // Finance (Fase 10) — kasir boleh lihat & catat transaksi, kelola rekening/transfer: admin
@@ -169,6 +163,16 @@ Route::prefix('v1/admin')->name('api.admin.')->group(function () {
             Route::post('/accounting/sync-journals', [AdminAccountingController::class, 'syncJournals']);
             Route::delete('/accounting/journals/bulk', [AdminAccountingController::class, 'bulkDestroyJournals']);
             Route::delete('/accounting/journals/{id}', [AdminAccountingController::class, 'destroyJournal']);
+        });
+
+        // GenieACS — aksi ke modem pelanggan: administrator & teknisi (sama dengan web; dulu admin juga)
+        Route::middleware('admin.role:administrator,teknisi')->group(function () {
+            Route::get('/genieacs/devices', [AdminGenieAcsController::class, 'devices']);
+            Route::get('/genieacs/devices/{deviceId}', [AdminGenieAcsController::class, 'showDevice']);
+            Route::post('/genieacs/devices/{deviceId}/reboot', [AdminGenieAcsController::class, 'rebootDevice']);
+            Route::post('/genieacs/devices/{deviceId}/refresh', [AdminGenieAcsController::class, 'refreshDevice']);
+            Route::post('/genieacs/devices/{deviceId}/config', [AdminGenieAcsController::class, 'updateConfig']);
+            Route::post('/genieacs/devices/{deviceId}/tags', [AdminGenieAcsController::class, 'updateTags']);
         });
 
         // System Admin & konfigurasi server (Fase 12-13) — administrator saja
