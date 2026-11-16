@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.145] - 2026-11-16
+
+### Perbaikan
+- **olt:** OLT detail page showed the SNMP write community in clear text
+
 ## [v1.5.144] - 2026-11-16
 
 ### Peningkatan

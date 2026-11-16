@@ -39,8 +39,9 @@
                         <span class="font-bold text-gray-800 dark:text-gray-200">{{ $olt->olt_type }}</span>
                     </div>
                     <div>
-                        <span class="block text-xs text-gray-400 uppercase">SNMP Write Community</span>
-                        <span class="font-mono text-xs text-gray-600 dark:text-gray-400">{{ $olt->snmp_write_community }}</span>
+                        {{-- Dulu community WRITE tampil terbuka di sini (juga untuk teknisi) --}}
+                        <span class="block text-xs text-gray-400 uppercase">Versi SNMP</span>
+                        <span class="font-mono text-xs text-gray-600 dark:text-gray-400">{{ (int) $olt->snmp_version === 3 ? 'v3' : ((int) $olt->snmp_version === 1 ? 'v1' : 'v2c') }}</span>
                     </div>
                 </div>
             </div>

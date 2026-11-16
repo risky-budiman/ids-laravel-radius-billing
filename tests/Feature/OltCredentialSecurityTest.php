@@ -73,6 +73,8 @@ class OltCredentialSecurityTest extends TestCase
             $html = strtolower($this->actingAs($admin)->get($url)->assertOk()->getContent());
             $this->assertStringNotContainsString('telnet', $html, $url);
             $this->assertStringNotContainsString('enable_password', $html, $url);
+            // Community tidak pernah tampil (dulu community WRITE tampil terbuka di halaman detail OLT)
+            $this->assertStringNotContainsString('rahasia', $html, $url);
         }
     }
 
