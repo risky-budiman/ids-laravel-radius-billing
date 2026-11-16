@@ -38,6 +38,10 @@ class ProvisionOnuJob implements ShouldQueue
         }
 
         $profile = $customer->package?->olt_tcont_profile;
+        \App\Models\OltWorkItem::record($customer->olt_id, 'provision', [
+            'customer_id' => $customer->id, 'onu_sn' => strtoupper((string) $customer->onu_sn), 'onu_index' => $customer->onu_index,
+            'vlan' => (int) ($customer->vlan_id ?: 100) ?: null, 'profile' => $profile,
+        ]);
         ActivityLog::create(['action' => 'onu_provision_manual', 'subject_type' => Customer::class, 'subject_id' => $customer->id,
             'description' => "Daftarkan ONU MANUAL di OLT {$customer->olt->name}: SN {$customer->onu_sn}, pelanggan {$customer->name}"
                 . " ({$customer->customer_code}), port {$customer->onu_index}, VLAN " . ($customer->vlan_id ?: 100)

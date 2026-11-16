@@ -43,7 +43,9 @@ class OltController extends Controller
             'critical' => (int) $onuStats->sum('critical'),
         ];
 
-        return view('olts.index', compact('olts', 'statuses', 'checkedAt', 'onuStats', 'summary'));
+        $workCounts = \App\Models\OltWorkItem::pending()->selectRaw('olt_id, COUNT(*) AS n')->groupBy('olt_id')->pluck('n', 'olt_id');
+
+        return view('olts.index', compact('olts', 'statuses', 'checkedAt', 'onuStats', 'summary', 'workCounts'));
     }
 
     /**
@@ -117,7 +119,8 @@ class OltController extends Controller
         // Status perangkat: dari cache NOC; "Perbarui" membaca langsung OLT ini lewat SNMP
         $statuses = \App\Services\Network\NocSnapshot::cachedStatuses();
         $status = $statuses[$olt->id] ?? null;
-        if ($request->boolean('refresh') || ($status === null && $olt->is_active)) {
+        // Tidak membaca SNMP otomatis saat halaman dibuka: OLT yang mati membuat halaman menunggu timeout
+        if ($request->boolean('refresh')) {
             try {
                 $status = (new OltGateway($olt))->getOltStatus();
             } catch (\Throwable) {
@@ -152,7 +155,13 @@ class OltController extends Controller
         $olt->load(['ponPorts' => fn ($q) => $q->orderBy('slot')->orderBy('pon_port')]);
         $olt->loadCount('customers');
 
-        return view('olts.show', compact('olt', 'status', 'board'));
+        // Pekerjaan manual di OLT: tutup otomatis yang sudah terlihat dari hasil pindai tersimpan (tanpa SNMP)
+        app(\App\Services\Network\OltWorkVerifier::class)->verify($olt, cacheOnly: true);
+        $work = \App\Models\OltWorkItem::with(['customer:id,customer_code,name', 'resolver:id,name'])->where('olt_id', $olt->id)
+            ->where(fn ($q) => $q->where('status', 'pending')->orWhere('resolved_at', '>=', now()->subDays(3)))
+            ->orderByRaw("status = 'pending' desc")->latest('id')->limit(50)->get();
+
+        return view('olts.show', compact('olt', 'status', 'board', 'work'));
     }
 
     /**
@@ -250,6 +259,34 @@ class OltController extends Controller
         if ($errors) {
             throw \Illuminate\Validation\ValidationException::withMessages($errors);
         }
+    }
+
+    /** Cek pekerjaan manual langsung ke OLT (SNMP) & tutup yang sudah dikerjakan. */
+    public function verifyWork(Olt $olt)
+    {
+        $r = app(\App\Services\Network\OltWorkVerifier::class)->verify($olt);
+        $msg = $r['done'] ? "{$r['done']} pekerjaan terkonfirmasi selesai di OLT." : 'Belum ada pekerjaan yang terkonfirmasi di OLT.';
+        if ($r['ports_read'] < $r['ports_total']) {
+            $msg .= " ({$r['ports_read']}/{$r['ports_total']} port terbaca; pekerjaan hapus ONU baru dicek bila semua port terbaca.)";
+        }
+
+        return back()->with('success', $msg);
+    }
+
+    /** Tandai pekerjaan selesai / abaikan (siapa & kapan dicatat). */
+    public function resolveWork(Request $request, Olt $olt, \App\Models\OltWorkItem $item)
+    {
+        abort_unless((int) $item->olt_id === (int) $olt->id, 404);
+        $data = $request->validate(['action' => 'required|in:done,dismiss', 'note' => 'nullable|string|max:500']);
+        if ($item->status !== 'pending') {
+            return back()->with('error', 'Pekerjaan ini sudah ditutup.');
+        }
+        $item->update(['status' => $data['action'] === 'done' ? 'done' : 'dismissed', 'resolution' => 'manual',
+            'resolved_by' => $request->user()->id, 'resolved_at' => now(), 'note' => $data['note'] ?? $item->note]);
+        \App\Models\ActivityLog::log('olt_work_' . ($data['action'] === 'done' ? 'done' : 'dismissed'),
+            "{$item->typeLabel()} {$item->onu_sn} di {$olt->name} ditandai " . ($data['action'] === 'done' ? 'selesai' : 'diabaikan') . '.', $olt);
+
+        return back()->with('success', 'Pekerjaan ditandai ' . ($data['action'] === 'done' ? 'selesai.' : 'diabaikan.'));
     }
 
     /** Tes login API web OLT (HSGQ) — dipakai untuk registrasi/allow ONU dari aplikasi. */

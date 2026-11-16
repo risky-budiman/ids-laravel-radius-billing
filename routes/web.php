@@ -195,6 +195,9 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
             Route::get('olts/{olt}/ports/{port}', [\App\Http\Controllers\OltController::class, 'showPort'])->name('olts.show-port');
             Route::post('olts/{olt}/sync-all-ports', [\App\Http\Controllers\OltController::class, 'syncAllPorts'])->name('olts.sync-all-ports');
             Route::get('olts/{olt}/ports/{port}/data', [\App\Http\Controllers\OltController::class, 'getPortData'])->name('olts.get-port-data');
+            Route::post('olts/{olt}/ports/{port}/onus/reboot', [\App\Http\Controllers\OltController::class, 'rebootOnu'])->name('olts.onus.reboot');
+            Route::post('olts/{olt}/work/verify', [\App\Http\Controllers\OltController::class, 'verifyWork'])->name('olts.work.verify');
+            Route::post('olts/{olt}/work/{item}', [\App\Http\Controllers\OltController::class, 'resolveWork'])->name('olts.work.resolve');
         });
     });
 

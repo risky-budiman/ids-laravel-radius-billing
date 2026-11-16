@@ -31,6 +31,12 @@ class DeprovisionOnuJob implements ShouldQueue
         $message = 'Hapus ONU MANUAL di OLT ' . ($olt?->name ?? "#{$this->oltId}")
             . ": SN {$this->sn}, posisi {$this->onuIndex} (pelanggan dicabut/dihapus; sistem hanya SNMP).";
         Log::info($message);
+        if ($olt) {
+            \App\Models\OltWorkItem::record($olt->id, 'delete', [
+                'customer_id' => \App\Models\Customer::where('olt_id', $olt->id)->where('onu_sn', $this->sn)->value('id'),
+                'onu_sn' => strtoupper((string) $this->sn), 'onu_index' => $this->onuIndex,
+            ]);
+        }
         ActivityLog::create(['user_id' => $this->requestedBy, 'action' => 'onu_delete_manual', 'description' => $message,
             'subject_type' => Olt::class, 'subject_id' => $this->oltId]);
     }

@@ -92,6 +92,63 @@
             </div>
         </div>
 
+        {{-- Pekerjaan yang harus dilakukan langsung di OLT (sistem hanya SNMP) --}}
+        @php $pendingWork = $work->where('status', 'pending'); @endphp
+        @if($work->isNotEmpty())
+            <section class="card {{ $pendingWork->isNotEmpty() ? 'border-amber-300 dark:border-amber-500/40' : '' }}">
+                <div class="card-header flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 class="card-title flex items-center gap-2">
+                            Pekerjaan di OLT
+                            @if($pendingWork->isNotEmpty())<span class="badge-warning">{{ $pendingWork->count() }} menunggu</span>@endif
+                        </h3>
+                        <p class="text-xs text-surface-500">Kerjakan langsung di OLT. Daftarkan & hapus ONU ditutup otomatis setelah terlihat di OLT; ganti profil ditandai manual.</p>
+                    </div>
+                    @if($pendingWork->isNotEmpty())
+                        <form method="POST" action="{{ route('olts.work.verify', $olt) }}">@csrf
+                            <button class="btn-secondary btn-sm"><x-icon name="search" class="w-3.5 h-3.5" /> Cek di OLT</button>
+                        </form>
+                    @endif
+                </div>
+                <ul class="divide-y divide-surface-100 dark:divide-surface-800">
+                    @foreach($work as $w)
+                        <li class="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-3 {{ $w->status !== 'pending' ? 'opacity-60' : '' }}">
+                            <span class="{{ ['provision' => 'badge-primary', 'delete' => 'badge-danger', 'profile' => 'badge-info'][$w->type] ?? 'badge-gray' }} shrink-0 w-fit">{{ $w->typeLabel() }}</span>
+                            <div class="min-w-0 flex-1 text-sm">
+                                <p class="font-medium text-surface-900 dark:text-white">
+                                    <span class="font-mono">{{ $w->onu_sn ?: '—' }}</span>
+                                    @if($w->customer)
+                                        · <a href="{{ route('customers.show', $w->customer_id) }}" class="text-primary-700 dark:text-primary-300 hover:underline">{{ $w->customer->customer_code }} {{ $w->customer->name }}</a>
+                                    @endif
+                                </p>
+                                <p class="text-xs text-surface-500">
+                                    @if($w->onu_index) Port/posisi {{ $w->onu_index }} @endif
+                                    @if($w->vlan) · VLAN {{ $w->vlan }} @endif
+                                    @if($w->profile) · profil {{ $w->profile }} @endif
+                                    · {{ $w->created_at->diffForHumans() }}
+                                    @if($w->status !== 'pending')
+                                        · {{ $w->status === 'done' ? 'Selesai' : 'Diabaikan' }}{{ $w->resolution === 'auto' ? ' (otomatis)' : ($w->resolver ? ' oleh ' . $w->resolver->name : '') }}
+                                    @endif
+                                </p>
+                            </div>
+                            @if($w->status === 'pending')
+                                <div class="flex gap-2 shrink-0">
+                                    <form method="POST" action="{{ route('olts.work.resolve', [$olt, $w]) }}">@csrf
+                                        <input type="hidden" name="action" value="done">
+                                        <button class="btn-primary btn-sm"><x-icon name="check" class="w-3.5 h-3.5" /> Sudah dikerjakan</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('olts.work.resolve', [$olt, $w]) }}" onsubmit="return confirm('Abaikan pekerjaan ini?')">@csrf
+                                        <input type="hidden" name="action" value="dismiss">
+                                        <button class="btn-ghost btn-sm">Abaikan</button>
+                                    </form>
+                                </div>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+        @endif
+
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {{-- Port PON --}}
             <section class="card xl:col-span-2">

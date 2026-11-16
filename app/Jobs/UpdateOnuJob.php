@@ -32,6 +32,12 @@ class UpdateOnuJob implements ShouldQueue
             return;
         }
         $olt = Olt::find($this->oltId);
+        if ($olt) {
+            \App\Models\OltWorkItem::record($olt->id, 'profile', [
+                'customer_id' => $this->sn ? \App\Models\Customer::where('olt_id', $olt->id)->where('onu_sn', $this->sn)->value('id') : null,
+                'onu_sn' => $this->sn ? strtoupper($this->sn) : null, 'onu_index' => $this->onuIndex, 'profile' => $this->profile,
+            ]);
+        }
         ActivityLog::create(['action' => 'onu_profile_manual', 'subject_type' => Olt::class, 'subject_id' => $this->oltId,
             'description' => 'Ganti profil T-CONT ONU MANUAL di OLT ' . ($olt?->name ?? "#{$this->oltId}")
                 . ": posisi {$this->onuIndex}" . ($this->sn ? ", SN {$this->sn}" : '') . " → profil {$this->profile}."]);

@@ -123,6 +123,9 @@
                             <span class="badge-info">{{ $olt->ponTechnology() }}</span>
                             <span class="badge-primary">SNMP {{ $olt->snmpVersionLabel() }}</span>
                             <span class="badge-gray">{{ $olt->pon_ports_count }} port PON</span>
+                            @if(($workCounts[$olt->id] ?? 0) > 0)
+                                <a href="{{ route('olts.show', $olt) }}" class="badge-warning hover:underline">{{ $workCounts[$olt->id] }} pekerjaan di OLT</a>
+                            @endif
                         </div>
 
                         {{-- Kesehatan perangkat --}}

@@ -45,6 +45,18 @@ Klik **Kelola** pada kartu OLT:
 - **Info perangkat**: tipe, teknologi, IP, versi SNMP; untuk HSGQ dengan akses web: model, firmware & serial number OLT;
 - **Tes koneksi**, **Perbarui** (baca status OLT langsung) dan **Ubah** (administrator); *Deteksi ulang port* untuk administrator.
 
+### Pekerjaan di OLT
+
+Sistem hanya membaca OLT lewat SNMP, jadi daftarkan/allow ONU, hapus ONU dan ganti profil T-CONT dikerjakan teknisi langsung di OLT. Setiap kebutuhan itu (dari aktivasi pelanggan, tambah pelanggan, dismantle/hapus pelanggan, ganti paket) dicatat sebagai **pekerjaan** di halaman Kelola OLT:
+- badge jumlah pekerjaan muncul di menu **Data OLT** dan di kartu OLT;
+- **daftarkan ONU** ditutup otomatis begitu ONU dengan SN/MAC itu terlihat di OLT; **hapus ONU** ditutup otomatis bila ONU sudah tidak ada (hanya bila semua port terbaca). Tombol **Cek di OLT** membaca ulang lewat SNMP;
+- **ganti profil** tidak bisa dicek lewat SNMP — tandai **Sudah dikerjakan** (siapa & kapan dicatat) atau **Abaikan**;
+- pekerjaan ganda tidak dibuat; "daftarkan" yang masih menunggu otomatis dibatalkan bila ada "hapus" untuk SN yang sama (dan sebaliknya).
+
+### Form tambah/ubah OLT
+
+Satu form untuk tambah & ubah: Identitas (nama, tipe, IP, lokasi, koordinat + Lihat di peta, aktif), SNMP (v1/v2c community atau v3 user/auth/enkripsi) dan Akses web OLT (khusus HSGQ, dengan Tes login web). Kredensial tidak pernah ditampilkan; kosongkan untuk tetap memakai yang tersimpan. Hapus OLT dipisah di bagian bawah halaman ubah.
+
 ### Pemantauan otomatis & peringatan NOC
 
 > **Lokasi:** `Pengaturan > Integrasi > NOC Bot` → *Pemantauan otomatis OLT & peringatan*

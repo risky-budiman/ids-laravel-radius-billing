@@ -205,6 +205,12 @@ class CustomerActivationService
         $report = $installation->baEnabled() ? $installation->createReport($customer->fresh(), $by, $invoice) : null;
         $installation->notifyCustomer($customer->fresh(), $report, $invoice?->fresh());
 
+        // Pekerjaan "daftarkan/allow ONU" di OLT; ditutup otomatis bila ONU sudah terlihat di OLT (cek SNMP)
+        $fresh = $customer->fresh();
+        if ($fresh->olt_id && $fresh->onu_sn) {
+            \App\Jobs\ProvisionOnuJob::dispatch($fresh->id);
+        }
+
         return ['customer' => $customer->fresh(), 'installation_invoice' => $invoice?->fresh(), 'installation_report' => $report];
     }
 
