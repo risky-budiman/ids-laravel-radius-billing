@@ -98,24 +98,15 @@ class OltController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Olt $olt)
+    public function show(Request $request, Olt $olt)
     {
-        // Auto-discover and create ports on first view if none exist
+        // Port belum ada: deteksi otomatis sekali (port PON jarang berubah)
         if ($olt->ponPorts()->count() === 0) {
             try {
-                $gateway = new OltGateway($olt);
-                $ports = $gateway->discoverPonPorts();
-                foreach ($ports as $port) {
+                foreach ((new OltGateway($olt))->discoverPonPorts() as $port) {
                     OltPonPort::updateOrCreate(
-                        [
-                            'olt_id' => $olt->id,
-                            'slot' => $port['slot'],
-                            'pon_port' => $port['port']
-                        ],
-                        [
-                            'status' => $port['status'] ?? 'inactive',
-                            'description' => $port['description'] ?? "Port {$port['slot']}/{$port['port']}"
-                        ]
+                        ['olt_id' => $olt->id, 'slot' => $port['slot'], 'pon_port' => $port['port']],
+                        ['status' => $port['status'] ?? 'inactive', 'description' => $port['description'] ?? "Port {$port['slot']}/{$port['port']}"]
                     );
                 }
             } catch (\Exception $e) {
@@ -123,8 +114,45 @@ class OltController extends Controller
             }
         }
 
-        $olt->load('ponPorts');
-        return view('olts.show', compact('olt'));
+        // Status perangkat: dari cache NOC; "Perbarui" membaca langsung OLT ini lewat SNMP
+        $statuses = \App\Services\Network\NocSnapshot::cachedStatuses();
+        $status = $statuses[$olt->id] ?? null;
+        if ($request->boolean('refresh') || ($status === null && $olt->is_active)) {
+            try {
+                $status = (new OltGateway($olt))->getOltStatus();
+            } catch (\Throwable) {
+                $status = ['status' => 'offline', 'cpu' => 0, 'uptime' => 'N/A', 'temp' => 0];
+            }
+            if ($statuses) {   // perbarui entri OLT ini di cache bersama tanpa menghapus OLT lain
+                $statuses[$olt->id] = $status;
+                \Illuminate\Support\Facades\Cache::put('noc_olt_stats', $statuses, \App\Services\Network\NocSnapshot::TTL);
+            }
+        }
+
+        // Info perangkat dari web OLT HSGQ (firmware, SN) — disimpan 1 hari; gagal disimpan 30 menit agar halaman
+        // tidak menunggu web OLT berulang kali
+        $board = null;
+        if (str_contains(strtoupper((string) $olt->olt_type), 'HSGQ') && filled($olt->web_username) && filled($olt->web_password)) {
+            $key = "olt_board_{$olt->id}";
+            if ($request->boolean('refresh')) {
+                \Illuminate\Support\Facades\Cache::forget($key);
+            }
+            $board = \Illuminate\Support\Facades\Cache::get($key);
+            if ($board === null) {
+                try {
+                    $board = (new \App\Services\Network\HsgqWebClient($olt, 4))->boardInfo();
+                    \Illuminate\Support\Facades\Cache::put($key, $board, now()->addDay());
+                } catch (\Throwable) {
+                    $board = [];
+                    \Illuminate\Support\Facades\Cache::put($key, $board, now()->addMinutes(30));
+                }
+            }
+        }
+
+        $olt->load(['ponPorts' => fn ($q) => $q->orderBy('slot')->orderBy('pon_port')]);
+        $olt->loadCount('customers');
+
+        return view('olts.show', compact('olt', 'status', 'board'));
     }
 
     /**
@@ -267,7 +295,7 @@ class OltController extends Controller
     {
         $request->validate([
             'slot' => 'required|integer',
-            'port_count' => 'required|integer|in:8,16',
+            'port_count' => 'required|integer|in:4,8,16',
         ]);
 
         $slot = $request->slot;
@@ -426,7 +454,7 @@ class OltController extends Controller
             $descriptions = \Illuminate\Support\Facades\Cache::get($dKey);
             if ($descriptions === null) {
                 try {
-                    $descriptions = (new \App\Services\Network\HsgqWebClient($olt))->onuDescriptions((int) $port->pon_port);
+                    $descriptions = (new \App\Services\Network\HsgqWebClient($olt))->onuDetails((int) $port->pon_port);
                     \Illuminate\Support\Facades\Cache::put($dKey, $descriptions, now()->addMinutes(10));
                 } catch (\Throwable $e) {
                     $descriptions = [];
@@ -441,8 +469,25 @@ class OltController extends Controller
             $onu['customer'] = $c ? ['id' => $c->id, 'code' => $c->customer_code, 'name' => $c->name, 'status' => $c->status,
                 'url' => route('customers.show', $c->id)] : null;
             $web = $descriptions[$key] ?? null;
-            if ($web && $web['description'] !== '') {
-                $onu['description'] = $web['description'];
+            if ($web) {
+                if (($web['description'] ?? '') !== '') {
+                    $onu['description'] = $web['description'];
+                }
+                // Status dari web OLT pasti (SNMP hanya menebak dari ada/tidaknya data optik)
+                if (! empty($web['status'])) {
+                    $onu['status'] = $web['status'];
+                }
+                foreach (['last_down_reason', 'last_down_time', 'tx_power', 'temperature', 'voltage', 'bias', 'vendor'] as $f) {
+                    if (isset($web[$f])) {
+                        $onu[$f] = $web[$f];
+                    }
+                }
+                if (! empty($web['register_time'])) {
+                    $onu['reg_time'] = $web['register_time'];
+                }
+                if (! empty($web['onu_type'])) {
+                    $onu['type'] = trim(($web['vendor'] ?? '') . ' ' . $web['onu_type']);
+                }
             }
             if (($onu['description'] ?? '-') === '-') {
                 $onu['description'] = '';

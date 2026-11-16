@@ -37,6 +37,14 @@ Sistem mendukung integrasi ke OLT ZTE (C300, C320, C600) dan HSGQ. Akses ke OLT 
 - Angka ONU online/offline/kritis berasal dari pemantauan otomatis atau halaman port; bila belum ada data, tampil `—`.
 - Kotak pencarian menyaring OLT berdasarkan nama, IP, lokasi atau tipe.
 
+### Halaman Kelola OLT
+
+Klik **Kelola** pada kartu OLT:
+- ringkasan **uptime, CPU, suhu**, ONU online/total (dan offline), pelanggan terhubung & sinyal kritis;
+- **kartu per port PON**: jumlah ONU, online, kritis, rata-rata Rx dan bar sebaran sinyal — terisi otomatis dari hasil pindai terakhir; **Pindai semua port** membaca ulang langsung dari OLT (berurutan per port);
+- **Info perangkat**: tipe, teknologi, IP, versi SNMP; untuk HSGQ dengan akses web: model, firmware & serial number OLT;
+- **Tes koneksi**, **Perbarui** (baca status OLT langsung) dan **Ubah** (administrator); *Deteksi ulang port* untuk administrator.
+
 ### Pemantauan otomatis & peringatan NOC
 
 > **Lokasi:** `Pengaturan > Integrasi > NOC Bot` → *Pemantauan otomatis OLT & peringatan*
@@ -59,7 +67,7 @@ Sistem mendukung integrasi ke OLT ZTE (C300, C320, C600) dan HSGQ. Akses ke OLT 
   - tabel ONU: posisi, nama & MAC/SN, **deskripsi**, **pelanggan yang tertaut** (klik untuk membuka data pelanggan), sinyal Rx berwarna (≥ -24 baik, -24 s/d -27 waspada, < -27 dBm kritis), jarak, status;
   - cari (MAC/SN, nama, deskripsi, pelanggan), filter (Online, Offline, Kritis, Tanpa pelanggan), urutkan menurut posisi/sinyal/jarak, pindah port;
   - panel **Detail** per ONU: salin MAC/SN, buka pelanggan, **Reboot ONU**, ubah nama/deskripsi.
-- **Ketersediaan aksi ONU:** OLT **ZTE** — reboot lewat SNMP (SN di posisi itu dicocokkan dulu; tercatat `onu_rebooted`). OLT **HSGQ** — SNMP-nya tidak menyediakan reboot, ubah nama/deskripsi maupun deskripsi ONU; deskripsi dibaca lewat **API web OLT** bila login web diisi, sedangkan reboot & ubah ONU HSGQ menyusul setelah API web OLT diuji.
+- **Ketersediaan aksi ONU:** OLT **ZTE** — reboot lewat SNMP (SN di posisi itu dicocokkan dulu; tercatat `onu_rebooted`). OLT **HSGQ** — SNMP-nya tidak menyediakan reboot, ubah nama/deskripsi maupun deskripsi ONU. Bila login web diisi, halaman port membaca dari **API web OLT**: deskripsi, status Online/Offline yang pasti, alasan & waktu putus terakhir, vendor/tipe, waktu terdaftar, serta Tx, suhu, tegangan & bias ONU (disimpan 10 menit). Reboot & ubah ONU HSGQ menyusul setelah perintah tulis API web OLT diuji dengan ONU cadangan.
 - Bila OLT tidak merespons SNMP, halaman menampilkan pesan gagal dan **daftar terakhir tetap ditampilkan** — port tidak lagi dianggap kosong dan statusnya tidak diubah.
 - Deteksi ulang port PON berjalan dalam satu transaksi: bila gagal di tengah, status port tidak berubah.
 

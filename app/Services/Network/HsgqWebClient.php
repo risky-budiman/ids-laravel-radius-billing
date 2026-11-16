@@ -19,7 +19,7 @@ class HsgqWebClient
 {
     protected ?string $token = null;
 
-    public function __construct(protected Olt $olt)
+    public function __construct(protected Olt $olt, protected int $timeout = 10)
     {
     }
 
@@ -48,7 +48,7 @@ class HsgqWebClient
             $headers['X-Token'] = $this->token;
         }
 
-        return Http::withHeaders($headers)->timeout(10)->withoutVerifying();
+        return Http::withHeaders($headers)->timeout($this->timeout)->connectTimeout(min(5, $this->timeout))->withoutVerifying();
     }
 
     /** Login ke web OLT; melempar RuntimeException berisi alasan yang bisa ditampilkan. */
@@ -118,16 +118,47 @@ class HsgqWebClient
     }
 
     /**
-     * Nama & deskripsi ONU per port dari web OLT (SNMP HSGQ tidak memuat deskripsi), dikunci MAC tanpa pemisah
-     * huruf besar. Endpoint dicoba berurutan karena tiap firmware HSGQ berbeda; endpoint yang 404 dilewati.
+     * Detail ONU per port dari web OLT, dikunci MAC tanpa pemisah huruf besar. Di HSGQ-E04ID (IR_V3.3.3ID)
+     * daftar izin memuat deskripsi, status pasti (Online/Offline), alasan & waktu putus terakhir, vendor, tipe,
+     * waktu daftar; ponmgmt?form=optical_onu memuat Tx, suhu, tegangan & bias.
      *
-     * @return array<string, array{name: string, description: string}>
+     * @return array<string, array<string, mixed>>
+     */
+    public function onuDetails(int $port): array
+    {
+        $out = $this->onuDescriptions($port);
+        try {
+            foreach ($this->get('ponmgmt', ['form' => 'optical_onu', 'port_id' => $port]) as $row) {
+                $mac = strtoupper(preg_replace('/[^A-Fa-f0-9]/', '', (string) ($row['macaddr'] ?? '')));
+                if ($mac === '') {
+                    continue;
+                }
+                $num = fn ($v) => is_numeric($n = trim(preg_replace('/[^0-9.\-]/', '', (string) $v))) ? (float) $n : null;
+                $out[$mac] = ($out[$mac] ?? ['name' => '', 'description' => '']) + [
+                    'tx_power' => $num($row['transmit_power'] ?? null),
+                    'temperature' => $num($row['work_temprature'] ?? $row['work_temperature'] ?? null),
+                    'voltage' => $num($row['work_voltage'] ?? null),
+                    'bias' => $num($row['transmit_bias'] ?? null),
+                ];
+            }
+        } catch (RuntimeException) {
+            // data optik tambahan bersifat opsional
+        }
+
+        return $out;
+    }
+
+    /**
+     * Nama & deskripsi (dan bila ada: status, alasan putus, vendor, tipe) ONU per port dari web OLT.
+     * Endpoint dicoba berurutan karena tiap firmware HSGQ berbeda; endpoint yang 404 dilewati.
+     *
+     * @return array<string, array<string, mixed>>
      */
     public function onuDescriptions(int $port): array
     {
         $out = [];
         $lastError = null;
-        foreach (['onu_info', 'onu_list', 'onu_allow_list'] as $endpoint) {
+        foreach (['onu_allow_list', 'onu_info', 'onu_list'] as $endpoint) {
             try {
                 $rows = $this->get($endpoint, ['port_id' => $port]);
             } catch (RuntimeException $e) {
@@ -146,10 +177,17 @@ class HsgqWebClient
                 if ($mac === '' || ($desc === '' && isset($out[$mac]))) {
                     continue;
                 }
-                $out[$mac] = [
+                $status = strtolower(trim((string) ($row['status'] ?? '')));
+                $out[$mac] = array_filter([
                     'name' => trim((string) ($row['onu_name'] ?? $row['name'] ?? '')),
                     'description' => $desc,
-                ];
+                    'status' => in_array($status, ['online', 'offline'], true) ? $status : null,
+                    'last_down_reason' => trim((string) ($row['last_down_reason'] ?? '')) ?: null,
+                    'last_down_time' => trim((string) ($row['last_down_time'] ?? '')) ?: null,
+                    'register_time' => trim((string) ($row['register_time'] ?? '')) ?: null,
+                    'vendor' => trim((string) ($row['vendor'] ?? '')) ?: null,
+                    'onu_type' => trim((string) ($row['onu_type'] ?? '')) ?: null,
+                ], fn ($v) => $v !== null) + ['name' => '', 'description' => ''];
             }
             if ($out && collect($out)->contains(fn ($o) => $o['description'] !== '')) {
                 break;

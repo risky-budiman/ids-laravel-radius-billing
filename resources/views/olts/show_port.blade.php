@@ -173,6 +173,16 @@
                                 <div class="flex justify-between gap-4 px-5 py-3"><dt class="text-surface-500">Jarak</dt><dd x-text="selected.distance ? selected.distance + ' m' : '—'"></dd></div>
                                 <div class="flex justify-between gap-4 px-5 py-3"><dt class="text-surface-500">Tipe</dt><dd x-text="selected.type || '—'"></dd></div>
                                 <div class="flex justify-between gap-4 px-5 py-3" x-show="selected.reg_time"><dt class="text-surface-500">Terdaftar</dt><dd x-text="selected.reg_time"></dd></div>
+                                <div class="flex justify-between gap-4 px-5 py-3" x-show="selected.last_down_reason"><dt class="text-surface-500">Putus terakhir</dt>
+                                    <dd class="text-right"><span x-text="selected.last_down_reason"></span><span class="block text-xs text-surface-500" x-text="selected.last_down_time"></span></dd></div>
+                                <template x-if="selected.tx_power !== undefined || selected.temperature !== undefined">
+                                    <div class="grid grid-cols-4 gap-2 px-5 py-3 text-center">
+                                        <div><p class="text-[11px] text-surface-500">Tx</p><p class="text-sm font-semibold tabular-nums" x-text="selected.tx_power != null ? selected.tx_power.toFixed(2) + ' dBm' : '—'"></p></div>
+                                        <div><p class="text-[11px] text-surface-500">Suhu</p><p class="text-sm font-semibold tabular-nums" x-text="selected.temperature != null ? selected.temperature + '°C' : '—'"></p></div>
+                                        <div><p class="text-[11px] text-surface-500">Tegangan</p><p class="text-sm font-semibold tabular-nums" x-text="selected.voltage != null ? selected.voltage.toFixed(2) + ' V' : '—'"></p></div>
+                                        <div><p class="text-[11px] text-surface-500">Bias</p><p class="text-sm font-semibold tabular-nums" x-text="selected.bias != null ? selected.bias + ' mA' : '—'"></p></div>
+                                    </div>
+                                </template>
                                 <div class="flex justify-between gap-4 px-5 py-3"><dt class="text-surface-500">Pelanggan</dt>
                                     <dd class="text-right">
                                         <template x-if="selected.customer"><a :href="selected.customer.url" class="font-medium text-primary-700 dark:text-primary-300 hover:underline" x-text="selected.customer.code + ' · ' + selected.customer.name"></a></template>

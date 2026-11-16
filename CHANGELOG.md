@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.151] - 2026-11-16
+
+### Fitur baru
+- **olt:** Lean OLT detail page; HSGQ ONU details from the web API
+
 ## [v1.5.150] - 2026-11-16
 
 ### Fitur baru

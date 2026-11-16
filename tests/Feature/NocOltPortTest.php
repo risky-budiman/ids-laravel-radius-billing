@@ -80,6 +80,28 @@ class NocOltPortTest extends TestCase
         $this->actingAs($teknisi)->get(route('olts.index'))->assertOk();
     }
 
+    public function test_olt_detail_page_is_lean_and_shows_device_info(): void
+    {
+        $olt = Olt::create(['name' => 'HSGQ Detail', 'ip_address' => '10.0.0.60', 'snmp_port' => 161, 'snmp_version' => 2,
+            'snmp_read_community' => 'public', 'olt_type' => 'HSGQ_EPON', 'is_active' => true,
+            'web_username' => 'admin', 'web_password' => 'rahasia-web']);
+        OltPonPort::create(['olt_id' => $olt->id, 'slot' => 1, 'pon_port' => 1, 'status' => 'active']);
+        Cache::put('noc_olt_stats', [$olt->id => ['status' => 'online', 'cpu' => 9, 'temp' => 35, 'uptime' => '40d 21h']], 300);
+        \Illuminate\Support\Facades\Http::fake([
+            '10.0.0.60/userlogin*' => \Illuminate\Support\Facades\Http::response(['code' => 1], 200, ['X-Token' => 't']),
+            '10.0.0.60/board_info*' => \Illuminate\Support\Facades\Http::response(['code' => 1, 'data' => ['product_name' => 'HSGQ-E04ID', 'fw_ver' => 'IR_V3.3.3ID', 'sn' => 'H4EG0001']]),
+        ]);
+        $teknisi = User::factory()->create(['role' => 'teknisi', 'is_active' => true]);
+
+        $this->actingAs($teknisi)->get(route('olts.show', $olt))->assertOk()
+            ->assertSee('40d 21h')->assertSee('9%')->assertSee('35°C')
+            ->assertSee('HSGQ-E04ID')->assertSee('IR_V3.3.3ID')->assertSee('H4EG0001')
+            ->assertSee('Port PON')->assertSee('Pindai semua port')
+            // Panel lama yang tidak efisien sudah dibuang
+            ->assertDontSee('Buat Port PON')->assertDontSee('Scan Unconfigured')->assertDontSee('ACTIVE &amp; OPERATIONAL', false)
+            ->assertDontSee('rahasia-web');
+    }
+
     public function test_port_page_uses_cache_and_rejects_ports_of_other_olts(): void
     {
         $a = $this->olt('OLT A');
@@ -123,9 +145,15 @@ class NocOltPortTest extends TestCase
         ], 600);
         \Illuminate\Support\Facades\Http::fake([
             '10.0.0.50/userlogin*' => \Illuminate\Support\Facades\Http::response(['code' => 1], 200, ['X-Token' => 't']),
-            '10.0.0.50/onu_info*' => \Illuminate\Support\Facades\Http::response('', 404),
-            '10.0.0.50/onu_list*' => \Illuminate\Support\Facades\Http::response(['code' => 1, 'data' => [
-                ['onu_id' => 1, 'macaddr' => '00:1a:69:43:12:29', 'onu_name' => '20391582228', 'onu_desc' => 'Ilhamsyah Pu'],
+            // Bentuk data dari HSGQ-E04ID asli (IR_V3.3.3ID)
+            '10.0.0.50/onu_allow_list*' => \Illuminate\Support\Facades\Http::response(['code' => 1, 'data' => [
+                ['port_id' => 1, 'onu_id' => 1, 'onu_name' => '20391582228', 'onu_desc' => 'Ilhamsyah Pu', 'macaddr' => '00:1a:69:43:12:29',
+                    'status' => 'Offline', 'vendor' => 'YOTU', 'onu_type' => '4fe', 'register_time' => '2026/11/05 00:09:19',
+                    'last_down_time' => '2026/11/16 10:00:00', 'last_down_reason' => 'Dying gasp'],
+            ]]),
+            '10.0.0.50/ponmgmt*' => \Illuminate\Support\Facades\Http::response(['code' => 1, 'data' => [
+                ['port_id' => 1, 'onu_id' => 1, 'macaddr' => '00:1a:69:43:12:29', 'work_temprature' => ' 44 °C', 'work_voltage' => '3.29 V',
+                    'transmit_bias' => ' 12 mA', 'transmit_power' => '1.7629 dBm', 'receive_power' => '-15.6543 dBm'],
             ]]),
         ]);
         $teknisi = User::factory()->create(['role' => 'teknisi', 'is_active' => true]);
@@ -133,6 +161,11 @@ class NocOltPortTest extends TestCase
 
         $res = $this->getJson(route('olts.get-port-data', [$olt, $port]))->assertOk();
         $this->assertSame('Ilhamsyah Pu', $res->json('onus.0.description'));
+        $this->assertSame('offline', $res->json('onus.0.status'), 'status dari web OLT menggantikan tebakan SNMP');
+        $this->assertSame('Dying gasp', $res->json('onus.0.last_down_reason'));
+        $this->assertSame('YOTU 4fe', $res->json('onus.0.type'));
+        $this->assertEquals(1.7629, $res->json('onus.0.tx_power'));
+        $this->assertEquals(44, $res->json('onus.0.temperature'));
         $this->assertFalse($res->json('capabilities.reboot'));
 
         // Reboot HSGQ ditolak dengan alasan jelas (SNMP HSGQ tidak mendukung)
