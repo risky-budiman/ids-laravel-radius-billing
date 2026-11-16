@@ -18,11 +18,18 @@ Keamanan sistem bergantung pada pengelolaan akun staf dan hak aksesnya.
 
 Dasbor, data keuangan dan Log Aktivitas hanya tampil untuk role yang berhak (lihat *Dasbor*).
 
-### Hak Akses per Role (rincian)
+### Hak Akses per Role (bisa diatur administrator)
 
-Menu **Pengaturan & Keamanan › Hak Akses per Role** (khusus administrator) menampilkan tabel fitur × role: **Penuh** (semua halaman & aksi), **Lihat** (hanya melihat), **Sebagian** (klik fitur untuk melihat aksi mana saja yang boleh), atau **—**. Tabel ini dibaca langsung dari aturan yang ditegakkan aplikasi, jadi selalu sesuai kenyataan.
+Menu **Pengaturan & Keamanan › Hak Akses per Role** (khusus administrator) menampilkan tabel fitur × role: **Penuh** (semua halaman & aksi), **Lihat** (hanya halaman baca), **Sebagian**, atau **—**.
 
-Menu di sidebar dan tombol di halaman (mis. *Paket Baru*, *Ubah*, *Aksi Massal*, *Catat Pemasukan*) mengikuti aturan yang sama: role yang tidak berhak tidak lagi melihat tombol yang ujungnya "403 Unauthorized". Aturan akses tidak bisa diubah dari layar agar tidak ada celah tidak sengaja; perubahan dilakukan oleh pengembang dan langsung terlihat di tabel ini.
+**Mengubah akses:**
+- Klik sel fitur sebuah role lalu pilih **Penuh**, **Lihat saja** (halaman baca; form tambah/ubah & simpan ditolak) atau **Tidak ada**.
+- Klik nama fitur untuk membuka rincian, lalu atur **per aksi** (✓ Boleh / · Tidak).
+- Sel yang diubah dari bawaan diberi **titik biru**; pilih **Kembalikan ke bawaan** di sel itu, atau **Kembalikan semua ke bawaan** di kanan atas.
+
+Perubahan langsung berlaku untuk menu sidebar, tombol di halaman dan pemeriksaan di server (pengguna terkait cukup memuat ulang halaman). Setiap perubahan tercatat di Log Aktivitas (`role_permissions_updated`).
+
+**Pengaman:** role **Administrator** selalu penuh; fitur bertanda 🔒 — **Kelola Staf, Hak Akses, Backup & Restore, Pembaruan sistem** — selalu khusus administrator dan tidak bisa diberikan ke role lain. Beberapa aksi punya pemeriksaan tambahan di dalam halaman (mis. kolom pelanggan khusus administrator), dan aplikasi mobile (API) memakai aturan bawaan.
 
 ## Panduan Singkat per Role
 

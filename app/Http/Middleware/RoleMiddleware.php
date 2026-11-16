@@ -34,8 +34,18 @@ class RoleMiddleware
             return redirect()->route('partners.show', $request->user());
         }
 
-        if (!$request->user()->hasRole($roles)) {
-            abort(403, 'Unauthorized: You do not have the required permissions to access this area.');
+        // Aturan bawaan rute + pengecualian per role dari halaman "Hak Akses per Role" (App\Support\RouteAccess).
+        // Rute bisa punya beberapa middleware role (grup bertingkat); keputusan dihitung atas semuanya sekaligus.
+        $user = $request->user();
+        $route = $request->route();
+        $name = $route?->getName();
+        if ($user instanceof \App\Models\User && $name) {
+            $allowed = \App\Support\RouteAccess::decide($user, $name, \App\Support\RouteAccess::listsOf($route));
+        } else {
+            $allowed = $user->hasRole($roles);
+        }
+        if (! $allowed) {
+            abort(403, 'Anda tidak punya akses ke halaman atau aksi ini.');
         }
 
         return $next($request);

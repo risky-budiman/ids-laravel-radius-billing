@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.166] - 2026-11-16
+
+### Fitur baru
+- **roles:** Administrators can customise access per role from 'Hak Akses per Role'
+
 ## [v1.5.165] - 2026-11-16
 
 ### Peningkatan

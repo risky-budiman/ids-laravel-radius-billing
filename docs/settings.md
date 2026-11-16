@@ -5,7 +5,7 @@
 | Menu | Isi |
 |---|---|
 | **Kelola Staf** | Akun staf, role, penanda "juga sales", nonaktifkan & reset sesi (lihat `docs/users.md`). |
-| **Hak Akses per Role** | Tabel fitur × role (Penuh / Lihat / Sebagian), dibaca langsung dari aturan yang ditegakkan aplikasi. |
+| **Hak Akses per Role** | Tabel fitur × role (Penuh / Lihat / Sebagian) yang **bisa diubah**: per fitur atau per aksi, dengan tombol kembali ke bawaan (lihat `docs/users.md`). |
 | **Pengaturan Aplikasi** | Identitas perusahaan (nama, alamat, kontak, logo — tampil di invoice, laporan, BA, halaman login & WhatsApp), **modul tambahan** (menu & perhitungan modul hanya muncul bila diaktifkan), **notifikasi tiket ke grup WhatsApp** (ID grup per jenis tiket). |
 | **Invoice & Portal** | Format & nomor invoice, NPWP, catatan kaki invoice, **portal pelanggan** dan **login OTP portal**. |
 | **Pengaturan Isolir** | Isolir lewat RADIUS (grup & IP isolir, mode rentang/pool), masa tenggang, dismantle otomatis, skrip MikroTik, daftar pelanggan terisolir (lihat `docs/billing.md`). |

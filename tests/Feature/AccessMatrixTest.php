@@ -79,6 +79,70 @@ class AccessMatrixTest extends TestCase
         $this->actingAs($admin)->get(route('access.matrix'))->assertForbidden();
     }
 
+    public function test_administrator_can_grant_and_revoke_access_per_feature(): void
+    {
+        $administrator = User::factory()->create(['role' => 'administrator', 'is_active' => true]);
+        $teknisi = User::factory()->create(['role' => 'teknisi', 'is_active' => true]);
+
+        // Bawaan: teknisi tidak boleh menambah paket
+        $this->actingAs($teknisi)->get(route('packages.create'))->assertForbidden();
+
+        $this->actingAs($administrator)->postJson(route('access.matrix.update'), ['role' => 'teknisi', 'feature' => 'packages', 'level' => 'full'])
+            ->assertOk()->assertJson(['success' => true]);
+        $this->assertTrue(\App\Models\ActivityLog::where('action', 'role_permissions_updated')->exists());
+
+        \App\Support\RouteAccess::flush();
+        $this->actingAs($teknisi)->get(route('packages.create'))->assertOk();
+        $this->actingAs($teknisi)->get(route('packages.index'))->assertOk()->assertSee('Paket Baru');   // tombol ikut
+
+        // "Lihat saja": halaman daftar boleh, aksi ubah tidak
+        $this->actingAs($administrator)->postJson(route('access.matrix.update'), ['role' => 'teknisi', 'feature' => 'packages', 'level' => 'view'])->assertOk();
+        \App\Support\RouteAccess::flush();
+        $this->actingAs($teknisi)->get(route('packages.index'))->assertOk()->assertDontSee('Paket Baru');
+        $this->actingAs($teknisi)->get(route('packages.create'))->assertForbidden();   // form tambah = aksi ubah
+        $this->actingAs($teknisi)->post(route('packages.store'), [])->assertForbidden();
+
+        // Kembali ke bawaan
+        $this->actingAs($administrator)->post(route('access.matrix.reset'), ['role' => 'teknisi'])->assertSessionHas('success');
+        \App\Support\RouteAccess::flush();
+        $this->actingAs($teknisi)->get(route('packages.create'))->assertForbidden();
+        $this->assertSame(0, \App\Models\RolePermission::count());
+    }
+
+    public function test_revoking_hides_menu_and_blocks_route(): void
+    {
+        $administrator = User::factory()->create(['role' => 'administrator', 'is_active' => true]);
+        $kasir = User::factory()->create(['role' => 'kasir', 'is_active' => true]);
+        $this->actingAs($kasir)->get(route('invoices.index'))->assertOk();
+
+        $this->actingAs($administrator)->postJson(route('access.matrix.update'), ['role' => 'kasir', 'route' => 'invoices.index', 'value' => 'deny'])->assertOk();
+        \App\Support\RouteAccess::flush();
+
+        $this->actingAs($kasir)->get(route('invoices.index'))->assertForbidden();
+        $menu = collect(SidebarMenu::admin($kasir))->flatMap(fn ($s) => collect($s['items'])->flatMap(fn ($i) => $i['type'] === 'group' ? $i['children'] : [$i]))->pluck('route');
+        $this->assertNotContains('invoices.index', $menu->all());
+
+        $this->actingAs($administrator)->get(route('access.matrix'))->assertOk()->assertSee('Kembalikan semua ke bawaan');
+    }
+
+    public function test_safeguards_administrator_role_and_locked_features(): void
+    {
+        $administrator = User::factory()->create(['role' => 'administrator', 'is_active' => true]);
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+
+        // Role administrator tidak bisa dibatasi
+        $this->actingAs($administrator)->postJson(route('access.matrix.update'), ['role' => 'administrator', 'feature' => 'customers', 'level' => 'none'])
+            ->assertStatus(422);
+        // Fitur terkunci (Kelola Staf) tidak bisa diberikan
+        $this->actingAs($administrator)->postJson(route('access.matrix.update'), ['role' => 'admin', 'route' => 'users.index', 'value' => 'allow'])->assertOk();
+        \App\Support\RouteAccess::flush();
+        $this->actingAs($admin)->get(route('users.index'))->assertForbidden();
+        $this->assertSame(0, \App\Models\RolePermission::count());
+
+        // Hanya administrator yang boleh mengubah
+        $this->actingAs($admin)->postJson(route('access.matrix.update'), ['role' => 'kasir', 'feature' => 'invoices', 'level' => 'none'])->assertForbidden();
+    }
+
     public function test_route_access_mirrors_role_middleware_including_sales_flag(): void
     {
         $kasir = User::factory()->create(['role' => 'kasir', 'is_active' => true]);

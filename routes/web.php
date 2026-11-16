@@ -394,6 +394,8 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::resource('nas', \App\Http\Controllers\NasController::class);
         Route::resource('users', \App\Http\Controllers\UserController::class);
         Route::get('access-matrix', \App\Http\Controllers\AccessMatrixController::class)->name('access.matrix');
+        Route::post('access-matrix', [\App\Http\Controllers\AccessMatrixController::class, 'update'])->name('access.matrix.update');
+        Route::post('access-matrix/reset', [\App\Http\Controllers\AccessMatrixController::class, 'reset'])->name('access.matrix.reset');
         Route::post('users/{user}/toggle-status', [\App\Http\Controllers\UserController::class, 'toggleStatus'])->name('users.toggle-status');
         Route::post('users/{user}/reset-sessions', [\App\Http\Controllers\UserController::class, 'resetSessions'])->name('users.reset-sessions');
         
