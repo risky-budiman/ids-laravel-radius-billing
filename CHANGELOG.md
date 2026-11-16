@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.138] - 2026-11-16
+
+### Perbaikan
+- **noc,olt:** NOC dashboard cached and skips offline OLTs; port page loads without waiting for SNMP
+
 ## [v1.5.137] - 2026-11-16
 
 ### Perbaikan

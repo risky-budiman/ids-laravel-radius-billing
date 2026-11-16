@@ -303,6 +303,11 @@ class OltGateway
         }
 
         if (empty($allSns)) {
+            // Bedakan "OLT tidak menjawab" dari "memang tidak ada ONU": dulu keduanya [] sehingga
+            // kegagalan SNMP tampil (dan di-cache) sebagai port kosong.
+            if ($this->snmp()->getSafe('1.3.6.1.2.1.1.3.0') === null) {
+                throw new \RuntimeException("OLT {$this->olt->name} ({$this->olt->ip_address}) tidak merespons SNMP.");
+            }
             Log::warning("SNMP: No ONU Serial numbers found across all tables for {$this->olt->ip_address}");
             return [];
         }

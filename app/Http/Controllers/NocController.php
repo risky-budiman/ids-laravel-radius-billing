@@ -9,9 +9,7 @@ class NocController extends Controller
 {
     public function index(Request $request)
     {
-        if ($request->has('refresh')) {
-            \Illuminate\Support\Facades\Cache::forget('noc_olt_stats');
-        }
+        $fresh = $request->has('refresh');
 
         // Get Online Usernames from Radius
         $onlineUsernames = \App\Models\Radius\RadAcct::online()->pluck('username')->unique()->toArray();
@@ -23,28 +21,11 @@ class NocController extends Controller
 
         // Get OLT Hardware Stats via SNMP (Cached for 5 minutes)
         $olts = \App\Models\Olt::where('is_active', true)->get();
-        $oltStats = \Illuminate\Support\Facades\Cache::remember('noc_olt_stats', 300, function() use ($olts) {
-            $data = [];
-            foreach ($olts as $olt) {
-                try {
-                    $gateway = new OltGateway($olt);
-                    $data[$olt->id] = $gateway->getOltStatus();
-                } catch (\Exception $e) {
-                    $data[$olt->id] = ['status' => 'offline', 'cpu' => 0, 'uptime' => 'N/A', 'temp' => 0];
-                }
-            }
-            return $data;
-        });
+        // Status OLT & ONU belum terdaftar: cache 5 menit, OLT offline tidak dipindai (dulu dipindai setiap buka)
+        $oltStats = \App\Services\Network\NocSnapshot::oltStatuses($olts, $fresh);
+        $unconfigured = \App\Services\Network\NocSnapshot::unconfigured($olts, $fresh);
+        $unconfiguredCount = $unconfigured['count'];
 
-        // Get Unconfigured ONU Count via SNMP
-        $unconfiguredCount = 0;
-        foreach ($olts as $olt) {
-            try {
-                $gateway = new OltGateway($olt);
-                $unconfiguredCount += count($gateway->scanUnconfiguredOnus());
-            } catch (\Exception $e) { }
-        }
-        
         $criticalCount = \App\Models\CustomerSignalCache::where('rx_power', '<', -27)->count();
 
         $stats = [
@@ -52,6 +33,8 @@ class NocController extends Controller
             'online' => $onlineCount,
             'offline' => $offlineCount,
             'unconfigured' => $unconfiguredCount,
+            // OLT yang tidak bisa dipindai (offline/gagal) — angka "belum terdaftar" tidak mencakupnya
+            'unconfigured_unscanned' => array_merge($unconfigured['skipped'], $unconfigured['failed']),
             'critical_signals' => $criticalCount,
             'open_tickets' => \App\Models\Ticket::where('status', 'open')->count(),
         ];

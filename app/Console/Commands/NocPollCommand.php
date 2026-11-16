@@ -62,6 +62,8 @@ class NocPollCommand extends Command
                         $customer->update(['onu_index' => $match['real_index']]);
                         $this->info("Updated index for {$customer->name} to {$match['real_index']}");
                     }
+                    // Cache memakai indeks terbaru (dulu indeks lama tetap tersimpan setelah indeks diperbarui)
+                    $index = ! empty($match['real_index']) ? $match['real_index'] : $index;
 
                     // Update Cache
                     CustomerSignalCache::updateOrCreate(

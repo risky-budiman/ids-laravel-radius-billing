@@ -205,6 +205,10 @@
                     window.addEventListener('sync-onu-live', () => {
                         this.syncLiveData();
                     });
+                    // Halaman tampil dulu, data ONU diambil di latar (dulu halaman menunggu scan SNMP selesai)
+                    if (@json($isLoading ?? false)) {
+                        this.syncLiveData();
+                    }
                 },
                 syncLiveData() {
                     this.loading = true;
@@ -219,6 +223,10 @@
                         return res.json();
                     })
                     .then(data => {
+                        if (data.status === 'error') {
+                            // Gagal scan: daftar lama tetap ditampilkan (dulu dianggap port kosong)
+                            throw new Error(data.message || 'OLT tidak merespons');
+                        }
                         this.onus = data.onus || [];
                     })
                     .catch(err => {

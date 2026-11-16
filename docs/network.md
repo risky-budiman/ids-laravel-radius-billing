@@ -27,6 +27,14 @@ Sistem mendukung integrasi ke OLT ZTE (C300, C320, C600) dan HSGQ. Pemantauan me
 - **Data Pelanggan (ONU)**: Menampilkan Serial Number, Nama, Status Online/Offline, dan Daya Optik (Rx Power dalam satuan dBm) secara langsung via SNMP walk.
 - **Auto-Scan Modem Baru (Discovery)**: Memindai modem/ONU baru yang belum terkonfigurasi.
 
+### Dasbor NOC & halaman port
+
+- Status OLT dan jumlah **ONU belum terdaftar** di dasbor NOC (web & aplikasi) disimpan **5 menit**. Klik **Refresh** untuk memindai ulang.
+- OLT yang **offline tidak dipindai** (dasbor tidak menunggu timeout). OLT yang offline atau gagal dipindai ditampilkan sebagai *"Tidak terpindai: …"*, sehingga angka 0 tidak disalahartikan.
+- **Halaman port** langsung tampil; daftar ONU diambil di latar. Hasil scan disimpan 10 menit; tombol sinkron memindai ulang.
+- Bila OLT tidak merespons SNMP, halaman menampilkan pesan gagal dan **daftar terakhir tetap ditampilkan** — port tidak lagi dianggap kosong dan statusnya tidak diubah.
+- Deteksi ulang port PON berjalan dalam satu transaksi: bila gagal di tengah, status port tidak berubah.
+
 ### Hak akses & kredensial OLT
 
 - **Tambah, ubah dan hapus OLT hanya administrator.** Teknisi tetap bisa melihat OLT, tes koneksi, sinkron port dan melihat ONU.

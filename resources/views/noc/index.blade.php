@@ -59,6 +59,9 @@
                     </div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Discovery ONU</p>
                     <h3 class="text-3xl font-semibold text-gray-900 dark:text-white tabular-nums">{{ $stats['unconfigured'] }}</h3>
+                    @if(! empty($stats['unconfigured_unscanned']))
+                        <p class="mt-1 text-xs text-amber-700 dark:text-amber-400">Tidak terpindai: {{ implode(', ', $stats['unconfigured_unscanned']) }}</p>
+                    @endif
                 </a>
 
                 <!-- Critical Signals -->

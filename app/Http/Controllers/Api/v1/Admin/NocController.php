@@ -16,7 +16,7 @@ class NocController extends Controller
     /**
      * Get NOC summary overview and OLT hardware telemetry.
      */
-    public function index()
+    public function index(Request $request)
     {
         $onlineCount = RadAcct::online()->distinct('username')->count('username');
         $activeCustomers = Customer::where('status', 'active')->count();
@@ -24,45 +24,27 @@ class NocController extends Controller
 
         $olts = Olt::where('is_active', true)->withCount('ponPorts')->get();
 
+        // Sama dengan dasbor web: cache 5 menit & OLT offline tidak dipindai (dulu dipindai setiap panggilan)
+        $fresh = $request->boolean('refresh');
+        $statuses = \App\Services\Network\NocSnapshot::oltStatuses($olts, $fresh);
+        $unconfigured = \App\Services\Network\NocSnapshot::unconfigured($olts, $fresh);
+        $unconfiguredList = $unconfigured['onus'];
+
         $oltTelemetry = [];
-        $unconfiguredList = [];
-
         foreach ($olts as $olt) {
-            try {
-                $gateway = new OltGateway($olt);
-                $status = $gateway->getOltStatus();
-                $oltTelemetry[] = [
-                    'id' => $olt->id,
-                    'name' => $olt->name,
-                    'ip_address' => $olt->ip_address,
-                    'olt_type' => $olt->olt_type,
-                    'ports_count' => $olt->pon_ports_count,
-                    'is_online' => ($status['status'] ?? '') === 'online',
-                    'cpu_usage' => $status['cpu'] ?? 0,
-                    'temperature' => $status['temp'] ?? 0,
-                    'uptime' => $status['uptime'] ?? 'N/A',
-                ];
-
-                $unconfigured = $gateway->scanUnconfiguredOnus();
-                foreach ($unconfigured as $onu) {
-                    $unconfiguredList[] = array_merge($onu, [
-                        'olt_id' => $olt->id,
-                        'olt_name' => $olt->name,
-                    ]);
-                }
-            } catch (\Throwable $e) {
-                $oltTelemetry[] = [
-                    'id' => $olt->id,
-                    'name' => $olt->name,
-                    'ip_address' => $olt->ip_address,
-                    'olt_type' => $olt->olt_type,
-                    'ports_count' => $olt->pon_ports_count,
-                    'is_online' => false,
-                    'cpu_usage' => 0,
-                    'temperature' => 0,
-                    'uptime' => 'Offline',
-                ];
-            }
+            $status = $statuses[$olt->id] ?? ['status' => 'offline'];
+            $online = ($status['status'] ?? '') === 'online';
+            $oltTelemetry[] = [
+                'id' => $olt->id,
+                'name' => $olt->name,
+                'ip_address' => $olt->ip_address,
+                'olt_type' => $olt->olt_type,
+                'ports_count' => $olt->pon_ports_count,
+                'is_online' => $online,
+                'cpu_usage' => $status['cpu'] ?? 0,
+                'temperature' => $status['temp'] ?? 0,
+                'uptime' => $online ? ($status['uptime'] ?? 'N/A') : 'Offline',
+            ];
         }
 
         $criticalCount = CustomerSignalCache::where('rx_power', '<', -27)->count();
@@ -75,6 +57,7 @@ class NocController extends Controller
                 'online_ont' => $onlineCount,
                 'offline_ont' => $offlineCount,
                 'unconfigured_count' => count($unconfiguredList),
+                'unconfigured_unscanned' => array_merge($unconfigured['skipped'], $unconfigured['failed']),
                 'signals_good' => $goodCount,
                 'signals_warning' => $warningCount,
                 'signals_critical' => $criticalCount,

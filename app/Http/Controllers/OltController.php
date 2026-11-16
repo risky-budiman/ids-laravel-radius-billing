@@ -219,13 +219,13 @@ class OltController extends Controller
             $ports = $gateway->discoverPonPorts();
 
             if (empty($ports)) {
-                return back()->with('error', 'No PON ports discovered via SNMP. Please check SNMP credentials and ensure OLT is reachable.');
+                return back()->with('error', 'Tidak ada port PON yang terdeteksi lewat SNMP. Periksa community SNMP dan pastikan OLT terjangkau.');
             }
 
-            // Reset all ports to inactive first to ensure accuracy
-            OltPonPort::where('olt_id', $olt->id)->update(['status' => 'inactive']);
-
+            // Reset status di DALAM transaksi (dulu sebelum transaksi: bila gagal di tengah, semua port
+            // terlanjur nonaktif)
             DB::beginTransaction();
+            OltPonPort::where('olt_id', $olt->id)->update(['status' => 'inactive']);
             foreach ($ports as $port) {
                 OltPonPort::updateOrCreate(
                     [
@@ -241,10 +241,10 @@ class OltController extends Controller
             }
             DB::commit();
 
-            return back()->with('success', 'Successfully discovered and created ' . count($ports) . ' PON ports via SNMP.');
+            return back()->with('success', count($ports) . ' port PON terdeteksi lewat SNMP.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Discovery failed: ' . $e->getMessage());
+            return back()->with('error', 'Deteksi port gagal: ' . $e->getMessage());
         }
     }
 
@@ -272,56 +272,17 @@ class OltController extends Controller
      */
     public function showPort(Olt $olt, OltPonPort $port)
     {
-        $shelf = $port->shelf ?: 1;
-        $slot = $port->slot;
-        $pon_port = $port->pon_port;
+        abort_unless((int) $port->olt_id === (int) $olt->id, 404);   // dulu port OLT lain bisa dibuka lewat URL
 
-        $onus = [];
-        try {
-            $gateway = new OltGateway($olt);
-            $onus = $gateway->getOnusOnPort($shelf, $slot, $pon_port);
-
-            // Store result in cache (expires in 10 minutes)
-            \Illuminate\Support\Facades\Cache::put("olt_port_data_{$port->id}", $onus, now()->addMinutes(10));
-
-            // Sync Port Status to Database
-            $newStatus = count($onus) > 0 ? 'active' : 'inactive';
-            $port->update(['status' => $newStatus]);
-
-            // UPDATE NOC DATA (CustomerSignalCache)
-            foreach ($onus as $onuData) {
-                if (!empty($onuData['sn'])) {
-                    $customer = \App\Models\Customer::where('olt_id', $olt->id)
-                        ->where('onu_sn', $onuData['sn'])
-                        ->first();
-
-                    if ($customer) {
-                        \App\Models\CustomerSignalCache::updateOrCreate(
-                            ['customer_id' => $customer->id],
-                            [
-                                'onu_index' => $onuData['index'],
-                                'rx_power' => is_numeric($onuData['signal']) ? $onuData['signal'] : null,
-                                'status' => $onuData['status'],
-                                'last_polled_at' => now(),
-                            ]
-                        );
-
-                        if ($onuData['status'] === 'online' && $customer->onu_index !== $onuData['index']) {
-                            $customer->update(['onu_index' => $onuData['index']]);
-                        }
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Error loading port data: " . $e->getMessage());
-            $onus = \Illuminate\Support\Facades\Cache::get("olt_port_data_{$port->id}", []);
-        }
+        // Tampilkan dari cache bila ada; bila belum, halaman memuat data di latar lewat getPortData
+        // (dulu scan SNMP berjalan sebelum halaman tampil — lambat/timeout)
+        $cached = \Illuminate\Support\Facades\Cache::get("olt_port_data_{$port->id}");
 
         return view('olts.show_port', [
             'olt' => $olt,
             'port' => $port,
-            'onus' => $onus,
-            'isLoading' => false
+            'onus' => $cached ?? [],
+            'isLoading' => $cached === null,
         ]);
     }
 
@@ -343,28 +304,52 @@ class OltController extends Controller
 
     public function getPortData(Request $request, Olt $olt, \App\Models\OltPonPort $port)
     {
-        $shelf = $port->shelf ?: 1;
-        $slot = $port->slot;
-        $pon_port = $port->pon_port;
+        abort_unless((int) $port->olt_id === (int) $olt->id, 404);
 
-        if ($request->has('fresh')) {
-            \Illuminate\Support\Facades\Cache::forget("olt_port_data_{$port->id}");
+        $key = "olt_port_data_{$port->id}";
+        if (! $request->has('fresh') && ($cached = \Illuminate\Support\Facades\Cache::get($key)) !== null) {
+            return response()->json(['onus' => $cached, 'status' => 'ready']);
         }
 
-        $onus = \Illuminate\Support\Facades\Cache::remember("olt_port_data_{$port->id}", now()->addMinutes(5), function() use ($olt, $shelf, $slot, $pon_port, $port) {
-            try {
-                $gateway = new OltGateway($olt);
-                $data = $gateway->getOnusOnPort($shelf, $slot, $pon_port);
-                $port->update(['status' => count($data) > 0 ? 'active' : 'inactive']);
-                return $data;
-            } catch (\Exception $e) {
-                return [];
-            }
-        });
+        try {
+            $onus = (new OltGateway($olt))->getOnusOnPort($port->shelf ?: 1, $port->slot, $port->pon_port);
+        } catch (\Throwable $e) {
+            // Gagal scan TIDAK disimpan sebagai port kosong & status port tidak diubah (dulu di-cache 5 menit)
+            \Illuminate\Support\Facades\Log::warning("Scan port OLT {$olt->id} {$port->slot}/{$port->pon_port} gagal: " . $e->getMessage());
 
-        return response()->json([
-            'onus' => $onus ?: [],
-            'status' => 'ready'
-        ]);
+            return response()->json(['onus' => [], 'status' => 'error', 'message' => 'OLT tidak merespons SNMP. Coba lagi.']);
+        }
+
+        \Illuminate\Support\Facades\Cache::put($key, $onus, now()->addMinutes(10));
+        $port->update(['status' => count($onus) > 0 ? 'active' : 'inactive']);
+        $this->syncSignalCache($olt, $onus);
+
+        return response()->json(['onus' => $onus, 'status' => 'ready']);
+    }
+
+    /** Perbarui cache sinyal NOC & indeks ONU pelanggan dari hasil scan port. */
+    private function syncSignalCache(Olt $olt, array $onus): void
+    {
+        foreach ($onus as $onuData) {
+            if (empty($onuData['sn'])) {
+                continue;
+            }
+            $customer = \App\Models\Customer::where('olt_id', $olt->id)->where('onu_sn', $onuData['sn'])->first();
+            if (! $customer) {
+                continue;
+            }
+            \App\Models\CustomerSignalCache::updateOrCreate(
+                ['customer_id' => $customer->id],
+                [
+                    'onu_index' => $onuData['index'],
+                    'rx_power' => is_numeric($onuData['signal'] ?? null) ? $onuData['signal'] : null,
+                    'status' => $onuData['status'] ?? null,
+                    'last_polled_at' => now(),
+                ]
+            );
+            if (($onuData['status'] ?? null) === 'online' && $customer->onu_index !== $onuData['index']) {
+                $customer->update(['onu_index' => $onuData['index']]);
+            }
+        }
     }
 }
