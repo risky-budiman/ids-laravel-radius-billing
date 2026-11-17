@@ -152,6 +152,65 @@
             </div>
         </form>
 
+        {{-- Sakelar isolir otomatis --}}
+        @php
+            $autoOn = \App\Services\AutoSuspension::enabled();
+            $dueQuery = \App\Services\AutoSuspension::dueQuery();
+            $dueCount = (clone $dueQuery)->count();
+            $duePreview = $dueQuery->with('package:id,name')
+                ->withSum(['invoices as due_amount' => fn ($q) => $q->suspendableRecurring()], 'amount')
+                ->withMin(['invoices as oldest_due' => fn ($q) => $q->suspendableRecurring()], 'due_date')
+                ->orderBy('name')->limit(15)->get(['id', 'customer_code', 'name', 'package_id', 'billing_type', 'billing_method', 'expired_at']);
+        @endphp
+        <div class="card {{ $autoOn ? '' : 'border-amber-300 dark:border-amber-500/40' }}" id="isolir-otomatis">
+            <div class="card-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h3 class="card-title flex items-center gap-2">Isolir otomatis
+                        <span class="{{ $autoOn ? 'badge-success' : 'badge-warning' }}">{{ $autoOn ? 'Aktif' : 'Nonaktif' }}</span>
+                    </h3>
+                    <p class="text-xs text-surface-500 dark:text-surface-400">Mengisolir pelanggan yang tagihannya lewat jatuh tempo (+ masa tenggang), prabayar renewal yang masa aktifnya habis, dan yang lewat batas bayar instalasi — setiap hari pukul 00:01. Nonaktif = tidak ada yang diisolir otomatis (job isolir yang sudah antre juga dibatalkan); isolir manual tetap bisa.</p>
+                </div>
+                <form method="POST" action="{{ route('settings.isolation.auto') }}" class="shrink-0"
+                      onsubmit="return confirm({{ $autoOn ? "'Nonaktifkan isolir otomatis? Penunggak tidak akan diisolir sampai diaktifkan kembali.'" : "'Aktifkan isolir otomatis? " . $dueCount . " pelanggan yang memenuhi syarat akan diisolir pada proses billing berikutnya (00:01) dan menerima WhatsApp isolir.'" }})">
+                    @csrf
+                    <input type="hidden" name="enabled" value="{{ $autoOn ? 0 : 1 }}">
+                    <button class="{{ $autoOn ? 'btn-secondary' : 'btn-primary' }}">{{ $autoOn ? 'Nonaktifkan' : 'Aktifkan isolir otomatis' }}</button>
+                </form>
+            </div>
+            <div class="card-body space-y-3">
+                @unless($autoOn)
+                    <p class="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+                        Isolir otomatis sedang <strong>nonaktif</strong>. Periksa daftar di bawah (tagih, lunasi atau hapus-buku invoice lama yang tidak valid, atau atur masa tenggang) sebelum mengaktifkannya.
+                    </p>
+                @endunless
+                <p class="text-sm text-surface-700 dark:text-surface-300"><strong class="tabular-nums">{{ number_format($dueCount) }}</strong> pelanggan aktif saat ini memenuhi syarat isolir{{ $autoOn ? ' dan akan diisolir pada proses billing berikutnya' : '' }}.</p>
+                @if($duePreview->isNotEmpty())
+                    <div class="overflow-x-auto rounded-lg border border-surface-200 dark:border-surface-800">
+                        <table class="w-full text-sm">
+                            <thead class="bg-surface-50 text-left text-xs uppercase tracking-wide text-surface-500 dark:bg-surface-900/60">
+                                <tr><th class="px-3 py-2">Pelanggan</th><th class="px-3 py-2">Paket</th><th class="px-3 py-2">Jatuh tempo tertua</th><th class="px-3 py-2 text-right">Tunggakan</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-surface-100 dark:divide-surface-800">
+                                @foreach($duePreview as $c)
+                                    <tr>
+                                        <td class="px-3 py-2"><a href="{{ route('customers.show', $c->id) }}" class="font-medium text-primary-700 hover:underline dark:text-primary-300">{{ $c->name }}</a>
+                                            <span class="block font-mono text-[11px] text-surface-500">{{ $c->customer_code }}</span></td>
+                                        <td class="px-3 py-2 text-surface-600 dark:text-surface-300">{{ $c->package?->name ?? '—' }}</td>
+                                        <td class="px-3 py-2 tabular-nums text-surface-600 dark:text-surface-300">
+                                            {{ $c->oldest_due ? \Illuminate\Support\Carbon::parse($c->oldest_due)->translatedFormat('d M Y') : ($c->expired_at ? 'masa aktif habis ' . $c->expired_at->translatedFormat('d M Y') : '—') }}</td>
+                                        <td class="px-3 py-2 text-right tabular-nums">Rp {{ number_format((float) $c->due_amount, 0, ',', '.') }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @if($dueCount > $duePreview->count())
+                        <p class="text-xs text-surface-500">Menampilkan {{ $duePreview->count() }} dari {{ number_format($dueCount) }}. Daftar lengkap: laporan Piutang › akan diisolir, atau <code>php artisan app:process-billing --dry-run</code>.</p>
+                    @endif
+                @endif
+            </div>
+        </div>
+
         {{-- Masa tenggang sebelum isolir --}}
         <form method="POST" action="{{ route('settings.isolation.grace') }}" class="card">
             @csrf

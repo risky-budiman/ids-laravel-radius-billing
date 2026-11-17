@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.173] - 2026-11-17
+
+### Fitur baru
+- **isolir:** Auto-isolation switch, off after upgrading an existing server
+
 ## [v1.5.172] - 2026-11-17
 
 ### Perbaikan

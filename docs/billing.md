@@ -37,6 +37,8 @@ Pelanggan **terisolir** otomatis dibuka kembali saat invoice dilunasi **dan tida
 > `Pengaturan & Keamanan › Pengaturan Isolir`
 
 - Pelanggan terisolir dipindah ke **grup RADIUS ISOLIR** dan mendapat **IP isolir** (mode *rentang*: satu IP per pelanggan dari rentang yang Anda atur; mode *pool*: IP dari pool MikroTik). Halaman isolir menampilkan pemberitahuan tagihan.
+- **Isolir otomatis** (sakelar aktif/nonaktif): menahan *semua* isolir otomatis — tunggakan langganan, prabayar renewal yang masa aktifnya habis, dan batas bayar instalasi — termasuk job isolir yang sudah antre. Isolir manual tetap bisa. Kartu ini menampilkan jumlah & daftar pelanggan yang memenuhi syarat isolir saat ini, sehingga bisa diperiksa sebelum diaktifkan. Mengubahnya tercatat di Log Aktivitas. Instalasi baru: aktif. **Update dari versi lama yang sudah berisi pelanggan: dimulai nonaktif** (versi sebelum v1.5.104 tidak pernah mengisolir penunggak karena bug, sehingga update akan mengisolir semua penunggak sekaligus).
+- Saat job isolir benar-benar dijalankan, tunggakan dicek ulang: pelanggan yang sudah membayar selagi job antre tidak diisolir.
 - **Masa tenggang**: berapa hari setelah jatuh tempo pelanggan yang belum bayar diisolir.
 - **Skrip MikroTik** dibuat otomatis dari data sistem (address list, redirect ke halaman isolir).
 - **Pengajuan dismantle otomatis** (bawaan *mati*): pelanggan terisolir lebih dari N hari (bawaan 60) diubah menjadi *menunggu dismantle* — tagihan berhenti dan tiket penarikan perangkat dibuat.

@@ -477,6 +477,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::post('settings/isolation', [\App\Http\Controllers\IsolationSettingsController::class, 'update'])->name('settings.isolation.update');
         Route::post('settings/isolation/dismantle', [\App\Http\Controllers\IsolationSettingsController::class, 'updateDismantle'])->name('settings.isolation.dismantle');
         Route::post('settings/isolation/grace', [\App\Http\Controllers\IsolationSettingsController::class, 'updateGrace'])->name('settings.isolation.grace');
+        Route::post('settings/isolation/auto', [\App\Http\Controllers\IsolationSettingsController::class, 'updateAuto'])->name('settings.isolation.auto');
         Route::get('settings/isolation/mikrotik.rsc', [\App\Http\Controllers\IsolationSettingsController::class, 'script'])->name('settings.isolation.script');
         Route::get('settings/installation', [\App\Http\Controllers\InstallationSettingsController::class, 'index'])->name('settings.installation');
         Route::post('settings/installation', [\App\Http\Controllers\InstallationSettingsController::class, 'update'])->name('settings.installation.update');

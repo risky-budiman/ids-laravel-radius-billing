@@ -45,6 +45,17 @@ class ProcessCustomerSuspension implements ShouldQueue
         if (!$customer->is_active) {
             return;
         }
+        // Job yang terlanjur antre: patuhi sakelar isolir otomatis, dan lewati bila sudah membayar sementara
+        // itu (dulu hanya is_active yang dicek, jadi pelanggan yang lunas selagi job antre tetap diisolir).
+        if (! \App\Services\AutoSuspension::enabled()) {
+            Log::info("Isolir {$customer->username} dibatalkan: isolir otomatis nonaktif.");
+            return;
+        }
+        $customer->refresh();
+        if (! \App\Services\AutoSuspension::stillDue($customer)) {
+            Log::info("Isolir {$customer->username} dibatalkan: tidak lagi menunggak.");
+            return;
+        }
 
         Log::warning("Suspending customer: {$customer->username}. Reason: {$reason}");
         

@@ -72,23 +72,19 @@ class ProcessAutomatedBilling extends Command
     {
         $this->info("Checking for customers needing suspension...");
         $accumulatedDelay = 0;
-        $today = now()->toDateString();
 
         // Isolir berdasarkan jatuh tempo INVOICE yang belum dibayar, bukan customers.billing_due_date.
         // billing_due_date sudah dimajukan ke siklus berikutnya saat invoice diterbitkan, sehingga
         // perbandingan lama ("billing_due_date < hari ini") tidak pernah terpenuhi selama invoice
         // terus terbit tiap bulan — pelanggan yang tidak membayar tidak pernah diisolir.
-        $overdue = Customer::where('is_active', true)
-            ->where('status', Customer::STATUS_ACTIVE)
-            ->where(function ($q) use ($today) {
-                $q->whereHas('invoices', fn ($i) => $i->suspendableRecurring())   // lewat jatuh tempo + masa tenggang
-                  // Renewal: masa aktif habis walau invoice belum/tidak terbit.
-                  ->orWhere(fn ($r) => $r->where('billing_type', 'prepaid')
-                      ->where('billing_method', 'renewal')
-                      ->whereNotNull('expired_at')
-                      ->whereDate('expired_at', '<', $today));
-            })
-            ->get();
+        $overdue = \App\Services\AutoSuspension::dueQuery()->get();
+
+        // Sakelar Pengaturan Isolir: tidak ada job isolir maupun WA isolir yang dibuat
+        if (! \App\Services\AutoSuspension::enabled() && ! $this->option('dry-run')) {
+            $this->warn("Isolir otomatis NONAKTIF (Pengaturan Isolir): {$overdue->count()} pelanggan memenuhi syarat isolir, tidak diisolir.");
+
+            return;
+        }
 
         foreach ($overdue as $customer) {
             $reason = match (true) {

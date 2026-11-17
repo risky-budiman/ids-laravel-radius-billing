@@ -55,8 +55,12 @@ class CheckActivationGracePeriod extends Command
             }
         }
 
-        // 2. Lewat batas -> isolir
+        // 2. Lewat batas -> isolir (ditahan bila isolir otomatis nonaktif)
         $expired = $pending()->where('activation_grace_expires_at', '<=', now())->get();
+        if ($expired->isNotEmpty() && ! \App\Services\AutoSuspension::enabled()) {
+            $this->warn("Isolir otomatis NONAKTIF: {$expired->count()} pelanggan lewat batas bayar instalasi, tidak diisolir.");
+            $expired = collect();
+        }
         foreach ($expired as $customer) {
             $this->warn("Isolir {$customer->username}: biaya instalasi belum dibayar sampai batas waktu.");
             try {

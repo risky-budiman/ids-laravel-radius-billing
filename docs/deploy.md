@@ -6,6 +6,7 @@ Untuk Admin IT. Jalankan berurutan setiap kali memasang versi baru di server pro
 
 - [ ] **Backup database** dan simpan salinannya di luar server (`BACKUP_REMOTE_DISK` / `BACKUP_REMOTE_PATH`).
 - [ ] Catat versi yang sedang berjalan (pojok kanan bawah aplikasi, mis. `v1.5.164`).
+- [ ] **Update dari versi lama (≤ v1.5.103)** — baca dulu bagian *Update dari Versi Lama* di bawah.
 
 ## 2. Pasang Versi Baru
 
@@ -46,6 +47,17 @@ php artisan optimize:clear && php artisan optimize
 - [ ] **Data perusahaan**: NPWP & catatan kaki invoice di `Invoice & Portal`.
 - [ ] **Penautan ONU**: NOC Center › Sinkron ONU, lalu periksa *Penautan ONU* (usulan) agar pelanggan lama tertaut ke OLT.
 - [ ] **Jalur kabel (opsional)**: isi server OSRM di `Peta Pelanggan › Pengaturan jalur` bila ingin tombol *Ikuti jalan*; tanpa itu jalur digambar manual.
+
+## Update dari Versi Lama (≤ v1.5.103)
+
+Versi lama tidak pernah mengisolir pelanggan yang menunggak (bug), dan webhook pembayaran belum diverifikasi. Setelah update:
+
+1. **Isolir otomatis dimulai nonaktif** (migrasi `2026_11_17_000002`) agar proses billing pertama tidak mengisolir semua penunggak sekaligus. Buka `Pengaturan Isolir › Isolir otomatis`, periksa daftarnya (tagih, lunasi, hapus-buku invoice yang tidak valid, atau atur masa tenggang), atur mode isolir & skrip MikroTik, lalu **Aktifkan**. Daftar lengkap: `php artisan app:process-billing --dry-run`.
+2. **Webhook pembayaran** (Moota, Midtrans, Xendit, Duitku) menolak permintaan tanpa kredensial/secret yang benar. Periksa `Integrasi` dan lakukan satu pembayaran percobaan.
+3. **Pengingat WhatsApp** H-3 / H-1 / hari H mulai terkirim pukul 09:00 (Template Pesan › Pengingat Tagihan).
+4. **Antrean lama**: `SELECT COUNT(*), FROM_UNIXTIME(MIN(created_at)) FROM jobs;` — bila ada job WhatsApp lama, putuskan dibuang atau dikirim **sebelum** menyalakan queue worker.
+5. Laporan Arus Kas periode lama akan berbeda (perbaikan hitung ganda & klasifikasi); jurnal tidak berubah.
+6. Hak akses staf per role lebih ketat; atur di `Hak Akses per Role` bila perlu.
 
 ## Bila Ada Masalah
 

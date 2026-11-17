@@ -56,6 +56,20 @@ class IsolationSettingsController extends Controller
             : 'Dismantle otomatis dinonaktifkan.');
     }
 
+    /** Sakelar isolir otomatis (tunggakan, renewal habis, batas bayar instalasi). */
+    public function updateAuto(Request $request)
+    {
+        $on = $request->validate(['enabled' => 'required|boolean'])['enabled'];
+        \App\Services\AutoSuspension::setEnabled((bool) $on);
+        $due = \App\Services\AutoSuspension::dueQuery()->count();
+        \App\Models\ActivityLog::log('isolir_auto_' . ($on ? 'enabled' : 'disabled'),
+            'Isolir otomatis ' . ($on ? 'DIAKTIFKAN' : 'DINONAKTIFKAN') . " ({$due} pelanggan memenuhi syarat isolir saat itu).");
+
+        return redirect()->route('settings.isolation')->with('success', $on
+            ? "Isolir otomatis aktif. {$due} pelanggan memenuhi syarat dan akan diisolir pada proses billing berikutnya (00:01)."
+            : 'Isolir otomatis dinonaktifkan. Tidak ada pelanggan yang diisolir otomatis sampai diaktifkan kembali.');
+    }
+
     /** Masa tenggang: jumlah hari setelah jatuh tempo sebelum pelanggan diisolir. */
     public function updateGrace(Request $request)
     {

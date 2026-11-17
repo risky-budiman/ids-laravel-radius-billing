@@ -51,7 +51,11 @@
                 <h3 class="card-title">Akan diisolir pada run billing berikutnya ({{ $toBeSuspended->count() }})</h3>
                 <p class="text-xs text-surface-500 dark:text-surface-400">
                     Pelanggan aktif yang tagihannya jatuh tempo paling lambat {{ $asOf->locale('id')->translatedFormat('d F Y') }}, atau masa aktif renewal-nya habis.
-                    Diisolir otomatis {{ $asOf->addDay()->locale('id')->translatedFormat('d F Y') }} pukul 00:01 bila belum dibayar.
+                    @if(\App\Services\AutoSuspension::enabled())
+                        Diisolir otomatis {{ $asOf->addDay()->locale('id')->translatedFormat('d F Y') }} pukul 00:01 bila belum dibayar.
+                    @else
+                        <span class="font-semibold text-amber-700 dark:text-amber-300">Isolir otomatis sedang nonaktif</span> — pelanggan ini tidak akan diisolir sampai diaktifkan di Pengaturan Isolir.
+                    @endif
                 </p>
             </div>
             <div class="overflow-x-auto">
