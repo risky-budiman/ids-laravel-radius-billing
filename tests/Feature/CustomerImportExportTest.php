@@ -252,4 +252,54 @@ class CustomerImportExportTest extends TestCase
         $this->assertSame('rahasia1', $sheet->getCell('C3')->getValue());
         $this->assertTrue(ActivityLog::where('action', 'customers_exported')->where('description', 'like', '%TERMASUK password%')->exists());
     }
+
+    public function test_export_has_info_columns_all_statuses_csv_and_reimports(): void
+    {
+        $c = $this->existing();
+        $olt = \App\Models\Olt::create(['name' => 'OLT Pusat', 'ip_address' => '10.0.0.9', 'snmp_port' => 161, 'snmp_version' => 2,
+            'snmp_read_community' => 'public', 'olt_type' => 'HSGQ_EPON', 'is_active' => true]);
+        $c->forceFill(['olt_id' => $olt->id, 'onu_index' => '1.1.1.5'])->saveQuietly();
+        \App\Models\Invoice::create(['customer_id' => $c->id, 'invoice_number' => 'INV-EXP-1', 'amount' => 150000, 'subtotal' => 150000,
+            'status' => 'unpaid', 'due_date' => now()]);
+        \App\Models\Invoice::create(['customer_id' => $c->id, 'invoice_number' => 'INV-EXP-2', 'amount' => 99000, 'subtotal' => 99000,
+            'status' => 'paid', 'due_date' => now()]);
+        $gone = Customer::create(['customer_code' => '001001001501', 'username' => 'cabut@net', 'name' => 'Sudah Cabut',
+            'package_id' => $this->p10->id, 'phone' => '0812']);
+        $gone->forceFill(['status' => 'dismantled'])->saveQuietly();
+        $this->actingAs($this->admin);
+
+        $path = tempnam(sys_get_temp_dir(), 'exp') . '.xlsx';
+        file_put_contents($path, $this->get(route('customers.export'))->assertOk()->streamedContent());
+        $book = IOFactory::load($path);
+        $sheet = $book->getSheet(0);
+        $headers = $sheet->rangeToArray('A2:AF2')[0];
+        $row = array_combine($headers, $sheet->rangeToArray('A4:AF4', null, true, false)[0]);   // A3 = "Pelanggan Lama", A4 = "Sudah Cabut" (urut nama)
+        $row3 = array_combine($headers, $sheet->rangeToArray('A3:AF3', null, true, false)[0]);
+        $this->assertSame('Pelanggan Lama', $row3['nama_pelanggan']);
+        $this->assertEquals(150000, $row3['info_tunggakan']);          // hanya invoice belum lunas
+        $this->assertEquals(1, $row3['info_invoice_belum_lunas']);
+        $this->assertSame('OLT Pusat', $row3['info_olt']);
+        $this->assertSame('1.1.1.5', $row3['info_posisi_onu']);
+        $this->assertSame('dismantled', $row['status']);
+
+        // Ringkasan memuat semua status, termasuk yang dicabut
+        $summary = collect($book->getSheet(1)->toArray())->mapWithKeys(fn ($r) => [trim((string) $r[0]) => $r[1]]);
+        $this->assertEquals(2, $summary['Total pelanggan']);
+        $this->assertEquals(1, $summary['Dicabut']);
+
+        // CSV: kolom sama, filter berlaku
+        $csv = $this->get(route('customers.export', ['format' => 'csv', 'status' => 'active']))->assertOk()->streamedContent();
+        $lines = array_values(array_filter(explode("\n", trim(substr($csv, 3)))));
+        $this->assertCount(2, $lines);
+        $this->assertStringStartsWith('nama_pelanggan;username;password', $lines[0]);
+        $this->assertStringContainsString('lama@net', $lines[1]);
+        $this->assertStringContainsString('OLT Pusat', $lines[1]);
+
+        // File ekspor bisa diimpor ulang (mode perbarui): kolom info_ diabaikan, data tidak rusak
+        $this->post(route('customers.import.store'), ['file' => new UploadedFile($path, 'ekspor.xlsx', null, null, true),
+            'duplicate_action' => 'update', 'mode' => 'import'])->assertSessionHasNoErrors();
+        $this->assertSame('0811', $c->fresh()->phone);
+        $this->assertSame(2, Customer::count());
+    }
+
 }

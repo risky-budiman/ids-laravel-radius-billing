@@ -12,7 +12,7 @@
                 <div x-data="{ open: false }" class="relative" @click.outside="open = false">
                     <button type="button" @click="open = !open" class="btn-secondary">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Ekspor Data (Excel)
+                        Ekspor Data
                     </button>
                     <div x-show="open" x-cloak class="absolute right-0 z-30 mt-1 w-72 rounded-lg border border-surface-200 bg-white p-1 shadow-lg dark:border-surface-700 dark:bg-surface-900">
                         <a href="{{ route('customers.export', request()->only(['status', 'package_id', 'billing_type', 'search'])) }}" class="block rounded px-3 py-2 text-sm hover:bg-surface-50 dark:hover:bg-surface-800">
@@ -22,6 +22,9 @@
                            onclick="return confirm('File akan berisi password PPPoE semua pelanggan. Simpan dengan aman. Lanjutkan?')"
                            class="block rounded px-3 py-2 text-sm hover:bg-surface-50 dark:hover:bg-surface-800">
                             Dengan password PPPoE <span class="block text-xs text-surface-500">Untuk migrasi ke sistem lain; tercatat di Log Aktivitas</span>
+                        </a>
+                        <a href="{{ route('customers.export', request()->only(['status', 'package_id', 'billing_type', 'search']) + ['format' => 'csv']) }}" class="block rounded border-t border-surface-100 px-3 py-2 text-sm hover:bg-surface-50 dark:border-surface-800 dark:hover:bg-surface-800">
+                            CSV (tanpa password) <span class="block text-xs text-surface-500">Paling cepat untuk data ribuan pelanggan; dibuka di Excel / Google Sheets</span>
                         </a>
                     </div>
                 </div>

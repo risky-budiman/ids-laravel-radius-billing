@@ -68,6 +68,12 @@ Hanya **admin & administrator** (menu Pelanggan → *Impor Data* / *Ekspor Data*
 ### Ekspor
 - **Tanpa password PPPoE** — disarankan untuk arsip/dibagikan. Kolom password dikosongkan.
 - **Dengan password PPPoE** — untuk migrasi ke sistem lain. File berisi password semua pelanggan; simpan dengan aman. Tercatat di Log Aktivitas.
+- **CSV (tanpa password)** — paling cepat & hemat memori untuk ribuan pelanggan; pemisah `;`, dibuka di Excel / Google Sheets.
+
+Ekspor mengikuti **filter** di daftar pelanggan (status, paket, tipe tagihan, pencarian). Isi file:
+- **Kolom A–T** sama dengan template impor, jadi file bisa diimpor ulang (mode *Perbarui*) atau ke sistem lain.
+- **Kolom `info_…`** (abu-abu) hanya informasi dan diabaikan saat impor: tipe pelanggan, biaya instalasi, wilayah/STO/STB, ODP & port, OLT, posisi ONU, **tunggakan** (jumlah invoice belum lunas, tanpa invoice booster) & jumlah invoice belum lunas, sales, mitra, tanggal daftar, tanggal berhenti.
+- Sheet **Ringkasan Export**: jumlah pelanggan per **semua** status (termasuk dicabut & batal).
 
 ### Impor
 1. Unduh **template**, isi sheet *Format Import* (lihat sheet *Contoh & Panduan*). Kolom username, password, No. HP, ID pelanggan, NIK dan SN ONU sudah berformat **teks** — jangan diubah ke angka, karena Excel menghapus angka 0 di depan dan membulatkan NIK 16 digit.

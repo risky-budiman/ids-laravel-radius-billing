@@ -929,259 +929,175 @@ class CustomerImportService
      *
      * @param array $filters Optional filters: status, package_id, billing_type, search
      */
+    /** Kolom ekspor: A–T sama dengan template impor (bisa diimpor ulang), sisanya kolom informasi (diabaikan saat impor). */
+    public const EXPORT_IMPORT_COLUMNS = ['nama_pelanggan', 'username', 'password', 'nama_paket', 'no_telepon', 'tipe_tagihan', 'metode_tagihan',
+        'tgl_jatuh_tempo', 'kenakan_ppn', 'tipe_diskon', 'nilai_diskon', 'status', 'tgl_aktivasi', 'id_pelanggan', 'email', 'nik_ktp',
+        'alamat', 'serial_number_onu', 'latitude', 'longitude'];
+
+    public const EXPORT_INFO_COLUMNS = ['info_tipe_pelanggan', 'info_biaya_instalasi', 'info_wilayah_sto_stb', 'info_odp', 'info_olt',
+        'info_posisi_onu', 'info_tunggakan', 'info_invoice_belum_lunas', 'info_sales', 'info_mitra', 'info_tgl_daftar', 'info_tgl_berhenti'];
+
+    /** Query ekspor (filter sama dengan daftar pelanggan) + tunggakan per pelanggan dalam satu query. */
+    public function exportQuery(array $filters = [])
+    {
+        $unpaid = fn ($agg) => \App\Models\Invoice::query()->selectRaw($agg)->whereColumn('invoices.customer_id', 'customers.id')
+            ->where('status', 'unpaid')->where('invoice_number', 'not like', 'INV-BOOST-%');
+
+        return Customer::query()
+            ->select('customers.*')
+            ->selectSub($unpaid('COALESCE(SUM(amount), 0)'), 'export_arrears')
+            ->selectSub($unpaid('COUNT(*)'), 'export_unpaid_count')
+            ->with(['package:id,name', 'olt:id,name', 'odp:id,name', 'sales:id,name', 'partner:id,name'])
+            ->when(! empty($filters['status']), fn ($q) => $q->where('status', $filters['status']))
+            ->when(! empty($filters['package_id']), fn ($q) => $q->where('package_id', $filters['package_id']))
+            ->when(! empty($filters['billing_type']), fn ($q) => $q->where('billing_type', $filters['billing_type']))
+            ->when(! empty($filters['search']), function ($q) use ($filters) {
+                $like = '%' . addcslashes((string) $filters['search'], '%_\\') . '%';
+                $q->where(fn ($w) => $w->where('name', 'like', $like)->orWhere('username', 'like', $like)
+                    ->orWhere('customer_code', 'like', $like)->orWhere('phone', 'like', $like));
+            })
+            ->orderBy('name')->orderBy('id');
+    }
+
+    /** Satu baris ekspor (urutan = EXPORT_IMPORT_COLUMNS + EXPORT_INFO_COLUMNS). */
+    public function exportRow(Customer $c, bool $withPasswords): array
+    {
+        $discount = ['fixed' => 'nominal', 'percentage' => 'persen'][$c->discount_type] ?? 'tanpa_diskon';
+
+        return [
+            $c->name, $c->username,
+            // Kosong bila password tidak diminta — impor ulang tidak mengubah password (kolom kosong = tetap)
+            $withPasswords ? (string) $c->password : '',
+            $c->package?->name ?? '', $c->phone ?? '', $c->billing_type ?? 'prepaid', $c->billing_method ?? 'fixed',
+            $c->billing_due_day ?? 20, $c->use_tax ? 'YA' : 'TIDAK', $discount, (float) ($c->discount_value ?? 0),
+            $c->status ?? 'active', $c->activated_at?->format('Y-m-d') ?? '', $c->customer_code ?? '', $c->email ?? '',
+            $c->ktp ?? '', $c->address ?? '', $c->onu_sn ?? '', $c->latitude, $c->longitude,
+            // informasi
+            $c->customer_type ?? '', (float) ($c->installation_fee ?? 0),
+            trim(implode('/', array_filter([$c->region_code, $c->sto_code, $c->stb_code])), '/'),
+            trim(($c->odp?->name ?? '') . ($c->odp_port ? " port {$c->odp_port}" : '')),
+            $c->olt?->name ?? '', $c->onu_index ?? '',
+            (float) ($c->export_arrears ?? 0), (int) ($c->export_unpaid_count ?? 0),
+            $c->sales?->name ?? '', $c->partner?->name ?? '',
+            $c->created_at?->format('Y-m-d') ?? '', $c->terminated_at?->format('Y-m-d') ?? '',
+        ];
+    }
+
+    /** Jumlah pelanggan per status untuk filter yang sama (satu query, semua status). */
+    public function exportStatusCounts(array $filters = []): array
+    {
+        return $this->exportQuery($filters)->reorder()->setEagerLoads([])
+            ->select('status')->selectRaw('COUNT(*) AS n')->groupBy('status')->pluck('n', 'status')->map(fn ($n) => (int) $n)->all();
+    }
+
+    /**
+     * Ekspor Excel. Data dibaca bertahap (lazy, 500 baris) dan tanpa gaya per baris agar ribuan pelanggan
+     * tidak menghabiskan memori. Untuk data sangat besar gunakan ekspor CSV (streaming).
+     */
     public function exportCustomersSpreadsheet(array $filters = [], bool $withPasswords = false): Spreadsheet
     {
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Data Pelanggan');
 
-        // Company domain suffix for username display
-        $companySuffix = \App\Models\Setting::where('key', 'company_domain')->first()?->value ?? 'net.id';
+        $headers = array_merge(self::EXPORT_IMPORT_COLUMNS, self::EXPORT_INFO_COLUMNS);
+        $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers));
+        $importLast = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count(self::EXPORT_IMPORT_COLUMNS));
+        $required = ['nama_pelanggan', 'nama_paket', 'no_telepon'];
 
-        // Row 1: Status Keterangan (same as import template)
-        $requirementBadges = [
-            'A1' => 'WAJIB',
-            'B1' => 'OPSIONAL',
-            'C1' => 'OPSIONAL',
-            'D1' => 'WAJIB',
-            'E1' => 'WAJIB',
-            'F1' => 'OPSIONAL',
-            'G1' => 'OPSIONAL',
-            'H1' => 'OPSIONAL',
-            'I1' => 'OPSIONAL',
-            'J1' => 'OPSIONAL',
-            'K1' => 'OPSIONAL',
-            'L1' => 'OPSIONAL',
-            'M1' => 'OPSIONAL',
-            'N1' => 'OPSIONAL',
-            'O1' => 'OPSIONAL',
-            'P1' => 'OPSIONAL',
-            'Q1' => 'OPSIONAL',
-            'R1' => 'OPSIONAL',
-            'S1' => 'OPSIONAL',
-            'T1' => 'OPSIONAL',
-        ];
-
-        foreach ($requirementBadges as $cell => $badge) {
-            $sheet->setCellValue($cell, "[ {$badge} ]");
-            $isWajib = ($badge === 'WAJIB');
-            $sheet->getStyle($cell)->applyFromArray([
-                'font' => [
-                    'bold' => true,
-                    'size' => 9,
-                    'color' => ['rgb' => $isWajib ? '991B1B' : '1E3A8A'],
-                ],
-                'fill' => [
-                    'fillType' => Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => $isWajib ? 'FEE2E2' : 'DBEAFE'],
-                ],
-                'alignment' => [
-                    'horizontal' => Alignment::HORIZONTAL_CENTER,
-                    'vertical' => Alignment::VERTICAL_CENTER,
-                ],
-            ]);
+        // Baris 1: keterangan kolom; baris 2: judul (sama dengan template impor)
+        foreach ($headers as $i => $h) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
+            $sheet->setCellValue("{$col}1", str_starts_with($h, 'info_') ? '[ INFO ]' : (in_array($h, $required, true) ? '[ WAJIB ]' : '[ OPSIONAL ]'));
+            $sheet->setCellValue("{$col}2", $h);
         }
-        $sheet->getRowDimension(1)->setRowHeight(20);
+        $sheet->getStyle("A1:{$lastCol}1")->applyFromArray(['font' => ['bold' => true, 'size' => 9, 'color' => ['rgb' => '1E3A8A']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'DBEAFE']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]]);
+        $sheet->getStyle("A2:{$importLast}2")->applyFromArray(['font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '2563EB']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]]);
+        $infoFirst = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count(self::EXPORT_IMPORT_COLUMNS) + 1);
+        $sheet->getStyle("{$infoFirst}1:{$lastCol}2")->applyFromArray(['font' => ['bold' => true, 'color' => ['rgb' => '334155']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E2E8F0']]]);
+        $sheet->freezePane('B3');
 
-        // Row 2: Headers (same structure as import template)
-        $headers = [
-            'A2' => 'nama_pelanggan',
-            'B2' => 'username',
-            'C2' => 'password',
-            'D2' => 'nama_paket',
-            'E2' => 'no_telepon',
-            'F2' => 'tipe_tagihan',
-            'G2' => 'metode_tagihan',
-            'H2' => 'tgl_jatuh_tempo',
-            'I2' => 'kenakan_ppn',
-            'J2' => 'tipe_diskon',
-            'K2' => 'nilai_diskon',
-            'L2' => 'status',
-            'M2' => 'tgl_aktivasi',
-            'N2' => 'id_pelanggan',
-            'O2' => 'email',
-            'P2' => 'nik_ktp',
-            'Q2' => 'alamat',
-            'R2' => 'serial_number_onu',
-            'S2' => 'latitude',
-            'T2' => 'longitude',
-        ];
+        // Kolom teks (No. HP, ID, NIK, SN, posisi ONU) agar tidak rusak saat diedit di Excel lalu diimpor ulang
+        $textCols = ['username', 'password', 'no_telepon', 'id_pelanggan', 'nik_ktp', 'serial_number_onu', 'info_posisi_onu', 'info_wilayah_sto_stb'];
+        $textIdx = array_map(fn ($h) => array_search($h, $headers, true), $textCols);
+        $text = \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING;
 
-        foreach ($headers as $cell => $text) {
-            $sheet->setCellValue($cell, $text);
-        }
-
-        // Style header row
-        $sheet->getStyle('A2:T2')->applyFromArray([
-            'font' => [
-                'bold' => true,
-                'color' => ['rgb' => 'FFFFFF'],
-                'size' => 11,
-            ],
-            'fill' => [
-                'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '2563EB'], // Blue-600 (different from import green to distinguish)
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['rgb' => '1D4ED8'],
-                ],
-            ],
-        ]);
-        $sheet->getRowDimension(2)->setRowHeight(28);
-        $sheet->freezePane('A3');
-
-        // Build query with optional filters
-        $query = Customer::with('package');
-
-        if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-        if (!empty($filters['package_id'])) {
-            $query->where('package_id', $filters['package_id']);
-        }
-        if (!empty($filters['billing_type'])) {
-            $query->where('billing_type', $filters['billing_type']);
-        }
-        if (!empty($filters['search'])) {
-            $search = $filters['search'];
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('username', 'like', "%{$search}%")
-                  ->orWhere('customer_code', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
-            });
-        }
-
-        $customers = $query->orderBy('name', 'asc')->get();
-
-        // Populate rows
-        $rowIdx = 3;
-        foreach ($customers as $customer) {
-            // Map discount_type back to template format
-            $discountType = 'tanpa_diskon';
-            if ($customer->discount_type === 'fixed') {
-                $discountType = 'nominal';
-            } elseif ($customer->discount_type === 'percentage') {
-                $discountType = 'persen';
+        $row = 3;
+        foreach ($this->exportQuery($filters)->lazy(500) as $customer) {
+            foreach ($this->exportRow($customer, $withPasswords) as $i => $value) {
+                $cell = [$i + 1, $row];
+                if (in_array($i, $textIdx, true)) {
+                    $sheet->setCellValueExplicit($cell, (string) $value, $text);
+                } elseif ($value !== null && $value !== '') {
+                    $sheet->setCellValue($cell, $value);
+                }
             }
-
-            $sheet->setCellValueExplicit('A' . $rowIdx, $customer->name, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('B' . $rowIdx, $customer->username, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            // Kosong bila password tidak diminta — impor ulang file ini tidak mengubah password (kolom kosong = tetap)
-            $sheet->setCellValueExplicit('C' . $rowIdx, $withPasswords ? (string) $customer->password : '', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('D' . $rowIdx, $customer->package?->name ?? '', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('E' . $rowIdx, $customer->phone ?? '', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            $sheet->setCellValue('F' . $rowIdx, $customer->billing_type ?? 'prepaid');
-            $sheet->setCellValue('G' . $rowIdx, $customer->billing_method ?? 'fixed');
-            $sheet->setCellValue('H' . $rowIdx, $customer->billing_due_day ?? 20);
-            $sheet->setCellValue('I' . $rowIdx, $customer->use_tax ? 'YA' : 'TIDAK');
-            $sheet->setCellValue('J' . $rowIdx, $discountType);
-            $sheet->setCellValue('K' . $rowIdx, $customer->discount_value ?? 0);
-            $sheet->setCellValue('L' . $rowIdx, $customer->status ?? 'active');
-            $sheet->setCellValue('M' . $rowIdx, $customer->activated_at ? $customer->activated_at->format('Y-m-d') : '');
-            $sheet->setCellValueExplicit('N' . $rowIdx, $customer->customer_code ?? '', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            $sheet->setCellValue('O' . $rowIdx, $customer->email ?? '');
-            $sheet->setCellValueExplicit('P' . $rowIdx, $customer->ktp ?? '', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            $sheet->setCellValue('Q' . $rowIdx, $customer->address ?? '');
-            $sheet->setCellValueExplicit('R' . $rowIdx, $customer->onu_sn ?? '', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            $sheet->setCellValue('S' . $rowIdx, $customer->latitude);
-            $sheet->setCellValue('T' . $rowIdx, $customer->longitude);
-
-            // Alternate row colors for readability
-            if ($rowIdx % 2 === 0) {
-                $sheet->getStyle("A{$rowIdx}:T{$rowIdx}")->applyFromArray([
-                    'fill' => [
-                        'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['rgb' => 'F8FAFC'],
-                    ],
-                ]);
-            }
-
-            $rowIdx++;
+            $row++;
+        }
+        $lastRow = max(3, $row - 1);
+        foreach ($textIdx as $i) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
+            $sheet->getStyle("{$col}3:{$col}" . max($row + 200, 1000))->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
+        }
+        foreach (['info_biaya_instalasi', 'info_tunggakan', 'nilai_diskon'] as $h) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(array_search($h, $headers, true) + 1);
+            $sheet->getStyle("{$col}3:{$col}{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
+        }
+        foreach ($headers as $i => $h) {
+            $sheet->getColumnDimension(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1))
+                ->setWidth(['nama_pelanggan' => 26, 'username' => 28, 'alamat' => 38, 'email' => 26, 'info_odp' => 22, 'info_olt' => 20][$h] ?? 18);
+        }
+        if ($row > 3) {
+            $sheet->setAutoFilter("A2:{$lastCol}{$lastRow}");
         }
 
-        // Format teks agar No. HP / ID / NIK tidak rusak saat file ini diedit di Excel lalu diimpor ulang
-        foreach (['B', 'C', 'E', 'N', 'P', 'R'] as $textCol) {
-            $sheet->getStyle("{$textCol}3:{$textCol}" . max($rowIdx + 200, 1000))->getNumberFormat()
-                ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
+        // Ringkasan: SEMUA status (dulu hanya aktif/terisolir/menunggu aktivasi)
+        $summary = $spreadsheet->createSheet();
+        $summary->setTitle('Ringkasan Export');
+        $summary->setCellValue('A1', 'RINGKASAN EXPORT DATA PELANGGAN');
+        $summary->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('1E3A8A');
+        $counts = $this->exportStatusCounts($filters);
+        $labels = ['new' => 'Baru', 'waiting_activation' => 'Menunggu aktivasi', 'active' => 'Aktif', 'suspended' => 'Terisolir',
+            'waiting_dismantle' => 'Menunggu dismantle', 'dismantled' => 'Dicabut', 'canceled' => 'Batal'];
+        $items = [['Tanggal export', now()->format('d/m/Y H:i')], ['Total pelanggan', array_sum($counts)]];
+        foreach ($labels as $k => $label) {
+            $items[] = ["  {$label}", $counts[$k] ?? 0];
         }
-
-        // Apply borders to data area
-        if ($rowIdx > 3) {
-            $lastRow = $rowIdx - 1;
-            $sheet->getStyle("A3:T{$lastRow}")->applyFromArray([
-                'borders' => [
-                    'allBorders' => [
-                        'borderStyle' => Border::BORDER_THIN,
-                        'color' => ['rgb' => 'E2E8F0'],
-                    ],
-                ],
-            ]);
+        foreach (array_diff_key($counts, $labels) as $k => $n) {
+            $items[] = ["  {$k}", $n];
         }
-
-        // Column widths (same as import template)
-        $columnWidths = [
-            'A' => 26, 'B' => 30, 'C' => 18, 'D' => 24, 'E' => 20,
-            'F' => 18, 'G' => 20, 'H' => 18, 'I' => 16, 'J' => 18,
-            'K' => 18, 'L' => 18, 'M' => 20, 'N' => 22, 'O' => 28,
-            'P' => 24, 'Q' => 38, 'R' => 24, 'S' => 18, 'T' => 18,
-        ];
-        foreach ($columnWidths as $col => $width) {
-            $sheet->getColumnDimension($col)->setWidth($width);
+        $items = array_merge($items, [['', ''], ['CARA MEMAKAI FILE INI', ''],
+            ['1.', 'Kolom A–T sama dengan template impor: file bisa diimpor ulang (mode Perbarui) atau ke sistem lain dengan format sama.'],
+            ['2.', 'Kolom berawalan info_ (abu-abu) hanya informasi — tunggakan, OLT, ODP, sales, dll. — dan diabaikan saat impor.'],
+            ['3.', 'Paket di sistem tujuan harus sudah dibuat dengan nama yang sama.'],
+            ['4.', $withPasswords ? 'Kolom password TERISI: file ini RAHASIA, simpan & hapus dengan aman.'
+                : 'Kolom password sengaja kosong; impor ulang (mode Perbarui) tidak mengubah password.']]);
+        foreach ($items as $i => [$a, $b]) {
+            $summary->setCellValue('A' . ($i + 3), $a);
+            $summary->setCellValue('B' . ($i + 3), $b);
         }
-
-        // ====================================
-        // SHEET 2: Ringkasan Export
-        // ====================================
-        $summarySheet = $spreadsheet->createSheet();
-        $summarySheet->setTitle('Ringkasan Export');
-
-        $summarySheet->setCellValue('A1', 'RINGKASAN EXPORT DATA PELANGGAN');
-        $summarySheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('1E3A8A');
-
-        $summaryItems = [
-            ['Tanggal Export', now()->format('d/m/Y H:i:s')],
-            ['Total Pelanggan', $customers->count()],
-            ['Pelanggan Aktif', $customers->where('status', 'active')->count()],
-            ['Pelanggan Suspended', $customers->where('status', 'suspended')->count()],
-            ['Pelanggan Waiting', $customers->where('status', 'waiting_activation')->count()],
-            ['', ''],
-            ['CARA MENGGUNAKAN FILE INI:', ''],
-            ['1.', 'File ini bisa langsung diimpor ke sistem billing lain yang mendukung format yang sama.'],
-            ['2.', 'Buka menu Import Pelanggan di sistem tujuan, lalu unggah file ini.'],
-            ['3.', 'Pastikan paket internet di sistem tujuan sudah dibuat terlebih dahulu dengan nama yang sama.'],
-            ['4.', $withPasswords
-                ? 'Kolom password terisi: file ini RAHASIA, simpan & hapus dengan aman.'
-                : 'Kolom password sengaja dikosongkan. Saat diimpor ulang (mode perbarui) password pelanggan tidak berubah.'],
-        ];
-
-        $sIdx = 3;
-        foreach ($summaryItems as $item) {
-            $summarySheet->setCellValue('A' . $sIdx, $item[0]);
-            $summarySheet->setCellValue('B' . $sIdx, $item[1]);
-
-            if (in_array($item[0], ['Tanggal Export', 'Total Pelanggan', 'Pelanggan Aktif', 'Pelanggan Suspended', 'Pelanggan Waiting'])) {
-                $summarySheet->getStyle('A' . $sIdx)->getFont()->setBold(true);
-            }
-            if ($item[0] === 'CARA MENGGUNAKAN FILE INI:') {
-                $summarySheet->getStyle('A' . $sIdx)->getFont()->setBold(true)->setSize(11)->getColor()->setRGB('059669');
-            }
-
-            $sIdx++;
-        }
-
-        $summarySheet->getColumnDimension('A')->setWidth(30);
-        $summarySheet->getColumnDimension('B')->setWidth(80);
+        $summary->getStyle('A3:A4')->getFont()->setBold(true);
+        $summary->getColumnDimension('A')->setWidth(30);
+        $summary->getColumnDimension('B')->setWidth(90);
 
         $spreadsheet->setActiveSheetIndex(0);
 
         return $spreadsheet;
+    }
+
+    /** Ekspor CSV streaming (memori tetap kecil berapa pun jumlah pelanggan). */
+    public function streamCustomersCsv(array $filters = [], bool $withPasswords = false): void
+    {
+        $out = fopen('php://output', 'w');
+        fwrite($out, "\xEF\xBB\xBF");   // BOM agar Excel membaca UTF-8
+        fputcsv($out, array_merge(self::EXPORT_IMPORT_COLUMNS, self::EXPORT_INFO_COLUMNS), ';');
+        foreach ($this->exportQuery($filters)->lazy(500) as $customer) {
+            fputcsv($out, array_map(fn ($v) => is_float($v) ? (string) $v : $v, $this->exportRow($customer, $withPasswords)), ';');
+        }
+        fclose($out);
     }
 }
 

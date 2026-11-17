@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.169] - 2026-11-17
+
+### Fitur baru
+- **customers:** Fuller, lighter customer export (info columns, all statuses, CSV)
+
 ## [v1.5.168] - 2026-11-16
 
 ### Fitur baru

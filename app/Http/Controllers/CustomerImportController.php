@@ -175,15 +175,32 @@ class CustomerImportController extends Controller
         $filters = $request->only(['status', 'package_id', 'billing_type', 'search']);
         // Password PPPoE hanya bila diminta khusus (dulu selalu ikut terekspor)
         $withPasswords = $request->boolean('with_passwords');
+        $csv = $request->get('format') === 'csv';
 
-        $spreadsheet = $this->importService->exportCustomersSpreadsheet($filters, $withPasswords);
-        
         $filterSuffix = '';
         if (!empty($filters['status'])) {
-            $filterSuffix .= '_' . $filters['status'];
+            $filterSuffix .= '_' . preg_replace('/[^a-z_]/', '', (string) $filters['status']);
         }
-        
-        $fileName = 'export_pelanggan' . $filterSuffix . '_' . date('Ymd_His') . '.xlsx';
+
+        $fileName = 'export_pelanggan' . $filterSuffix . '_' . date('Ymd_His') . ($csv ? '.csv' : '.xlsx');
+
+        if ($csv) {
+            ActivityLog::create(['user_id' => auth()->id(), 'action' => 'customers_exported',
+                'description' => "Export data pelanggan ke file '{$fileName}'" . ($withPasswords ? ' TERMASUK password PPPoE.' : ' (tanpa password).')]);
+
+            // CSV dialirkan baris per baris: memori tetap kecil untuk ribuan pelanggan
+            return response()->streamDownload(fn () => $this->importService->streamCustomersCsv($filters, $withPasswords),
+                $fileName, ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'max-age=0']);
+        }
+
+        @set_time_limit(300);
+        // Excel menyimpan semua sel di memori (~50 KB per pelanggan): beri ruang; data sangat besar → CSV
+        $limit = trim((string) ini_get('memory_limit'));
+        $bytes = (int) $limit * (['g' => 1 << 30, 'm' => 1 << 20, 'k' => 1 << 10][strtolower(substr($limit, -1))] ?? 1);
+        if ($bytes > 0 && $bytes < 512 * 1024 * 1024) {
+            @ini_set('memory_limit', '512M');
+        }
+        $spreadsheet = $this->importService->exportCustomersSpreadsheet($filters, $withPasswords);
 
         // Log activity
         ActivityLog::create([
