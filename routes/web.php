@@ -135,6 +135,14 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::post('customers/{customer}/reset-fup', [\App\Http\Controllers\CustomerController::class, 'resetFup'])->name('customers.reset-fup');
     });
 
+    // Jalur kabel di peta: gambar/ubah oleh admin & teknisi; server routing jalan oleh administrator
+    Route::middleware('role:administrator,admin,teknisi')->group(function () {
+        Route::post('customers/map/routes/snap', [\App\Http\Controllers\CableRouteController::class, 'snap'])->middleware('throttle:60,1')->name('customers.map.routes.snap');
+        Route::post('customers/map/routes', [\App\Http\Controllers\CableRouteController::class, 'save'])->name('customers.map.routes.save');
+        Route::delete('customers/map/routes', [\App\Http\Controllers\CableRouteController::class, 'destroy'])->name('customers.map.routes.destroy');
+    });
+    Route::middleware('role:administrator')->post('customers/map/routing-settings', [\App\Http\Controllers\CableRouteController::class, 'settings'])->name('customers.map.routing-settings');
+
     // CUSTOMERS (lihat) + CS: daftar, peta, detail; ubah kontak & pengajuan ganti paket.
     // Didaftarkan setelah customers/create & customers/import agar tidak tertangkap customers/{customer}.
     Route::middleware('role:administrator,admin,teknisi,sales,cs')->group(function () {

@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.171] - 2026-11-17
+
+### Fitur baru
+- **map:** Status layers, private data removed, cable routes that follow roads
+
 ## [v1.5.170] - 2026-11-17
 
 ### Perbaikan

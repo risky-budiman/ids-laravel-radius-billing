@@ -259,6 +259,11 @@ class Customer extends Authenticatable
         return $this->belongsTo(Odp::class);
     }
 
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class);
+    }
+
     public function invoices()
     {
         return $this->hasMany(Invoice::class);

@@ -61,6 +61,34 @@ Tombol **Ubah kontak** di halaman pelanggan (admin & CS) hanya mengubah **No. HP
 
 Aturan: satu pengajuan menunggu per pelanggan; admin tidak bisa menyetujui pengajuannya sendiri (administrator bisa); pengajuan ditolak bila paket pelanggan sudah berubah sejak diajukan.
 
+## Peta Pelanggan
+
+Menu **Peta Pelanggan** (administrator, admin, teknisi, sales, CS) menampilkan pelanggan yang punya koordinat.
+
+**Lapisan status** (bisa dinyalakan/dimatikan, dengan jumlah per lapisan; tombol *Hanya masalah*):
+
+| Lapisan | Arti |
+|---|---|
+| Gangguan | Pelanggan aktif dengan tiket **gangguan** terbuka, ONU putus (LOS/dying gasp/offline), atau sinyal di bawah -27 dBm (hasil Sinkron ONU terakhir) |
+| Terisolir | Status terisolir |
+| Menunggak | Ada invoice belum lunas yang **lewat jatuh tempo** (invoice booster tidak dihitung) |
+| Normal | Aktif tanpa masalah |
+| Belum aktif | Baru / menunggu aktivasi |
+| Berhenti | Menunggu dismantle / dicabut / batal (bawaan disembunyikan) |
+
+Cari pelanggan di kotak pencarian untuk langsung memperbesar ke lokasinya. Infrastruktur (OLT, wilayah, STO, STB, ODC, ODP) hanya tampil untuk admin & teknisi. Peta hanya memuat data yang ditampilkan (nama, kode, paket, status, tunggakan) — password, NIK, No. HP dan alamat tidak lagi ikut terkirim ke browser.
+
+### Jalur kabel
+
+Setiap pelanggan / ODP / ODC / STB / STO tersambung ke induknya (pelanggan→ODP, ODP→ODC, ODC→STB, STB→STO, STO→wilayah). Garis **putus-putus** = jalur belum digambar (garis lurus); garis **utuh** = jalur kabel tersimpan, dengan panjangnya.
+
+Admin & teknisi menggambar jalur: klik titik lalu **Gambar jalur kabel** (atau klik garisnya).
+1. Klik peta di sepanjang jalan / tiang untuk menambah titik belok — titik disisipkan di ruas terdekat. Seret titik untuk memindah, klik kanan untuk menghapus.
+2. **Ikuti jalan** (opsional) membentuk jalur mengikuti jalan melewati titik-titik itu; ujungnya tetap tersambung ke tiang ODP dan rumah pelanggan. Tambah titik lalu klik lagi bila jalannya kurang tepat.
+3. **Simpan jalur**. *Kembalikan garis lurus* menghapus jalur. Semua perubahan tercatat di Log Aktivitas.
+
+**Ikuti jalan** membutuhkan server routing **OSRM** yang diatur administrator di *Peta Pelanggan › Pengaturan jalur* (alamat server & profil: kendaraan / jalan kaki / sepeda). Bawaan kosong = nonaktif; gambar manual tetap bisa. Yang dikirim ke server routing hanya koordinat titik jalur. Paling aman memakai server OSRM sendiri dengan data OpenStreetMap Indonesia; server demo publik `https://router.project-osrm.org` hanya profil kendaraan, tanpa jaminan layanan, dan koordinat terkirim ke pihak luar.
+
 ## Impor & Ekspor Data
 
 Hanya **admin & administrator** (menu Pelanggan → *Impor Data* / *Ekspor Data*).

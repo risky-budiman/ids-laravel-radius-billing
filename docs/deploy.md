@@ -44,6 +44,8 @@ php artisan optimize:clear && php artisan optimize
 - [ ] **GenieACS**: pasang login NBI lewat nginx + batasi IP (contoh di `docs/network.md`), lalu isi di `Integrasi › Server GenieACS` dan klik **Tes**.
 - [ ] **Bot NOC**: atur interval pemantauan di `Integrasi › Bot NOC` bila peringatan OLT/ONU diinginkan.
 - [ ] **Data perusahaan**: NPWP & catatan kaki invoice di `Invoice & Portal`.
+- [ ] **Penautan ONU**: NOC Center › Sinkron ONU, lalu periksa *Penautan ONU* (usulan) agar pelanggan lama tertaut ke OLT.
+- [ ] **Jalur kabel (opsional)**: isi server OSRM di `Peta Pelanggan › Pengaturan jalur` bila ingin tombol *Ikuti jalan*; tanpa itu jalur digambar manual.
 
 ## Bila Ada Masalah
 

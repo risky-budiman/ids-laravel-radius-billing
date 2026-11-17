@@ -111,33 +111,99 @@ class CustomerController extends Controller
         return redirect()->back()->with('success', $message);
     }
 
+    /**
+     * Peta pelanggan dengan lapisan status. Hanya kolom yang dibutuhkan peta yang dikirim ke browser (dulu seluruh
+     * data pelanggan — termasuk password PPPoE, NIK & No. HP — ikut tertulis di sumber halaman).
+     */
     public function map()
     {
-        // 1. Get Customers
-        $query = Customer::where('latitude', '!=', '')
-            ->whereNotNull('latitude')
-            ->with(['package', 'odp']);
+        $customers = Customer::query()
+            ->whereNotNull('latitude')->where('latitude', '!=', '')->whereNotNull('longitude')->where('longitude', '!=', '')
+            ->when(auth()->user()->isMitra(), fn ($q) => $q->where('partner_id', auth()->id()))
+            ->with(['package:id,name', 'odp:id,name,latitude,longitude', 'signalCache:id,customer_id,status,rx_power'])
+            ->withCount(['tickets as open_tickets' => fn ($q) => $q->where('type', 'gangguan')->whereNotIn('status', \App\Models\Ticket::DONE_STATUSES)])
+            ->withSum(['invoices as overdue_amount' => fn ($q) => $q->where('status', 'unpaid')->whereDate('due_date', '<', today())
+                ->where('invoice_number', 'not like', 'INV-BOOST-%')], 'amount')
+            ->get(['id', 'customer_code', 'name', 'status', 'latitude', 'longitude', 'package_id', 'odp_id']);
 
-        if (auth()->user()->isMitra()) {
-            $query->where('partner_id', auth()->id());
-        }
-
-        $customers = $query->get();
-
-        // 2. Get Infrastructure (Only for Admin/Technical)
-        $infrastructure = [];
-        if (auth()->user()->isAdmin() || auth()->user()->isTeknisi()) {
-            $infrastructure = [
-                'regions' => \App\Models\Region::whereNotNull('latitude')->get(),
-                'olts' => \App\Models\Olt::whereNotNull('latitude')->get(),
-                'stos' => \App\Models\Sto::whereNotNull('latitude')->with('region')->get(),
-                'stbs' => \App\Models\Stb::whereNotNull('latitude')->with('sto')->get(),
-                'odcs' => \App\Models\Odc::whereNotNull('latitude')->with('stb')->get(),
-                'odps' => \App\Models\Odp::whereNotNull('latitude')->with('odc')->get(),
+        $routes = \App\Models\CableRoute::keyed();
+        $points = [];
+        foreach ($customers as $c) {
+            $lat = (float) $c->latitude;
+            $lng = (float) $c->longitude;
+            if (! $lat || ! $lng || abs($lat) > 90 || abs($lng) > 180) {
+                continue;
+            }
+            $points[] = [
+                'id' => $c->id, 'code' => $c->customer_code, 'name' => $c->name, 'lat' => $lat, 'lng' => $lng,
+                'package' => $c->package?->name, 'status' => $c->status,
+                'layer' => self::mapLayer($c), 'problem' => self::mapProblem($c),
+                'overdue' => (float) $c->overdue_amount, 'tickets' => (int) $c->open_tickets,
+                'odp' => $c->odp && $c->odp->latitude ? [(float) $c->odp->latitude, (float) $c->odp->longitude] : null,
+                'route' => $routes["customer:{$c->id}"] ?? null,
+                'url' => route('customers.show', $c->id),
             ];
         }
-            
-        return view('customers.map', compact('customers', 'infrastructure'));
+
+        // Infrastruktur hanya untuk admin & teknisi; kolom seperlunya
+        $infrastructure = [];
+        if (auth()->user()->isAdmin() || auth()->user()->isTeknisi()) {
+            $pick = fn ($rows, $parent = null, $type = null) => $rows->filter(fn ($r) => (float) $r->latitude && (float) $r->longitude)->map(fn ($r) => [
+                'id' => (string) $r->getKey(), 'name' => $r->name, 'lat' => (float) $r->latitude, 'lng' => (float) $r->longitude,
+                'route' => $type ? ($routes["{$type}:{$r->getKey()}"] ?? null) : null,
+                'parent' => $parent && $r->{$parent} && (float) $r->{$parent}->latitude ? [(float) $r->{$parent}->latitude, (float) $r->{$parent}->longitude] : null,
+            ])->values();
+            $infrastructure = [
+                'olt' => $pick(\App\Models\Olt::whereNotNull('latitude')->get()),
+                'region' => $pick(\App\Models\Region::whereNotNull('latitude')->get()),
+                'sto' => $pick(\App\Models\Sto::whereNotNull('latitude')->with('region')->get(), 'region', 'sto'),
+                'stb' => $pick(\App\Models\Stb::whereNotNull('latitude')->with('sto')->get(), 'sto', 'stb'),
+                'odc' => $pick(\App\Models\Odc::whereNotNull('latitude')->with('stb')->get(), 'stb', 'odc'),
+                'odp' => $pick(\App\Models\Odp::whereNotNull('latitude')->with('odc')->get(), 'odc', 'odp'),
+            ];
+        }
+        $counts = collect($points)->countBy('layer')->all();
+        $routing = ['enabled' => \App\Services\Network\RoadRouter::enabled(), 'url' => \App\Services\Network\RoadRouter::baseUrl(),
+            'profile' => \App\Services\Network\RoadRouter::profile()];
+        $cableTotal = (int) \App\Models\CableRoute::sum('length_m');
+
+        return view('customers.map', compact('points', 'infrastructure', 'counts', 'routing', 'cableTotal'));
+    }
+
+    /** Lapisan peta, urut prioritas: gangguan > terisolir > menunggak > normal; lainnya belum aktif / berhenti. */
+    public static function mapLayer(Customer $c): string
+    {
+        if (in_array($c->status, Customer::TERMINATED_STATUSES, true)) {
+            return 'inactive';
+        }
+        if (! in_array($c->status, [Customer::STATUS_ACTIVE, Customer::STATUS_SUSPENDED], true)) {
+            return 'pending';
+        }
+        if (self::mapProblem($c)) {
+            return 'trouble';
+        }
+        if ($c->status === Customer::STATUS_SUSPENDED) {
+            return 'suspended';
+        }
+
+        return (float) $c->overdue_amount > 0 ? 'overdue' : 'normal';
+    }
+
+    /** Alasan gangguan: tiket gangguan terbuka, ONU putus, atau sinyal kritis (hanya pelanggan aktif). */
+    public static function mapProblem(Customer $c): ?string
+    {
+        if ((int) $c->open_tickets > 0) {
+            return $c->open_tickets . ' tiket gangguan terbuka';
+        }
+        if ($c->status !== Customer::STATUS_ACTIVE || ! $c->signalCache) {
+            return null;
+        }
+        if (in_array($c->signalCache->status, \App\Services\Network\NocService::DOWN_STATUSES, true)) {
+            return 'ONU ' . $c->signalCache->status;
+        }
+        $rx = $c->signalCache->rx_power;
+
+        return $rx !== null && (float) $rx < \App\Services\Network\NocService::CRITICAL_DBM ? 'sinyal ' . number_format((float) $rx, 1) . ' dBm' : null;
     }
 
     public function show(Customer $customer)
