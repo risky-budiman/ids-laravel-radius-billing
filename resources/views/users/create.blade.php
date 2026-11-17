@@ -1,127 +1,40 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
-            {{ __('Add New Staff Account') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-xl border border-gray-100 dark:border-gray-700">
-                <div class="p-8">
-                    <form action="{{ route('users.store') }}" method="POST" class="space-y-6">
-                        @csrf
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <x-input-label for="name" value="{{ __('Full Name') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                <x-text-input id="name" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-indigo-500" type="text" name="name" :value="old('name')" required autofocus />
-                                <x-input-error :messages="$errors->get('name')" class="mt-2" />
-                            </div>
-
-                            <div>
-                                <x-input-label for="email" value="{{ __('Email Address') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                <x-text-input id="email" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-indigo-500" type="email" name="email" :value="old('email')" required />
-                                <x-input-error :messages="$errors->get('email')" class="mt-2" />
-                            </div>
-                        </div>
-
-                        <div>
-                            <x-input-label for="role" value="{{ __('Assigned Role') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                            <select id="role" name="role" onchange="toggleFields(this.value)" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:border-indigo-500 focus:ring-indigo-500 shadow-sm transition-all">
-                                @foreach($roles as $value => $label)
-                                    <option value="{{ $value }}">{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            <x-input-error :messages="$errors->get('role')" class="mt-2" />
-                            <p class="mt-2 text-xs text-gray-400 italic font-medium">*Setiap peran memiliki batasan akses masing-masing.</p>
-                        </div>
-
-                        <!-- Secondary Capability: Sales -->
-                        <div id="sales_toggle_container" class="p-4 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-xl border border-indigo-100/50 dark:border-indigo-800/30">
-                            <label class="flex items-center cursor-pointer">
-                                <div class="relative">
-                                    <input type="checkbox" name="is_sales" value="1" class="sr-only peer" {{ old('role') == 'sales' ? 'checked' : '' }}>
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
-                                </div>
-                                <span class="ml-3 text-sm font-bold text-gray-700 dark:text-gray-300 ">Aktifkan Fungsi Sales</span>
-                            </label>
-                            <p class="mt-2 text-xs text-gray-400 leading-tight">Bila aktif, pengguna ini juga mendapat akses sales (dashboard sales, tambah pelanggan) dan bisa dipilih sebagai referal yang mendapat komisi. Berlaku untuk staf internal; diabaikan untuk role Sales (sudah otomatis) dan Mitra. Tampil sebagai label "+ Sales" di daftar staf.</p>
-                        </div>
-
-                        <!-- Partner Fields (Conditional) -->
-                        <div id="partner_fields" class="hidden p-6 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-xl border border-emerald-100 dark:border-emerald-800/30 space-y-4">
-                            <div class="flex items-center space-x-2 text-emerald-600 dark:text-emerald-400 mb-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                <span class="text-xs font-semibold ">Konfigurasi Mitra</span>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <x-input-label for="commission_rate" value="{{ __('Default Commission Rate') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                    <x-text-input id="commission_rate" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-emerald-500" type="number" step="0.01" name="commission_rate" :value="old('commission_rate')" />
-                                </div>
-
-                                <div>
-                                    <x-input-label for="commission_type" value="{{ __('Commission Type') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                    <select id="commission_type" name="commission_type" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:border-emerald-500 focus:ring-emerald-500 shadow-sm transition-all">
-                                        <option value="percentage">Percentage (%)</option>
-                                        <option value="fixed">Nominal Tetap (Rp)</option>
-                                    </select>
-                                </div>
-
-                                <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div>
-                                        <x-input-label for="bank_name" value="{{ __('Bank Name') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                        <x-text-input id="bank_name" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-emerald-500" type="text" name="bank_name" :value="old('bank_name')" placeholder="BCA, Mandiri, etc" />
-                                    </div>
-                                    <div>
-                                        <x-input-label for="bank_account_number" value="{{ __('Account Number') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                        <x-text-input id="bank_account_number" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-emerald-500" type="text" name="bank_account_number" :value="old('bank_account_number')" />
-                                    </div>
-                                    <div>
-                                        <x-input-label for="bank_account_name" value="{{ __('Account Holder Name') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                        <x-text-input id="bank_account_name" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-emerald-500" type="text" name="bank_account_name" :value="old('bank_account_name')" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <script>
-                            function togglePartnerFields(role) {
-                                const container = document.getElementById('partner_fields');
-                                if (role === 'mitra') {
-                                    container.classList.remove('hidden');
-                                } else {
-                                    container.classList.add('hidden');
-                                }
-                            }
-                        </script>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <x-input-label for="password" value="{{ __('Initial Password') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                <x-text-input id="password" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-indigo-500" type="password" name="password" required autocomplete="new-password" />
-                                <x-input-error :messages="$errors->get('password')" class="mt-2" />
-                            </div>
-
-                            <div>
-                                <x-input-label for="password_confirmation" value="{{ __('Confirm Password') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                <x-text-input id="password_confirmation" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-indigo-500" type="password" name="password_confirmation" required autocomplete="new-password" />
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-end mt-10 pt-6 border-t border-gray-50 dark:border-gray-700">
-                            <a href="{{ route('users.index') }}" class="text-sm font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mr-6 transition-colors">
-                                Batal
-                            </a>
-                            <x-primary-button class="bg-indigo-600 hover:bg-indigo-700 px-8 py-3 rounded-xl shadow-sm uppercase text-xs">
-                                {{ __('Create Staff Account') }}
-                            </x-primary-button>
-                        </div>
-                    </form>
-                </div>
+        <div class="flex items-center gap-3">
+            <a href="{{ route('users.index') }}" class="btn-ghost btn-icon" aria-label="Kembali ke Kelola Staf"><x-icon name="chevron-right" class="h-5 w-5 rotate-180" /></a>
+            <div>
+                <h2 class="font-bold text-2xl text-surface-900 dark:text-white leading-tight">Tambah staf</h2>
+                <p class="text-sm text-surface-500 dark:text-surface-400">Buat akun untuk anggota tim baru.</p>
             </div>
         </div>
-    </div>
+    </x-slot>
+
+    <form method="POST" action="{{ route('users.store') }}" class="grid gap-5 lg:grid-cols-[1fr_20rem]">
+        @csrf
+        <div class="min-w-0">
+            @if($errors->any())
+                <div class="mb-5 flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300" role="alert">
+                    <x-icon name="exclamation" class="mt-0.5 h-4 w-4 shrink-0" /> Periksa kembali isian yang ditandai.</div>
+            @endif
+            @include('users._form', ['user' => null])
+        </div>
+
+        <aside class="space-y-4 lg:sticky lg:top-20 lg:self-start">
+            <div class="card p-5">
+                <h3 class="text-sm font-semibold text-surface-900 dark:text-white">Sebelum membuat akun</h3>
+                <ul class="mt-3 space-y-2.5 text-sm text-surface-600 dark:text-surface-300">
+                    <li class="flex gap-2"><x-icon name="check" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" /> Satu orang satu akun — jangan berbagi akun, agar setiap perubahan bisa ditelusuri.</li>
+                    <li class="flex gap-2"><x-icon name="check" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" /> Pilih peran paling kecil yang cukup untuk pekerjaannya.</li>
+                    <li class="flex gap-2"><x-icon name="check" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" /> Sampaikan kata sandi awal secara pribadi; staf menggantinya di Profil.</li>
+                    @if(\App\Services\TwoFactorService::requiredRoles())
+                        <li class="flex gap-2"><x-icon name="lock-closed" class="mt-0.5 h-4 w-4 shrink-0 text-primary-500" /> Role {{ collect(\App\Services\TwoFactorService::requiredRoles())->map(fn ($r) => \App\Models\User::STAFF_ROLES[$r] ?? $r)->implode(', ') }} wajib mengaktifkan verifikasi dua langkah saat pertama masuk.</li>
+                    @endif
+                </ul>
+            </div>
+            <div class="card flex flex-col gap-2 p-4">
+                <button class="btn-primary w-full justify-center"><x-icon name="user-plus" class="h-4 w-4" /> Buat akun staf</button>
+                <a href="{{ route('users.index') }}" class="btn-ghost w-full justify-center">Batal</a>
+            </div>
+        </aside>
+    </form>
 </x-app-layout>

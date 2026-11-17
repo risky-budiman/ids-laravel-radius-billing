@@ -34,4 +34,25 @@ class StaffListTest extends TestCase
         $this->get(route('users.index', ['q' => 'budi@kantor']))->assertSee('Budi Teknisi')->assertDontSee('Kasir Lama');
         $this->get(route('users.index', ['q' => 'tidak-ada']))->assertSee('Tidak ada staf yang cocok dengan filter.');
     }
+
+    public function test_create_and_edit_forms(): void
+    {
+        $root = User::factory()->create(['role' => 'administrator', 'is_active' => true, 'name' => 'Root Admin']);
+        $this->actingAs($root)->get(route('users.create'))->assertOk()
+            ->assertSee('Tambah staf')->assertSee('Kata sandi awal')->assertSee('Komisi & rekening mitra')
+            ->assertSee('Juga sebagai sales')->assertSee('Lapangan & jaringan')->assertDontSee('toggleFields');
+
+        $this->post(route('users.store'), ['name' => 'Siti Kasir', 'email' => 'siti@kantor.id', 'role' => 'kasir',
+            'password' => 'Sandi-Kuat-123', 'password_confirmation' => 'Sandi-Kuat-123'])
+            ->assertRedirect(route('users.index'))->assertSessionHas('success', fn ($m) => str_contains($m, 'Akun staf Siti Kasir dibuat'));
+        $siti = User::where('email', 'siti@kantor.id')->firstOrFail();
+
+        $this->get(route('users.edit', $siti))->assertOk()->assertSee('Ubah staf')->assertSee('Ganti kata sandi')
+            ->assertSee('Belum pernah')->assertSee('Simpan perubahan');
+        // Akun sendiri: peran terkunci
+        $this->get(route('users.edit', $root))->assertOk()->assertSee('Peran akun Anda sendiri tidak bisa diubah');
+
+        $this->post(route('users.toggle-status', $siti))->assertSessionHas('success', 'Akun Siti Kasir dinonaktifkan; ia tidak bisa masuk lagi.');
+        $this->post(route('users.reset-sessions', $siti))->assertSessionHas('success', 'Siti Kasir dikeluarkan dari semua perangkat.');
+    }
 }

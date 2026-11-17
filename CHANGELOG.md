@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.182] - 2026-11-17
+
+### Peningkatan
+- **users:** Professional Tambah staf / Ubah staf forms
+
 ## [v1.5.181] - 2026-11-17
 
 ### Peningkatan

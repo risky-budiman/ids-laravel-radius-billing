@@ -1,146 +1,66 @@
+@php
+    $initials = mb_strtoupper(collect(preg_split('/\s+/', trim($user->name)))->filter()->take(2)->map(fn ($w) => mb_substr($w, 0, 1))->implode('')) ?: '?';
+    $isSelf = $user->id === auth()->id();
+    $tfaRequired = in_array($user->role, \App\Services\TwoFactorService::requiredRoles(), true);
+@endphp
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
-            {{ __('Edit Staff Account') }}: {{ $user->name }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            @if(session('error'))
-                <div class="mb-4 px-4 py-3 bg-rose-100/80 border border-rose-200 text-rose-700 rounded-xl dark:bg-rose-900/30 dark:border-rose-800 dark:text-rose-400" role="alert">
-                    {{ session('error') }}
-                </div>
-            @endif
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-xl border border-gray-100 dark:border-gray-700">
-                <div class="p-8">
-                    <form action="{{ route('users.update', $user) }}" method="POST" class="space-y-6">
-                        @csrf
-                        @method('PUT')
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <x-input-label for="name" value="{{ __('Full Name') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                <x-text-input id="name" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-indigo-500" type="text" name="name" :value="old('name', $user->name)" required autofocus />
-                                <x-input-error :messages="$errors->get('name')" class="mt-2" />
-                            </div>
-
-                            <div>
-                                <x-input-label for="email" value="{{ __('Email Address') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                <x-text-input id="email" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-indigo-500" type="email" name="email" :value="old('email', $user->email)" required />
-                                <x-input-error :messages="$errors->get('email')" class="mt-2" />
-                            </div>
-                        </div>
-
-                        <div>
-                            <x-input-label for="role" value="{{ __('Assigned Role') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                            <select id="role" name="role" onchange="toggleFields(this.value)" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl {{ $user->id === auth()->id() ? 'opacity-50 cursor-not-allowed bg-gray-50' : '' }} focus:border-indigo-500 focus:ring-indigo-500 shadow-sm transition-all" {{ $user->id === auth()->id() ? 'disabled' : '' }}>
-                                @foreach($roles as $value => $label)
-                                    <option value="{{ $value }}" {{ $user->role === $value ? 'selected' : '' }}>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            @if($user->id === auth()->id())
-                                <input type="hidden" name="role" value="{{ $user->role }}">
-                                <p class="mt-2 text-xs text-amber-600">Anda tidak bisa mengubah peran akun Anda sendiri di sini.</p>
-                            @endif
-                            <x-input-error :messages="$errors->get('role')" class="mt-2" />
-                        </div>
-
-                        <!-- Secondary Capability: Sales -->
-                        <div id="sales_toggle_container" class="p-4 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-xl border border-indigo-100/50 dark:border-indigo-800/30">
-                            <label class="flex items-center cursor-pointer">
-                                <div class="relative">
-                                    <input type="checkbox" name="is_sales" value="1" class="sr-only peer" {{ $user->is_sales || $user->role === 'sales' ? 'checked' : '' }}>
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
-                                </div>
-                                <span class="ml-3 text-sm font-bold text-gray-700 dark:text-gray-300 ">Aktifkan Fungsi Sales</span>
-                            </label>
-                            <p class="mt-2 text-xs text-gray-400 leading-tight">Bila aktif, pengguna ini juga mendapat akses sales (dashboard sales, tambah pelanggan) dan bisa dipilih sebagai referal yang mendapat komisi. Berlaku untuk staf internal; diabaikan untuk role Sales (sudah otomatis) dan Mitra. Tampil sebagai label "+ Sales" di daftar staf.</p>
-                        </div>
-
-                        <!-- Partner Fields (Conditional) -->
-                        <div id="partner_fields" class="{{ $user->role === 'mitra' ? '' : 'hidden' }} p-6 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-xl border border-emerald-100 dark:border-emerald-800/30 space-y-4">
-                            <div class="flex items-center space-x-2 text-emerald-600 dark:text-emerald-400 mb-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                <span class="text-xs font-semibold ">Konfigurasi Mitra</span>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <x-input-label for="commission_rate" value="{{ __('Default Commission Rate') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                    <x-text-input id="commission_rate" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-emerald-500" type="number" step="0.01" name="commission_rate" :value="old('commission_rate', $user->commission_rate)" />
-                                    <p class="mt-1 text-xs text-gray-400">Tarif default untuk mitra ini.</p>
-                                </div>
-
-                                <div>
-                                    <x-input-label for="commission_type" value="{{ __('Commission Type') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                    <select id="commission_type" name="commission_type" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:border-emerald-500 focus:ring-emerald-500 shadow-sm transition-all">
-                                        <option value="percentage" {{ old('commission_type', $user->commission_type) == 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
-                                        <option value="fixed" {{ old('commission_type', $user->commission_type) == 'fixed' ? 'selected' : '' }}>Nominal Tetap (Rp)</option>
-                                    </select>
-                                </div>
-
-                                <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div>
-                                        <x-input-label for="bank_name" value="{{ __('Bank Name') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                        <x-text-input id="bank_name" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-emerald-500" type="text" name="bank_name" :value="old('bank_name', $user->bank_name)" placeholder="BCA, Mandiri, etc" />
-                                    </div>
-                                    <div>
-                                        <x-input-label for="bank_account_number" value="{{ __('Account Number') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                        <x-text-input id="bank_account_number" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-emerald-500" type="text" name="bank_account_number" :value="old('bank_account_number', $user->bank_account_number)" />
-                                    </div>
-                                    <div>
-                                        <x-input-label for="bank_account_name" value="{{ __('Account Holder Name') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                        <x-text-input id="bank_account_name" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-emerald-500" type="text" name="bank_account_name" :value="old('bank_account_name', $user->bank_account_name)" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <script>
-                            function togglePartnerFields(role) {
-                                const container = document.getElementById('partner_fields');
-                                if (role === 'mitra') {
-                                    container.classList.remove('hidden');
-                                } else {
-                                    container.classList.add('hidden');
-                                }
-                            }
-                        </script>
-
-                        <div class="p-6 bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700 space-y-4">
-                            <div class="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400 mb-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                                <span class="text-xs font-semibold ">Atur Ulang Kata Sandi (Opsional)</span>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <x-input-label for="password" value="{{ __('New Password') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                    <x-text-input id="password" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-indigo-500" type="password" name="password" autocomplete="new-password" />
-                                    <x-input-error :messages="$errors->get('password')" class="mt-2" />
-                                </div>
-
-                                <div>
-                                    <x-input-label for="password_confirmation" value="{{ __('Confirm New Password') }}" class="font-bold text-xs  text-gray-400 mb-2" />
-                                    <x-text-input id="password_confirmation" class="block mt-1 w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl focus:ring-indigo-500" type="password" name="password_confirmation" autocomplete="new-password" />
-                                </div>
-                            </div>
-                            <p class="text-xs text-gray-400">Kosongkan bila tidak ingin mengganti kata sandi.</p>
-                        </div>
-
-                        <div class="flex items-center justify-end mt-10 pt-6 border-t border-gray-50 dark:border-gray-700">
-                            <a href="{{ route('users.index') }}" class="inline-flex items-center px-6 py-3 bg-gray-100 dark:bg-gray-700 border border-transparent rounded-xl font-bold text-xs text-gray-700 dark:text-gray-300  hover:bg-gray-200 dark:hover:bg-gray-600 transition ease-in-out duration-150 mr-4">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                                Kembali
-                            </a>
-                            <x-primary-button class="bg-indigo-600 hover:bg-indigo-700 px-8 py-3 rounded-xl shadow-sm uppercase text-xs">
-                                {{ __('Update Account Information') }}
-                            </x-primary-button>
-                        </div>
-                    </form>
-                </div>
+        <div class="flex items-center gap-3">
+            <a href="{{ route('users.index') }}" class="btn-ghost btn-icon" aria-label="Kembali ke Kelola Staf"><x-icon name="chevron-right" class="h-5 w-5 rotate-180" /></a>
+            <div class="min-w-0">
+                <h2 class="truncate font-bold text-2xl text-surface-900 dark:text-white leading-tight">Ubah staf</h2>
+                <p class="truncate text-sm text-surface-500 dark:text-surface-400">{{ $user->name }} · {{ $user->email }}</p>
             </div>
         </div>
-    </div>
+    </x-slot>
+
+    <form method="POST" action="{{ route('users.update', $user) }}" class="grid gap-5 lg:grid-cols-[1fr_20rem]">
+        @csrf
+        @method('PUT')
+        <div class="min-w-0">
+            @if(session('error'))
+                <div class="mb-5 flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300" role="alert">
+                    <x-icon name="exclamation" class="mt-0.5 h-4 w-4 shrink-0" /> {{ session('error') }}</div>
+            @elseif($errors->any())
+                <div class="mb-5 flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300" role="alert">
+                    <x-icon name="exclamation" class="mt-0.5 h-4 w-4 shrink-0" /> Periksa kembali isian yang ditandai.</div>
+            @endif
+            @include('users._form', ['user' => $user])
+        </div>
+
+        <aside class="space-y-4 lg:sticky lg:top-20 lg:self-start">
+            {{-- Ringkasan akun --}}
+            <div class="card overflow-hidden">
+                <div class="flex items-center gap-3 border-b border-surface-200 p-5 dark:border-surface-800">
+                    @if($user->profile_photo)
+                        <img src="{{ asset('storage/' . $user->profile_photo) }}" alt="" class="h-12 w-12 rounded-full object-cover">
+                    @else
+                        <span class="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 text-base font-semibold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300">{{ $initials }}</span>
+                    @endif
+                    <div class="min-w-0">
+                        <p class="flex items-center gap-2 truncate font-semibold text-surface-900 dark:text-white">{{ $user->name }}
+                            @if($isSelf)<span class="rounded bg-surface-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-surface-500 dark:bg-surface-800">Anda</span>@endif</p>
+                        <p class="text-xs text-surface-500">{{ \App\Models\User::STAFF_ROLES[$user->role] ?? $user->role }}{{ $user->hasSalesFlag() ? ' + Sales' : '' }}</p>
+                    </div>
+                </div>
+                <dl class="divide-y divide-surface-100 text-sm dark:divide-surface-800">
+                    <div class="flex items-center justify-between px-5 py-3"><dt class="text-surface-500">Status</dt>
+                        <dd class="inline-flex items-center gap-1.5 {{ $user->is_active ? 'text-emerald-700 dark:text-emerald-400' : 'text-surface-500' }}"><span class="h-2 w-2 rounded-full {{ $user->is_active ? 'bg-emerald-500' : 'bg-surface-400' }}"></span>{{ $user->is_active ? 'Aktif' : 'Nonaktif' }}</dd></div>
+                    <div class="flex items-center justify-between px-5 py-3"><dt class="text-surface-500">Verifikasi 2 langkah</dt>
+                        <dd class="{{ $user->hasTwoFactor() ? 'text-emerald-700 dark:text-emerald-400' : ($tfaRequired ? 'text-amber-700 dark:text-amber-400' : 'text-surface-500') }}">{{ $user->hasTwoFactor() ? 'Aktif' : ($tfaRequired ? 'Wajib, belum aktif' : 'Tidak aktif') }}</dd></div>
+                    <div class="flex items-center justify-between px-5 py-3"><dt class="text-surface-500">Sesi aktif</dt>
+                        <dd class="tabular-nums text-surface-800 dark:text-surface-200">{{ $user->sessions_count }} perangkat</dd></div>
+                    <div class="flex items-center justify-between gap-3 px-5 py-3"><dt class="text-surface-500">Masuk terakhir</dt>
+                        <dd class="text-right text-surface-800 dark:text-surface-200">{{ $lastLogin ? \Illuminate\Support\Carbon::parse($lastLogin)->translatedFormat('d M Y H:i') : 'Belum pernah' }}</dd></div>
+                    <div class="flex items-center justify-between px-5 py-3"><dt class="text-surface-500">Dibuat</dt>
+                        <dd class="text-surface-800 dark:text-surface-200">{{ $user->created_at?->translatedFormat('d M Y') ?? '—' }}</dd></div>
+                </dl>
+            </div>
+            <div class="card flex flex-col gap-2 p-4">
+                <button class="btn-primary w-full justify-center"><x-icon name="check" class="h-4 w-4" /> Simpan perubahan</button>
+                <a href="{{ route('users.index') }}" class="btn-ghost w-full justify-center">Batal</a>
+            </div>
+            <p class="px-1 text-xs text-surface-500">Nonaktifkan akun, keluarkan dari semua perangkat, reset verifikasi 2 langkah atau hapus akun lewat menu ⋮ di daftar Kelola Staf. Perubahan peran tercatat di Log Aktivitas.</p>
+        </aside>
+    </form>
 </x-app-layout>

@@ -85,14 +85,17 @@ class UserController extends Controller
             'is_sales' => $request->has('is_sales') && self::canBeAlsoSales($request->role),
         ]);
 
-        return redirect()->route('users.index')->with('success', 'Staff account created successfully.');
+        return redirect()->route('users.index')->with('success', "Akun staf {$request->name} dibuat. Sampaikan email & kata sandi awal kepadanya secara pribadi.");
     }
 
     public function edit(User $user)
     {
         // Daftar memuat Administrator: dulu tidak ada, sehingga menyimpan form administrator lain menurunkannya jadi Admin
         $roles = User::STAFF_ROLES;
-        return view('users.edit', compact('user', 'roles'));
+        $user->loadCount(['sessions' => fn ($s) => $s->where('last_activity', '>=', now()->subMinutes((int) config('session.lifetime'))->getTimestamp())]);
+        $lastLogin = \App\Models\ActivityLog::where('user_id', $user->id)->where('action', 'login')->latest('created_at')->value('created_at');
+
+        return view('users.edit', compact('user', 'roles', 'lastLogin'));
     }
 
     public function update(Request $request, User $user)
@@ -160,14 +163,13 @@ class UserController extends Controller
 
         $user->update(['is_active' => !$user->is_active]);
 
-        $status = $user->is_active ? 'activated' : 'deactivated';
-        return back()->with('success', "Account has been successfully {$status}.");
+        return back()->with('success', "Akun {$user->name} " . ($user->is_active ? 'diaktifkan.' : 'dinonaktifkan; ia tidak bisa masuk lagi.'));
     }
 
     public function resetSessions(User $user)
     {
         $user->sessions()->delete();
-        return back()->with('success', "All active sessions for {$user->name} have been reset.");
+        return back()->with('success', "{$user->name} dikeluarkan dari semua perangkat.");
     }
 
     public function destroy(User $user)
