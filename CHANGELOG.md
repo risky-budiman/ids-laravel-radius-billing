@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.185] - 2026-11-18
+
+### Perbaikan
+- **snmp:** ONU MAC and status empty on Linux servers with the php-snmp extension
+
 ## [v1.5.184] - 2026-11-18
 
 ### Peningkatan

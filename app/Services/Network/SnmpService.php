@@ -172,7 +172,12 @@ class SnmpService
         }
         try {
             if (function_exists('snmp_set_quick_print')) snmp_set_quick_print(1);
-            if (function_exists('snmp_set_oid_numeric_print')) snmp_set_oid_numeric_print(1);
+            // OID numerik penuh (.1.3.6.1…). Dulu snmp_set_oid_numeric_print(1): fungsi itu alias
+            // snmp_set_oid_output_format dan 1 = SNMP_OID_OUTPUT_SUFFIX, sehingga kunci hasil walk berbentuk
+            // pendek dan pencarian per OID (MAC & Rx ONU HSGQ, tabel ZTE) tidak pernah cocok di server Linux.
+            if (function_exists('snmp_set_oid_output_format') && defined('SNMP_OID_OUTPUT_NUMERIC')) {
+                snmp_set_oid_output_format(SNMP_OID_OUTPUT_NUMERIC);
+            }
             if (function_exists('snmp_set_valueretrieval')) snmp_set_valueretrieval(SNMP_VALUE_PLAIN);
             $res = match ($this->version) {
                 1 => @snmprealwalk($target, $this->community, $oid, $timeoutMicro, 1),
@@ -258,13 +263,10 @@ class SnmpService
 
         // ── METHOD 1: PHP Native SNMP Extension (v1/v2c/v3) ──
         $nativeWalk = $this->nativeWalk($target, '.' . $cleanOid, $timeoutMicro);
-        if ($nativeWalk !== null) {
-            foreach ($nativeWalk as $k => $v) {
-                $results['.' . ltrim($k, '.')] = trim((string) $v, "\" \r\n");
-            }
-
-            return $results;
+        if ($nativeWalk !== null && ($normalized = self::numericOidKeys($nativeWalk)) !== null) {
+            return $normalized;
         }
+        // Kunci bukan OID numerik (format keluaran ekstensi tidak sesuai): jangan dipakai, baca ulang lewat CLI
 
         // ── METHOD 2: System CLI snmpwalk (Linux / macOS) ──
         if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
@@ -463,6 +465,24 @@ class SnmpService
         }
 
         return $raw;
+    }
+
+    /**
+     * Hasil walk ekstensi php-snmp → ['.1.3.6…' => nilai]. null bila ada kunci yang bukan OID numerik
+     * (mis. "iso.3.6…" atau "enterprises.50224…"), agar pemanggil membaca ulang dengan cara lain.
+     */
+    public static function numericOidKeys(array $rows): ?array
+    {
+        $out = [];
+        foreach ($rows as $k => $v) {
+            $key = '.' . ltrim((string) $k, '.');
+            if (! preg_match('/^(\.\d+)+$/', $key)) {
+                return null;
+            }
+            $out[$key] = trim((string) $v, "\" \r\n");
+        }
+
+        return $out;
     }
 
     public function getHost(): string

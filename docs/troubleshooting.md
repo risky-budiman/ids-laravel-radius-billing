@@ -45,5 +45,6 @@ Yang dipulihkan: status, aktif/tidak, tanggal isolir & tanggal berhenti asli, da
 | *GenieACS meminta login* / *Login NBI GenieACS ditolak* | NBI dilindungi Basic Auth: isi/perbaiki username & password NBI di **Server ACS**. |
 | *Data tidak ditemukan di GenieACS (HTTP 404)* | Modem sudah dihapus dari GenieACS atau ID perangkat berubah (ganti modem). Muat ulang daftar perangkat. |
 | *GenieACS mengalami galat (HTTP 5xx)* | Galat di server GenieACS; periksa log layanan `genieacs-nbi`. |
+| *ONU terbaca (nama ada) tetapi MAC kosong & semua offline* | Terjadi sebelum v1.5.185 di server Linux yang memasang ekstensi `php-snmp`: format OID hasil walk tidak numerik sehingga MAC & Rx tidak cocok. Perbarui ke v1.5.185+ lalu **Sinkron ONU**. Cek cepat: `php artisan noc:monitor` harus menyebut jumlah pelanggan diperbarui > 0 setelah pelanggan ditautkan. |
 | *Pembacaan SNMP gagal* / *OLT tidak menjawab SNMP* | Periksa IP & port SNMP OLT, community / user SNMPv3, dan ACL SNMP di OLT yang mengizinkan IP server aplikasi. |
 | *Web OLT menolak …* / *OLT menolak perintah* | Akses web OLT HSGQ salah atau firmware tidak mendukung perintah itu. Periksa username/password web di pengaturan OLT; hindari mencoba berulang (akun bisa terkunci). |
