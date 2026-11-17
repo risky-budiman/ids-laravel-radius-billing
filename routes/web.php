@@ -135,6 +135,17 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::post('customers/{customer}/reset-fup', [\App\Http\Controllers\CustomerController::class, 'resetFup'])->name('customers.reset-fup');
     });
 
+    // Gangguan massal (NOC Center): admin & teknisi
+    Route::middleware('role:administrator,admin,teknisi')->group(function () {
+        Route::get('noc/incidents', [\App\Http\Controllers\IncidentController::class, 'index'])->name('noc.incidents.index');
+        Route::get('noc/incidents/create', [\App\Http\Controllers\IncidentController::class, 'create'])->name('noc.incidents.create');
+        Route::get('noc/incidents/preview', [\App\Http\Controllers\IncidentController::class, 'preview'])->name('noc.incidents.preview');
+        Route::post('noc/incidents', [\App\Http\Controllers\IncidentController::class, 'store'])->name('noc.incidents.store');
+        Route::get('noc/incidents/{incident}', [\App\Http\Controllers\IncidentController::class, 'show'])->name('noc.incidents.show');
+        Route::post('noc/incidents/{incident}/notify', [\App\Http\Controllers\IncidentController::class, 'notify'])->name('noc.incidents.notify');
+        Route::post('noc/incidents/{incident}/resolve', [\App\Http\Controllers\IncidentController::class, 'resolve'])->name('noc.incidents.resolve');
+    });
+
     // Jalur kabel di peta: gambar/ubah oleh admin & teknisi; server routing jalan oleh administrator
     Route::middleware('role:administrator,admin,teknisi')->group(function () {
         Route::post('customers/map/routes/snap', [\App\Http\Controllers\CableRouteController::class, 'snap'])->middleware('throttle:60,1')->name('customers.map.routes.snap');

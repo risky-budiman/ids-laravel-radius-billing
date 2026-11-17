@@ -62,6 +62,13 @@ class WhatsappTemplateSeeder extends Seeder
                 'is_active' => true,
             ],
             [
+                'name' => 'Gangguan Teratasi',
+                'type' => 'gangguan_pulih',
+                'message' => "Halo *{name}*,\n\nGangguan jaringan di wilayah Anda sudah *teratasi* dan layanan internet kembali normal sejak *{tanggal}*.\n\nBila internet Anda masih bermasalah, silakan matikan lalu nyalakan kembali modem, atau hubungi kami.\n\nTerima kasih atas kesabaran Anda.",
+                'variables_description' => json_encode(['{id_pelanggan}', '{name}', '{tanggal}']),
+                'is_active' => true,
+            ],
+            [
                 'name' => 'Maintenance Jaringan',
                 'type' => 'gangguan_maintenance',
                 'message' => "Pemberitahuan Pemeliharaan Jaringan\n\nHalo *{name}*,\n\nUntuk meningkatkan kualitas layanan, kami akan melakukan pemeliharaan jaringan (Maintenance) terjadwal di wilayah Anda pada:\n\nWaktu: *{tanggal}*\n\nSelama proses ini, layanan internet Anda mungkin akan mengalami gangguan sementara.\n\nMohon maaf atas ketidaknyamanan ini. Terima kasih.",

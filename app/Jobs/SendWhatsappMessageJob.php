@@ -67,7 +67,12 @@ class SendWhatsappMessageJob implements ShouldQueue
 
         $formattedDate = date('d-m-Y H:i');
         if ($this->customDate) {
-            $formattedDate = \Carbon\Carbon::parse($this->customDate)->format('d-m-Y H:i');
+            // Tanggal → "d-m-Y H:i"; teks bebas (mis. estimasi "secepatnya", "sore ini") dipakai apa adanya
+            try {
+                $formattedDate = \Carbon\Carbon::parse($this->customDate)->format('d-m-Y H:i');
+            } catch (\Throwable) {
+                $formattedDate = (string) $this->customDate;
+            }
         }
 
         $replace = [

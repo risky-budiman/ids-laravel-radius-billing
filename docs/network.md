@@ -87,6 +87,18 @@ Satu form untuk tambah & ubah: Identitas (nama, tipe, IP, lokasi, koordinat + Li
 - **Riwayat sinyal** (tombol *Grafik*): grafik Rx 24 jam / 7 hari / 30 hari dengan garis -24 & -27 dBm dan titik **ONU putus**, rata-rata, terlemah/terkuat, jumlah putus, catatan.
 - **ONU Belum Terdaftar**: **Pindai sekarang** mencari ONU yang tersambung tapi belum diizinkan — HSGQ lewat web OLT (belum diizinkan & daftar tolak; butuh *Akses web OLT*), ZTE lewat SNMP. Hasil disimpan 5 menit; OLT yang tidak bisa dibaca/tidak didukung diberi keterangan (bukan "0 ONU"). ONU yang SN-nya cocok dengan pelanggan ditautkan; **Allow** langsung dari daftar (HSGQ).
 
+### Gangguan Massal
+
+> **Lokasi:** `NOC Center › Gangguan Massal` (administrator, admin, teknisi). Pintasan: tombol **Laporkan gangguan massal** di halaman port OLT.
+
+Untuk gangguan yang mengenai banyak pelanggan sekaligus (feeder putus, OLT/port mati, ODP rusak):
+1. **Laporkan gangguan massal** → pilih cakupan **OLT**, **Port PON** atau **ODP**. Panel kanan menampilkan jumlah & daftar **pelanggan aktif terdampak** sebelum dibuat. Port PON: dari posisi ONU tersimpan + hasil baca port terakhir (MAC/SN atau nama ONU, sama dengan NOC).
+2. Isi judul, keterangan, **estimasi perbaikan** (tanggal atau teks bebas, mis. "sore ini") dan prioritas. Centang **Kirim WhatsApp** bila pelanggan perlu diberi tahu (template *Gangguan Massal*, hanya pelanggan aktif bernomor HP, bertahap lewat antrean); bisa juga dikirim/diulang nanti.
+3. Sistem membuat **satu tiket induk** (`[Gangguan massal] …`). Tiket gangguan pelanggan terdampak yang sudah terbuka, **dan yang dibuat selama gangguan berlangsung**, otomatis **tertaut** (ada catatan di tiketnya & banner di halaman tiket). Hanya satu gangguan terbuka per cakupan.
+4. **Tandai pulih** dengan catatan penyelesaian: tiket induk dan semua tiket pelanggan tertaut diselesaikan sekaligus (grup WA tiket menerima satu ringkasan, bukan per tiket); opsional WhatsApp **"layanan sudah normal"** (template *Gangguan Teratasi*, ditambahkan otomatis oleh migrasi; isi bisa diubah di Template Pesan).
+
+Semua tercatat di Log Aktivitas (`incident_opened`, `incident_resolved`). Durasi gangguan tampil di daftar.
+
 ### Menautkan pelanggan lama ke ONU
 
 Pelanggan yang didaftarkan sebelum fitur OLT (atau hasil impor) belum punya **OLT, posisi & MAC ONU**, sehingga sinyal, status & peringatan NOC tidak berjalan untuk mereka. Cara menautkan:

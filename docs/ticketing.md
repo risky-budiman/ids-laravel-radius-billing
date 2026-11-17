@@ -12,6 +12,8 @@
 | Relokasi | `RL` | Pindah alamat. |
 | Maintenance | `MT` | Pekerjaan jaringan terjadwal. |
 
+**Gangguan massal:** tiket gangguan pelanggan yang terdampak gangguan massal terbuka otomatis tertaut ke tiket induknya dan ikut diselesaikan saat gangguan ditandai pulih (lihat `docs/network.md` › Gangguan Massal).
+
 ## Status
 
 **Open** → **Dikerjakan** (diambil petugas) → **Resolved** (selesai, menunggu konfirmasi) → **Closed**. Tiket *Resolved* ditutup otomatis setelah 24 jam. Tiket tertentu bisa berstatus *Menunggu persetujuan*.

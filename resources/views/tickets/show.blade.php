@@ -23,6 +23,16 @@
 
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            @if($ticket->incident)
+                {{-- Bagian dari gangguan massal --}}
+                <div class="flex flex-col gap-2 rounded-xl border px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between {{ $ticket->incident->isOpen() ? 'border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200' : 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200' }}">
+                    <span>{{ $ticket->incident->ticket_id === $ticket->id ? 'Tiket induk' : 'Bagian dari' }} gangguan massal <strong>{{ $ticket->incident->title }}</strong> ({{ $ticket->incident->scope_label }}) —
+                        {{ $ticket->incident->isOpen() ? 'masih berlangsung' : 'sudah pulih' }}.</span>
+                    @canroute('noc.incidents.show')
+                        <a href="{{ route('noc.incidents.show', $ticket->incident) }}" class="font-semibold underline">Buka gangguan</a>
+                    @endcanroute
+                </div>
+            @endif
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Main Ticket Content -->
                 <div class="lg:col-span-2 space-y-6">

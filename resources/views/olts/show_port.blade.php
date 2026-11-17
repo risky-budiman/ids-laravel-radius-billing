@@ -22,6 +22,9 @@
                         @endforeach
                     </select>
                 @endif
+                @canroute('noc.incidents.create')
+                    <a href="{{ route('noc.incidents.create', ['scope_type' => 'port', 'scope_id' => $port->id]) }}" class="btn-secondary">Laporkan gangguan massal</a>
+                @endcanroute
                 <button type="button" class="btn-primary" onclick="window.dispatchEvent(new CustomEvent('sync-onu-live'))">
                     <x-icon name="refresh" class="w-4 h-4" /> Sinkron langsung
                 </button>

@@ -33,6 +33,15 @@ class Ticket extends Model
     /** Status yang berarti pekerjaan tiket sudah selesai. */
     public const DONE_STATUSES = ['resolved', 'closed'];
 
+    /** True saat banyak tiket diubah sekaligus (gangguan massal pulih): ringkasan ke grup WA tidak dikirim per tiket. */
+    public static bool $quietGroupNotify = false;
+
+    /** Gangguan massal tempat tiket ini tertaut (tiket induk atau tiket pelanggan terdampak). */
+    public function incident()
+    {
+        return $this->belongsTo(NetworkIncident::class, 'incident_id');
+    }
+
     public function customer()
     {
         return $this->belongsTo(Customer::class);
@@ -132,6 +141,17 @@ class Ticket extends Model
         });
 
         static::created(function ($ticket) {
+            // Tiket gangguan pelanggan yang terdampak gangguan massal terbuka: tautkan ke tiket induknya
+            if ($ticket->type === 'gangguan' && $ticket->customer_id && ! $ticket->incident_id) {
+                try {
+                    if ($incident = \App\Services\Network\IncidentService::openIncidentFor((int) $ticket->customer_id)) {
+                        app(\App\Services\Network\IncidentService::class)->attachTicket($ticket, $incident);
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('Tautkan tiket ke gangguan massal gagal: ' . $e->getMessage());
+                }
+            }
+
             SendTicketToWhatsAppGroupJob::dispatch($ticket, 'created');
 
             // Broadcast realtime event
@@ -151,7 +171,7 @@ class Ticket extends Model
         });
 
         static::updated(function ($ticket) {
-            if ($ticket->wasChanged(['status', 'assigned_to', 'resolution_notes'])) {
+            if ($ticket->wasChanged(['status', 'assigned_to', 'resolution_notes']) && ! self::$quietGroupNotify) {
                 SendTicketToWhatsAppGroupJob::dispatch($ticket, 'updated');
             }
 

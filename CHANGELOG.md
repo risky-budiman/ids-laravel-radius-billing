@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.175] - 2026-11-17
+
+### Fitur baru
+- **noc:** Mass outage incidents with one parent ticket and customer WhatsApp
+
 ## [v1.5.174] - 2026-11-17
 
 ### Fitur baru
