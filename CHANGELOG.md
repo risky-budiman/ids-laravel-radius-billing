@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.170] - 2026-11-17
+
+### Perbaikan
+- **olt,acs,noc:** Indonesian messages instead of English
+
 ## [v1.5.169] - 2026-11-17
 
 ### Fitur baru

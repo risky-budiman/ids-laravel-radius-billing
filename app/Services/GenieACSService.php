@@ -874,7 +874,7 @@ class GenieACSService
     protected function request(string $method, string $endpoint, array $data = [], int $timeout = 60)
     {
         if (!$this->baseUrl) {
-            throw new Exception("ACS Server URL not set.");
+            throw new Exception('Alamat server GenieACS belum diisi.');
         }
 
         $url = rtrim($this->baseUrl, '/') . '/' . ltrim($endpoint, '/');
@@ -921,8 +921,20 @@ class GenieACSService
             }
             $errorBody = $response->body();
             Log::error("GenieACS API Error [{$url}]: " . $errorBody);
-            throw new Exception("GenieACS API returned error: " . $response->status() . " - " . $errorBody);
+            $detail = $response->json('message') ?? $response->json('error') ?? \Illuminate\Support\Str::limit(trim(strip_tags($errorBody)), 160);
+            throw new Exception(match (true) {
+                $response->status() === 404 => 'Data tidak ditemukan di GenieACS (HTTP 404)' . ($detail ? ": {$detail}" : '.'),
+                $response->status() >= 500 => "GenieACS mengalami galat (HTTP {$response->status()})" . ($detail ? ": {$detail}" : '.'),
+                default => "GenieACS menolak permintaan (HTTP {$response->status()})" . ($detail ? ": {$detail}" : '.'),
+            });
 
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::error("GenieACS Request Exception: " . $e->getMessage());
+            // Teks "cURL error 28 / timed out" dipertahankan: dipakai untuk mengenali waktu habis (refresh/kirim parameter)
+            $timedOut = str_contains($e->getMessage(), 'cURL error 28') || stripos($e->getMessage(), 'timed out') !== false;
+            throw new Exception($timedOut
+                ? "GenieACS tidak menjawab dalam {$timeout} detik (cURL error 28, timed out)."
+                : 'Tidak bisa terhubung ke GenieACS di ' . $this->baseUrl . '. Periksa alamat, port & jaringan server. (' . \Illuminate\Support\Str::limit($e->getMessage(), 120) . ')', 0, $e);
         } catch (Exception $e) {
             Log::error("GenieACS Request Exception: " . $e->getMessage());
             throw $e;

@@ -94,7 +94,7 @@ class OltController extends Controller
 
         \App\Models\ActivityLog::log('olt_created', "OLT '{$olt->name}' ({$olt->ip_address}) ditambahkan.", $olt);
 
-        return redirect()->route('olts.index')->with('success', 'OLT added successfully.');
+        return redirect()->route('olts.index')->with('success', 'OLT ditambahkan.');
     }
 
     /**
@@ -385,10 +385,10 @@ class OltController extends Controller
                 );
             }
             DB::commit();
-            return back()->with('success', "Generated {$count} PON ports for Slot {$slot}.");
+            return back()->with('success', "{$count} port PON dibuat untuk slot {$slot}.");
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', "Error generating ports: " . $e->getMessage());
+            return back()->with('error', "Gagal membuat port: " . $e->getMessage());
         }
     }
 
@@ -459,7 +459,7 @@ class OltController extends Controller
                 ->delay(now()->addSeconds($index * 2));
         }
 
-        return back()->with('success', "Syncing status for " . count($ports) . " ports in background. This may take a few minutes.");
+        return back()->with('success', "Status " . count($ports) . " port sedang disinkronkan di latar belakang; tunggu beberapa menit.");
     }
 
     public function getPortData(Request $request, Olt $olt, \App\Models\OltPonPort $port)

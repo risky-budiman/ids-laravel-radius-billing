@@ -81,7 +81,7 @@ class AcsServerController extends Controller
     {
         $acsServer->delete();
 
-        return redirect()->back()->with('success', 'ACS Server deleted successfully.');
+        return redirect()->back()->with('success', 'Server ACS dihapus.');
     }
 
     /**
@@ -237,7 +237,7 @@ class AcsServerController extends Controller
         }
 
         if (!$server) {
-            return back()->with('error', "No ACS Server configured.");
+            return back()->with('error', 'Belum ada Server ACS. Tambahkan dulu di menu Server ACS.');
         }
         
         try {
@@ -268,7 +268,7 @@ class AcsServerController extends Controller
                 'service' => isset($service) ? $service : null,
                 'tasks' => [],
                 'wanConnections' => [],
-                'error' => "ACS Connection Error: " . $e->getMessage()
+                'error' => "Gagal mengambil data dari GenieACS: " . $e->getMessage()
             ]);
         }
     }
@@ -339,7 +339,7 @@ class AcsServerController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => "Tidak ada perubahan konfigurasi yang dikirim."], 422);
             }
-            return back()->with('error', "No changes to push.");
+            return back()->with('error', 'Tidak ada perubahan konfigurasi yang dikirim.');
         }
 
         try {
@@ -418,7 +418,7 @@ class AcsServerController extends Controller
             \App\Services\GenieACSService::audit('acs_rebooted', $deviceId, [], ['server_id' => $server->id, 'via' => 'web']);
             return back()->with('success', "Perintah reboot terkirim.");
         } catch (\Exception $e) {
-            return back()->with('error', "Failed to reboot: " . $e->getMessage());
+            return back()->with('error', "Gagal mengirim perintah reboot: " . $e->getMessage());
         }
     }
 
@@ -493,20 +493,20 @@ class AcsServerController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Tags updated successfully.',
+                    'message' => 'Tag perangkat diperbarui.',
                     'tags'    => array_values($newTags)
                 ]);
             }
 
-            return back()->with('success', 'Tags updated successfully.');
+            return back()->with('success', 'Tag perangkat diperbarui.');
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to update tags: ' . $e->getMessage()
+                    'message' => 'Gagal memperbarui tag: ' . $e->getMessage()
                 ], 500);
             }
-            return back()->with('error', 'Failed to update tags: ' . $e->getMessage());
+            return back()->with('error', 'Gagal memperbarui tag: ' . $e->getMessage());
         }
     }
 }

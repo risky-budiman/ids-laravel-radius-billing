@@ -35,3 +35,15 @@ Yang dipulihkan: status, aktif/tidak, tanggal isolir & tanggal berhenti asli, da
 
 ---
 *Dukungan Lanjutan: Jika masalah belum teratasi, silakan buat tiket dukungan kepada tim pengembang sistem.*
+
+## 6. Pesan Galat GenieACS & OLT
+
+| Pesan | Arti & langkah |
+|---|---|
+| *Tidak bisa terhubung ke GenieACS di …* | Server aplikasi tidak bisa membuka alamat NBI (biasanya port 7557). Periksa alamat & port di **Server ACS**, firewall dan routing ke server GenieACS. |
+| *GenieACS tidak menjawab dalam N detik* | Server sibuk atau modem sedang diproses. Untuk ubah Wi-Fi/PPPoE ini berarti **perintah sudah masuk antrean** — cek tab Antrean di detail modem. |
+| *GenieACS meminta login* / *Login NBI GenieACS ditolak* | NBI dilindungi Basic Auth: isi/perbaiki username & password NBI di **Server ACS**. |
+| *Data tidak ditemukan di GenieACS (HTTP 404)* | Modem sudah dihapus dari GenieACS atau ID perangkat berubah (ganti modem). Muat ulang daftar perangkat. |
+| *GenieACS mengalami galat (HTTP 5xx)* | Galat di server GenieACS; periksa log layanan `genieacs-nbi`. |
+| *Pembacaan SNMP gagal* / *OLT tidak menjawab SNMP* | Periksa IP & port SNMP OLT, community / user SNMPv3, dan ACL SNMP di OLT yang mengizinkan IP server aplikasi. |
+| *Web OLT menolak …* / *OLT menolak perintah* | Akses web OLT HSGQ salah atau firmware tidak mendukung perintah itu. Periksa username/password web di pengaturan OLT; hindari mencoba berulang (akun bisa terkunci). |

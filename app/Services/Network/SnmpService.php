@@ -376,7 +376,7 @@ class SnmpService
             if ($name !== null || $descr !== null) {
                 return [
                     'status'      => true,
-                    'message'     => 'Connected successfully via SNMP',
+                    'message'     => 'Terhubung lewat SNMP.',
                     'device_name' => (string)($name ?: 'ZTE OLT'),
                     'description' => (string)($descr ?: '')
                 ];
@@ -386,7 +386,7 @@ class SnmpService
             if ($uptime !== null) {
                 return [
                     'status'      => true,
-                    'message'     => 'Connected successfully via SNMP (sysUpTime responsive)',
+                    'message'     => 'Terhubung lewat SNMP (hanya sysUpTime yang menjawab).',
                     'device_name' => 'ZTE OLT',
                     'description' => 'Up: ' . $uptime
                 ];
@@ -399,7 +399,7 @@ class SnmpService
         } catch (Exception $e) {
             return [
                 'status'  => false,
-                'message' => "SNMP Query Failed: " . $e->getMessage()
+                'message' => "Pembacaan SNMP gagal: " . $e->getMessage()
             ];
         }
     }
