@@ -19,7 +19,8 @@ class AccessMatrixTest extends TestCase
 
     /** Rute admin yang memang terbuka tanpa role (sebelum/sesudah login). */
     private const OPEN = ['login', 'logout', 'password.request', 'password.email', 'password.reset', 'password.store',
-        'verification.notice', 'verification.verify', 'verification.send', 'password.confirm', 'password.update'];
+        'verification.notice', 'verification.verify', 'verification.send', 'password.confirm', 'password.update',
+        'two-factor.challenge', 'two-factor.verify'];   // kode 2FA setelah password benar, sebelum login
 
     public function test_every_staff_route_is_restricted_by_role(): void
     {

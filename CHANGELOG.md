@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.180] - 2026-11-17
+
+### Keamanan
+- **security:** Two-factor authentication (TOTP) for staff, no extra packages
+
 ## [v1.5.179] - 2026-11-17
 
 ### Fitur baru

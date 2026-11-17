@@ -24,7 +24,9 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
+        if ($request->authenticate() === 'two_factor') {
+            return redirect()->route('two-factor.challenge');
+        }
 
         $request->session()->regenerate();
 

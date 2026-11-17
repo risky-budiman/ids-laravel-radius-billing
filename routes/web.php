@@ -440,6 +440,8 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
         Route::post('access-matrix', [\App\Http\Controllers\AccessMatrixController::class, 'update'])->name('access.matrix.update');
         Route::post('access-matrix/reset', [\App\Http\Controllers\AccessMatrixController::class, 'reset'])->name('access.matrix.reset');
         Route::post('users/{user}/toggle-status', [\App\Http\Controllers\UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::post('users/{user}/two-factor/reset', [\App\Http\Controllers\TwoFactorController::class, 'reset'])->name('users.two-factor.reset');
+        Route::post('users/two-factor/required', [\App\Http\Controllers\TwoFactorController::class, 'required'])->name('users.two-factor.required');
         Route::post('users/{user}/reset-sessions', [\App\Http\Controllers\UserController::class, 'resetSessions'])->name('users.reset-sessions');
         
         Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
@@ -602,6 +604,12 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,mitra'
 Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknisi,kasir,sales,cs,mitra'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // Verifikasi dua langkah (TOTP) milik sendiri
+    Route::post('/profile/two-factor/enable', [\App\Http\Controllers\TwoFactorController::class, 'enable'])->name('two-factor.enable');
+    Route::post('/profile/two-factor/confirm', [\App\Http\Controllers\TwoFactorController::class, 'confirm'])->middleware('throttle:10,1')->name('two-factor.confirm');
+    Route::post('/profile/two-factor/cancel', [\App\Http\Controllers\TwoFactorController::class, 'cancelSetup'])->name('two-factor.cancel');
+    Route::post('/profile/two-factor/disable', [\App\Http\Controllers\TwoFactorController::class, 'disable'])->middleware('throttle:10,1')->name('two-factor.disable');
+    Route::post('/profile/two-factor/recovery', [\App\Http\Controllers\TwoFactorController::class, 'regenerateRecovery'])->middleware('throttle:10,1')->name('two-factor.recovery');
     // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 

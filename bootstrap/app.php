@@ -28,6 +28,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.role' => \App\Http\Middleware\AdminApiRole::class,
         ]);
 
+        // Staf yang rolenya wajib 2FA tetapi belum mengaktifkan: diarahkan ke Profil
+        $middleware->appendToGroup('web', \App\Http\Middleware\EnsureTwoFactorEnabled::class);
+
         $middleware->redirectGuestsTo(fn ($request) => $request->is('admin/*') || $request->is('admin') ? route('login') : route('customer.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {

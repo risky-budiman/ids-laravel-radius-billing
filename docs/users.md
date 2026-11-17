@@ -91,9 +91,29 @@ Sakelar **Aktifkan Fungsi Sales** memberi staf internal (administrator, admin, t
 
 Akun yang **sudah punya riwayat** — tiket, balasan tiket, komisi, jurnal, transaksi kas, mutasi gudang, pelanggan referal, Log Aktivitas, dll. — **tidak bisa dihapus**. Sistem menampilkan riwayat yang ditemukan; **nonaktifkan** akun tersebut. Hanya akun yang belum pernah dipakai (mis. salah buat) yang bisa dihapus, dan penghapusannya tercatat (`user_deleted`).
 
+## Verifikasi Dua Langkah (2FA)
+
+Selain password, masuk memerlukan **kode 6 digit** dari aplikasi authenticator di HP (Google Authenticator, Authy, Microsoft Authenticator). Akun tetap aman walau password bocor.
+
+**Mengaktifkan (setiap staf, di Profil › Verifikasi dua langkah):**
+1. Klik **Aktifkan verifikasi dua langkah**, lalu pindai **QR code** dengan aplikasi authenticator (atau ketik kode manualnya).
+2. Masukkan kode 6 digit dari aplikasi → **Aktifkan**.
+3. Simpan **8 kode cadangan** yang tampil (sekali saja). Masing-masing berlaku sekali untuk masuk bila HP hilang. Kode cadangan baru bisa dibuat kapan saja (dengan password); kode lama tidak berlaku lagi.
+
+**Saat masuk:** setelah password benar, halaman meminta kode 6 digit (atau *HP hilang? Pakai kode cadangan*). Akun belum dianggap masuk sebelum kode benar. Kode berlaku ±30 detik dan **tidak bisa dipakai dua kali**; 5 kode salah → tunggu 1 menit; halaman kode berlaku 10 menit. Kode salah & pemakaian kode cadangan tercatat di Log Aktivitas.
+
+**Administrator (Kelola Staf):**
+- **Wajib untuk role** — centang role yang wajib 2FA (bawaan: tidak ada). Staf role itu yang belum mengaktifkan hanya bisa membuka **Profil** sampai mengaktifkannya, dan tidak bisa menonaktifkannya sendiri.
+- Lencana **2FA** / **2FA belum** di daftar staf; tombol **2FA** mereset verifikasi staf yang kehilangan HP & kode cadangan (staf itu lalu mengaktifkan ulang).
+
+**Aplikasi mobile staf:** login API (`POST /api/v1/admin/login`) untuk akun ber-2FA menjawab **202** `{"two_factor_required": true}` bila belum mengirim kode; kirim ulang dengan field `code` (kode 6 digit atau kode cadangan). Kode salah → 422. Akun tanpa 2FA tidak berubah. Perbarui aplikasi mobile sebelum mewajibkan 2FA untuk role yang memakai aplikasi.
+
+Secret disimpan terenkripsi (APP_KEY — jangan diganti), kode cadangan hanya sebagai hash; keduanya tidak pernah tertulis di Log Aktivitas.
+
 ## Keamanan Data
 
 - **Log Aktivitas**: administrator memantau perubahan penting (keuangan, pengaturan, OLT, role) di menu **Log Aktivitas**.
+- **Verifikasi dua langkah**: lihat bagian di atas; disarankan wajib untuk Administrator & Admin.
 - **Blokir akses**: bila staf berhenti bekerja, **nonaktifkan** akunnya daripada menghapus, agar riwayat transaksi tetap terjaga. Tombol **Reset sesi** mengeluarkan akun dari semua perangkat.
 
 ---

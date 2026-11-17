@@ -35,6 +35,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     // Role Constants
@@ -138,6 +140,29 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_sales' => 'boolean',
             'is_active' => 'boolean',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    /** Secret & kode cadangan 2FA tidak pernah tertulis di Log Aktivitas (aktif/nonaktif dicatat terpisah). */
+    public function activityRedactedFields(): array
+    {
+        return ['two_factor_secret', 'two_factor_recovery_codes'];
+    }
+
+    /** Pemakaian kode 2FA (langkah waktu / sisa kode cadangan) saat login bukan perubahan akun: tidak dicatat. */
+    public function shouldLogActivity(): bool
+    {
+        $changed = array_keys($this->exists && $this->wasChanged() ? $this->getChanges() : $this->getDirty());
+
+        return ! $this->exists || array_diff($changed, ['two_factor_last_step', 'two_factor_recovery_codes', 'remember_token', 'updated_at']) !== [] || $changed === [];
+    }
+
+    /** Verifikasi dua langkah aktif (secret sudah dikonfirmasi dengan kode dari aplikasi authenticator). */
+    public function hasTwoFactor(): bool
+    {
+        return $this->two_factor_confirmed_at !== null && filled($this->two_factor_secret);
     }
 }

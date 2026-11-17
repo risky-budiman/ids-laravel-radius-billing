@@ -36,9 +36,11 @@ class LoginRequest extends FormRequest
     /**
      * Attempt to authenticate the request's credentials.
      *
+     * @return string|null 'two_factor' bila password benar tetapi kode 2FA masih diperlukan
+     *
      * @throws ValidationException
      */
-    public function authenticate(): void
+    public function authenticate(): ?string
     {
         $this->ensureIsNotRateLimited();
 
@@ -85,6 +87,21 @@ class LoginRequest extends FormRequest
             'password' => $password,
         ];
 
+        // Staf dengan verifikasi dua langkah: cek password TANPA login, lalu minta kode 6 digit
+        if ($user && $user->role !== \App\Models\User::ROLE_CUSTOMER && $user->hasTwoFactor()) {
+            if (! Auth::validate($credentials)) {
+                RateLimiter::hit($this->throttleKey());
+                RateLimiter::hit($this->accountThrottleKey(), self::ACCOUNT_DECAY_SECONDS);
+
+                throw ValidationException::withMessages(['login' => trans('auth.failed')]);
+            }
+            RateLimiter::clear($this->throttleKey());
+            $this->session()->put('two_factor_login', ['user_id' => $user->id, 'remember' => $this->boolean('remember'),
+                'expires' => now()->addMinutes(10)->getTimestamp()]);
+
+            return 'two_factor';
+        }
+
         if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
             RateLimiter::hit($this->accountThrottleKey(), self::ACCOUNT_DECAY_SECONDS);
@@ -95,6 +112,8 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+
+        return null;
     }
 
     /**

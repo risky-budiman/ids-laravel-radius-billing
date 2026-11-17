@@ -22,6 +22,10 @@ Route::middleware('guest')->group(function () {
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
+    // Verifikasi dua langkah setelah password benar (belum login)
+    Route::get('two-factor', [\App\Http\Controllers\TwoFactorController::class, 'challenge'])->name('two-factor.challenge');
+    Route::post('two-factor', [\App\Http\Controllers\TwoFactorController::class, 'verifyChallenge'])->middleware('throttle:20,1')->name('two-factor.verify');
+
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 

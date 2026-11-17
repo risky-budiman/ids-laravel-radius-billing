@@ -50,6 +50,16 @@ class AuthController extends Controller
             ]);
         }
 
+        // Verifikasi dua langkah: tanpa ini 2FA web bisa dilewati lewat API. Kirim ulang login dengan "code".
+        if ($user->hasTwoFactor()) {
+            if (! $request->filled('code')) {
+                return response()->json(['message' => 'Masukkan kode verifikasi dua langkah dari aplikasi authenticator.', 'two_factor_required' => true], 202);
+            }
+            if (! app(\App\Services\TwoFactorService::class)->verify($user, (string) $request->input('code'))) {
+                throw ValidationException::withMessages(['code' => ['Kode verifikasi salah atau sudah dipakai.']]);
+            }
+        }
+
         // Revoke old admin tokens for this device
         $user->tokens()->where('name', 'admin-portal-token')->delete();
 

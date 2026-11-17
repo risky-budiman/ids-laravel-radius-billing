@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
-                {{ __('System User Management') }}
+                Kelola Staf
             </h2>
             <a href="{{ route('users.create') }}" class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-xl font-bold text-xs text-white  hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -18,6 +18,28 @@
                     {{ session('error') }}
                 </div>
             @endif
+            @if(session('success'))
+                <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">{{ session('success') }}</div>
+            @endif
+
+            {{-- Verifikasi dua langkah wajib per role --}}
+            @php $tfaRequired = \App\Services\TwoFactorService::requiredRoles(); @endphp
+            <form method="POST" action="{{ route('users.two-factor.required') }}" class="card mb-6 p-5"
+                  onsubmit="return confirm('Simpan? Staf dengan role yang dicentang dan belum mengaktifkan verifikasi dua langkah akan diminta mengaktifkannya sebelum bisa memakai aplikasi.')">
+                @csrf
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-surface-900 dark:text-white">Verifikasi dua langkah wajib untuk role</p>
+                        <p class="text-xs text-surface-500">Staf mengaktifkan sendiri di Profil (aplikasi authenticator di HP). Yang belum aktif hanya bisa membuka Profil sampai mengaktifkannya. Login aplikasi mobile staf juga meminta kode.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        @foreach(\App\Services\TwoFactorService::STAFF_ROLES as $role)
+                            <label class="inline-flex items-center gap-1.5 text-sm"><input type="checkbox" name="roles[]" value="{{ $role }}" class="rounded" @checked(in_array($role, $tfaRequired, true))> {{ \App\Models\User::STAFF_ROLES[$role] ?? $role }}</label>
+                        @endforeach
+                        <button class="btn-secondary btn-sm">Simpan</button>
+                    </div>
+                </div>
+            </form>
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-xl border border-gray-100 dark:border-gray-700">
                 <div class="p-8">
                     <div class="overflow-x-auto">
@@ -77,11 +99,16 @@
                                                 Nonaktif
                                             </span>
                                         @endif
+                                        @if($user->hasTwoFactor())
+                                            <span class="badge-success ml-1" title="Verifikasi dua langkah aktif">2FA</span>
+                                        @elseif(in_array($user->role, $tfaRequired, true))
+                                            <span class="badge-warning ml-1" title="Wajib, belum diaktifkan">2FA belum</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-5 text-center">
                                         <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold {{ $user->sessions_count > 0 ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500' }}">
                                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                                            {{ $user->sessions_count }} Devices
+                                            {{ $user->sessions_count }} perangkat
                                         </div>
                                     </td>
                                     <td class="px-6 py-5 text-center text-xs text-gray-500 dark:text-gray-400">
@@ -92,7 +119,7 @@
                                             @if($user->role !== \App\Models\User::ROLE_ADMINISTRATOR)
                                             <form action="{{ route('users.toggle-status', $user) }}" method="POST">
                                                 @csrf
-                                                <button type="submit" class="p-2 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-amber-50 hover:text-amber-600 transition-all shadow-sm border border-transparent hover:border-amber-200" title="{{ $user->is_active ? 'Deactivate' : 'Activate' }}">
+                                                <button type="submit" class="p-2 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-amber-50 hover:text-amber-600 transition-all shadow-sm border border-transparent hover:border-amber-200" title="{{ $user->is_active ? 'Nonaktifkan' : 'Aktifkan' }}">
                                                     @if($user->is_active)
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
                                                     @else
@@ -102,7 +129,13 @@
                                             </form>
                                             @endif
 
-                                            <form action="{{ route('users.reset-sessions', $user) }}" method="POST" onsubmit="return confirm('Reset all active sessions for this user? They will be logged out from all devices.')">
+                                            @if($user->hasTwoFactor() && $user->id !== auth()->id())
+                                                <form action="{{ route('users.two-factor.reset', $user) }}" method="POST" onsubmit="return confirm('Reset verifikasi dua langkah {{ addslashes($user->name) }}? Pakai bila HP & kode cadangannya hilang. Ia harus mengaktifkan ulang.')">
+                                                    @csrf
+                                                    <button type="submit" class="rounded-xl border border-transparent bg-gray-50 px-2 py-2 text-xs font-semibold text-gray-500 shadow-sm transition-all hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600 dark:bg-gray-700 dark:text-gray-400" title="Reset verifikasi dua langkah">2FA</button>
+                                                </form>
+                                            @endif
+                                            <form action="{{ route('users.reset-sessions', $user) }}" method="POST" onsubmit="return confirm('Keluarkan pengguna ini dari semua perangkat?')">
                                                 @csrf
                                                 <button type="submit" class="p-2 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all shadow-sm border border-transparent hover:border-indigo-200" title="Atur Ulang Semua Sesi">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>
