@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.174] - 2026-11-17
+
+### Fitur baru
+- **noc:** Router/NAS down and recovery alerts
+
 ## [v1.5.173] - 2026-11-17
 
 ### Fitur baru

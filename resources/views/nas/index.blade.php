@@ -2,11 +2,16 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
-                {{ __('Routers (NAS)') }}
+                Router (NAS)
             </h2>
-            <a href="{{ route('nas.create') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm shadow-indigo-500/30">
-                + Tambah NAS
-            </a>
+            <div class="flex items-center gap-2">
+                <form method="POST" action="{{ route('nas.check-status') }}">@csrf
+                    <button class="btn-secondary">Cek status sekarang</button>
+                </form>
+                <a href="{{ route('nas.create') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm shadow-indigo-500/30">
+                    + Tambah NAS
+                </a>
+            </div>
         </div>
     </x-slot>
 
@@ -47,6 +52,7 @@
                             <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
                             <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Alamat IP</th>
                             <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Shortname</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                             <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Secret</th>
                             <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Deskripsi</th>
                             <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Aksi</th>
@@ -60,6 +66,20 @@
                                 </td>
                                 <td class="px-6 py-4 font-mono text-indigo-600 dark:text-indigo-400">{{ $router->nasname }}</td>
                                 <td class="px-6 py-4 text-gray-900 dark:text-gray-100">{{ $router->shortname }}</td>
+                                @php $st = \App\Services\Network\NasMonitor::lastStatus($router); @endphp
+                                <td class="px-6 py-4 text-sm">
+                                    @if(! \App\Services\Network\NasMonitor::monitorable($router))
+                                        <span class="badge-gray" title="Alamat berupa rentang, tidak bisa dipantau">—</span>
+                                    @elseif(! $st)
+                                        <span class="badge-gray">Belum dicek</span>
+                                    @elseif($st['up'])
+                                        <span class="badge-success">Online</span>
+                                        <span class="block text-xs text-gray-500">{{ $st['via'] }} · {{ $st['sessions'] }} sesi · {{ \Illuminate\Support\Carbon::createFromTimestamp($st['checked_at'])->diffForHumans() }}</span>
+                                    @else
+                                        <span class="badge-danger">Tidak merespons</span>
+                                        <span class="block text-xs text-gray-500">{{ $st['down_since'] ? 'sejak ' . $st['down_since'] . ' · ' : '' }}{{ \Illuminate\Support\Carbon::createFromTimestamp($st['checked_at'])->diffForHumans() }}</span>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4 text-gray-500 font-mono tracking-widest">••••••••</td>
                                 <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ $router->description }}</td>
                                 <td class="px-6 py-4 text-center">
@@ -75,7 +95,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">Belum ada router.</td>
+                                <td colspan="7" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">Belum ada router.</td>
                             </tr>
                         @endforelse
                     </tbody>

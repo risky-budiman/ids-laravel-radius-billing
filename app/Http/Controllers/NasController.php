@@ -17,6 +17,20 @@ class NasController extends Controller
         return view('nas.index', compact('routers', 'serverIp'));
     }
 
+    /** Cek sekarang: ping / port MikroTik semua router (tanpa mengirim peringatan). */
+    public function checkStatus(\App\Services\Network\NasMonitor $monitor)
+    {
+        $up = $down = 0;
+        foreach (Nas::all() as $nas) {
+            if (! \App\Services\Network\NasMonitor::monitorable($nas)) {
+                continue;
+            }
+            $monitor->refreshStatus($nas)['up'] ? $up++ : $down++;
+        }
+
+        return redirect()->route('nas.index')->with('success', "Status router diperbarui: {$up} online, {$down} tidak merespons.");
+    }
+
     public function create()
     {
         return view('nas.create');

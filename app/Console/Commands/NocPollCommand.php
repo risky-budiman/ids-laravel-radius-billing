@@ -12,21 +12,36 @@ use Illuminate\Support\Facades\Log;
 /**
  * Pemantauan NOC terjadwal: baca ONU semua OLT aktif (per port PON, HSGQ & ZTE), perbarui sinyal & status
  * pelanggan, lalu kirim SATU ringkasan peringatan per OLT (ONU putus / sinyal kritis) dan peringatan OLT mati
- * atau pulih. Jadwal diatur di Integrasi › Bot NOC (bawaan nonaktif).
+ * atau pulih. Router/NAS juga dicek (ping / port MikroTik) dengan peringatan mati & pulih.
+ * Jadwal diatur di Integrasi › Bot NOC (bawaan nonaktif).
  */
 class NocPollCommand extends Command
 {
     protected $signature = 'noc:monitor';
-    protected $description = 'Pantau OLT: status & sinyal ONU pelanggan, peringatan ONU putus/sinyal kritis & OLT mati';
+    protected $description = 'Pantau OLT & router: status & sinyal ONU pelanggan, peringatan ONU putus/sinyal kritis, OLT & router mati';
 
     public const CRITICAL_DBM = NocService::CRITICAL_DBM;
     public const REALERT_HOURS = 6;
 
-    public function handle(NocService $noc, NocAlertService $alerts): int
+    public function handle(NocService $noc, NocAlertService $alerts, \App\Services\Network\NasMonitor $nasMonitor): int
     {
+        // Router/NAS (MikroTik): mati = semua pelanggan di router itu putus
+        foreach (\App\Models\Radius\Nas::all() as $nas) {
+            if (! \App\Services\Network\NasMonitor::monitorable($nas)) {
+                continue;
+            }
+            try {
+                $r = $nasMonitor->check($nas, $alerts);
+                $this->info("Router {$nas->shortname} ({$nas->nasname}): " . ($r['up'] ? "online via {$r['via']}" : 'TIDAK MERESPONS') . ", {$r['sessions']} sesi aktif");
+            } catch (\Throwable $e) {
+                Log::error("NOC monitor NAS {$nas->id}: " . $e->getMessage());
+            }
+        }
+
         $olts = Olt::where('is_active', true)->get();
         if ($olts->isEmpty()) {
             $this->info('Tidak ada OLT aktif.');
+            Cache::put('noc_last_sync_at', now()->getTimestamp(), now()->addDays(7));
 
             return self::SUCCESS;
         }

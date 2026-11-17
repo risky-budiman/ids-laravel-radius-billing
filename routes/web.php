@@ -405,6 +405,7 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
 
     // SYSTEM ADMINISTRATION: Administrator ONLY
     Route::middleware('role:administrator')->group(function () {
+        Route::post('nas/check-status', [\App\Http\Controllers\NasController::class, 'checkStatus'])->middleware('throttle:10,1')->name('nas.check-status');
         Route::resource('nas', \App\Http\Controllers\NasController::class);
         Route::resource('users', \App\Http\Controllers\UserController::class);
         Route::get('access-matrix', \App\Http\Controllers\AccessMatrixController::class)->name('access.matrix');

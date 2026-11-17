@@ -65,6 +65,7 @@ Satu form untuk tambah & ubah: Identitas (nama, tipe, IP, lokasi, koordinat + Li
 - status & sinyal semua ONU dibaca per port PON (sama dengan Sinkron ONU) dan grafik riwayat sinyal terisi;
 - peringatan dikirim ke **Telegram** dan/atau **WhatsApp** (nomor atau grup) yang diisi di halaman yang sama:
   - **OLT mati** — sekali, lalu **OLT kembali online** saat pulih;
+  - **Router/NAS mati** — setiap router di *Router (NAS)* dicek dengan **ping**, lalu koneksi TCP ke port MikroTik (8728 API, 8291 Winbox, 22, 80, 443) bila ICMP diblokir; tanpa username/password router. Peringatan dikirim setelah **2 kali cek gagal berturut-turut** (tidak terpicu satu paket hilang), sekali, berisi jumlah sesi PPPoE yang tercatat aktif di router itu; lalu **kembali online** saat pulih. NAS berupa rentang (mis. `0.0.0.0/0`) dilewati. Status terakhir tampil di halaman **Router (NAS)**; tombol *Cek status sekarang* (administrator) memperbarui tampilan tanpa mengirim peringatan. Pastikan server aplikasi bisa me-ping / menjangkau IP router;
   - **ONU putus** (LOS / dying-gasp / offline) — hanya pelanggan **aktif** yang sebelumnya online;
   - **sinyal kritis** di bawah **-27 dBm**;
   - per pelanggan paling sering **sekali per 6 jam**, digabung dalam **satu pesan per OLT**;
