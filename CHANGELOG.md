@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.183] - 2026-11-18
+
+### Peningkatan
+- **deploy:** Upgrade guide from old production versions (v1.5.65)
+
 ## [v1.5.182] - 2026-11-17
 
 ### Peningkatan

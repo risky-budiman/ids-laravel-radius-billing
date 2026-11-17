@@ -6,7 +6,7 @@ Untuk Admin IT. Jalankan berurutan setiap kali memasang versi baru di server pro
 
 - [ ] **Backup database** dan simpan salinannya di luar server (`BACKUP_REMOTE_DISK` / `BACKUP_REMOTE_PATH`).
 - [ ] Catat versi yang sedang berjalan (pojok kanan bawah aplikasi, mis. `v1.5.164`).
-- [ ] **Update dari versi lama (≤ v1.5.103)** — baca dulu bagian *Update dari Versi Lama* di bawah.
+- [ ] **Update dari versi lama (mis. v1.5.65)** — baca dulu bagian *Update dari Versi Lama* di bawah.
 
 ## 2. Pasang Versi Baru
 
@@ -48,16 +48,37 @@ php artisan optimize:clear && php artisan optimize
 - [ ] **Penautan ONU**: NOC Center › Sinkron ONU, lalu periksa *Penautan ONU* (usulan) agar pelanggan lama tertaut ke OLT.
 - [ ] **Jalur kabel (opsional)**: isi server OSRM di `Peta Pelanggan › Pengaturan jalur` bila ingin tombol *Ikuti jalan*; tanpa itu jalur digambar manual.
 
-## Update dari Versi Lama (≤ v1.5.103)
+## Update dari Versi Lama (mis. v1.5.65 → v1.5.182)
 
-Versi lama tidak pernah mengisolir pelanggan yang menunggak (bug), dan webhook pembayaran belum diverifikasi. Setelah update:
+Versi lama tidak pernah mengisolir pelanggan yang menunggak (bug), webhook pembayaran belum diverifikasi, dan belum ada pengingat WhatsApp. Data transaksi lama **tidak** diubah, tetapi perilaku billing, isolir, pembayaran & WhatsApp berubah begitu versi baru berjalan. Pakai SSH (bukan menu Pembaruan Sistem versi lama, yang tidak menjalankan `npm run build`), pada pagi/siang hari kerja.
 
-1. **Isolir otomatis dimulai nonaktif** (migrasi `2026_11_17_000002`) agar proses billing pertama tidak mengisolir semua penunggak sekaligus. Buka `Pengaturan Isolir › Isolir otomatis`, periksa daftarnya (tagih, lunasi, hapus-buku invoice yang tidak valid, atau atur masa tenggang), atur mode isolir & skrip MikroTik, lalu **Aktifkan**. Daftar lengkap: `php artisan app:process-billing --dry-run`.
-2. **Webhook pembayaran** (Moota, Midtrans, Xendit, Duitku) menolak permintaan tanpa kredensial/secret yang benar. Periksa `Integrasi` dan lakukan satu pembayaran percobaan.
-3. **Pengingat WhatsApp** H-3 / H-1 / hari H mulai terkirim pukul 09:00 (Template Pesan › Pengingat Tagihan).
-4. **Antrean lama**: `SELECT COUNT(*), FROM_UNIXTIME(MIN(created_at)) FROM jobs;` — bila ada job WhatsApp lama, putuskan dibuang atau dikirim **sebelum** menyalakan queue worker.
-5. Laporan Arus Kas periode lama akan berbeda (perbaikan hitung ganda & klasifikasi); jurnal tidak berubah.
-6. Hak akses staf per role lebih ketat; atur di `Hak Akses per Role` bila perlu.
+**Sebelum** — backup database, `.env` dan `storage/app`; catat commit lama (`git log -1 --oneline`); cek `php -m | grep -i snmp`, `which mysqldump ping`, `node -v`, `upload_max_filesize` ≥ 10M; jalankan query pengecekan:
+
+```sql
+SELECT status, COUNT(*) FROM invoices GROUP BY status;            -- hanya unpaid / paid / overdue
+SHOW TABLES LIKE 'bank_mutations';                                  -- harus kosong
+SELECT code FROM chart_of_accounts WHERE code IN ('1104','1105','1106','1202','2101','2102','4199','5105','5106');  -- 9 baris
+SELECT COUNT(*), FROM_UNIXTIME(MIN(created_at)) FROM jobs;          -- job lama yang menumpuk
+```
+
+**Pasang** — `php artisan down --retry=60` → langkah 2 di atas (pull, composer, `migrate --force` = 28 migrasi, `npm ci && npm run build`, `.env`, `optimize`, `storage:link`, reload PHP-FPM) → `php artisan up`.
+
+Migrasi yang mengisi/mengubah data lama: template invoice bawaan yang belum diubah diganti template baru; tiket selesai, pelanggan dicabut/terisolir diberi tanggalnya dari riwayat; kredensial OLT dienkripsi (`APP_KEY`); kolom telnet OLT dihapus; **isolir otomatis = nonaktif** (server sudah berisi pelanggan); template WA "Gangguan Teratasi"; akun COA **1290 Akumulasi Penyusutan**.
+
+**Hari itu juga (sebelum 00:01 & 09:00):**
+
+1. Cek halaman utama tanpa error, versi tampil benar, `storage/logs/laravel.log` bersih.
+2. *Pengaturan Isolir › Isolir otomatis* = **Nonaktif**; `php artisan app:process-billing --dry-run`.
+3. *Integrasi*: kredensial webhook Moota (Webhook Secret Token / api_token), Midtrans, Xendit, Duitku terisi; **satu pembayaran percobaan**. Transfer Moota yang tidak jelas kini menunggu di *Keuangan › Mutasi Bank*.
+4. Pengingat tagihan WA H-3 / H-1 / hari H mulai 09:00 — periksa *Template Pesan › Pengingat Tagihan*.
+5. Antrean: buang job basi (`php artisan queue:clear`) **sebelum** worker berjalan; bila `QUEUE_CONNECTION` = `database`/`redis`, worker (supervisor, bagian 3) wajib hidup.
+6. Uji login satu staf per role; aktifkan 2FA di akun Administrator.
+
+**Minggu pertama (bertahap):** aktifkan isolir otomatis setelah daftar penunggak dibereskan (+ mode isolir & skrip MikroTik, masa tenggang); sesuaikan *Hak Akses per Role*; OLT HSGQ (akses web), Sinkron ONU + *Penautan ONU*; Bot NOC (OLT/ONU/router); GenieACS NBI; rekonsiliasi bank; penyusutan (akun akumulasi ke 1290, lalu aktifkan); opsional: dismantle otomatis, BA instalasi, masa simpan log, backup luar server, OSRM peta; NPWP; `customers:recover-edit-bug`. Wajibkan 2FA per role **setelah** aplikasi mobile staf mendukung field `code`.
+
+**Yang dirasakan pengguna:** tampilan baru & menu mengikuti hak akses role; Arus Kas periode lama tampil berbeda (perbaikan hitung ganda & klasifikasi, jurnal tidak berubah); Rekening Koran memberi peringatan selisih saldo tersimpan; pelanggan menerima pengingat tagihan, dan setelah isolir otomatis aktif benar-benar terisolir lewat RADIUS.
+
+**Kembali ke versi lama** hanya dengan memulihkan backup database (migrasi mengenkripsi kredensial OLT & menghapus kolom telnet): `php artisan down` → `git checkout <commit lama>` → composer & `npm run build` → `mysql … < backup.sql` → `optimize` → `php artisan up`. Transaksi setelah update ikut hilang — catat dulu.
 
 ## Bila Ada Masalah
 
