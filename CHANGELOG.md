@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.177] - 2026-11-17
+
+### Peningkatan
+- **finance:** Clearer Rekonsiliasi Bank page
+
 ## [v1.5.176] - 2026-11-17
 
 ### Fitur baru
