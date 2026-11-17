@@ -2,94 +2,46 @@
 
 namespace App\Console\Commands;
 
+use App\Models\ActivityLog;
+use App\Services\Finance\DepreciationService;
+use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
-use App\Models\FixedAsset;
-use App\Models\Journal;
-use App\Models\JournalItem;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
+/**
+ * Jurnal penyusutan aset tetap untuk satu bulan (bawaan: bulan berjalan). Dijadwalkan hari terakhir tiap bulan
+ * pukul 23:00 bila "Penyusutan otomatis" diaktifkan di halaman Aset Tetap.
+ *
+ * Dulu: tidak pernah dijadwalkan, menyusutkan aset yang dibeli setelah bulan itu, mengabaikan tutup buku, dan
+ * mengisi kolom jurnal yang tidak ada (nomor/status/keterangan baris diabaikan diam-diam).
+ */
 class CalculateDepreciation extends Command
 {
-    protected $signature = 'app:calculate-depreciation';
-    protected $description = 'Calculate and journal fixed asset depreciation for the current month';
+    protected $signature = 'app:calculate-depreciation {--month= : Bulan YYYY-MM (bawaan bulan berjalan)} {--dry-run : Hanya tampilkan rencana}';
+    protected $description = 'Jurnal penyusutan bulanan aset tetap (garis lurus)';
 
-    public function handle()
+    public function handle(DepreciationService $service): int
     {
-        $this->info('Starting depreciation calculation...');
-        $assets = FixedAsset::where('status', 'active')
-            ->whereRaw('accumulated_depreciation < (purchase_price - salvage_value)')
-            ->get();
-
-        if ($assets->isEmpty()) {
-            $this->info('No active assets found requiring depreciation.');
-            return;
-        }
-
-        DB::beginTransaction();
         try {
-            $totalDepreciated = 0;
-            $journalDate = Carbon::now()->endOfMonth()->toDateString();
-            
-            foreach ($assets as $asset) {
-                $depreciableAmount = $asset->purchase_price - $asset->salvage_value;
-                $monthlyDepreciation = $depreciableAmount / $asset->useful_life_months;
-                
-                // Adjust if remaining is less than monthly
-                $remainingToDepreciate = $depreciableAmount - $asset->accumulated_depreciation;
-                if ($monthlyDepreciation > $remainingToDepreciate) {
-                    $monthlyDepreciation = $remainingToDepreciate;
-                }
+            $month = $this->option('month') ? CarbonImmutable::createFromFormat('Y-m', $this->option('month'))->startOfMonth() : now()->toImmutable()->startOfMonth();
+        } catch (\Throwable) {
+            $this->error('Format --month harus YYYY-MM.');
 
-                if ($monthlyDepreciation <= 0) continue;
-
-                // Aman dijalankan berulang: satu jurnal penyusutan per aset per bulan.
-                $alreadyPosted = Journal::where('reference', 'Depresiasi Aset: ' . $asset->asset_code)
-                    ->whereDate('date', $journalDate)
-                    ->exists();
-                if ($alreadyPosted) {
-                    $this->line("Skip {$asset->name}: penyusutan bulan ini sudah dijurnal.");
-                    continue;
-                }
-
-                $journal = Journal::create([
-                    'journal_number' => 'DEP-' . strtoupper(uniqid()),
-                    'date' => $journalDate,
-                    'reference' => 'Depresiasi Aset: ' . $asset->asset_code,
-                    'description' => 'Beban penyusutan bulanan untuk ' . $asset->name,
-                    'status' => 'posted',
-                ]);
-
-                // Debit Depreciation Expense
-                JournalItem::create([
-                    'journal_id' => $journal->id,
-                    'account_id' => $asset->depreciation_account_id,
-                    'description' => 'Beban penyusutan: ' . $asset->name,
-                    'debit' => $monthlyDepreciation,
-                    'credit' => 0,
-                ]);
-
-                // Credit Accumulated Depreciation
-                JournalItem::create([
-                    'journal_id' => $journal->id,
-                    'account_id' => $asset->accumulated_account_id,
-                    'description' => 'Akumulasi penyusutan: ' . $asset->name,
-                    'debit' => 0,
-                    'credit' => $monthlyDepreciation,
-                ]);
-
-                $asset->accumulated_depreciation += $monthlyDepreciation;
-                $asset->save();
-
-                $totalDepreciated += $monthlyDepreciation;
-                $this->line("Depreciated {$asset->name} by " . number_format($monthlyDepreciation, 2));
-            }
-
-            DB::commit();
-            $this->info("Depreciation calculation completed. Total: " . number_format($totalDepreciated, 2));
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->error('Failed to calculate depreciation: ' . $e->getMessage());
+            return self::FAILURE;
         }
+        $label = $month->locale('id')->translatedFormat('F Y');
+        foreach ($service->plan($month) as $row) {
+            $this->line(sprintf('%-14s %-30s %15s  %s', $row['asset']->asset_code, mb_substr($row['asset']->name, 0, 30),
+                $row['amount'] ? number_format($row['amount'], 2, ',', '.') : '-', $row['note']));
+        }
+        if ($this->option('dry-run')) {
+            return self::SUCCESS;
+        }
+        $r = $service->run($month);
+        if ($r['count']) {
+            ActivityLog::log('depreciation_posted', "Penyusutan {$label}: {$r['count']} aset, Rp " . number_format($r['total'], 0, ',', '.') . '.');
+        }
+        $this->info("Penyusutan {$label}: {$r['count']} aset dijurnal, total " . number_format($r['total'], 2, ',', '.') . '.');
+
+        return self::SUCCESS;
     }
 }

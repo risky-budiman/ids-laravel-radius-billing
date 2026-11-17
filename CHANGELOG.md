@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.179] - 2026-11-17
+
+### Fitur baru
+- **assets:** Monthly depreciation with preview, manual run and opt-in schedule
+
 ## [v1.5.178] - 2026-11-17
 
 ### Fitur baru

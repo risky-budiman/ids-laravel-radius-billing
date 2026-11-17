@@ -349,7 +349,11 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
             Route::delete('inventory/categories/{category}', [\App\Http\Controllers\InventoryController::class, 'destroyCategory'])->name('inventory.category.destroy');
         });
 
-        // Fixed Assets
+        // Fixed Assets — penyusutan (jurnal) hanya administrator & admin
+        Route::middleware('role:administrator,admin')->group(function () {
+            Route::post('fixed-assets/depreciation/run', [\App\Http\Controllers\FixedAssetController::class, 'runDepreciation'])->name('fixed-assets.depreciation.run');
+            Route::post('fixed-assets/depreciation/auto', [\App\Http\Controllers\FixedAssetController::class, 'autoDepreciation'])->name('fixed-assets.depreciation.auto');
+        });
         Route::resource('fixed-assets', \App\Http\Controllers\FixedAssetController::class);
     });
     // APP CHANGELOG (Public/Shared)

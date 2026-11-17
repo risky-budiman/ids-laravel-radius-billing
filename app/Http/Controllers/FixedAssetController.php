@@ -8,10 +8,45 @@ use Illuminate\Http\Request;
 
 class FixedAssetController extends Controller
 {
-    public function index()
+    public function index(Request $request, \App\Services\Finance\DepreciationService $depreciation)
     {
         $assets = FixedAsset::latest()->paginate(15);
-        return view('fixed-assets.index', compact('assets'));
+        try {
+            $month = $request->filled('month') ? \Carbon\CarbonImmutable::createFromFormat('Y-m', $request->get('month'))->startOfMonth() : now()->toImmutable()->startOfMonth();
+        } catch (\Throwable) {
+            $month = now()->toImmutable()->startOfMonth();
+        }
+        $plan = $depreciation->plan($month);
+        $autoOn = \App\Services\Finance\DepreciationService::enabled();
+
+        return view('fixed-assets.index', compact('assets', 'plan', 'month', 'autoOn'));
+    }
+
+    /** Jurnal penyusutan satu bulan sekarang (juga untuk mengejar bulan yang terlewat). */
+    public function runDepreciation(Request $request, \App\Services\Finance\DepreciationService $depreciation)
+    {
+        $month = \Carbon\CarbonImmutable::createFromFormat('Y-m', $request->validate(['month' => 'required|date_format:Y-m'])['month'])->startOfMonth();
+        if ($month->gt(now()->startOfMonth())) {
+            return back()->with('error', 'Bulan yang belum berjalan tidak bisa dijurnal.');
+        }
+        $label = $month->locale('id')->translatedFormat('F Y');
+        $r = $depreciation->run($month);
+        if ($r['count']) {
+            \App\Models\ActivityLog::log('depreciation_posted', "Penyusutan {$label} dijurnal manual: {$r['count']} aset, Rp " . number_format($r['total'], 0, ',', '.') . '.');
+        }
+
+        return redirect()->route('fixed-assets.index', ['month' => $month->format('Y-m')])->with($r['count'] ? 'success' : 'error', $r['count']
+            ? "Penyusutan {$label}: {$r['count']} aset dijurnal, total Rp " . number_format($r['total'], 0, ',', '.') . '.'
+            : "Tidak ada penyusutan {$label} yang perlu dijurnal.");
+    }
+
+    public function autoDepreciation(Request $request)
+    {
+        $on = (bool) $request->validate(['enabled' => 'required|boolean'])['enabled'];
+        \App\Services\Finance\DepreciationService::setEnabled($on);
+        \App\Models\ActivityLog::log('depreciation_auto_' . ($on ? 'enabled' : 'disabled'), 'Penyusutan aset otomatis ' . ($on ? 'diaktifkan' : 'dinonaktifkan') . '.');
+
+        return back()->with('success', $on ? 'Penyusutan otomatis aktif: dijurnal setiap hari terakhir bulan pukul 23:00.' : 'Penyusutan otomatis dinonaktifkan.');
     }
 
     public function create()

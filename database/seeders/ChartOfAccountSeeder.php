@@ -21,6 +21,7 @@ class ChartOfAccountSeeder extends Seeder
             ['code' => '1106', 'name' => 'PPN Masukan', 'type' => 'asset', 'parent_id' => '1000'],
             ['code' => '1201', 'name' => 'Inventaris Kantor', 'type' => 'asset', 'parent_id' => '1000'],
             ['code' => '1202', 'name' => 'Peralatan Jaringan (OLT/Router)', 'type' => 'asset', 'parent_id' => '1000'],
+            ['code' => '1290', 'name' => 'Akumulasi Penyusutan Aset Tetap', 'type' => 'asset', 'parent_id' => '1000'],   // kontra aset (saldo kredit)
 
             // LIABILITIES (2xxx)
             ['code' => '2000', 'name' => 'KEWAJIBAN', 'type' => 'liability', 'parent_id' => null],

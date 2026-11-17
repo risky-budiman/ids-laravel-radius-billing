@@ -19,6 +19,9 @@ Schedule::command('app:send-invoice-reminders')->dailyAt('09:00')->withoutOverla
 Schedule::command('app:backup-database')->dailyAt('02:30')->withoutOverlapping(120);
 // Masa simpan log (Log Aktivitas). Bawaan tidak menghapus apa pun; berjalan setelah backup harian.
 Schedule::command('logs:prune')->dailyAt('03:45')->withoutOverlapping(120);
+// Penyusutan aset tetap: hari terakhir tiap bulan, hanya bila diaktifkan di halaman Aset Tetap (bawaan mati)
+Schedule::command('app:calculate-depreciation')->lastDayOfMonth('23:00')->withoutOverlapping(60)
+    ->when(fn () => \App\Services\Finance\DepreciationService::enabled());
 Schedule::command('customer:check-grace-period')->everyMinute();
 
 // Pemantauan NOC (status & sinyal ONU + peringatan Telegram/WhatsApp): NONAKTIF bawaan.

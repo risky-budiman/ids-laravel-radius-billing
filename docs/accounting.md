@@ -50,6 +50,17 @@ Mencocokkan mutasi rekening dari bank dengan catatan Kas & Bank, untuk menemukan
 
 Import, cocok manual & abaikan tercatat di Log Aktivitas. Rekening Koran menautkan ke halaman ini bila saldo tersimpan berbeda dari mutasinya.
 
+## Aset Tetap & Penyusutan
+
+> **Lokasi:** `Inventaris & Aset › Aset Tetap` (penyusutan: administrator & admin)
+
+- **Garis lurus**: (harga perolehan − nilai sisa) ÷ umur manfaat (bulan), **mulai bulan perolehan**; bulan terakhir hanya sisa nilainya. Jurnal tanggal akhir bulan: **Dr akun beban penyusutan (5201) / Cr akun akumulasi penyusutan (1290)**, satu jurnal per aset per bulan (aman dijalankan ulang).
+- Kartu **Penyusutan bulanan** menampilkan per aset: nominal per bulan, sisa yang belum disusutkan, dan status bulan terpilih — *Siap dijurnal*, *Sudah dijurnal*, *Dibeli setelah bulan ini*, *Sudah habis disusutkan*, *Aset tidak aktif*, *Periode sudah tutup buku*, atau **Periksa akun** (akun akumulasi sama dengan akun aset / akun beban bukan tipe beban — tidak dijurnal).
+- **Jurnal penyusutan [bulan]** menjurnal bulan terpilih sekarang; pilih bulan lain untuk mengejar bulan yang terlewat.
+- **Otomatis** (bawaan **nonaktif**): bila diaktifkan, berjalan setiap **hari terakhir bulan pukul 23:00** (`app:calculate-depreciation`; cek manual: `--month=YYYY-MM --dry-run`).
+- Akun **1290 Akumulasi Penyusutan Aset Tetap** (kontra aset, saldo kredit mengurangi total aset) ditambahkan otomatis oleh migrasi. Aset lama yang memakai akun lain sebagai akumulasi: ubah ke 1290 di halaman Ubah aset.
+- Aktivasi, penjurnalan manual & otomatis tercatat di Log Aktivitas (`depreciation_posted`, `depreciation_auto_enabled/disabled`).
+
 ## Laporan
 
 Laba Rugi, Neraca, **Arus Kas** (metode langsung dengan klasifikasi per akun lawan), Buku Besar, Pusat Pajak PPN — lihat `docs/reports.md`.
