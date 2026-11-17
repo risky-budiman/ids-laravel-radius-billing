@@ -9,12 +9,45 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    public function index()
+    /**
+     * Daftar staf (akun portal pelanggan tidak ikut). "Terakhir aktif" dari sesi web terakhir, "terakhir masuk"
+     * dari log login — dulu kolom ini memakai updated_at (waktu data akun diubah).
+     */
+    public function index(Request $request)
     {
-        $users = User::withCount(['sessions' => function($query) {
-            $query->where('last_activity', '>=', now()->subMinutes(config('session.lifetime'))->getTimestamp());
-        }])->latest()->paginate(10);
-        return view('users.index', compact('users'));
+        $staffRoles = array_keys(User::STAFF_ROLES);
+        $onlineSince = now()->subMinutes((int) config('session.lifetime'))->getTimestamp();
+        $role = in_array($request->get('role'), $staffRoles, true) ? $request->get('role') : null;
+        $status = in_array($request->get('status'), ['active', 'inactive', 'no2fa'], true) ? $request->get('status') : null;
+        $q = trim((string) $request->get('q'));
+
+        $users = User::query()
+            ->whereIn('role', $staffRoles)
+            ->withCount(['sessions' => fn ($s) => $s->where('last_activity', '>=', $onlineSince)])
+            ->withMax('sessions as last_seen', 'last_activity')
+            ->addSelect(['last_login_at' => \App\Models\ActivityLog::select('created_at')->whereColumn('user_id', 'users.id')
+                ->where('action', 'login')->latest('created_at')->limit(1)])
+            ->when($role, fn ($w) => $w->where('role', $role))
+            ->when($status === 'active', fn ($w) => $w->where('is_active', true))
+            ->when($status === 'inactive', fn ($w) => $w->where('is_active', false))
+            ->when($status === 'no2fa', fn ($w) => $w->whereNull('two_factor_confirmed_at'))
+            ->when($q !== '', fn ($w) => $w->where(fn ($x) => $x->where('name', 'like', '%' . addcslashes($q, '%_\\') . '%')
+                ->orWhere('email', 'like', '%' . addcslashes($q, '%_\\') . '%')))
+            ->orderByDesc('is_active')
+            ->orderByRaw('CASE role ' . collect($staffRoles)->map(fn ($r, $i) => "WHEN '{$r}' THEN {$i}")->implode(' ') . ' ELSE 99 END')
+            ->orderBy('name')
+            ->paginate(15)->withQueryString();
+
+        $base = User::whereIn('role', $staffRoles);
+        $stats = [
+            'total' => (clone $base)->count(),
+            'active' => (clone $base)->where('is_active', true)->count(),
+            'online' => (clone $base)->whereHas('sessions', fn ($s) => $s->where('last_activity', '>=', $onlineSince))->count(),
+            'two_factor' => (clone $base)->where('is_active', true)->whereNotNull('two_factor_confirmed_at')->count(),
+        ];
+        $roleCounts = (clone $base)->selectRaw('role, COUNT(*) n')->groupBy('role')->pluck('n', 'role')->all();
+
+        return view('users.index', compact('users', 'stats', 'roleCounts', 'role', 'status', 'q'));
     }
 
     public function create()

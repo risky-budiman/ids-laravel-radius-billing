@@ -73,7 +73,9 @@ Mitra tidak bisa membuka halaman mitra lain, daftar pelanggan, tagihan maupun me
 
 ## Membuat & Mengubah Akun Staf
 
-Buka **Pengguna > Tambah**:
+**Kelola Staf** (administrator) menampilkan ringkasan (total staf, online sekarang, berapa yang sudah 2FA, role yang wajib 2FA), **kebijakan keamanan login**, dan daftar staf dengan filter per role, status (aktif / nonaktif / tanpa 2FA) dan pencarian nama/email. Per staf: peran, status, keamanan login, **aktivitas** (online sekarang atau kapan terakhir aktif, dan kapan terakhir masuk dari log login). Aksi: **Ubah**, dan menu ⋮ — nonaktifkan/aktifkan, keluarkan dari semua perangkat, reset verifikasi 2 langkah, hapus akun. Akun portal pelanggan tidak ikut terdaftar.
+
+Buka **Kelola Staf > Tambah staf**:
 - Gunakan email aktif; password minimal **8 karakter** (berlaku juga untuk API aplikasi staf).
 - Pilih role sesuai tanggung jawab. Role yang tersedia sama di web dan API.
 
