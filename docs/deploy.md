@@ -48,7 +48,7 @@ php artisan optimize:clear && php artisan optimize
 - [ ] **Penautan ONU**: NOC Center › Sinkron ONU, lalu periksa *Penautan ONU* (usulan) agar pelanggan lama tertaut ke OLT.
 - [ ] **Jalur kabel (opsional)**: isi server OSRM di `Peta Pelanggan › Pengaturan jalur` bila ingin tombol *Ikuti jalan*; tanpa itu jalur digambar manual.
 
-## Update dari Versi Lama (mis. v1.5.65 → v1.5.182)
+## Update dari Versi Lama (mis. v1.5.65 → versi terbaru)
 
 Versi lama tidak pernah mengisolir pelanggan yang menunggak (bug), webhook pembayaran belum diverifikasi, dan belum ada pengingat WhatsApp. Data transaksi lama **tidak** diubah, tetapi perilaku billing, isolir, pembayaran & WhatsApp berubah begitu versi baru berjalan. Pakai SSH (bukan menu Pembaruan Sistem versi lama, yang tidak menjalankan `npm run build`), pada pagi/siang hari kerja.
 
