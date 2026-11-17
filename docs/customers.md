@@ -87,7 +87,9 @@ Admin & teknisi menggambar jalur: klik titik lalu **Gambar jalur kabel** (atau k
 2. **Ikuti jalan** (opsional) membentuk jalur mengikuti jalan melewati titik-titik itu; ujungnya tetap tersambung ke tiang ODP dan rumah pelanggan. Tambah titik lalu klik lagi bila jalannya kurang tepat.
 3. **Simpan jalur**. *Kembalikan garis lurus* menghapus jalur. Semua perubahan tercatat di Log Aktivitas.
 
-**Ikuti jalan** membutuhkan server routing **OSRM** yang diatur administrator di *Peta Pelanggan › Pengaturan jalur* (alamat server & profil: kendaraan / jalan kaki / sepeda). Bawaan kosong = nonaktif; gambar manual tetap bisa. Yang dikirim ke server routing hanya koordinat titik jalur. Paling aman memakai server OSRM sendiri dengan data OpenStreetMap Indonesia; server demo publik `https://router.project-osrm.org` hanya profil kendaraan, tanpa jaminan layanan, dan koordinat terkirim ke pihak luar.
+**Tidak ada garis kabel sama sekali?** Garis hanya muncul untuk pelanggan yang terhubung ke **ODP berkoordinat** (isi di *Lokasi › ODP*, lalu pilih ODP di data pelanggan). Peta menampilkan peringatan bila belum ada sambungan yang bisa digambar. Mengisi server routing tidak membuat garis otomatis — jalur tetap dibuat per sambungan lewat *Gambar jalur kabel*.
+
+**Ikuti jalan** membutuhkan server routing **OSRM** yang diatur administrator di *Peta Pelanggan › Pengaturan jalur* (alamat server & profil: kendaraan / jalan kaki / sepeda). Bawaan kosong = nonaktif; gambar manual tetap bisa. Yang dikirim ke server routing hanya koordinat titik jalur. Saat disimpan, server langsung **diuji** (rute contoh Monas → Bundaran HI, bukan data pelanggan); bila gagal, pesan menjelaskan penyebabnya — paling sering server aplikasi tidak punya akses internet / firewall ke alamat itu. Paling aman memakai server OSRM sendiri dengan data OpenStreetMap Indonesia; server demo publik `https://router.project-osrm.org` hanya profil kendaraan, tanpa jaminan layanan, dan koordinat terkirim ke pihak luar.
 
 ## Impor & Ekspor Data
 

@@ -29,6 +29,17 @@
         @if(session('success'))
             <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">{{ session('success') }}</div>
         @endif
+        @if(session('error'))
+            <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">{{ session('error') }}</div>
+        @endif
+        @if($canEdit && $linkable === 0)
+            {{-- Garis kabel butuh induk berkoordinat: tanpa ODP tidak ada yang bisa digambar --}}
+            <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                <strong>Belum ada garis kabel untuk digambar.</strong> Garis kabel menghubungkan pelanggan ke <strong>ODP</strong>-nya (lalu ODP → ODC → STB → STO).
+                Saat ini {{ $odpWithCoords }} ODP berkoordinat dan {{ $customersWithOdp }} pelanggan berkoordinat yang terhubung ke ODP.
+                Tambahkan ODP beserta koordinatnya di @canroute('locations.odps')<a href="{{ route('locations.odps') }}" class="font-semibold underline">Lokasi › ODP</a>@else menu Lokasi › ODP @endcanroute, lalu isi ODP di data pelanggan.
+            </div>
+        @endif
 
         {{-- Lapisan --}}
         <div class="card p-3">

@@ -82,6 +82,14 @@ class CableRouteController extends Controller
         Setting::updateOrCreate(['key' => RoadRouter::URL_KEY], ['value' => trim((string) ($data['routing_url'] ?? '')), 'type' => 'string']);
         Setting::updateOrCreate(['key' => RoadRouter::PROFILE_KEY], ['value' => $data['routing_profile'], 'type' => 'string']);
 
-        return back()->with('success', filled($data['routing_url'] ?? null) ? 'Server routing jalan disimpan.' : 'Ikuti jalan otomatis dinonaktifkan.');
+        if (! filled($data['routing_url'] ?? null)) {
+            return back()->with('success', 'Ikuti jalan otomatis dinonaktifkan.');
+        }
+        // Langsung diuji agar masalah jaringan terlihat sekarang, bukan saat teknisi menggambar jalur
+        $test = app(RoadRouter::class)->test();
+
+        return $test['ok']
+            ? back()->with('success', 'Server routing jalan disimpan. ' . $test['message'])
+            : back()->with('error', 'Alamat disimpan, tetapi uji gagal: ' . $test['message']);
     }
 }

@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.172] - 2026-11-17
+
+### Perbaikan
+- **map:** Explain missing cable lines and test the routing server when saved
+
 ## [v1.5.171] - 2026-11-17
 
 ### Fitur baru

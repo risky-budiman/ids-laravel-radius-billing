@@ -166,8 +166,12 @@ class CustomerController extends Controller
         $routing = ['enabled' => \App\Services\Network\RoadRouter::enabled(), 'url' => \App\Services\Network\RoadRouter::baseUrl(),
             'profile' => \App\Services\Network\RoadRouter::profile()];
         $cableTotal = (int) \App\Models\CableRoute::sum('length_m');
+        // Sambungan yang bisa digambar (titik dengan induk berkoordinat)
+        $customersWithOdp = collect($points)->whereNotNull('odp')->count();
+        $odpWithCoords = \App\Models\Odp::whereNotNull('latitude')->where('latitude', '!=', '')->count();
+        $linkable = $customersWithOdp + collect($infrastructure)->flatten(1)->whereNotNull('parent')->count();
 
-        return view('customers.map', compact('points', 'infrastructure', 'counts', 'routing', 'cableTotal'));
+        return view('customers.map', compact('points', 'infrastructure', 'counts', 'routing', 'cableTotal', 'customersWithOdp', 'odpWithCoords', 'linkable'));
     }
 
     /** Lapisan peta, urut prioritas: gangguan > terisolir > menunggak > normal; lainnya belum aktif / berhenti. */

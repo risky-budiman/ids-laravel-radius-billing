@@ -106,9 +106,34 @@ class CableRouteTest extends TestCase
 
         $root = User::factory()->create(['role' => 'administrator', 'is_active' => true]);
         $this->actingAs($root)->post(route('customers.map.routing-settings'), ['routing_url' => 'javascript:alert(1)', 'routing_profile' => 'driving'])->assertSessionHasErrors('routing_url');
+        Http::fake(['10.90.10.20:5000/*' => Http::response(['code' => 'Ok', 'routes' => [['distance' => 900, 'geometry' => ['coordinates' => [[106.8, -6.1], [106.9, -6.2]]]]]])]);
         $this->post(route('customers.map.routing-settings'), ['routing_url' => 'http://10.90.10.20:5000/', 'routing_profile' => 'foot'])->assertSessionHas('success');
         $this->assertSame('http://10.90.10.20:5000', RoadRouter::baseUrl());
         $this->assertSame('foot', RoadRouter::profile());
         $this->get(route('customers.map'))->assertSee('Pengaturan jalur')->assertSee('aktif');
+    }
+
+    public function test_saving_routing_server_tests_it_and_map_explains_missing_odp(): void
+    {
+        $root = User::factory()->create(['role' => 'administrator', 'is_active' => true]);
+        $this->actingAs($root);
+
+        Http::fake(['osrm.local/*' => fn () => throw new \Illuminate\Http\Client\ConnectionException('cURL error 28: Failed to connect to osrm.local port 443 after 10001 ms')]);
+        $this->post(route('customers.map.routing-settings'), ['routing_url' => 'https://osrm.local/', 'routing_profile' => 'driving'])
+            ->assertSessionHas('error', fn ($m) => str_contains($m, 'Alamat disimpan, tetapi uji gagal') && str_contains($m, 'tidak bisa terhubung ke https://osrm.local'));
+        $this->assertSame('https://osrm.local', RoadRouter::baseUrl());
+
+        Http::swap(new \Illuminate\Http\Client\Factory());
+        Http::fake(['osrm.local/*' => Http::response(['code' => 'Ok', 'routes' => [['distance' => 2300.4, 'geometry' => ['coordinates' => [[106.8272, -6.1754], [106.8230, -6.1950]]]]]])]);
+        $this->post(route('customers.map.routing-settings'), ['routing_url' => 'https://osrm.local', 'routing_profile' => 'driving'])
+            ->assertSessionHas('success', fn ($m) => str_contains($m, '2300 m'));
+        Http::assertSent(fn ($r) => str_contains($r->url(), '106.8272,-6.1754;106.823,-6.195'));   // titik uji umum, bukan data pelanggan
+
+        // Tanpa ODP berkoordinat: peta menjelaskan kenapa tidak ada garis kabel
+        Odp::query()->delete();
+        $this->get(route('customers.map'))->assertOk()->assertSee('Belum ada garis kabel untuk digambar.');
+        Odp::create(['id' => 'ODP-B', 'name' => 'ODP B', 'latitude' => -6.2, 'longitude' => 106.8]);
+        $this->customer->update(['odp_id' => 'ODP-B']);
+        $this->get(route('customers.map'))->assertOk()->assertDontSee('Belum ada garis kabel untuk digambar.');
     }
 }
