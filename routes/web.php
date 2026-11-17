@@ -376,6 +376,19 @@ Route::prefix('admin')->middleware(['auth:web', 'role:administrator,admin,teknis
             Route::post('mutations/{mutation}/match', [\App\Http\Controllers\Finance\BankMutationController::class, 'match'])->name('bank-mutations.match');
             Route::post('mutations/{mutation}/ignore', [\App\Http\Controllers\Finance\BankMutationController::class, 'ignore'])->name('bank-mutations.ignore');
 
+            // Rekonsiliasi bank: import mutasi rekening (CSV/Excel) & cocokkan dengan Kas & Bank
+            Route::get('reconciliation', [\App\Http\Controllers\Finance\BankReconciliationController::class, 'index'])->name('bank-reconciliation.index');
+            Route::post('reconciliation/upload', [\App\Http\Controllers\Finance\BankReconciliationController::class, 'upload'])->name('bank-reconciliation.upload');
+            Route::get('reconciliation/map', [\App\Http\Controllers\Finance\BankReconciliationController::class, 'map'])->name('bank-reconciliation.map');
+            Route::post('reconciliation/confirm', [\App\Http\Controllers\Finance\BankReconciliationController::class, 'confirm'])->name('bank-reconciliation.confirm');
+            Route::post('reconciliation/rematch', [\App\Http\Controllers\Finance\BankReconciliationController::class, 'rematch'])->name('bank-reconciliation.rematch');
+            Route::get('reconciliation/lines/{line}/candidates', [\App\Http\Controllers\Finance\BankReconciliationController::class, 'candidates'])->name('bank-reconciliation.candidates');
+            Route::post('reconciliation/lines/{line}/match', [\App\Http\Controllers\Finance\BankReconciliationController::class, 'match'])->name('bank-reconciliation.match');
+            Route::post('reconciliation/lines/{line}/unmatch', [\App\Http\Controllers\Finance\BankReconciliationController::class, 'unmatch'])->name('bank-reconciliation.unmatch');
+            Route::post('reconciliation/lines/{line}/ignore', [\App\Http\Controllers\Finance\BankReconciliationController::class, 'ignore'])->name('bank-reconciliation.ignore');
+            Route::get('reconciliation/lines/{line}/record', [\App\Http\Controllers\Finance\BankReconciliationController::class, 'record'])->name('bank-reconciliation.record');
+            Route::delete('reconciliation/imports/{import}', [\App\Http\Controllers\Finance\BankReconciliationController::class, 'destroyImport'])->name('bank-reconciliation.import.destroy');
+
             Route::get('expense', [\App\Http\Controllers\Finance\BankTransactionController::class, 'expense'])->name('bank-transactions.expense');
             Route::post('expense', [\App\Http\Controllers\Finance\BankTransactionController::class, 'processExpense'])->name('bank-transactions.process-expense');
 

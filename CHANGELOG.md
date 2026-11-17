@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.176] - 2026-11-17
+
+### Fitur baru
+- **finance:** Import bank statements (CSV/Excel) and reconcile with Kas & Bank
+
 ## [v1.5.175] - 2026-11-17
 
 ### Fitur baru

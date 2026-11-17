@@ -81,6 +81,9 @@
                             Selisih biasanya terjadi karena ada transaksi yang terhapus di luar aplikasi (langsung di database / restore).
                             Cocokkan dengan mutasi bank asli, lalu catat transaksi penyesuaian bila memang ada dana yang belum tercatat.
                         </p>
+                        @canroute('bank-reconciliation.index')
+                            <a href="{{ route('bank-reconciliation.index') }}" class="inline-block font-semibold underline">Import mutasi bank & rekonsiliasi →</a>
+                        @endcanroute
                     </div>
                 </div>
             </div>

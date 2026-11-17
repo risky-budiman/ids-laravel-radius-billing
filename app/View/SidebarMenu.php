@@ -128,6 +128,7 @@ class SidebarMenu
         // Route accounting.* hanya untuk administrator & admin.
         if ($isAdmin) {
             $finance[] = self::link('Mutasi Bank', 'bank-mutations.index', 'inbox', ['bank-mutations.*']);
+            $finance[] = self::link('Rekonsiliasi Bank', 'bank-reconciliation.index', 'check-circle', ['bank-reconciliation.*']);
             $finance[] = self::link('KPI Bisnis', 'kpi.index', 'trending-up', ['kpi.*']);
             $finance[] = self::link('Bagan Akun (COA)', 'accounting.coa.index', 'book', ['accounting.coa.*']);
             $finance[] = self::group('Laporan Keuangan', 'presentation', [

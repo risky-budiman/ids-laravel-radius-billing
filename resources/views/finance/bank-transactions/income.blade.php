@@ -161,6 +161,9 @@
         
         document.addEventListener('DOMContentLoaded', function() {
             updateBalanceInfo(document.getElementById('bank_account_id'));
+            // Nominal terisi (old input / dari Rekonsiliasi Bank): tampilkan juga di kolom yang terlihat
+            const display = document.getElementById('display_amount');
+            if (display && document.getElementById('amount').value) finalizeCurrency(display, 'amount');
         });
     </script>
 </x-app-layout>
