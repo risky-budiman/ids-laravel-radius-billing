@@ -41,6 +41,33 @@ class ActivityLogController extends Controller
         $activities = $query->paginate(50)->withQueryString();
         $users = \App\Models\User::orderBy('name')->get();
 
-        return view('activity-logs.index', compact('activities', 'users'));
+        $retention = app(\App\Services\LogRetention::class);
+        $retentionPlan = $retention->plan();
+
+        return view('activity-logs.index', compact('activities', 'users', 'retentionPlan'));
+    }
+
+    /** Simpan masa simpan log. "Pratinjau" hanya menghitung yang akan dihapus dengan pilihan baru. */
+    public function retention(Request $request, \App\Services\LogRetention $retention)
+    {
+        $rules = [];
+        foreach (\App\Services\LogRetention::OPTIONS as $key => $allowed) {
+            $rules[$key] = 'required|integer|in:' . implode(',', $allowed);
+        }
+        $data = $request->validate($rules);
+
+        if ($request->input('action') === 'preview') {
+            $total = collect($retention->plan($data))->sum('count');
+
+            return back()->withInput()->with('retention_preview', $retention->plan($data))
+                ->with('success', "Pratinjau: {$total} baris akan dihapus pada penghapusan harian berikutnya (03:45) bila disimpan.");
+        }
+        \App\Services\LogRetention::set($data);
+        $total = collect($retention->plan())->sum('count');
+        \App\Models\ActivityLog::log('logs_retention_updated', 'Masa simpan log diubah: ' . collect($data)->map(fn ($v, $k) => str_replace('log_retention_', '', $k) . '=' . ($v ?: 'selamanya'))->implode(', ') . '.');
+
+        return back()->with('success', $total
+            ? "Masa simpan disimpan. {$total} baris lama akan dihapus pada penghapusan harian berikutnya (03:45)."
+            : 'Masa simpan disimpan. Saat ini tidak ada log yang melewati batas.');
     }
 }

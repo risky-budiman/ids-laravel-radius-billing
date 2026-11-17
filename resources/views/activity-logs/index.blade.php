@@ -2,18 +2,79 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
-                {{ __('System Activity Logs') }}
+                Log Aktivitas
             </h2>
             <div class="flex space-x-3">
                 <span class="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-semibold  rounded-xl border border-indigo-100 dark:border-indigo-800">
-                    Live Audit Trail
+                    Jejak audit
                 </span>
             </div>
         </div>
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            @if(session('success'))
+                <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">{{ session('success') }}</div>
+            @endif
+
+            {{-- Masa simpan log --}}
+            @php
+                $plan = session('retention_preview', $retentionPlan);
+                $planTotal = collect($plan)->sum('count');
+                $cur = fn ($k) => (int) old($k, \App\Services\LogRetention::get($k));
+                $fields = [
+                    'log_retention_general_days' => ['Log aktivitas operasional', 'hari', 'Login, akun & role staf, hak akses, backup & ekspor data minimal 1 tahun.'],
+                    'log_retention_finance_years' => ['Log aktivitas keuangan', 'tahun', 'Invoice, pembayaran, jurnal, kas & bank, COA, pajak, gateway, komisi, pengaturan. Minimal 5 tahun.'],
+                    'log_retention_whatsapp_days' => ['Log WhatsApp', 'hari', 'Isi pesan ke pelanggan & status kirim.'],
+                    'log_retention_radius_days' => ['Log login PPPoE (RADIUS)', 'hari', 'Menu Log Autentikasi; bisa sangat besar.'],
+                    'log_retention_notifications_days' => ['Notifikasi yang sudah dibaca', 'hari', 'Notifikasi staf yang belum dibaca tidak dihapus.'],
+                ];
+                $anyOn = collect($plan)->contains(fn ($p) => $p['cutoff'] !== null);
+            @endphp
+            <details class="card" @if(session('retention_preview') || $errors->any()) open @endif>
+                <summary class="flex cursor-pointer items-center justify-between gap-3 px-5 py-4">
+                    <span>
+                        <span class="text-sm font-semibold text-surface-900 dark:text-white">Masa simpan log</span>
+                        <span class="block text-xs text-surface-500">{{ $anyOn ? 'Log lama dihapus otomatis setiap hari pukul 03:45 sesuai setelan.' : 'Semua log disimpan selamanya (bawaan). Atur bila tabel log sudah terlalu besar.' }}</span>
+                    </span>
+                    <span class="{{ $anyOn ? 'badge-success' : 'badge-gray' }}">{{ $anyOn ? 'Aktif' : 'Nonaktif' }}</span>
+                </summary>
+                <form method="POST" action="{{ route('activity-logs.retention') }}" class="border-t border-surface-200 dark:border-surface-800">
+                    @csrf
+                    <div class="grid gap-x-6 gap-y-4 p-5 md:grid-cols-2">
+                        @foreach($fields as $key => [$label, $unit, $hint])
+                            <div>
+                                <label class="label" for="{{ $key }}">{{ $label }}</label>
+                                <select id="{{ $key }}" name="{{ $key }}" class="input">
+                                    @foreach(\App\Services\LogRetention::OPTIONS[$key] as $opt)
+                                        <option value="{{ $opt }}" @selected($cur($key) === $opt)>{{ $opt ? "Simpan {$opt} {$unit}" : 'Simpan selamanya' }}</option>
+                                    @endforeach
+                                </select>
+                                <p class="help-text">{{ $hint }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="overflow-x-auto border-t border-surface-200 dark:border-surface-800">
+                        <table class="table">
+                            <thead><tr><th>Jenis log</th><th>Disimpan</th><th class="text-right">{{ session('retention_preview') ? 'Akan dihapus (pratinjau)' : 'Akan dihapus berikutnya' }}</th></tr></thead>
+                            <tbody>
+                                @foreach($plan as $p)
+                                    <tr><td>{{ $p['label'] }}</td><td>{{ $p['keep'] }}@if($p['cutoff']) <span class="text-xs text-surface-500">(sebelum {{ $p['cutoff']->translatedFormat('d M Y') }})</span>@endif</td>
+                                        <td class="text-right tabular-nums">{{ $p['cutoff'] ? number_format($p['count'], 0, ',', '.') : '—' }}</td></tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex flex-col gap-2 border-t border-surface-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800">
+                        <p class="text-xs text-surface-500">Penghapusan tidak bisa dibatalkan — backup harian tetap menyimpan salinannya. Tercatat di Log Aktivitas.</p>
+                        <div class="flex gap-2">
+                            <button name="action" value="preview" class="btn-secondary">Pratinjau</button>
+                            <button name="action" value="save" class="btn-primary" onclick="return confirm('Simpan masa simpan log? Log yang melewati batas akan dihapus permanen pada penghapusan harian berikutnya.')">Simpan</button>
+                        </div>
+                    </div>
+                </form>
+            </details>
             <div class="glass-premium bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-100 dark:border-gray-700">
                 <div class="p-8">
                     <!-- Filter Bar -->

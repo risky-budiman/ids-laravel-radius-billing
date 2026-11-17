@@ -2,6 +2,11 @@
 
 Riwayat perubahan per versi. Disusun otomatis dari riwayat commit oleh `php artisan app:generate-changelog --write`.
 
+## [v1.5.178] - 2026-11-17
+
+### Fitur baru
+- **logs:** Log retention, off by default, with finance and security minimums
+
 ## [v1.5.177] - 2026-11-17
 
 ### Peningkatan

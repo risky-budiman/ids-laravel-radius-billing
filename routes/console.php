@@ -17,6 +17,8 @@ Schedule::command('app:ticket-sla-alerts')->everyFifteenMinutes()->withoutOverla
 // Pengingat tagihan WhatsApp H-3 / H-1 / hari H (template invoice_reminder, setting invoice_reminder_days)
 Schedule::command('app:send-invoice-reminders')->dailyAt('09:00')->withoutOverlapping(60);
 Schedule::command('app:backup-database')->dailyAt('02:30')->withoutOverlapping(120);
+// Masa simpan log (Log Aktivitas). Bawaan tidak menghapus apa pun; berjalan setelah backup harian.
+Schedule::command('logs:prune')->dailyAt('03:45')->withoutOverlapping(120);
 Schedule::command('customer:check-grace-period')->everyMinute();
 
 // Pemantauan NOC (status & sinyal ONU + peringatan Telegram/WhatsApp): NONAKTIF bawaan.
